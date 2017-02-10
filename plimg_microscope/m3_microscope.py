@@ -5,7 +5,7 @@ from ScopeFoundry import BaseMicroscopeApp
 import logging
 
 logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
-logging.getLogger('').setLevel(logging.WARNING)
+#logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
 logging.getLogger('ScopeFoundry.logged_quantity.LoggedQuantity').setLevel(logging.WARNING)
