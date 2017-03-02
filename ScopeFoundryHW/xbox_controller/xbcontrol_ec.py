@@ -1,3 +1,5 @@
+"""Xbox ScopeFoundry demonstration module written by Alan Buckley with suggestions for improvement 
+from Ed Barnard and Lev Lozhkin"""
 import pygame.joystick
 import time
 #from pygame.constants import JOYAXISMOTION, JOYHATMOTION, JOYBUTTONDOWN, JOYBUTTONUP

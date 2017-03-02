@@ -1,22 +1,22 @@
 from setuptools import setup
 
 setup(
-    name = 'ScopeFoundryHW.random_gen',
+    name = 'ScopeFoundryHW.relay_arduino',
     
     version = '0.0.1',
     
-    description = 'ScopeFoundry Hardware plug-in: Dummy random number generator',
+    description = 'ScopeFoundry Hardware plug-in: seeed studio Relay Shield and Arduino Uno pair ScopeFoundry interface',
     
     # Author details
-    author='Edward S. Barnard',
-    author_email='esbarnard@lbl.gov',
+    author='Alan Buckley',
+    author_email='alanbuckley@lbl.gov',
 
     # Choose your license
     license='BSD',
 
-    package_dir={'ScopeFoundryHW.random_gen': '.'},
+    package_dir={'ScopeFoundryHW.relay_arduino': '.'},
     
-    packages=['ScopeFoundryHW.random_gen',],
+    packages=['ScopeFoundryHW.relay_arduino',],
     
     #packages=find_packages('.', exclude=['contrib', 'docs', 'tests']),
     #include_package_data=True,  

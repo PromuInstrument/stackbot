@@ -1,4 +1,4 @@
-"""Written by Alan Buckley with suggestions for improvement 
+"""Xbox ScopeFoundry demonstration module written by Alan Buckley with suggestions for improvement 
 from Ed Barnard and Lev Lozhkin"""
 from __future__ import absolute_import
 from ScopeFoundry.measurement import Measurement
@@ -6,7 +6,7 @@ import time
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 import pygame.event
 from pygame.constants import JOYAXISMOTION, JOYHATMOTION, JOYBUTTONDOWN, JOYBUTTONUP
-from ..equipment.xbcontrol_ec import XboxControlDevice
+from ScopeFoundryHW.xbox_controller.xbcontrol_ec import XboxControlDevice
 
 class XboxControlMeasure(Measurement):
     """This class contains connections to logged quantities and ui elements. 

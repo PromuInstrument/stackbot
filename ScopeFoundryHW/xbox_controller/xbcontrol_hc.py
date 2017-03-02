@@ -1,6 +1,8 @@
+"""Xbox ScopeFoundry demonstration module written by Alan Buckley with suggestions for improvement 
+from Ed Barnard and Lev Lozhkin"""
 from __future__ import absolute_import
 from ScopeFoundry import HardwareComponent
-from ..equipment.xbcontrol_ec import XboxControlDevice
+from ScopeFoundryHW.xbox_controller.xbcontrol_ec import XboxControlDevice
 
 
 class XboxControlHW(HardwareComponent):

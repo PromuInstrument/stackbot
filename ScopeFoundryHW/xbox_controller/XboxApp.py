@@ -1,8 +1,9 @@
-#from PySide import QtGui
+"""Xbox ScopeFoundry demonstration module written by Alan Buckley with suggestions for improvement 
+from Ed Barnard and Lev Lozhkin"""
 from __future__ import absolute_import, print_function, division
 from ScopeFoundry import BaseMicroscopeApp
-from ScopeFoundryHW.xbox_controller.measurement.xbcontrol_mc import XboxControlMeasure
-from ScopeFoundryHW.xbox_controller.hardware.xbcontrol_hc import XboxControlHW
+from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
+from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
 import logging
 
 logging.basicConfig(level='DEBUG')
