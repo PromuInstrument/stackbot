@@ -23,8 +23,6 @@ class SemSyncRasterDAQ(HardwareComponent):
 
         # Create logged quantities, set limits and defaults
         
-        
-        # Rename to adc_rate
         self.sample_rate = self.add_logged_quantity("sample_rate", dtype=float, 
                                                     ro=False, 
                                                     initial=2e6, 
@@ -33,14 +31,13 @@ class SemSyncRasterDAQ(HardwareComponent):
                                                     unit='Hz',
                                                     si=True)
         
-        # rename to pixel_rate
         self.output_rate = self.add_logged_quantity("output_rate", dtype=float, 
                                                     ro=True, 
                                                     initial=5e5, 
                                                     vmin=1, 
                                                     vmax=2e6,
                                                     unit='Hz', si=True)
-        # rename to adc_per_pixel
+        
         self.samples_per_pixel = self.add_logged_quantity("samples_per_pixel", dtype=int, 
                                                     ro=False, 
                                                     initial=1, 
@@ -49,21 +46,6 @@ class SemSyncRasterDAQ(HardwareComponent):
                                                     unit='samples')
         
         self.continuous = self.add_logged_quantity('continuous', dtype=bool, initial=True)
-        
-        
-        
-        self.settings.New("dac_device", dtype=str, initial='Dev1') # aout_dev
-        self.settings.New("adc_device", dtype=str, initial='Dev1') # ain_dev
-        self.settings.New('ctr_device', dtype=str, initial='Dev1')
-        
-        self.settings.New('dac_channels', dtype=str, initial='ao0,ao1')
-        self.settings.New('adc_channels', dtype=str, initial='ai0,ai1')
-        self.settings.New('ctr_channels', dtype=str, initial='ctr0,ctr1')
-        self.settings.New('ctr_terms',    dtype=str, initial='PFI0,PFI1')
-        
-        self.settings.New('dac_names', dtype=str, initial='ao0,ao1')
-        self.settings.New('adc_names', dtype=str, initial='ai0,ai1')
-        self.settings.New('ctr_names', dtype=str, initial='ctr0,ctr1')
         
                  
         self.output_channel_addresses= self.add_logged_quantity("output_channel_addresses",dtype=str,
@@ -95,13 +77,18 @@ class SemSyncRasterDAQ(HardwareComponent):
                                                         ro=False,
                                                         initial='PFI0,PFI12')
         
-#             #FIX implement in SemSyncRasterScan (not at HW level)
+        
+        #self.counter_unit=self.add_logged_quantity("counter_unit",dtype=str,
+        #                                                ro=False,
+        #                                                initial='count',
+        #                                                choices=[('count','count'),('Hz','Hz')])
+        
+#             #FIX implement in SemSyncRasterScan
 #         self.auto_blanking=self.add_logged_quantity('auto_blanking', initial=True,
 #                                                    dtype=bool,
 #                                                    ro=False)
 #         
         
-        # which device?
         self.ext_clock_enable = self.add_logged_quantity("ext_clock_enable", dtype=bool, initial=False)
         self.ext_clock_source = self.add_logged_quantity("ext_clock_source", dtype=str, initial="/X-6368/PFI0")
         

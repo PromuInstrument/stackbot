@@ -169,9 +169,8 @@ class SemSyncRasterScanQuadView(Measurement):
             if not self.sync_scan.is_measuring():
                 self.interrupt_measurement_called = True
 
-            121067lbl
+
             time.sleep(self.display_update_period)
-        BoolBlockascx
         #self.sync_scan.interrupt()
         self.sync_scan.settings['activation'] = False
 
