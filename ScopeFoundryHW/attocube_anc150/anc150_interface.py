@@ -38,81 +38,34 @@ class ANC_Interface(object):
         message = cmd+b'\r\n'
         self.ser.write(message)
         resp = self.ser.readlines()
-        print("initial resp:", resp)
-        status, parsed_resp = self.parse_response(resp)
-        if (status is not None) and (parsed_resp is not None):
-            value, status = self.extract_value(parsed_resp, status)
-            if status == "ok":
-                return value
-            elif status == "err":
-                logger.debug(value)
-        else:
-            value = None
+        
+        if len(resp) < 2:
+            raise IOError( "No response from ANC 150, power off? {}".format(resp))
+        
+        if resp[-2] != b"OK\r\n":
+            # example error string list [b'getc 1\r\n', b'Axis in wrong mode\r\n', b'ERROR\r\n', b'> ']
+            err_msg = "ANC Error {} --> {}".format(cmd, resp)
+            logger.error(err_msg)
+            raise IOError(err_msg)
+        # example success string list [b'getf 1\r\n', b'frequency = 2 Hz\r\n', b'OK\r\n', b'> '   ]
         if self.debug:
-            logger.debug("readout: {}".format(cmd))
-            logger.debug("resp: {}".format(resp))
-            print("status:", status)
-            print("(ask_cmd) end_resp:", parsed_resp)
+            print("ANC ask command resp:", resp)
+        resp = resp[1:-2]   #trim command echo and OK/prompt
+        return resp         
 
-    
-    def send_cmd(self, cmd):
-        """
-        Issues a command to the Attocube device.
-        :returns: The entire response given by the Attocube device.
-        """
-        if self.debug: 
-            logger.debug("ask_cmd: {}".format(cmd))
-        message = cmd+b'\r\n'
-        self.ser.write(message)
-        resp = self.ser.readlines()
-        if self.debug:
-            logger.debug("readout: {}".format(cmd))
-            logger.debug("resp: {}".format(resp))
-        return resp
-    
-    def extract_value(self, data, status):
+    def extract_value(self, resp):
         """
         Strips entry prior to terminating characters,
-        Seeks out "=" sign and picks the value thereafter. 
-        
+        Seeks out "=" sign and picks the value thereafter.        
         """
-        if status == "ok":
-            entry = data[0].strip().decode().split()
-            if "=" in entry:
-                for i in enumerate(entry):
-                    if i[1] == "=":
-                        sub_index = i[0]
-                        equals = i[1]
-                value_index = sub_index+1
-                value = entry[value_index]
-                return(value, status)
-            else:
-                pass
-            
-        elif status == "err":
-            entry = data[0].strip().decode()
-            print("extract_value>", entry)
-            return(entry, status)
-        
-    def parse_response(self, data):
-        """
-        Finds terminating characters "OK/r/n" or "ERROR/r/n",
-        :returns: data index, status of outcome.
-        """
-        for i in enumerate(data):
-            if i[1] == b"OK\r\n":
-                index = i[0]
-                status = "ok"
-            elif i[1] == b"ERROR\r\n":
-                index = i[0]
-                status = "err"
-        resp = data[1:index]
-        if self.debug:
-            print("status:", status, "resp:", resp)
-        if len(resp) > 0:
-            return status, resp
-        else:
-            return(None, None)
+        entry = resp[0].strip().decode().split()
+        for i in enumerate(entry):
+            if i[1] == "=":
+                sub_index = i[0]
+                equals = i[1]
+        value_index = sub_index+1
+        value = entry[value_index]
+        return(value)
     
     def get_version(self):
         """
@@ -224,7 +177,7 @@ class ANC_Interface(object):
         """
         message = "getf {}".format(axis_id).encode()
         resp = self.ask_cmd(message)
-        return resp
+        return int(resp)
     
     def get_voltage(self, axis_id):
         """
@@ -251,7 +204,7 @@ class ANC_Interface(object):
         :returns: The measured capacity for axis <AID>.
         """
         message = "getc {}".format(axis_id).encode()
-        resp = self.send_cmd(message)
+        resp = self.ask_cmd(message)
         return resp
     
     def set_pattern(self, axis_id, dir, pattern_number):
