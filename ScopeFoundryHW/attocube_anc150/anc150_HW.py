@@ -14,13 +14,9 @@ logger = logging.getLogger(__name__)
 
 
 try: 
-    #from ScopeFoundryHW.relay_arduino.relay_arduino_interface import RelayArduinoInterface
     from ScopeFoundryHW.attocube_anc150.anc150_interface import ANC_Interface
-
 except Exception as err:
     logger.error("Cannot load required modules for ANC150, {}".format(err))
-
-from ScopeFoundryHW.attocube_anc150.anc150_interface import ANC_Interface
     
 
 class ANC_HW(HardwareComponent):
@@ -32,6 +28,15 @@ class ANC_HW(HardwareComponent):
         self.port = self.settings.New(name="port", initial="COM6", dtype=str, ro=False)
         self.settings.New(name='debug_mode', initial=False, dtype=bool, ro=False)
         
+        self.settings.New('frequency', dtype=int, array=True,  ro=False, 
+                  initial=[20,20,20,20,20,20])
+        self.settings.New('voltage', dtype=int, array=True,  ro=False, 
+                  initial=[30,30,30,30,30,30])
+        self.settings.New('position', dtype=int, array=True,  ro=False, 
+                  initial=[0,0,0,0,0,0])#keeps track of moves
+
+        #FIX
+        '''
         self.settings.New(name='axis', dtype=int, initial=1, choices=[("1", 1),
                                                                        ("2", 2),
                                                                        ("3", 3),
@@ -50,18 +55,18 @@ class ANC_HW(HardwareComponent):
             self.settings.New(name="move_direction"+str(i), dtype=str, choices=[("Up", "u"),("Down", "d")])
             self.settings.New(name="move_mode"+str(i), dtype=str, choices=[("Continuous", "c"),("Discrete", "n")])
             self.settings.New(name="move_steps"+str(i), initial=0, dtype=int, fmt="%i", ro=False)
+        self.start = self.add_operation("start", self.move_start)
+        self.stop = self.add_operation("stop", self.move_stop)
+        '''
         
         self.settings.axis.updated_value.connect(self.reconnect_lq_funcs)
         
         #self.apply = self.settings.add_operation("apply_axis1", op_func)
-        self.start = self.add_operation("start", self.move_start)
-        self.stop = self.add_operation("stop", self.move_stop)
         
         
         
         
-    def connect(self):
- 
+    def connect(self): 
         self.anc_interface = ANC_Interface(port=self.port.val, debug=self.settings['debug_mode'])
         self.reconnect_lq_funcs()
 
@@ -72,14 +77,9 @@ class ANC_HW(HardwareComponent):
         self.settings.get_lq('voltage'+str(i)).connect_to_hardware(
             read_func = self.read_active_axis_voltage,
             write_func = self.write_active_axis_voltage)
-        self.settings.get_lq('capacitance'+str(i)).connect_to_hardware(
-            read_func = self.read_active_axis_cap)
         self.settings.get_lq('frequency'+str(i)).connect_to_hardware(
             read_func = self.read_active_axis_freq,
             write_func = self.write_active_axis_freq)
-        self.settings.get_lq('axis_mode'+str(i)).connect_to_hardware(
-            read_func = self.read_active_axis_mode,
-            write_func = self.write_active_axis_mode)
         
     def move_start(self):
         axis = self.settings['axis']
