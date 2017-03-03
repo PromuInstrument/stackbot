@@ -45,7 +45,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
         self.settings.n_frames.connect_to_widget(self.details_ui.n_frames_doubleSpinBox)
         
         
-        self.scanDAQ.settings.output_rate.add_listener(self.compute_times)
+        self.scanDAQ.settings.dac_rate.add_listener(self.compute_times)
         self.settings.Nh.add_listener(self.compute_times)
         self.settings.Nv.add_listener(self.compute_times)
         
@@ -137,15 +137,15 @@ class SemSyncRasterScan(BaseRaster2DScan):
             self.adc_map_h5 = self.create_h5_framed_dataset('adc_map', self.adc_map, chunks=(1,1, 64, 64,self.scanDAQ.adc_chan_count ))
                     
             # Ctr
-            # ctr_pixel_index contains index of next pixel to be processed, need one per ctr
-            # since ctrs are independent tasks
-            self.ctr_pixel_index = np.zeros(self.scanDAQ.ctr_num, dtype=int)
-            self.ctr_total_pixel_index = np.zeros(self.scanDAQ.ctr_num, dtype=int)
-            self.ctr_pixels = np.zeros((self.Npixels, self.scanDAQ.ctr_num), dtype=int)
+            # ctr_pixel_index contains index of next pixel to be processed, 
+            # need one per ctr since ctrs are independent tasks
+            self.ctr_pixel_index = np.zeros(self.scanDAQ.num_ctrs, dtype=int)
+            self.ctr_total_pixel_index = np.zeros(self.scanDAQ.num_ctrs, dtype=int)
+            self.ctr_pixels = np.zeros((self.Npixels, self.scanDAQ.num_ctrs), dtype=int)
             self.new_ctr_data_queue = [] # list will contain tuples (ctr_number, data_block) to be processed
-            self.ctr_map = np.zeros(self.scan_shape + (self.scanDAQ.ctr_num,), dtype=int)
+            self.ctr_map = np.zeros(self.scan_shape + (self.scanDAQ.num_ctrs,), dtype=int)
             self.ctr_map_Hz = np.zeros(self.ctr_map.shape, dtype=float)
-            self.ctr_map_h5 = self.create_h5_framed_dataset('ctr_map', self.ctr_map, chunks=(1,1, 64, 64,self.scanDAQ.ctr_num ))
+            self.ctr_map_h5 = self.create_h5_framed_dataset('ctr_map', self.ctr_map, chunks=(1,1, 64, 64,self.scanDAQ.num_ctrs ))
                         
             ##### register callbacks
             self.scanDAQ.set_adc_n_pixel_callback(
@@ -153,7 +153,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
             self.scanDAQ.sync_analog_io.adc.set_done_callback(
                 self.done_callback_func_adc )
             
-            for ctr_i in range(self.scanDAQ.ctr_num):
+            for ctr_i in range(self.scanDAQ.num_ctrs):
                 self.scanDAQ.set_ctr_n_pixel_callback( ctr_i,
                         num_pixels_per_block, lambda i=ctr_i: self.every_n_callback_func_ctr(i))
             
@@ -238,7 +238,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
     def on_new_adc_data(self, new_data):
         self.set_progress(100*self.pixel_index / self.Npixels )
         #print('callback block', self.pixel_index, new_data.shape, 'remaining px', self.Npixels - self.pixel_index)
-        new_data = new_data.reshape(-1,  self.scanDAQ.samples_per_pixel.val, self.scanDAQ.adc_chan_count).swapaxes(1,2)
+        new_data = new_data.reshape(-1,  self.scanDAQ.settings['adc_oversample'], self.scanDAQ.adc_chan_count).swapaxes(1,2)
         ii = self.pixel_index
         dii = num_new_pixels = new_data.shape[0]
         # average over samples (takes oversampled adc data and
@@ -374,6 +374,6 @@ class SemSyncRasterScan(BaseRaster2DScan):
             return False
                 
     def compute_times(self):
-        self.settings['pixel_time'] = 1.0/self.scanDAQ.settings['output_rate']
+        self.settings['pixel_time'] = 1.0/self.scanDAQ.settings['dac_rate']
         self.settings['line_time'] = self.settings['pixel_time'] * self.settings['Nh']
         self.settings['frame_time'] = self.settings['pixel_time'] * self.Npixels

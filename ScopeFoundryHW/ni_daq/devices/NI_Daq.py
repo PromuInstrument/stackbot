@@ -35,6 +35,10 @@ class NI_TaskWrap(object):
     
     def make_task(self, name = '' ):
         ''' creates a [named] task, should not fail if DAQmx present'''
+        # clean up name to remove unallowed characters (might be missing some)
+        for char in '/,;':
+            name = name.replace(char, "_")
+        print("make_task", name)
         self._task_name = name
         try:
             self.task = NamedTask(name)        
@@ -132,6 +136,8 @@ class NI_AdcTask(NI_TaskWrap):
         Range [+/- 1, 2, 5, 10]
         terminalConfig in ['default', 'rse', 'nrse', 'diff', 'pdiff']
         '''
+        assert terminalConfig in  ('default', 'rse', 'nrse', 'diff', 'pdiff')
+        
         NI_TaskWrap.__init__(self, name)
         
         self.terminalConfig = terminalConfig
@@ -153,8 +159,7 @@ class NI_AdcTask(NI_TaskWrap):
         #  could use GetTaskDevices followed by GetDevAIVoltageRngs to validate max volts
         #  also can check for simultaneous, max single, max multi rates
         self._channel = channel
-        assert adc_range <= 10  #error if range exceeds device maximum
-        self._input_range = min( abs(adc_range), 10.0 )
+        self._input_range = min( abs(adc_range), 10.0 ) #error if range exceeds device maximum
         self._sample_count = 0
         adc_max = mx.float64(  self._input_range )
         adc_min = mx.float64( -self._input_range )
@@ -190,12 +195,12 @@ class NI_AdcTask(NI_TaskWrap):
         adc_count = mx.uInt64(int(count))
         
         self.stop() #make sure task not running, 
+        
         #  CfgSampClkTiming ( const char source[], float64 rate, int32 activeEdge, 
         #                        int32 sampleMode, uInt64 sampsPerChan );
         #  default clk_source (clock source) is subsystem acquisition clock (OnboardClock)
         # adc_rate: The sampling rate in samples per second per channel. 
         #             If you use an external source for the Sample Clock, set this value to the maximum expected rate of that clock.  
-        
         try:                 
             self.task.CfgSampClkTiming(clk_source, adc_rate, mx.DAQmx_Val_Rising, adc_mode, adc_count) 
             adc_rate = mx.float64(0)
@@ -315,11 +320,6 @@ class NI_AdcTask(NI_TaskWrap):
 #        assert read_count.value == 1, \
 #           "sample count {} transfer count {}".format( 1, read_count.value )
         return data
-    
-    @property
-    def num_chans(self):
-        return self._chan_count
-
             
 class NI_DacTask(NI_TaskWrap):
     '''
@@ -469,11 +469,7 @@ class NI_DacTask(NI_TaskWrap):
     def DoneCallback(self, status):
         #print "Status",status.value
         return 0 # The function should return an integer
-    
-    @property
-    def num_chans(self):
-        return self._chan_count
-    
+
 class NI_CounterTask( NI_TaskWrap ):
     '''
     Event counting input task, inherits from abstract NI_TaskWrap task
@@ -483,6 +479,7 @@ class NI_CounterTask( NI_TaskWrap ):
             uses input 'PFI0' by default
         '''
         NI_TaskWrap.__init__(self, name)
+        
 
         if self.task:
             self.set_channel(channel, input_terminal)
@@ -491,6 +488,7 @@ class NI_CounterTask( NI_TaskWrap ):
             
     def set_channel(self, channel, input_terminal = 'PFI0' ):
         ''' adds input channel[s] to existing task'''
+        logger.debug("NI_CounterTask.set_channel-- {} {}".format(channel, input_terminal))
         #  could use GetTaskDevices followed by GetDevAIVoltageRngs to validate max volts
         #  also can check for simultaneous, max single, max multi rates            
         self._channel = channel
@@ -506,10 +504,10 @@ class NI_CounterTask( NI_TaskWrap ):
             #self._chan_count = 0
             self.error(err)
             
-    def set_rate(self,rate = 1e4, count = 1000,  clock_source = 'ao/SampleClock', finite = True):
+    def set_rate(self, rate = 1e4, count = 1000,  clk_source = 'ao/SampleClock', finite = True):
         """
         NOTE analog output and input clocks are ONLY available when NI_DacTask or NI_AdcTask task are running. This
-        is OK for simultaneous acquisition. Otherwise use dummy task or use another crt as a clock. If the 
+        is OK for simultaneous acquisition. Otherwise use dummy task or use another ctr as a clock. If the 
         analog task completes before the counter task, the sample trigger will no longer arrive
         
         Input buffer
@@ -526,14 +524,14 @@ class NI_CounterTask( NI_TaskWrap ):
             ctr_mode = mx.int32(mx.DAQmx_Val_ContSamps)
         ctr_rate = mx.float64(rate)   #override python type
         ctr_count = mx.uInt64(int(count))
-        self._clock_source = clock_source
+        self._clock_source = clk_source
         
         self.stop() #make sure task not running, 
         #  CfgSampClkTiming ( const char source[], float64 rate, int32 activeEdge, 
         #                        int32 sampleMode, uInt64 sampsPerChan );
         #  default clock source is subsystem acquisition clock
         try:                 
-            self.task.CfgSampClkTiming(clock_source, ctr_rate, mx.DAQmx_Val_Rising, ctr_mode, ctr_count) 
+            self.task.CfgSampClkTiming(clk_source, ctr_rate, mx.DAQmx_Val_Rising, ctr_mode, ctr_count) 
             #exact rate depends on hardware timer properties, may be slightly different from requested rate
             ctr_rate.value = 0
             self.task.GetSampClkRate(mx.byref(ctr_rate));
@@ -639,46 +637,44 @@ class NI_SyncTaskSet(object):
     '''
     creates simultaneous input (ADC, counter) and output (DAC) tasks with 
     synchronized start triggers
-    input (ADC) and output (DAC) task elapsed time need not be equal, but typically will be, 
+    input and output task elapsed time need not be equal, but typically will be, 
     can oversample input with for example 10x rate, 10x sample count
     '''
     def __init__(self, out_chan, in_chan,ctr_chans, ctr_terms, vin_range = 10.0, 
-                 out_name = '', in_name = '', terminalConfig='default', clock_source = "", trigger_output_term=None ):
+                terminalConfig='default', clock_source = "", trigger_output_term=None ):
     
-        self.clock_source = clock_source
         # create input and output tasks
-        self.dac = NI_DacTask( out_chan, out_name)        
-        self.adc = NI_AdcTask( in_chan, vin_range, in_name, terminalConfig )
+        self.dac = NI_DacTask( out_chan, name='SyncTaskSet_DAC')        
+        self.adc = NI_AdcTask( in_chan, vin_range, 'SyncTaskSet_ADC', terminalConfig )
         self.ctr_chans=ctr_chans
         self.ctr_terms=ctr_terms
-        self.ctr_num=len(self.ctr_chans)
-        self.ctr=[]
-#         for n in range(self.ctr_num):
-#             print(ctr_chans)
-#             print(ctr_terms)
-        for i in range(0,self.ctr_num):
-            self.ctr.append(NI_CounterTask(ctr_chans[i],ctr_terms[i],''))
+        self.num_ctrs=len(self.ctr_chans)
+        self.ctrs=[]
+
+        for i in range(self.num_ctrs):
+            self.ctrs.append(NI_CounterTask(ctr_chans[i],ctr_terms[i],
+                                            name='ctr_{}_{}'.format(ctr_chans[i], ctr_terms[i])))
         
-        # if a clock_source is defined, use it to clock the adc, otherwise internally clock adc
-        if clock_source:
+        # if a clock_source is defined, use it to clock the ADC, 
+        # otherwise internally clock ADC, rate set during setup()
+        self.clock_source = clock_source
+        if self.clock_source:
             logger.debug( "setup clock_source" + repr( self.clock_source) )
             self.adc.task.CfgDigEdgeStartTrig(clock_source, mx.DAQmx_Val_Rising)
 
-        # Sync dac StartTrigger on adc StartTigger
+        # Sync DAC StartTrigger on ADC StartTigger
         buffSize = 512
         buff = mx.create_string_buffer( buffSize )
-        
-        
         self.adc.task.GetNthTaskDevice(1, buff, buffSize)    #DAQmx name for input device
-        trig_name = b'/' + buff.value + b'/ai/StartTrigger'
-        #print trig_name
-        self.dac.task.CfgDigEdgeStartTrig(trig_name, mx.DAQmx_Val_Rising)
+        dac_trig_name = b'/' + buff.value + b'/ai/StartTrigger'
+        self.dac.task.CfgDigEdgeStartTrig(dac_trig_name, mx.DAQmx_Val_Rising)
 
 
-        # Route dac sampleclock signal to trigger_output_term
+        # Route DAC SampleClock signal to trigger_output_term
         # This allows you to trigger other devices simultaneously with DAC output
-        if trigger_output_term:
-            self.dac.task.ExportSignal(mx.DAQmx_Val_SampleClock, trigger_output_term)
+        self.trigger_output_term = trigger_output_term
+        if self.trigger_output_term:
+            self.dac.task.ExportSignal(mx.DAQmx_Val_SampleClock, self.trigger_output_term)
             #self.adc.task.SetDOTristate(trigger_output_term, False)
             
             ## For debugging, send trigger to another pin
@@ -688,39 +684,39 @@ class NI_SyncTaskSet(object):
         """
         Set the i/o rates and size of buffers
         
-        rate_out: DAC rate (Hz)
-        rate_in: ADC rate (Hz)
+        *rate_out*: DAC rate (Hz)
+        *rate_in*: ADC rate (Hz), counters are also clocked at this rate
         
         *is_finite* defines if single shot or continuous
         
         ADC, Counters lag DAC, 
         ADC reads voltage while DAC is starting to move to voltage
-        # Removing extra values, from ADC, counters may be necessary to align writes/reads
+        therefore removing extra values, from ADC, counters may be necessary to align writes/reads
         """
         # Pad removed 2017-02-23 ESB + DFO
         #        *Pad* if true, acquire one extra input value per channel, 
         #        strip off the first read, so writes/reads align
-#         if pad:
-#             self.delta = int(np.rint(rate_in / rate_out))
-#         else:
-#             self.delta = 0
+        # if pad:
+        #      self.delta = int(np.rint(rate_in / rate_out))
+        # else:
+        #     self.delta = 0
         
         if rate_in % rate_out > 0:
             logger.warn("NI_SyncTaskSet: rate_in/rate_out is not an integer, funny oversampling will occur")
-        
 
         self.dac.set_rate(rate_out, count_out, finite=is_finite, clk_source=self.clock_source)
-        self.adc.set_rate(rate_in, count_in,finite=is_finite, clk_source=self.clock_source)
-        for i in range(self.ctr_num):
-            self.ctr[i].set_rate(rate_in,count_in,clock_source='ai/SampleClock',finite=is_finite)
+        self.adc.set_rate(rate_in,  count_in  ,finite=is_finite, clk_source=self.clock_source)
+        for i in range(self.num_ctrs):
+            self.ctrs[i].set_rate(rate_in,count_in,
+                                  clk_source='ai/SampleClock',finite=is_finite)
             
         
     def write_output_data_to_buffer(self, data):
         self.dac.load_buffer(data)
     
     def start(self):
-        for i in range(self.ctr_num):
-            self.ctr[i].start()
+        for i in range(self.num_ctrs):
+            self.ctrs[i].start()
         self.dac.start() #start dac first, waits for trigger from ADC to output data
         self.adc.start()
         
@@ -739,24 +735,24 @@ class NI_SyncTaskSet(object):
     
     def read_ctr_buffer(self, ctr_i, count=0, timeout=0):
         """Reads the counter ctr_i buffer up to count,
-        if count=0 (default) block_size"""
-        x = self.ctr[ctr_i].read_buffer(count, timeout)
-        #return x[self.delta: ]
+        if count=0 (default) read up to block_size"""
+        x = self.ctrs[ctr_i].read_buffer(count, timeout)
         return x
     
     def read_ctr_buffer_diff(self, ctr_i, count=0, timeout = 0):
-        return self.ctr[ctr_i].read_diff_buffer(count, timeout)
+        return self.ctrs[ctr_i].read_diff_buffer(count, timeout)
     
     def stop(self):
         logger.debug('dac.task {}'.format( self.dac.task ))
         logger.debug('adc.task {}'.format( self.adc.task ))
         self.dac.stop() 
         self.adc.stop()
-        for i in range(self.ctr_num):
-            self.ctr[i].stop()
+        for i in range(self.num_ctrs):
+            self.ctrs[i].stop()
         
     def close(self):
         self.dac.close()
         self.adc.close()
-        for i in range(self.ctr_num):
-            self.ctr[i].close()
+        for i in range(self.num_ctrs):
+            self.ctrs[i].close()
+            
