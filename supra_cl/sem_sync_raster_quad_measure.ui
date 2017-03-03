@@ -95,9 +95,16 @@
       <item row="2" column="0">
        <widget class="QGroupBox" name="autolevel_groupBox">
         <property name="title">
-         <string>Quad View: AutoLevel</string>
+         <string>AutoScale Images</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="1">
+          <widget class="QCheckBox" name="ctr0_autolevel_checkBox">
+           <property name="text">
+            <string>ctr0</string>
+           </property>
+          </widget>
+         </item>
          <item row="0" column="0">
           <widget class="QCheckBox" name="ai0_autolevel_checkBox">
            <property name="text">
@@ -112,17 +119,17 @@
            </property>
           </widget>
          </item>
-         <item row="0" column="1">
-          <widget class="QCheckBox" name="ctr0_autolevel_checkBox">
-           <property name="text">
-            <string>ctr0</string>
-           </property>
-          </widget>
-         </item>
          <item row="1" column="1">
           <widget class="QCheckBox" name="ctr1_autolevel_checkBox">
            <property name="text">
             <string>ctr1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QCheckBox" name="show_crosshairs_checkBox">
+           <property name="text">
+            <string>Show Cross Hairs</string>
            </property>
           </widget>
          </item>

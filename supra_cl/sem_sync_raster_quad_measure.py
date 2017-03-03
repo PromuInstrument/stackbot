@@ -41,6 +41,10 @@ class SemSyncRasterScanQuadView(Measurement):
             self.settings.get_lq(lq_name).connect_to_widget(
                 getattr(self.ui, lq_name + "_checkBox"))
 
+        self.settings.New('show_crosshairs', dtype=bool, initial=True)
+        self.settings.show_crosshairs.connect_to_widget(self.ui.show_crosshairs_checkBox)
+        self.settings.show_crosshairs.add_listener(self.on_crosshair_change)
+        
         # Collect
         # TODO
         
@@ -92,6 +96,7 @@ class SemSyncRasterScanQuadView(Measurement):
         self.img_items = dict()
         self.hist_luts = dict()
         self.display_image_maps = dict()
+        self.cross_hair_lines = dict()
         
         for ii, name in enumerate(self.names):
             if (ii % 2)-1:
@@ -104,6 +109,14 @@ class SemSyncRasterScanQuadView(Measurement):
             plot.showGrid(x=True, y=True)
             plot.setAspectLocked(lock=True, ratio=1)
 
+
+            vLine = pg.InfiniteLine(angle=90, movable=False)
+            hLine = pg.InfiniteLine(angle=0, movable=False)
+            
+
+            self.cross_hair_lines[name] = hLine, vLine
+            plot.addItem(vLine, ignoreBounds=True)
+            plot.addItem(hLine, ignoreBounds=True)
 
             hist_lut = self.hist_luts[name] = pg.HistogramLUTItem()
             hist_lut.setImageItem(img_item)
@@ -152,7 +165,12 @@ class SemSyncRasterScanQuadView(Measurement):
 
         for name in self.names:
             self.img_items[name].setAutoDownsample(True)
-        
+            
+            # move crosshairs to center of images
+            hLine, vLine = self.cross_hair_lines[name]
+            vLine.setPos(self.sync_scan.settings['Nh']/2)
+            hLine.setPos(self.sync_scan.settings['Nv']/2)
+
         
         self.display_maps = dict(
             ai0=self.sync_scan.adc_map[:,:,:,0], # numpy views of data
@@ -193,3 +211,13 @@ class SemSyncRasterScanQuadView(Measurement):
             
 
         #print('quad display {}'.format(time.time() -t0))
+        
+    def on_crosshair_change(self):
+        vis = self.settings['show_crosshairs']
+        
+        for name in self.names:
+            hLine, vLine = self.cross_hair_lines[name]
+            hLine.setVisible(vis)
+            vLine.setVisible(vis)
+
+        
