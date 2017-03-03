@@ -57,7 +57,7 @@ class SemSyncRasterScanQuadView(Measurement):
             self.sync_scan.settings['Nv'] = self.settings['n_pixels']
         self.settings.n_pixels.add_listener(on_new_n_pixels)
         
-        self.scanDAQ.samples_per_pixel.connect_to_widget(
+        self.scanDAQ.settings.adc_oversample.connect_to_widget(
             self.ui.adc_oversample_doubleSpinBox)
         
         self.ui.pixel_time_pgSpinBox = \
@@ -215,9 +215,10 @@ class SemSyncRasterScanQuadView(Measurement):
     def on_crosshair_change(self):
         vis = self.settings['show_crosshairs']
         
-        for name in self.names:
-            hLine, vLine = self.cross_hair_lines[name]
-            hLine.setVisible(vis)
-            vLine.setVisible(vis)
+        if hasattr(self, 'cross_hair_lines'):
+            for name in self.names:
+                hLine, vLine = self.cross_hair_lines[name]
+                hLine.setVisible(vis)
+                vLine.setVisible(vis)
 
         
