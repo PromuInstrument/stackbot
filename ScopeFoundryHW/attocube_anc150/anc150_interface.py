@@ -3,17 +3,20 @@ Created on Feb 23, 2017
 
 @author: Alan Buckley
 Helpful feedback from Ed Barnard and Frank Ogletree
+Changes to error handling, add some error checking, relay command Frank & Ed 3/2/17
 '''
 from __future__ import division, absolute_import, print_function
 import serial
 import logging
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 class ANC_Interface(object):
     
     name="anc_interface"
-    timeout = 0.1
+    timeout = 0.1# long enough so that ANC returns multiline text response 
+    modes = ['gnd','stp','ext','cap']
     
     def __init__(self, port="COM6", debug = False):
         self.port = port
@@ -21,21 +24,132 @@ class ANC_Interface(object):
         if self.debug:
             logger.debug("ANC_Interface.__init__, port={}".format(self.port))
             
+        self.ser.timeout = 0.1            
         self.ser = serial.Serial(port=self.port, baudrate=38400, bytesize=8, parity='N', stopbits=1, timeout = self.timeout)
+        #raise SerialException on fail
         
-        self.ser.timeout = 0.1
-        self.ser.writeTimeout = 0.1
+        self.get_anc_hw_state()
+        #FIX error handling to prompt for ANC on, channels in CCON mode
         
-        self.ser.flush()
+    def close(self):
+        self.ser.close()
+        del self.ser
         
-    def ask_cmd(self, cmd):
+    def __del__(self):
+        self.close()
+
+    #higher level functions=================================================================
+    
+    '''
+    track state to minimize slow RS232 traffic
+    virtualize 3 real channels into 6 effective channels with flip relay
+    chan is between 0 and 5, axis between 1 and 3
+    '''
+    
+    position = np.zeros(6)
+    freq = np.zeros(6)
+    volt = np.zeros(6)
+    hw_freq = np.zeros(3)
+    hw_volt = np.zeros(3)    
+    ground = False    
+    relay = False #current relay status False for chan 0-2 or True for 3-5
+    
+    
+    def get_anc_hw_state(self,ground=False):
+        '''
+        reads voltages and freqs from real channels, overloaded channels have same state
+        
+        '''
+        for i in range(0,3):
+            self.hw_volt[i] = self.get_voltage(i+1)
+            self.hw_freq[i] = self.get_frequency(i+1)
+        self.relay = self.get_relay()
+        self.ground_outputs(ground) #force known state
+            
+    def ground_outputs(self, state):
+        '''
+        ground all for low noise or to switch relay state
+        '''
+        if state == self.ground:
+            return #nothing to do
+        if state:
+            self.ground = True
+            self.set_axis_mode(1,'gnd')
+            self.set_axis_mode(2,'gnd')
+            self.set_axis_mode(3,'gnd')
+        else:
+            self.ground = False
+            self.set_axis_mode(1,'stp')
+            self.set_axis_mode(2,'stp')
+            self.set_axis_mode(3,'stp')
+    
+    def select_chan(self,chan):
+        '''
+        checks relay state, updates relay/volts/freqs as required
+        
+        '''
+        self.set_relay(bool(chan>=3)) #change relay state if required
+        self.set_volts(self.volt) #update volts and freqs as HW state requires
+        self.set_freqs(self.freq)
+
+    def set_volts(self,volt):
+        '''
+        sets all 6 virtual channels, updates active HW channels only if state has changed
+        '''
+        self.volt = volt
+        if self.relay: offset=3
+        else: offset = 0
+        
+        for i in range(0,3):
+            vset = self.volt[i+offset]
+            if vset !=self.hw_volt[i]:
+                self.set_voltage(i+1, vset)
+        
+    def set_freqs(self,freq):
+        '''
+        sets all 6 virtual channels, updates active HW channels only if state has changed
+        '''
+        self.freq = freq
+        if self.relay: offset=3
+        else: offset = 0
+        
+        for i in range(0,3):
+            fset = self.freq[i+offset]
+            if fset !=self.hw_freq[i]:
+                self.set_freq(i+1, fset)
+                
+    def delta_pos(self,chan,steps):
+        '''
+        increment current position by 'steps', flip relay as required
+        unground during motion if required
+        '''
+        if steps == 0:
+            return
+        ground = self.ground
+        self.ground_outputs(False) #could change ground state only for selected channel...
+        self.select_chan(chan)
+        if chan >=3:
+            axis = chan - 2
+        else:
+            axis = chan + 1 
+        self.move(axis,steps)
+        self.position[chan] += steps
+        self.ground(ground)
+        #FIX block with timer for motion to complete? When does function return?
+    
+    def goto_pos(self, chan, pos):
+        self.delta_pos(chan, -self.position[chan])    
+        
+
+    #low level functions====================================================================
+    def anc_cmd(self, cmd):
         """
         Issues a command to the Attocube device.
-        :returns: a value extracted from the Attocube device.
+        :returns: a list of strings from the Attocube device.
         """
         if self.debug: 
-            logger.debug("ask_cmd: {}".format(cmd))
-        message = cmd+b'\r\n'
+            logger.debug("anc_cmd: {}".format(cmd))
+        message = cmd.encode()+b'\r\n'  #convert unicode to char() string
         self.ser.write(message)
         resp = self.ser.readlines()
         
@@ -49,30 +163,46 @@ class ANC_Interface(object):
             raise IOError(err_msg)
         # example success string list [b'getf 1\r\n', b'frequency = 2 Hz\r\n', b'OK\r\n', b'> '   ]
         if self.debug:
-            print("ANC ask command resp:", resp)
-        resp = resp[1:-2]   #trim command echo and OK/prompt
-        return resp         
+            print("anc_cmd response:", resp)
+        return resp[1:-2]   #trim command echo and OK/prompt
 
     def extract_value(self, resp):
         """
         Strips entry prior to terminating characters,
-        Seeks out "=" sign and picks the value thereafter.        
+        Seeks out "=" sign and returns the next token 
+        usually an int or a string 
         """
         entry = resp[0].strip().decode().split()
         for i in enumerate(entry):
             if i[1] == "=":
-                sub_index = i[0]
-                equals = i[1]
-        value_index = sub_index+1
-        value = entry[value_index]
-        return(value)
+                index = i[0]
+        return(entry[index+1])
     
     def get_version(self):
         """
-        :returns: Prints the version number and the manufacturer.
+        :returns: version number and the manufacturer.
         """
-        message = b'ver'
-        resp = self.ask_cmd(message)
+        return self.anc_cmd(b'ver')
+    
+    
+    def get_relay(self):
+        return self.anc_cmd('rbctl')
+    
+    def set_relay(self, state=False):
+        '''
+        documentation does not specify what state should be, 0/1, true/false, etc... FIX
+        convert to True for 4-6, false for 1-3        
+        outputs must be grounded to switch inputs
+        '''        
+        if state == self.relay:
+            return  #nothing to do
+        ground = self.ground 
+        if not ground:
+            self.ground_outputs(True)
+        resp = self.anc_cmd('rbctl {}'.format(state))
+        if not ground:
+            self.ground_outputs(False)
+        self.relay = state
         return resp
     
     def set_axis_mode(self, axis_id, axis_mode):
@@ -86,11 +216,13 @@ class ANC_Interface(object):
         axis_mode     ext, stp, gnd, cap   Axis mode of the selected axis.
         ============  ===================  ========================================
         """
-        message = "setm {} {}".format(axis_id, axis_mode).encode()
-        resp = self.ask_cmd(message)
-        if self.debug:
-            logger.debug(resp)
-        
+        if not(axis_mode in self.modes):
+            err = 'requested axis mode {} is not in {}'.format(axis_mode,self.modes)
+            logger.debug(err)
+            raise IOError(err)
+            
+        message = "setm {} {}".format(axis_id, axis_mode)
+        return self.anc_cmd(message)        
     
     def get_axis_mode(self, axis_id):
         """
@@ -101,9 +233,8 @@ class ANC_Interface(object):
         
         :returns: The mode the corresponding axis is in.
         """
-        message = "getm {}".format(axis_id).encode()
-        resp = self.ask_cmd(message)
-        return resp
+        message = "getm {}".format(axis_id)
+        return self.extract_value(self.anc_cmd(message))
     
     def stop(self, axis_id):
         """
@@ -115,14 +246,13 @@ class ANC_Interface(object):
         ============  ===================  ========================================
         
         """
-        message = "stop {}".format(axis_id).encode()
-        resp = self.ask_cmd(message)
-        return resp
+        message = "stop {}".format(axis_id)
+        return self.anc_cmd(message)
     
-    def step(self, axis_id, dir, c):
+    def move(self, axis_id, steps ):
         """
-        Move <C> steps or continuously upwards (outwards) or downwards (inwards). An error occurs when
-        the axis is not in "stp" mode.
+        Move 'steps', direction determined by sign, or continuously positive '+c' or negative '-c' (inwards).
+        An error occurs when the axis is not in "stp" mode.
         
         ============  ===================  ============================================
         **Argument**  **Range of values**  **Description**
@@ -132,11 +262,21 @@ class ANC_Interface(object):
         ============  ===================  ============================================
         
         """
-        message = "step{} {} {}".format(dir, axis_id, c).encode()
-        resp = self.ask_cmd(message)
-        return resp
+        if steps == '+c': 
+            mode = 'u'
+            count = 'c'
+        elif steps == '-c': 
+            mode = 'd'
+            count = 'c'
+        else:
+            if steps > 0: mode = 'u' 
+            else: mode = 'd'
+            count = abs(steps)
+            
+        message = "step{} {} {}".format(mode, axis_id, count)
+        return self.anc_cmd(message)
         
-    def set_frequency(self, axis_id, frequency):
+    def set_frequency(self, axis_id, freq):
         """
         Set the frequency on axis <AID> to <FRQ>.
         
@@ -147,10 +287,23 @@ class ANC_Interface(object):
         ============  ===================  ========================================
 
         """
-        message = "setf {} {}".format(axis_id, frequency).encode()
-        resp = self.ask_cmd(message)
-        return resp
+        freq = min(8000,max(1,freq))
+        message = "setf {} {}".format(axis_id, freq)
+        self.hw_freq[axis_id-1] = freq #track state
+        return self.anc_cmd(message)
     
+    def get_frequency(self, axis_id):
+        """
+        ============  ===================  ========================================
+        **Argument**  **Range of values**  **Description**
+        axis_id       1,2,3                One of the 3 axes offered on the ANC150.
+        ============  ===================  ========================================
+
+        :returns: The frequency for axis <AID>.
+        """
+        message = "getf {}".format(axis_id)
+        return int(self.extract_value(self.anc_cmd(message)))
+
     def set_voltage(self, axis_id, voltage):
         """
         Set the voltage on axis <AID> to <VOL>.
@@ -162,22 +315,9 @@ class ANC_Interface(object):
         ============  ===================  ========================================
 
         """
-        message = "setv {} {}".format(axis_id, voltage).encode()
-        resp = self.ask_cmd(message)
-        return resp
-    
-    def get_frequency(self, axis_id):
-        """
-        ============  ===================  ========================================
-        **Argument**  **Range of values**  **Description**
-        axis_id       1,2,3                One of the 3 axes offered on the ANC150.
-        ============  ===================  ========================================
-
-        :returns: The frequency for axis <AID>.
-        """
-        message = "getf {}".format(axis_id).encode()
-        resp = self.ask_cmd(message)
-        return int(resp)
+        message = "setv {} {}".format(axis_id, voltage)
+        self.hw_volt[axis_id-1] = voltage #track state
+        return self.anc_cmd(message)    
     
     def get_voltage(self, axis_id):
         """
@@ -188,9 +328,10 @@ class ANC_Interface(object):
 
         :returns: The voltage for axis <AID>.
         """
-        message = "getv {}".format(axis_id).encode()
-        resp = self.ask_cmd(message)
-        return resp
+        message = "getv {}".format(axis_id)
+        return int(self.extract_value(self.anc_cmd(message)))
+    
+    ''' these functions not used for now
     
     def get_capacity(self, axis_id):
         """
@@ -203,8 +344,8 @@ class ANC_Interface(object):
 
         :returns: The measured capacity for axis <AID>.
         """
-        message = "getc {}".format(axis_id).encode()
-        resp = self.ask_cmd(message)
+        message = "getc {}".format(axis_id)
+        resp = self.anc_cmd(message)
         return resp
     
     def set_pattern(self, axis_id, dir, pattern_number):
@@ -219,8 +360,8 @@ class ANC_Interface(object):
         ==============  ===================  ===============================================
 
         """
-        message = "setp{} {} {}".format(dir, axis_id, pattern_number).encode()
-        resp = self.ask_cmd(message)
+        message = "setp{} {} {}".format(dir, axis_id, pattern_number)
+        resp = self.anc_cmd(message)
         return resp
         
 
@@ -236,8 +377,8 @@ class ANC_Interface(object):
         :returns: Pattern number <PNUM> for upward or downward movement on axis <AID>.
         
         """
-        message = "getp{} {}".format(dir, axis_id).encode()
-        resp = self.ask_cmd(message)
+        message = "getp{} {}".format(dir, axis_id)
+        resp = self.anc_cmd(message)
         return resp
 
     
@@ -252,8 +393,8 @@ class ANC_Interface(object):
         =============  ===================  ======================================================
         
         """
-        message = "setp {} {}".format(pattern_index, pattern_val).encode()
-        resp = self.ask_cmd(message)
+        message = "setp {} {}".format(pattern_index, pattern_val)
+        resp = self.anc_cmd(message)
         return resp
     
     def get_pattern_value(self, pattern_index):
@@ -267,8 +408,8 @@ class ANC_Interface(object):
         =============  ===================  ======================================================
         
         """
-        message = "getp {}".format(pattern_index).encode()
-        resp = self.ask_cmd(message)
+        message = "getp {}".format(pattern_index)
+        resp = self.anc_cmd(message)
         return resp
     
     def reset_patterns(self):
@@ -276,16 +417,10 @@ class ANC_Interface(object):
         Reset all patterns to factory defaults.
         """
         message = b"Resetp"
-        resp = self.ask_cmd(message)
+        resp = self.anc_cmd(message)
         return resp
     
-    def close(self):
-        self.ser.close()
-        del self.ser
-        
-    def __del__(self):
-        self.close()
-        
+     '''   
         
         
         
