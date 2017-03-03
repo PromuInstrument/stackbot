@@ -21,7 +21,7 @@ except Exception as err:
 
 class ANC_HW(HardwareComponent):
     
-    name = 'anc_hw'
+    name = 'anc150'
     
     def setup(self):
         
@@ -34,16 +34,17 @@ class ANC_HW(HardwareComponent):
                   initial=[30,30,30,30,30,30])
         self.settings.New('position', dtype=int, array=True,  ro=False, 
                   initial=[0,0,0,0,0,0])#keeps track of moves
+        self.settings.New('chan_names', dtype=str, array=True,
+                          initial=['pitch', 'y', 'x', 'yaw', 'nc', 'nc'])
+
+        self.settings.New('scale_factor', dtype=int, array=True,
+                          initial=[-1.0, 1.0, -1.0, -1.0, 1.0, 1.0])
+
+
+
 
         #FIX
         '''
-        self.settings.New(name='axis', dtype=int, initial=1, choices=[("1", 1),
-                                                                       ("2", 2),
-                                                                       ("3", 3),
-                                                                       ("4", 4),
-                                                                       ("5", 5),
-                                                                       ("6", 6)])
-                    
         for i in [1,2,3,4,5,6]:
             self.settings.New(name='axis_mode'+str(i), dtype=str, choices=[('External', 'ext'),
                                                                     ('Ground', 'gnd'),
@@ -59,7 +60,7 @@ class ANC_HW(HardwareComponent):
         self.stop = self.add_operation("stop", self.move_stop)
         '''
         
-        self.settings.axis.updated_value.connect(self.reconnect_lq_funcs)
+        #self.settings.axis.updated_value.connect(self.reconnect_lq_funcs)
         
         #self.apply = self.settings.add_operation("apply_axis1", op_func)
         
@@ -68,18 +69,44 @@ class ANC_HW(HardwareComponent):
         
     def connect(self): 
         self.anc_interface = ANC_Interface(port=self.port.val, debug=self.settings['debug_mode'])
-        self.reconnect_lq_funcs()
 
+        self.axis_name_dict = dict()
+        for i, name in enumerate(self.settings['chan_names']):
+            self.axis_name_dict[name] = i
+
+        self.settings.frequency.connect_to_hardware(
+            read_func= self.anc_interface.get_freqs,
+            write_func= self.anc_interface.set_freqs
+            )
+        self.settings.voltage.connect_to_hardware(
+            read_func= self.anc_interface.get_volts,
+            write_func= self.anc_interface.set_volts,
+            )
+        self.settings.position.connect_to_hardware(
+            read_func = self.anc_interface.get_positions
+            )
+    
+    def disconnect(self):
+        self.settings.disconnect_all_from_hardware()
         
-    def reconnect_lq_funcs(self):
-        i = self.settings['axis']
-        print(i)
-        self.settings.get_lq('voltage'+str(i)).connect_to_hardware(
-            read_func = self.read_active_axis_voltage,
-            write_func = self.write_active_axis_voltage)
-        self.settings.get_lq('frequency'+str(i)).connect_to_hardware(
-            read_func = self.read_active_axis_freq,
-            write_func = self.write_active_axis_freq)
+        if hasattr(self, 'anc_interface'):
+            self.anc_interface.close()
+            del self.anc_interface
+            
+    def move_axis_delta(self, axis_id, delta_steps):
+        self.anc_interface.delta_pos(axis_id, delta_steps*self.settings['scale_factor'][axis_id])
+        self.settings.position.read_from_hardware()
+
+    def move_axis_delta_by_name(self, axis_name, delta_steps):
+        axis_id = self.axis_name_dict[axis_name]
+        self.move_axis_delta(axis_id, delta_steps)
+        
+    def get_pos_by_name(self, axis_name):
+        axis_id = self.axis_name_dict[axis_name]
+        return self.settings['position'][axis_id]*self.settings['scale_factor'][axis_id]
+        
+        
+    #######################
         
     def move_start(self):
         axis = self.settings['axis']
@@ -93,12 +120,6 @@ class ANC_HW(HardwareComponent):
         self.write_active_axis_stop()
         
     
-    def disconnect(self):
-        self.settings.disconnect_all_from_hardware()
-        
-        if hasattr(self, 'anc_interface'):
-            self.anc_interface.close()
-            del self.anc_interface
 
 
     def read_active_axis_mode(self):

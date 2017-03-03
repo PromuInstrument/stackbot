@@ -20,8 +20,13 @@ class AttocubeANCApp(BaseMicroscopeApp):
         from ScopeFoundryHW.attocube_anc150.anc150_HW import ANC_HW
         self.add_hardware(ANC_HW(self))
         
-        from ScopeFoundryHW.attocube_anc150.anc150_optimizer import ANC_Optimizer
-        self.add_measurement(ANC_Optimizer(self))        
+        #from ScopeFoundryHW.attocube_anc150.anc150_optimizer import ANC_Optimizer
+        #self.add_measurement(ANC_Optimizer(self))
+        
+        from ScopeFoundryHW.attocube_anc150.anc_explore_measure import ANC_RemoteMeasure
+        self.add_measurement(ANC_RemoteMeasure(self))
+        
+        self.ui.lq_trees_groupBox.hide()
         
 if __name__ == '__main__':
     import sys

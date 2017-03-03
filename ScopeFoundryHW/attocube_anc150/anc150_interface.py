@@ -14,6 +14,12 @@ logger = logging.getLogger(__name__)
 
 class ANC_Interface(object):
     
+    """
+    Notes: 
+        Need to handle timing for long moves, currently non-blocking
+        Need to handle mode errors or power state problems
+    """
+    
     name="anc_interface"
     timeout = 0.1# long enough so that ANC returns multiline text response 
     modes = ['gnd','stp','ext','cap']
@@ -24,12 +30,23 @@ class ANC_Interface(object):
         if self.debug:
             logger.debug("ANC_Interface.__init__, port={}".format(self.port))
             
-        self.ser.timeout = 0.1            
-        self.ser = serial.Serial(port=self.port, baudrate=38400, bytesize=8, parity='N', stopbits=1, timeout = self.timeout)
+        self.ser = serial.Serial(port=self.port, baudrate=38400, bytesize=8, 
+                                 parity='N', stopbits=1, timeout = 0.1)
+        #self.ser.timeout = 0.1            
         #raise SerialException on fail
         
+
+        self.position = np.zeros(6, dtype=int)
+        self.freq = np.zeros(6, dtype=int)
+        self.volt = np.zeros(6, dtype=int)
+        self.hw_freq = np.zeros(3, dtype=int)
+        self.hw_volt = np.zeros(3, dtype=int)    
+        self.ground_state = None    
+        self.relay = False #current relay status False for chan 0-2 or True for 3-5
+
         self.get_anc_hw_state()
         #FIX error handling to prompt for ANC on, channels in CCON mode
+
         
     def close(self):
         self.ser.close()
@@ -46,13 +63,6 @@ class ANC_Interface(object):
     chan is between 0 and 5, axis between 1 and 3
     '''
     
-    position = np.zeros(6)
-    freq = np.zeros(6)
-    volt = np.zeros(6)
-    hw_freq = np.zeros(3)
-    hw_volt = np.zeros(3)    
-    ground = False    
-    relay = False #current relay status False for chan 0-2 or True for 3-5
     
     
     def get_anc_hw_state(self,ground=False):
@@ -61,8 +71,14 @@ class ANC_Interface(object):
         
         '''
         for i in range(0,3):
-            self.hw_volt[i] = self.get_voltage(i+1)
-            self.hw_freq[i] = self.get_frequency(i+1)
+            v = self.get_voltage(i+1)
+            freq = self.get_frequency(i+1)
+            self.hw_volt[i] = v
+            self.volt[i] = v
+            self.volt[i+3] = v
+            self.freq[i] = freq
+            self.freq[i+3] = freq
+
         self.relay = self.get_relay()
         self.ground_outputs(ground) #force known state
             
@@ -70,15 +86,15 @@ class ANC_Interface(object):
         '''
         ground all for low noise or to switch relay state
         '''
-        if state == self.ground:
+        if state == self.ground_state:
             return #nothing to do
         if state:
-            self.ground = True
+            self.ground_state = True
             self.set_axis_mode(1,'gnd')
             self.set_axis_mode(2,'gnd')
             self.set_axis_mode(3,'gnd')
         else:
-            self.ground = False
+            self.ground_state = False
             self.set_axis_mode(1,'stp')
             self.set_axis_mode(2,'stp')
             self.set_axis_mode(3,'stp')
@@ -104,6 +120,9 @@ class ANC_Interface(object):
             vset = self.volt[i+offset]
             if vset !=self.hw_volt[i]:
                 self.set_voltage(i+1, vset)
+                
+    def get_volts(self):
+        return self.volt
         
     def set_freqs(self,freq):
         '''
@@ -116,7 +135,10 @@ class ANC_Interface(object):
         for i in range(0,3):
             fset = self.freq[i+offset]
             if fset !=self.hw_freq[i]:
-                self.set_freq(i+1, fset)
+                self.set_frequency(i+1, fset)
+                
+    def get_freqs(self):
+        return self.freq
                 
     def delta_pos(self,chan,steps):
         '''
@@ -125,7 +147,7 @@ class ANC_Interface(object):
         '''
         if steps == 0:
             return
-        ground = self.ground
+        prev_ground_state = self.ground_state
         self.ground_outputs(False) #could change ground state only for selected channel...
         self.select_chan(chan)
         if chan >=3:
@@ -134,11 +156,14 @@ class ANC_Interface(object):
             axis = chan + 1 
         self.move(axis,steps)
         self.position[chan] += steps
-        self.ground(ground)
+        self.ground_outputs(prev_ground_state)
         #FIX block with timer for motion to complete? When does function return?
     
     def goto_pos(self, chan, pos):
         self.delta_pos(chan, -self.position[chan])    
+        
+    def get_positions(self):
+        return self.position
         
 
     #low level functions====================================================================
@@ -163,7 +188,7 @@ class ANC_Interface(object):
             raise IOError(err_msg)
         # example success string list [b'getf 1\r\n', b'frequency = 2 Hz\r\n', b'OK\r\n', b'> '   ]
         if self.debug:
-            print("anc_cmd response:", resp)
+            logger.debug("anc_cmd response: {}".format(resp) )
         return resp[1:-2]   #trim command echo and OK/prompt
 
     def extract_value(self, resp):
@@ -186,20 +211,34 @@ class ANC_Interface(object):
     
     
     def get_relay(self):
-        return self.anc_cmd('rbctl')
+        #resp is like: [b'off\r\n']
+        resp = self.anc_cmd('rbctl')
+        resp = resp[0].strip()
+        if  resp == b'on':
+            return True
+        elif resp == b'off':
+            return False
+        else:
+            raise IOError("ANC get_relay could not interpret resp {}".format(resp))
     
     def set_relay(self, state=False):
         '''
-        documentation does not specify what state should be, 0/1, true/false, etc... FIX
+        state is a bool,
         convert to True for 4-6, false for 1-3        
         outputs must be grounded to switch inputs
+
+        Notes:
+        relay command sends 'on' or 'off'
+        documentation does not specify what state should be, 0/1, true/false, etc... FIX
         '''        
         if state == self.relay:
             return  #nothing to do
-        ground = self.ground 
+        ground = self.ground_state 
         if not ground:
             self.ground_outputs(True)
-        resp = self.anc_cmd('rbctl {}'.format(state))
+        
+        state_str = ['off', 'on'][state]
+        resp = self.anc_cmd('rbctl {}'.format(state_str))
         if not ground:
             self.ground_outputs(False)
         self.relay = state
@@ -271,7 +310,7 @@ class ANC_Interface(object):
         else:
             if steps > 0: mode = 'u' 
             else: mode = 'd'
-            count = abs(steps)
+            count = abs(int(steps))
             
         message = "step{} {} {}".format(mode, axis_id, count)
         return self.anc_cmd(message)
