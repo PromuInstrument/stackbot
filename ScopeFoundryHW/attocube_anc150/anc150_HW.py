@@ -2,7 +2,7 @@
 Created on Feb 23, 2017
 
 @author: Alan Buckley
-Helpful feedback from Ed Barnard
+Helpful feedback and modifications from Ed Barnard
 '''
 
 from __future__ import division, absolute_import, print_function
@@ -38,33 +38,12 @@ class ANC_HW(HardwareComponent):
                           initial=['pitch', 'y', 'x', 'yaw', 'nc', 'nc'])
 
         self.settings.New('scale_factor', dtype=int, array=True,
-                          initial=[-1.0, 1.0, -1.0, -1.0, 1.0, 1.0])
-
-
-
-
-        #FIX
-        '''
-        for i in [1,2,3,4,5,6]:
-            self.settings.New(name='axis_mode'+str(i), dtype=str, choices=[('External', 'ext'),
-                                                                    ('Ground', 'gnd'),
-                                                                    ('Step', 'stp'),
-                                                                    ('Capacity', 'cap')])
-            self.settings.New(name="frequency"+str(i), initial=1, dtype=int, fmt="%i", ro=False)
-            self.settings.New(name="voltage"+str(i), initial=0, dtype=int, fmt="%i", ro=False)
-            self.settings.New(name="capacitance"+str(i), initial=0, dtype=float, fmt="%i", ro=True)
-            self.settings.New(name="move_direction"+str(i), dtype=str, choices=[("Up", "u"),("Down", "d")])
-            self.settings.New(name="move_mode"+str(i), dtype=str, choices=[("Continuous", "c"),("Discrete", "n")])
-            self.settings.New(name="move_steps"+str(i), initial=0, dtype=int, fmt="%i", ro=False)
-        self.start = self.add_operation("start", self.move_start)
-        self.stop = self.add_operation("stop", self.move_stop)
-        '''
+                          initial=[-1.0, -1.0, -1.0, -1.0, 1.0, 1.0])
         
-        #self.settings.axis.updated_value.connect(self.reconnect_lq_funcs)
-        
-        #self.apply = self.settings.add_operation("apply_axis1", op_func)
-        
-        
+        self.settings.New('ground_all', dtype=bool, initial=False, ro=False)
+
+        self.add_operation(name="zero_position", op_func=self.zero_position)
+
         
         
     def connect(self): 
@@ -85,6 +64,11 @@ class ANC_HW(HardwareComponent):
         self.settings.position.connect_to_hardware(
             read_func = self.anc_interface.get_positions
             )
+        
+        self.settings.ground_all.connect_to_hardware(
+            write_func = self.anc_interface.ground_outputs
+            )
+        
     
     def disconnect(self):
         self.settings.disconnect_all_from_hardware()
@@ -92,9 +76,14 @@ class ANC_HW(HardwareComponent):
         if hasattr(self, 'anc_interface'):
             self.anc_interface.close()
             del self.anc_interface
+    
+    def zero_position(self):
+        self.anc_interface.zero_positions()
+        self.settings.position.read_from_hardware()
+        print('position reset:', self.settings['position'])
             
     def move_axis_delta(self, axis_id, delta_steps):
-        self.anc_interface.delta_pos(axis_id, delta_steps*self.settings['scale_factor'][axis_id])
+        self.anc_interface.delta_pos(axis_id, delta_steps*self.settings['scale_factor'][axis_id],wait=True)
         self.settings.position.read_from_hardware()
 
     def move_axis_delta_by_name(self, axis_name, delta_steps):

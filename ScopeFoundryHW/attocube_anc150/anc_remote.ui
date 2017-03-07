@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>698</width>
-    <height>347</height>
+    <height>384</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -145,6 +145,32 @@
       <width>62</width>
       <height>22</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="zero_position_pushButton">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>190</y>
+      <width>75</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Zero position</string>
+    </property>
+   </widget>
+   <widget class="QCheckBox" name="ground_all_checkBox">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>230</y>
+      <width>81</width>
+      <height>17</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Ground All</string>
     </property>
    </widget>
   </widget>
@@ -309,9 +335,9 @@ Yaw</string>
    <property name="geometry">
     <rect>
      <x>80</x>
-     <y>310</y>
+     <y>300</y>
      <width>531</width>
-     <height>21</height>
+     <height>31</height>
     </rect>
    </property>
    <property name="font">
@@ -321,6 +347,20 @@ Yaw</string>
    </property>
    <property name="text">
     <string>ANC 150 Controller must be on and all channels switched to CCON Mode</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_9">
+   <property name="geometry">
+    <rect>
+     <x>150</x>
+     <y>330</y>
+     <width>431</width>
+     <height>41</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Ground All checkbox electrically grounds piezo stages to reduce noise,
+however this slows down adjustments. Only ground during data acquisition not setup.</string>
    </property>
   </widget>
  </widget>

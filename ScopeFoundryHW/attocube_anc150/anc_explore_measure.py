@@ -45,6 +45,10 @@ class ANC_RemoteMeasure(Measurement):
             Check terminal for detailed error message.
             """)
             msgbox.show()
+            
+        self.anc_hw.settings.ground_all.connect_to_widget(self.ui.ground_all_checkBox)
+        
+        self.ui.zero_position_pushButton.clicked.connect(self.anc_hw.zero_position)
                   
     def move_x_up(self):
         self.anc_hw.move_axis_delta_by_name('x', self.settings['steps_xy'])

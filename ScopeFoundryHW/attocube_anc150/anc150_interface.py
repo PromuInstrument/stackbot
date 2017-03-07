@@ -9,6 +9,7 @@ from __future__ import division, absolute_import, print_function
 import serial
 import logging
 import numpy as np
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -140,13 +141,17 @@ class ANC_Interface(object):
     def get_freqs(self):
         return self.freq
                 
-    def delta_pos(self,chan,steps):
+    def delta_pos(self,chan,steps,wait=False):
         '''
         increment current position by 'steps', flip relay as required
         unground during motion if required
+        RS232 returns immediately, does not wait for move to finish, if
+        wait is true, sleeps for estimated move time
         '''
+        overhead = 0.15 #used in step wait
         if steps == 0:
             return
+
         prev_ground_state = self.ground_state
         self.ground_outputs(False) #could change ground state only for selected channel...
         self.select_chan(chan)
@@ -156,6 +161,9 @@ class ANC_Interface(object):
             axis = chan + 1 
         self.move(axis,steps)
         self.position[chan] += steps
+        if wait:
+            delay = abs(steps) / float(self.freq[chan]) + overhead
+            time.sleep(delay)
         self.ground_outputs(prev_ground_state)
         #FIX block with timer for motion to complete? When does function return?
     
@@ -164,7 +172,9 @@ class ANC_Interface(object):
         
     def get_positions(self):
         return self.position
-        
+    
+    def zero_positions(self):
+        self.position = np.zeros(6, dtype=int)
 
     #low level functions====================================================================
     def anc_cmd(self, cmd):
