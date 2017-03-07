@@ -20,6 +20,8 @@ setup(
     
     #packages=find_packages('.', exclude=['contrib', 'docs', 'tests']),
     #include_package_data=True,  
+
+    install_requires=['ScopeFoundry>=0.0.1'],
     
     package_data={
         '':["*.ui"], # include QT ui files 

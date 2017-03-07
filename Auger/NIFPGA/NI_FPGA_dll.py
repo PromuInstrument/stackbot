@@ -52,59 +52,59 @@ class NI_FPGA(object):
             raise IOError("NI_FPGA Error {}: {}".format(err_code, self.err_bynum[err_code]))
         return err_code
     
-    def connect(self):
+    def load_bitfile(self):
         NiFpga_OpenAttribute_NoRun = 1 # from Nifpga.h
         attribute = NiFpga_OpenAttribute_NoRun
         session=self.session
         err = self.handle_err(fpga_dll.NiFpgaDll_Open(self.bitfilename, self.signature, self.resource, attribute, ctypes.byref(session)))
-        if self.debug: print "Connection Status:" + str(err), self.session
+        if self.debug: print("Connection Status:" + str(err), self.session)
         if err == 0:
-            if self.debug: print "Connected, FPGA configured to automatically run."
+            if self.debug: print("Connected, FPGA configured to automatically run.")
         return err
             
     def unload(self):
         err = self.handle_err(fpga_dll.NiFpgaDll_Finalize())
-        if self.debug: print "Unload Status:" + str(err), self.session
+        if self.debug: print("Unload Status:" + str(err), self.session)
         if err == 0:
-            if self.debug: print "FPGA Library unloaded (caveat: not thread safe)."
+            if self.debug: print("FPGA Library unloaded (caveat: not thread safe).")
             
-    def disconnect(self):
+    def close(self):
         err = self.handle_err(fpga_dll.NiFpgaDll_Close(self.session, 0))
-        if self.debug: print "Disconnect Status:" + str(err)
+        if self.debug: print("Disconnect Status:" + str(err))
         if err == 0:
-            if self.debug: print "FPGA session disconnected (closed)."
+            if self.debug: print("FPGA session disconnected (closed).")
         
     def run(self):
         self.attribute = 0
         err = self.handle_err(fpga_dll.NiFpgaDll_Run(self.session, self.attribute))
-        if self.debug: print "Status:" + str(err)
+        if self.debug: print("Status:" + str(err))
         if err == 0:
-            if self.debug: print "Running FPGA VI on target."
+            if self.debug: print("Running FPGA VI on target.")
     #Runs the FPGA VI on the target. If you use 
     #NiFpga_RunAttribute_WaitUntilDone, 
     #NiFpga_Run blocks the thread until the FPGA finishes running.
     
     def abort(self):
         err = self.handle_err(fpga_dll.NiFpgaDll_Abort(self.session))
-        if self.debug: print "Status:" + str(err)
+        if self.debug: print("Status:" + str(err))
         if err == 0:
-            if self.debug: print "FPGA VI successfully aborted."
+            if self.debug: print("FPGA VI successfully aborted.")
     #Aborts the FPGA VI.
     
     
     def reset(self):
         err = fpga_dll.NiFpgaDll_Reset(self.session)
-        if self.debug: print "Status:" + str(err)
+        if self.debug: print("Status:" + str(err))
         if err == 0:
-            if self.debug: print "FPGA VI successfully reset."
+            if self.debug: print("FPGA VI successfully reset.")
     #Resets the FPGA VI.
     
     
     def download(self):
             err = self.handle_err(fpga_dll.NiFpgaDll_Download(self.session))
-            if self.debug: print "Status:" + str(err)
+            if self.debug: print("Status:" + str(err))
             if err == 0:
-                if self.debug: print "FPGA VI successfully downloaded."
+                if self.debug: print("FPGA VI successfully downloaded.")
     #Redownloads FPGA to target.
 
 ###--------------End Basic Command Section----------------###
@@ -134,22 +134,26 @@ class NI_FPGA(object):
         self.requested_depth = ctypes.c_size_t(reqDepth)
         self.actual_depth = ctypes.c_size_t(0)
         err = fpga_dll.NiFpga_ConfigureFifo2(self.session, fifo, self.requested_depth, self.actual_depth)
-        if self.debug: print "FIFO Configure Status:" + str(err)
+        if self.debug: print("FIFO Configure Status:" + str(err))
         if err == 0:
-            if self.debug: print "FIFO Configured"
+            if self.debug: print("FIFO Configured")
     
     ##Optional Method:  
     def Start_Fifo(self, fifo=0):
         err = fpga_dll.NiFpgaDll_StartFifo(self.session, fifo)
-        if self.debug: print "Start FIFO Status:" + str(err)
+        if self.debug: print("Start FIFO Status:" + str(err))
         if err == 0:
-            if self.debug: print "FIFO Started"
+            if self.debug: print("FIFO Started")
 
-    def Read_Fifo(self, fifo=0, numberOfElements=8, timeout=10000):
-        self.data = ctypes.c_uint32(0)
-        buffer = np.zeros(numberOfElements, dtype=np.uint32)
-        bufpointer = buffer.ctypes.data_as(ctypes.POINTER(ctypes.c_uint32))
-        remaining = ctypes.c_size_t(0)
+    def Read_Fifo(self, fifo=0, numberOfElements=8, timeout=10000, dtype='U32'):
+        dtype_map = {'U32': (np.uint32, ctypes.c_uint32, fpga_dll.NiFpgaDll_ReadFifoU32),
+                     'U64': (np.uint64, ctypes.c_uint64, fpga_dll.NiFpgaDll_ReadFifoU64)}
+        
+        np_dtype, ctype_dtype, read_func = dtype_map[dtype]        
+        
+        buffer = np.zeros(numberOfElements, dtype=np_dtype)
+        bufpointer = buffer.ctypes.data_as(ctypes.POINTER(ctype_dtype))
+        remaining = ctypes.c_uint32(0)
         """
          * @param session handle to a currently open session
          * @param fifo target-to-host FIFO from which to read
@@ -160,28 +164,32 @@ class NI_FPGA(object):
          *                          remaining in the host memory part of the DMA FIFO
          * @return result of the call
          
-         NiFpga_Status NiFpga_ReadFifoU32(NiFpga_Session session,
+         NiFpga_Status NiFpga_ReadFifo<>(NiFpga_Session session,
                                  uint32_t       fifo,
-                                 uint32_t*      data,
+                                 uint32_t*      data, //(type depends on fifo read type) 
                                  size_t         numberOfElements,
                                  uint32_t       timeout,
-                                 size_t*        elementsRemaining);
+                                 uint32_t*        elementsRemaining);
 
          
+         where <> can be U32, U64 etc
         """
-        err = fpga_dll.NiFpgaDll_ReadFifoU32(
-                                             self.session, 
-                                             fifo,
-                                             bufpointer,
-                                             numberOfElements,
-                                             timeout,
-                                             ctypes.byref(remaining))
-        if self.debug: print "Read FIFO Status:" + str(err)
+        err = read_func(
+                         self.session, 
+                         fifo,
+                         bufpointer,
+                         numberOfElements,
+                         timeout,
+                         ctypes.byref(remaining))
+        
+        if self.debug: print("Read FIFO Status:" + str(err))
         if err == 0:
-            if self.debug: print "FPGA FIFO Read."
-            if self.debug: print remaining, buffer
+            if self.debug: print("FPGA FIFO Read.")
+            if self.debug: print(remaining, buffer.shape)
         #Returns Data as "Last" I32
         return remaining.value, buffer
+    
+    
     
 
     def ReleaseFifoElements(self, fifo=0, numberOfElements=8):
@@ -205,15 +213,15 @@ class NI_FPGA(object):
         """
                                                  
         err = fpga_dll.NiFpgaDll_ReleaseFifoElements(self.session, fifo, numberOfElements)
-        if self.debug: print "Release FIFO Status:" + str(err)
+        if self.debug: print("Release FIFO Status:" + str(err))
         return err
 
     ##Optional Method:
     def Stop_Fifo(self, fifo=0):
         err = fpga_dll.NiFpgaDll_StopFifo(self.session, fifo)
-        if self.debug: print "Stop FIFO Status:" + str(err)
+        if self.debug: print("Stop FIFO Status:" + str(err))
         if err == 0:
-            if self.debug: print "FPGA VI successfully reset."
+            if self.debug: print("FPGA VI successfully reset.")
 
 ##### -----------End FIFO Functions ---------######
 ### -----------Begin Read/Write Functions ------###
@@ -228,9 +236,14 @@ class NI_FPGA(object):
         data = ctypes.c_int16(0)
         err = fpga_dll.NiFpgaDll_ReadI16(self.session, indicator, ctypes.byref(data))
         return err, data.value
+  
+    def Read_U8(self, indicator):
+        data = ctypes.c_uint8(0)
+        err = fpga_dll.NiFpgaDll_ReadU8(self.session, indicator, ctypes.byref(data))
+        return err, data.value
 
     def Read_U16(self, indicator):
-        data = ctypes.c_uint32(0)
+        data = ctypes.c_uint16(0)
         err = fpga_dll.NiFpgaDll_ReadU16(self.session, indicator, ctypes.byref(data))
         return err, data.value
 
@@ -261,18 +274,19 @@ class NI_FPGA(object):
 
 
     def Write_Bool(self, indicator, value):
-        self.data = value
         err = fpga_dll.NiFpgaDll_WriteBool(self.session, indicator, value)
         return err
 
     def Write_I16(self, indicator, value):
-        self.data = value
         err = fpga_dll.NiFpgaDll_WriteI16(self.session, indicator, value)
         return err
         
     def Write_U32(self, indicator, value):
-        self.data = value
         err = fpga_dll.NiFpgaDll_WriteU32(self.session, indicator, value)
+        return err
+
+    def Write_U8(self, indicator, value):
+        err = fpga_dll.NiFpgaDll_WriteU8(self.session, indicator, value)
         return err
 
 

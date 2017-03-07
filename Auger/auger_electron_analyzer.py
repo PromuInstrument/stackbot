@@ -54,7 +54,7 @@ class AugerElectronAnalyzer(object):
         if v2 & 0x80:
             cmd |= 0x20
             v2  &= 0x7f
-        s = b'' + chr(cmd) + chr(v1) + chr(v2)
+        s = b'' + bytes( [cmd, v1, v2])
         return s    
     
     def write_cmd(self, address, cmd_num, value):
@@ -163,7 +163,7 @@ class AugerElectronAnalyzer(object):
     
 from ScopeFoundry import HardwareComponent
 
-class AugerElectronAnalyzerHC(HardwareComponent):
+class AugerElectronAnalyzerHW(HardwareComponent):
     
     name = 'auger_electron_analyzer'
     
@@ -213,7 +213,7 @@ class AugerElectronAnalyzerHC(HardwareComponent):
         
         
         for lqname in ['KE', 'pass_energy', 'crr_ratio']:
-            getattr(self.settings, lqname).updated_value[None].connect(self.settings.resolution.read_from_hardware)
+            getattr(self.settings, lqname).add_listener(self.settings.resolution.read_from_hardware)
     
     def disconnect(self):
         self.settings['multiplier'] = False
@@ -245,7 +245,7 @@ class PrologixGPIB_Omicron(object):
         return self.ser.close()
 
     def set_address(self, address=1):
-        cmd_str = '++addr {:d}\n'.format(address)
+        cmd_str = '++addr {:d}\n'.format(address).encode()
         if self.debug: print("prologix set_addr", repr(cmd_str))
         self.ser.write(cmd_str)
 
@@ -253,53 +253,56 @@ class PrologixGPIB_Omicron(object):
         '''configure prologix usb GPIB for Omicron'''
         ser = self.ser
         #no automatic read after write
-        ser.write("++auto 0\n")
+        ser.write(b"++auto 0\n")
         #assert gpib EOI after write
-        ser.write("++eoi 1\n")
+        ser.write(b"++eoi 1\n")
         #no CR, LF after write
-        ser.write("++eos 3\n")
+        ser.write(b"++eos 3\n")
         #be controller, send to omicron
-        ser.write("++mode 1\n")
+        ser.write(b"++mode 1\n")
         #no CR, LF with read
-        ser.write("++eos 3\n")
+        ser.write(b"++eos 3\n")
 
     def read_print_config_gpib(self):
         ''' get prologix gpib configuration'''
-        self.ser.write('++ver\n')
-        print( self.ser.readline())
-        self.ser.write("++auto\n")
-        print( 'auto '+self.ser.readline())
-        self.ser.write("++eoi\n")
-        print( 'eoi '+self.ser.readline())
-        self.ser.write("++eos\n")
-        print( 'eos '+self.ser.readline())
-        self.ser.write("++mode\n")
-        print( 'mode '+self.ser.readline())
-        self.ser.write("++addr\n")
-        print( 'address '+self.ser.readline())
+        self.ser.write(b'++ver\n')
+        print( self.ser.readline().decode())
+        self.ser.write(b"++auto\n")
+        print( 'auto '+self.ser.readline().decode())
+        self.ser.write(b"++eoi\n")
+        print( 'eoi '+self.ser.readline().decode())
+        self.ser.write(b"++eos\n")
+        print( 'eos '+self.ser.readline().decode())
+        self.ser.write(b"++mode\n")
+        print( 'mode '+self.ser.readline().decode())
+        self.ser.write(b"++addr\n")
+        print( 'address '+self.ser.readline().decode())
 
     def binary_escape_gpib_string( self, s ):
         ''' prevent binary data from being interpreted
         as prologix configuration commands, add lf'''
-        esc = chr(27)
-        lf = '\n'
-        cr = chr(0xd)
-        plus = '+'
+        print('binary_escape_gpib_string', repr(s))
+        esc = bytes([27])
+        lf = b'\n'
+        cr = bytes([0xd])
+        plus = b'+'
         
-        out = b''
+        out = bytearray()
         for c in s:
             if c in (esc, lf, cr, plus ):
                 out += esc
-            out += c
+            out.append(c)
         out += lf
         return out
     
     def write(self, s):
+        #s = s.encode()
+        print('write', repr(s))
         out = self.binary_escape_gpib_string(s)
         if self.debug:
             print("prologix write")
-            print("\t", " ".join(["{:02x}".format(ord(c)) for c in s]))
-            print("\t", " ".join(["{:08b}".format(ord(c)) for c in s]))            
+            print("\t", " ".join(["{:02x}".format(c) for c in s]))
+            print("\t", " ".join(["{:08b}".format(c) for c in s]))            
             print("\n")
             
         return self.ser.write(out)
@@ -313,7 +316,7 @@ class AugerElectronAnalyzerTestApp(BaseMicroscopeApp):
     
     def setup(self):
         
-        AEA = self.add_hardware_component(AugerElectronAnalyzerHC(self))
+        AEA = self.add_hardware_component(AugerElectronAnalyzerHW(self))
 
         self.ui.show()
         
@@ -338,6 +341,7 @@ class AugerElectronAnalyzerTestApp(BaseMicroscopeApp):
         #self.ui_analyzer.show()
         self.ui.centralwidget.layout().addWidget(self.ui_analyzer)
         self.ui.setWindowTitle(self.name)
+        AEA.settings['debug_mode'] = True
         AEA.settings.connected.update_value(True)
         
 if __name__ == '__main__':

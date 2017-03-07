@@ -1,4 +1,4 @@
-from ScopeFoundry.scanning.base_cartesian_scan import BaseRaster2DSlowScan
+from ScopeFoundry.scanning import BaseRaster2DSlowScan
 import numpy as np
 import time
 

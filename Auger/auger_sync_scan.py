@@ -1,102 +1,49 @@
-from sem_sync_raster_measure import SemSyncRasterScan
+from .sem_sync_raster_measure import SemSyncRasterScan
 import time
 import numpy as np
 
-class AugerSyncScan(SemSyncRasterScan):
-    name = "AugerSyncScan"
+
+class AugerSyncRasterScan(SemSyncRasterScan):
     
-    def single_scan_regular(self):
-        #SemSyncRasterScan.single_scan_regular(self)
-        t0 = time.time()
-        #print self.name, "single_scan_regular"
-        
-        self.counter_dac_hc = self.app.hardware['Counter_DAC_FPGA_VI_HC']
-        
-        print "CtrOverflow before", self.counter_dac_hc.counter_dac.CtrOverflow()
-        if self.counter_dac_hc.counter_dac.CtrOverflow():
-            self.counter_dac_hc.settings['connected'] = False
-            raise IOError("Counter Overflow, need to reset FPGA")
-            #self.counter_dac_hc.connect()
+    name = "auger_sync_raster_scan"
+    
+    def scan_specific_setup(self):
+        self.display_update_period = 0.1
+        SemSyncRasterScan.scan_specific_setup(self)
+    
+    def pre_scan_setup(self):
+        # Hardware
+        self.auger_fpga_hw = self.app.hardware['auger_fpga']
+        self.auger_fpga_hw.settings['trigger_mode'] = 'off'
+        time.sleep(0.01)
+        self.auger_fpga_hw.flush_fifo()
 
-        NUM_CHANS = self.counter_dac_hc.NUM_CHANS
-        
-        self.scanDAQ.sync_mode.update_value('regular')
-        #self.scanDAQ.settings['ext_clock_enable'] = True
-        self.scanDAQ.connect()
-        self.scanDAQ.setup_io_with_data(self.scan_h_positions, -1*self.scan_v_positions)
+        self.auger_fpga_hw.settings['trigger_mode'] = 'pxi'
 
-        self.counter_dac_hc.settings['ext_trig_enable'] = False
-        self.counter_dac_hc.settings['ext_trig_enable'] = True
-        t0 = time.time()
-        #print "before start"
-        self.counter_dac_hc.engage_FIFO()
-        #time.sleep(0.0001)
-        self.scanDAQ.sync_analog_io.start()            
+        # Data Arrays
+        self.auger_chan_pixels = np.zeros((self.Npixels, 10), dtype=np.uint32)
+        self.auger_i = 0
+        # figure?
         
-        #print "after start", time.time() - t0 
-        #print "CtrOverflow after", self.counter_dac_hc.counter_dac.CtrOverflow()
-        #self.counter_dac_hc.settings['ext_trig_enable'] = False
+    def every_n_callback_func(self):
+        i = self.auger_i
+        new_auger_data = self.auger_fpga_hw.read_fifo()
+        n = new_auger_data.shape[0]
+        self.auger_chan_pixels[i:i+n] = new_auger_data
+        self.auger_i += n
+        
+        return SemSyncRasterScan.every_n_callback_func(self)
+    
+    def handle_new_data(self):
+        """ Called during measurement thread wait loop"""
+        SemSyncRasterScan.handle_new_data(self)
+    
+    def post_scan_cleanup(self):
+        self.auger_fpga_hw.settings['trigger_mode'] = 'off'
 
-        self.auger_buf_list = []
-        
-        READ_BLOCKS = 10 
-        
-        wait_time = READ_BLOCKS*1.0/self.scanDAQ.settings['sample_rate']
-        for i in range(self.Npixels/READ_BLOCKS):
-            buf = self.counter_dac_hc.read_FIFO()
-            #print "-->", buf.shape
-            self.auger_buf_list.append(buf)
-            time.sleep(wait_time)
-            
-        self.ai_data = self.scanDAQ.read_ai_chans()
-        # TODO read Counters
-
-        self.auger_buf_list.append(self.counter_dac_hc.read_FIFO())
-        #self.counter_dac_hc.disengage_FIFO()
-        #time.sleep(0.01)
-        
-        self.auger_buf = np.concatenate(self.auger_buf_list, axis=1)
-        
-        #self.display_image_map[self.scan_index_array] = self.ai_data[0,:]
-        #self.display_image_map[0,:,:] = self.ai_data[:,1].reshape(self.settings['Nv'], self.settings['Nh'])
-        #self.display_image_map[0,:,:] = self.auger_buf[:,:].sum(axis=0).reshape(self.settings['Nv'], self.settings['Nh'])
-        #self.display_image_map[0,:,:] = self.auger_buf[:,:].sum(axis=0).reshape(self.settings['Nv'], self.settings['Nh'])
-        
-        # TODO save data
-        
-        self.scanDAQ.sync_analog_io.stop()
-        #self.scanDAQ.sync_analog_io.close()
-        
-        #print self.name, "frame time", time.time() - t0, "num_pixels", self.Npixels
-        _, depth = self.auger_buf.shape
-        #if depth > 0:
-        print self.auger_buf.shape
-        #print self.auger_buf.sum(axis=0)
-        
-        #depth = 
-        
-        if depth > self.Npixels:
-            depth = self.Npixels
-            print "depth > px"
-        
-        filled_auger_buf = np.zeros(self.Npixels)
-        print depth
-        print filled_auger_buf.shape, self.auger_buf.shape
-        #filled_auger_buf[0:depth] = self.auger_buf[0:7,-depth:].sum(axis=0)
-        filled_auger_buf[0:depth] = np.bitwise_and(self.auger_buf[8,-depth:], 0x7FFFFFFF)
-        time_info = np.bitwise_and(self.auger_buf[8,:], 0x7FFFFFFF)
-        #filled_auger_buf = np.bitwise_and(self.auger_buf[8,:], 0x7FFFFFFF)
-        
-        print np.bitwise_and(self.auger_buf[8,:-depth], 0x7FFFFFFF)
-        print filled_auger_buf[:5]
-        print filled_auger_buf[-5:]
-        print np.sum(filled_auger_buf > 9000)
-        print time_info[time_info > 5000]
-                
-        self.display_image_map[0,:,:] = filled_auger_buf.reshape(self.settings['Nv'], self.settings['Nh'])
-        #self.display_image_map[0,0,0] = 0
-        #self.display_image_map[0,:,:] = self.ai_data[:,1].reshape(self.settings['Nv'], self.settings['Nh'])
-        
-        self.counter_dac_hc.disengage_FIFO()
+    def update_display(self):
+        self.display_pixels = self.auger_chan_pixels[:,0:8].sum(axis=1)
+        SemSyncRasterScan.update_display(self)
+    
         
         
