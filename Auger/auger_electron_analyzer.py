@@ -6,28 +6,40 @@ from _ast import Add
 
 class AugerElectronAnalyzer(object):
     
-    "Omicron EAC2200 NanoSAM 570" "Electron Analyser Control"
-    "Omicron Multiplier Supplies 1127"
-    "Omicron Mulit-channel receiver 538"
+    "Controls Omicron EAC2200 NanoSAM 570 energy analyzer power supply" 
+ 
+    #class constants
+    quad_cmds = dict(X1=0x81, Y1=0x82, X2=0x83, Y2=0x84)
+    dispersion = 0.02 #analyzer physical property
+    retarding_modes = dict(CAE=0, CRR=1)
     
-    def __init__(self, debug=False):
-        
+    # State Variables
+    work_function = 4.5 #must be defined to calc KE
+    retarding_mode='CAE'
+    last_mode = None
+    KE = 200.0
+    pass_energy = 50.0
+    crr_ratio = 5.0
+    resolution = dispersion * pass_energy
+    multiplier_state = False
+    quad_value = dict(X1=0.0, Y1=0.0, X2=0.0, Y2=0.0)
+    
+    def __init__(self, debug=False):        
         self.debug=debug
-        
-        
+               
         # prologix usb-gpib
         self.gpib = PrologixGPIB_Omicron("COM8", debug=self.debug)
-
+        
         # Initialize to known state
-        self.retarding_mode='CAE'
-        self.KE_V = 0.0
-        self.set_work_function(4.5)
-        self.write_multiplier_state(False)
-        self.write_crr_ratio(1.5)
-        self.write_pass_energy(5.0)
-        self.write_KE(0.0)
+        self.write_KE(self.KE)
+        self.write_state(self.multiplier_state,self.retarding_mode)
+        self.write_crr_ratio(self.crr_ratio)
+        self.write_pass_energy(self.pass_energy)
         for quad in ['X1', 'Y1', 'X2', 'Y2']:
-            self.write_Quad(quad, 0.0)
+            self.write_quad(quad, self.quad_value[quad])
+
+    def close(self):
+        self.gpib.close()
         
         
         
@@ -70,37 +82,21 @@ class AugerElectronAnalyzer(object):
     def set_work_function(self, wf):
         self.work_function = float(wf)
     
-    def write_KE(self, ke_v):
-        assert 0 <= ke_v <= 2200
-        self.KE_V = float(ke_v)
-        ke_int = int( ((ke_v-self.work_function)/2200.)*65535)
-        if self.retarding_mode == 'CRR':
-            self.resolution_eV = self.KE_V/self.crr_ratio * 0.02
+    def write_KE(self, ke):
+        ke = min( max( self.work_function, ke), 2200 + self.work_function)
+        self.KE = float(ke)
+        ke_int = int( ((ke-self.work_function)/2200.)*65535)
         self.write_cmd(1, 0x82, ke_int)
+        self.get_resolution() #depends on KE in CRR mode
     
     def get_KE(self):
-        return self.KE_V
+        return self.KE
     
-    retarding_modes = dict(CAE=0, CRR=1)
 
-    def write_state(self, multiplier_state, retarding_mode='CAE'):
-        self.multiplier_state = bool(multiplier_state)
-        assert retarding_mode in self.retarding_modes.keys()
-        self.retarding_mode = retarding_mode
-        val = 0x0400*bool(multiplier_state) + 0x0200*self.retarding_modes[retarding_mode]
-        self.write_cmd(1, 0x85, val)
-        
-        # Alternate method
-        # state is a special command that can be only 2 bytes long (instead of 3)
-        #val = 0x04*bool(multiplier_state) + 0x02*self.retarding_modes[retarding_mode]
-        #self.gpib.set_address(1)
-        #self.gpib.write(b"\x85" + chr(val))
-
-
-    def write_multiplier_state(self, state):
+    def write_multiplier(self, state):
         return self.write_state(state, self.retarding_mode)
 
-    def get_multiplier_state(self):
+    def get_multiplier(self):
         return self.multiplier_state
 
     def write_retarding_mode(self, retarding_mode):
@@ -109,47 +105,78 @@ class AugerElectronAnalyzer(object):
     def get_retarding_mode(self):
         return self.retarding_mode
 
-
-    # CAE 
+        #retarding modes
+        #command to set CRR ratio and to set pass energy is 'overloaded',
+        #only set pass energy in CAE, only set retarding ratio in CRR
+        #also one command sets mode switch and multiplier switch
+        
     def write_pass_energy(self, epass):
-        assert 5.0 <= epass <= 500
+        epass = min( 500.0, max( 5.0, epass))
         self.pass_energy = float(epass)
-        val = int(float(epass)*44.69)
-        self.resolution_eV = 0.02*epass
-        self.write_cmd(1, 0x84, val)
+        if self.retarding_mode == 'CAE':
+            val = int(float(epass)*44.69)
+            self.write_cmd(1, 0x84, val)
+            self.get_resolution() 
     
     def get_pass_energy(self):
-        return self.pass_energy
-    
-    # CRR
+        return self.pass_energy   
+
     def write_crr_ratio(self, crr_ratio):
-        assert 1.5 <= crr_ratio <= 20.0
+        crr_ratio = min( 20.0, max( 1.5, crr_ratio ))
         self.crr_ratio = crr_ratio
-        val = int(crr_ratio*3276.8)
-        self.resolution_eV = self.KE_V/self.crr_ratio * 0.02
-        self.write_cmd(1, 0x84, val)
+        if self.retarding_mode == 'CRR':
+            val = int(crr_ratio*3276.8)
+            self.write_cmd(1, 0x84, val)
+            self.get_resolution() 
     
     def get_crr_ratio(self):
         return self.crr_ratio
     
     def get_resolution(self):
-        return self.resolution_eV
- 
+        # calculate energy resolution in current mode
+        if self.retarding_mode == 'CAE':
+            epass = self.pass_energy
+        else:
+            epass = self.KE/self.crr_ratio
+        self.resolution = epass * self.dispersion
+        return self.resolution
+
+    def write_state(self, multiplier_state, retarding_mode='CAE'):
+        # update crr_ratio or pass_energy when retarding mode changes...
+        self.multiplier_state = bool(multiplier_state)
+        assert retarding_mode in self.retarding_modes.keys()
+        self.retarding_mode = retarding_mode
+        val = 0x0400*bool(multiplier_state) + 0x0200*self.retarding_modes[retarding_mode]
+        self.write_cmd(1, 0x85, val)
+        
+        if self.retarding_mode != self.last_mode:
+            self.last_mode = self.retarding_mode
+            #make sure overloaded resolution command is correct
+            self.write_crr_ratio(self.crr_ratio)
+            self.write_pass_energy(self.pass_energy)
+            self.get_resolution()
+        
+        
+        # Alternate method
+        # state is a special command that can be only 2 bytes long (instead of 3)
+        #val = 0x04*bool(multiplier_state) + 0x02*self.retarding_modes[retarding_mode]
+        #self.gpib.set_address(1)
+        #self.gpib.write(b"\x85" + chr(val))
+
+
+  
     ####  Quadrupole
     
     quad_cmds = dict(X1=0x81, Y1=0x82, X2=0x83, Y2=0x84)
+    quad_index = dict(X1=0, Y1=1, X2=2, Y2=3)
     
-    def write_Quad(self, quad, val):
+    def write_quad(self, quad, val):
         assert quad in self.quad_cmds.keys()
         assert -50 <= val <= 50
         val_int = int((val + 50)*655.35)
+        #print( 'cmd {} val {}'.format(self.quad_cmds[quad],val_int))
         self.write_cmd(3,self.quad_cmds[quad], val_int)
-        
-    def write_Quad_X1(self,val):
-        return self.write_Quad('X1', val)
-    
-    def close(self):
-        self.gpib.close()
+        self.quad_value[quad] = val
         
     # setup procedure
     """
@@ -160,20 +187,20 @@ class AugerElectronAnalyzer(object):
     set Fraction (for sweeps)
     set span (for sweeps)
     """
-    
+ 
 from ScopeFoundry import HardwareComponent
 
 class AugerElectronAnalyzerHW(HardwareComponent):
     
     name = 'auger_electron_analyzer'
-    
+
     def setup(self):
         self.settings.New("mode", dtype=str, choices=('CAE', 'CRR'))
-        self.settings.New("multiplier", dtype=bool)
-        self.settings.New("KE", dtype=float, unit='eV', vmin=0, vmax=2200)
+        self.settings.New("multiplier", dtype=bool, initial = False)
+        self.settings.New("KE", dtype=float, unit='eV', vmin=0, vmax=2200, initial = 200)
         self.settings.New("work_function", dtype=float, unit='eV', vmin=0, vmax=10, initial=4.5)
-        self.settings.New("pass_energy", dtype=float, unit='V', vmin=5, vmax=500)
-        self.settings.New("crr_ratio", dtype=float, vmin=1.5, vmax=20)
+        self.settings.New("pass_energy", dtype=float, unit='V', vmin=5, vmax=500, initial = 100)
+        self.settings.New("crr_ratio", dtype=float, vmin=1.5, vmax=20, initial = 5.0)
         self.settings.New("resolution", dtype=float, ro=True, unit='eV')
         quad_lq_settings = dict( dtype=float, vmin=-50, vmax=+50, initial=0, unit='%%', si=False)
         self.settings.New("quad_X1", **quad_lq_settings)
@@ -187,8 +214,8 @@ class AugerElectronAnalyzerHW(HardwareComponent):
         self.settings.mode.hardware_read_func = E.get_retarding_mode
         self.settings.mode.hardware_set_func = E.write_retarding_mode
         
-        self.settings.multiplier.hardware_read_func = E.get_multiplier_state
-        self.settings.multiplier.hardware_set_func = E.write_multiplier_state
+        self.settings.multiplier.hardware_read_func = E.get_multiplier
+        self.settings.multiplier.hardware_set_func = E.write_multiplier
         
         self.settings.KE.hardware_read_func = E.get_KE
         self.settings.KE.hardware_set_func  = E.write_KE
@@ -205,10 +232,10 @@ class AugerElectronAnalyzerHW(HardwareComponent):
         self.settings.resolution.hardware_read_func = E.get_resolution
         
         print("setting quad hardware_set_funcs")
-        self.settings.quad_X1.hardware_set_func = lambda val, E=E: E.write_Quad('X1', val) 
-        self.settings.quad_Y1.hardware_set_func = lambda val, E=E: E.write_Quad('Y1', val) 
-        self.settings.quad_X2.hardware_set_func = lambda val, E=E: E.write_Quad('X2', val) 
-        self.settings.quad_Y2.hardware_set_func = lambda val, E=E: E.write_Quad('Y2', val) 
+        self.settings.quad_X1.hardware_set_func = lambda val, E=E: E.write_quad('X1', val) 
+        self.settings.quad_Y1.hardware_set_func = lambda val, E=E: E.write_quad('Y1', val) 
+        self.settings.quad_X2.hardware_set_func = lambda val, E=E: E.write_quad('X2', val) 
+        self.settings.quad_Y2.hardware_set_func = lambda val, E=E: E.write_quad('Y2', val) 
         print("done quad hardware_set_funcs")
         
         
@@ -246,7 +273,7 @@ class PrologixGPIB_Omicron(object):
 
     def set_address(self, address=1):
         cmd_str = '++addr {:d}\n'.format(address).encode()
-        if self.debug: print("prologix set_addr", repr(cmd_str))
+        #if self.debug: print("prologix set_addr", repr(cmd_str))
         self.ser.write(cmd_str)
 
     def write_config_gpib(self):
@@ -281,7 +308,7 @@ class PrologixGPIB_Omicron(object):
     def binary_escape_gpib_string( self, s ):
         ''' prevent binary data from being interpreted
         as prologix configuration commands, add lf'''
-        print('binary_escape_gpib_string', repr(s))
+        #print('binary_escape_gpib_string', repr(s))
         esc = bytes([27])
         lf = b'\n'
         cr = bytes([0xd])
@@ -297,13 +324,12 @@ class PrologixGPIB_Omicron(object):
     
     def write(self, s):
         #s = s.encode()
-        print('write', repr(s))
+        #print('write', repr(s))
         out = self.binary_escape_gpib_string(s)
         if self.debug:
-            print("prologix write")
-            print("\t", " ".join(["{:02x}".format(c) for c in s]))
-            print("\t", " ".join(["{:08b}".format(c) for c in s]))            
-            print("\n")
+            str = "prologix gpib \t" + " ".join(["{:02x}".format(c) for c in s])
+            print(str)
+            #print("\t", " ".join(["{:08b}".format(c) for c in s]))            
             
         return self.ser.write(out)
 
@@ -348,24 +374,5 @@ if __name__ == '__main__':
     app = AugerElectronAnalyzerTestApp([])
     app.exec_()
     
-    """a = AugerElectronAnalyzer(debug=True)
+
     
-    a.write_state(True, 'CAE')
-    a.write_KE(2200)
-    time.sleep(10)
-    a.write_multiplier_state(False)
-    
-    a.close()
-    """
-    
-    """
-    write_gpib( port, set_mode_omicron(True, False) )
-    write_gpib( port, set_omicron_volts( 1500 ))
-    write_gpib( port, set_omicron_volts( 37.5 ))
-    write_gpib( port, set_omicron_volts( 137.5 ))
-    write_gpib( port, set_omicron_volts( 2200 ))
-    time.sleep(10)
-    write_gpib( port, set_mode_omicron(mult=False) )
-    
-    port.close()
-    """

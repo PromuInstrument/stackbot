@@ -1,0 +1,62 @@
+Frank Ogletree 2/8/17
+
+Notes on SEM scanning with "auger_app.py"
+
+daqMX scan engine in "sem_sync_raster_hardware.py" in class SemSyncRasterDaq
+
+this is left over from Hao's code based on my daqmx classes. Several features not working or disabled for now.
+	sample_per_point does not work, needed to correct SNR
+	something odd in serpentine scan
+	flyback problems at high rates, not too bad at 400 points 100 kHz or 250 Hz line rate 4 ms, starts
+		to be noticiable at 1 ms/line (400 kHz 1000 points)
+	no incremental image update for now
+	timeout in non-callback not updated for image size
+	lq's do not use SI controls...
+	
+sync_mode callback broken, must be regular for now
+
+NI_SyncTaskSet looks like it shoud work with multiple points per sample
+
+where is app.ui defined for AugerMicroscopeApp ?
+	BaseCartesian2DScan creates windows and controls/ui
+	cart_scan_base.ui
+
+SemSyncRasterScan in sem_sync_raster_hardware does actual scanning
+	subclasses BaseCartesian2DScan
+	
+	SemSyncRasterScan.single_scan_regular() actually does scanning
+
+BaseCartesian2DScan
+	sets up graphics and buttons
+	sets up and updates plots
+	does histogram/Z contrast
+	generates raster scan XY coord arrays
+	what do index arrays do? Used for mouse???
+	
+SemSyncRasterScan.ScanDaq = SemSyncRasterDaq
+
+
+ESB:
+Got Callbacks  working
+
+Problems:
+	- if frame size is very small, can get errors where callbacks can't keep up
+		eg. 50x50 pixel frame ~800frames per second
+		currently always a callback per frame
+	- def read_ai_chan_pixels(self, n_pixels):
+        # TODO: check if n_pixels worth of data are actually returned
+	
+
+Fixed:
+	the last chunk of data -- fixed, now use a integer number of blocks per frame
+	can't unregister callback, have to disconnect -- fixed
+	
+        
+        
+TODO:
+ - REMCOM
+ - HDF5 data files
+ 	-- continuous (how to extend data set)
+ 	-- finite number of frames
+ - FPGA
+ - callbacks for new input data
