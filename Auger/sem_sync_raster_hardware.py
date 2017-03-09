@@ -220,11 +220,10 @@ class SemSyncRasterDAQ(HardwareComponent):
         # TODO: check if n_pixels worth of data are actually returned
         n_samples = int(n_pixels * self.settings['adc_oversample'])
         buf = self.sync_analog_io.read_adc_buffer(count = n_samples, timeout=self.timeout)
-        #print('read_ai_chan_pixels', 'n_pixels', n_pixels, 'adc_chan_count', self.adc_chan_count, 
-        #      'n_samples', n_samples, 'buf.shape', buf.shape)
 
-        return buf.reshape(n_pixels, self.settings['adc_oversample'], self.adc_chan_count).swapaxes(1,2)
-        
+        buf_reshaped = buf.reshape(n_pixels, self.settings['adc_oversample'], self.adc_chan_count).swapaxes(1,2)
+
+        return buf_reshaped
     
     def read_counter_buffer(self, ctr_i, count=0):
         return self.sync_analog_io.read_ctr_buffer_diff(

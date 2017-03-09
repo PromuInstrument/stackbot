@@ -126,11 +126,12 @@ class SemSyncRasterScan(BaseRaster2DScan):
                 #print("num_blocks", num_blocks)
         
             self.num_pixels_per_block = num_pixels_per_block = int(self.Npixels / num_blocks)
-            self.log.info("num_pixels_per_block", num_pixels_per_block)
+            self.log.info("num_pixels_per_block {}".format( num_pixels_per_block))
             
             ##### Data array
             # ADC
             self.adc_pixels = np.zeros((self.Npixels, self.scanDAQ.adc_chan_count), dtype=float)
+            #self.adc_pixels_oversample = np.zeros((self.Npixels, self.scanDAQ.adc_chan_count*self.scanDAQ.settings['adc_oversample']))
             #self.pixels_remaining = self.Npixels # in frame
             self.new_adc_data_queue = [] # will contain numpy arrays (data blocks) from adc to be processed
             self.adc_map = np.zeros(self.scan_shape + (self.scanDAQ.adc_chan_count,), dtype=float)
@@ -238,7 +239,6 @@ class SemSyncRasterScan(BaseRaster2DScan):
     def on_new_adc_data(self, new_data):
         self.set_progress(100*self.pixel_index / self.Npixels )
         #print('callback block', self.pixel_index, new_data.shape, 'remaining px', self.Npixels - self.pixel_index)
-        new_data = new_data.reshape(-1,  self.scanDAQ.settings['adc_oversample'], self.scanDAQ.adc_chan_count).swapaxes(1,2)
         ii = self.pixel_index
         dii = num_new_pixels = new_data.shape[0]
         # average over samples (takes oversampled adc data and
@@ -247,13 +247,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
 
         #stuff into pixel data array
         self.adc_pixels[ii:ii+dii , :] = new_data
-        
-        """        DISPLAY_CHAN = 1                    
-        x = self.scan_index_array[ii:ii+dii,:].T
-        x1 = self.scan_index_array[(ii+dii+1)%self.Npixels,:]
-        self.display_image_map[x[0], x[1], x[2]] = self.adc_pixels[ii:ii+dii, DISPLAY_CHAN]
-        """
-        
+                
         self.current_scan_index = self.scan_index_array[self.pixel_index]
 
         self.pixel_index += num_new_pixels
