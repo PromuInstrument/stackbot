@@ -315,7 +315,8 @@ class NI_AdcTask(NI_TaskWrap):
             self.error(err)
             #not sure how to handle actual samples read, resize array??
         if read_count.value < count:
-            logger.warning( 'requested {} values for {} channels, only {} read'.format( count, self._chan_count, read_count.value) )
+            pass
+            #logger.warning( 'requested {} values for {} channels, only {} read'.format( count, self._chan_count, read_count.value) )
 #        print "samples {} written {}".format( self._sample_count, writeCount.value)
 #        assert read_count.value == 1, \
 #           "sample count {} transfer count {}".format( 1, read_count.value )
