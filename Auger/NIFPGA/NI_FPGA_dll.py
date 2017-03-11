@@ -179,7 +179,7 @@ class NI_FPGA(object):
                          fifo,
                          bufpointer,
                          numberOfElements,
-                         timeout,
+                         int(timeout),
                          ctypes.byref(remaining))
         
         if self.debug: print("Read FIFO Status:" + str(err))
