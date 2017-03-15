@@ -221,7 +221,7 @@ class AugerElectronAnalyzerHW(HardwareComponent):
                           
     def connect(self):
         E = self.analyzer = AugerElectronAnalyzer(debug=self.debug_mode.val)
-        
+                
         self.settings.CAE_mode.hardware_read_func = E.get_retarding_mode
         self.settings.CAE_mode.hardware_set_func = E.write_retarding_mode
         
@@ -251,13 +251,14 @@ class AugerElectronAnalyzerHW(HardwareComponent):
             getattr(self.settings, lqname).add_listener(self.settings.resolution.read_from_hardware)
     
     def disconnect(self):
-        self.settings['multiplier'] = False
-        self.analyzer.close()
+
         
         # disconnect lq's
         # TODO
-        
-        del self.analyzer
+
+        if hasattr(self, 'analyzer'):
+            self.analyzer.close()        
+            del self.analyzer
         
 
 
