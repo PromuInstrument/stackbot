@@ -90,10 +90,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
                
 
         
- 
-        try:
-            ##### HDF5 Data file
-            if self.settings['save_h5']:
+             if self.settings['save_h5']:
                 self.h5_file = h5_io.h5_base_file(self.app, measurement=self)
                 self.h5_m = h5_io.h5_create_measurement_group(measurement=self, h5group=self.h5_file)
 
