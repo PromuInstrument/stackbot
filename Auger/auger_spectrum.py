@@ -23,7 +23,7 @@ class AugerSpectrum(Measurement):
         self.settings.New('crr_ratio', dtype=float, initial=5, vmin=1.5,vmax=20)
         self.settings.New('CAE_mode', dtype=bool, initial=False)
         self.settings.New('No_dispersion', dtype=bool, initial=False)
-        self.settings.New('Chan_sum', dtype=bool, initial=False)       
+        self.settings.New('Chan_sum', dtype=bool, initial=True)       
        
         self.display_update_period = 0.01 
         
@@ -63,10 +63,11 @@ class AugerSpectrum(Measurement):
         ''' create plots for channels and/or sum'''
         self.plot_lines = []
         for i in range(self.display_chans):
-            color = pg.intColor(i)
+            color = pg.intColor(i+1)
             plot_line = self.plot.plot([0], pen=color)
             self.plot_lines.append(plot_line)
             #channel average
+        color = pg.intColor(0)
         plot_line = self.plot.plot([0], pen=color)
         self.plot_lines.append(plot_line)
         
