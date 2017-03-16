@@ -25,14 +25,6 @@ class SemSyncRasterScan(BaseRaster2DScan):
         self.Nv.update_value(1000)
                 
         self.display_update_period = 0.050 #seconds
-
-        # Created logged quantities
-        
-        self.settings.New('n_frames', dtype=int, initial=1, vmin=1)
-        
-        self.settings.New('pixel_time', dtype=float, ro=True, si=True, unit='s')
-        self.settings.New('line_time' , dtype=float, ro=True, si=True, unit='s')
-        self.settings.New('frame_time' , dtype=float, ro=True, si=True, unit='s')        
         
         
         
@@ -89,8 +81,8 @@ class SemSyncRasterScan(BaseRaster2DScan):
         # previously set samples_per_point in scanDAQ hardware
                
 
-        
-             if self.settings['save_h5']:
+        try:
+            if self.settings['save_h5']:
                 self.h5_file = h5_io.h5_base_file(self.app, measurement=self)
                 self.h5_m = h5_io.h5_create_measurement_group(measurement=self, h5group=self.h5_file)
 
@@ -366,5 +358,4 @@ class SemSyncRasterScan(BaseRaster2DScan):
                 
     def compute_times(self):
         self.settings['pixel_time'] = 1.0/self.scanDAQ.settings['dac_rate']
-        self.settings['line_time'] = self.settings['pixel_time'] * self.settings['Nh']
-        self.settings['frame_time'] = self.settings['pixel_time'] * self.Npixels
+        BaseRaster2DScan.compute_times(self)
