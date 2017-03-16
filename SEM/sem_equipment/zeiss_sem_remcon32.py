@@ -1,7 +1,9 @@
 '''
 Created on Feb 5, 2015
 
-@author: Hao Wu
+@author: Hao Wu, In process for python 3 Frank 3/15/17
+
+### NOT DONE
 
 Communicating with RemCon32 on the SEM computer through RS232 Serial communcation
 '''
@@ -23,15 +25,12 @@ class ZeissSEMRemCon32(object):
                                  parity=serial.PARITY_NONE, 
                                  stopbits=serial.STOPBITS_ONE,
                                  timeout=0.1)
-        pass
     
     def send_cmd(self,cmd):
-        self.ser.flushOutput()
         self.ser.write(cmd)
-        pass
     
     def write_cmd(self,cmd):
-        self.ser.flushInput()
+        #self.ser.flushInput()
         self.send_cmd(cmd)
         resp=self.ser.readlines()
         return self.conv_resp(resp)
@@ -39,13 +38,14 @@ class ZeissSEMRemCon32(object):
     def conv_resp(self,resp):
         '''
         The response from RemCon comes in two lines, first line
-        shows the status of the task, second line contains the parameter
-        or error number
+        shows the status of the task '@' for success or '#' for failure,
+        second line contains '>' followed by the parameter or error number
         '''
+        #print(resp)
         cmd_status=resp[0][0]
         success=resp[1][0]
-        if cmd_status=='@':
-            if success=='>':
+        if cmd_status==ord(b'@'):
+            if success==ord(b'>'):
                 if (len(resp[1])>3):
                     #output the requested value, if any
                     return resp[1][1:-2]
@@ -64,27 +64,27 @@ class ZeissSEMRemCon32(object):
     6 7 EHT
     '''
     def read_EHT(self):
-        return self.write_cmd('EHT?\r')
+        return self.write_cmd(b'EHT?\r')
     
     def write_EHT(self,val):
-        return self.write_cmd('EHT %f\r' % val)
+        return self.write_cmd(b'EHT %f\r' % val)
 
     
     '''
     8 Electron Gun Status
     '''
     def read_gun(self):
-        return self.write_cmd('GUN?\r')
+        return self.write_cmd(b'GUN?\r')
     
     '''
     9 10 Beam Blanking
     '''
     def read_beam_blanking(self):
-        return self.write_cmd('BBL?\r')
+        return self.write_cmd(b'BBL?\r')
     
     def write_beam_blanking(self,val):
         if val==0 or val==1:
-            return self.write_cmd('BBLK %i\r' % val)
+            return self.write_cmd(b'BBLK %i\r' % val)
         else:
             raise ValueError("blanking state %s instead of 0, or 1" % val)
     
@@ -112,11 +112,11 @@ class ZeissSEMRemCon32(object):
     17 18 Scan Rate
     '''
     def read_scan_rate(self):
-        return self.write_cmd('RAT?\r')
+        return self.write_cmd(b'RAT?\r')
     
     def write_scan_rate(self,val):
         if val>=0 and val<=15:
-            return self.write_cmd('RATE %i\r' % val)
+            return self.write_cmd(b'RATE %i\r' % val)
         else:
             raise ValueError("value %s out of range [0,15]" % val)  
         
@@ -124,10 +124,10 @@ class ZeissSEMRemCon32(object):
     24 92 Stigmator
     '''
     def _read_stigmator(self):
-        return self.write_cmd('STI?\r')
+        return self.write_cmd(b'STI?\r')
     
     def _write_stigmator(self,x_val,y_val):
-            return self.write_cmd('STIM '+str(x_val)+' ' +str(y_val) +'\r' )
+            return self.write_cmd(b'STIM {} {}/r'.format(x_val, y_val))
         
     def _read_stigmator_array(self):
         return np.fromstring(self._read_stigmator(),sep=' ')
@@ -155,11 +155,11 @@ class ZeissSEMRemCon32(object):
      27 28 Brightness
     '''
     def read_brightness(self):
-        return self.write_cmd('BGT?\r')
+        return self.write_cmd(b'BGT?\r')
     
     def write_brightness(self,val):
         if val>=0.0 and val<=100.0:
-            return self.write_cmd('BRGT %f\r' % val)
+            return self.write_cmd(b'BRGT %f\r' % val)
         else:
             raise ValueError("value %s out of range [0.0,100.0]" % val)  
         
@@ -167,11 +167,11 @@ class ZeissSEMRemCon32(object):
    29 30 Brightness
     '''
     def read_contrast(self):
-        return self.write_cmd('CST?\r')
+        return self.write_cmd(b'CST?\r')
     
     def write_contrast(self,val):
         if val>=0.0 and val<=100.0:
-            return self.write_cmd('CRST %f\r' % val)
+            return self.write_cmd(b'CRST %f\r' % val)
         else:
             raise ValueError("value %s out of range [0.0,100.0]" % val)  
      
@@ -179,20 +179,20 @@ class ZeissSEMRemCon32(object):
     35 Magnification
     '''
     def read_magnification(self):
-        return self.write_cmd('MAG?\r')
+        return self.write_cmd(b'MAG?\r')
     
     def write_magnification(self, val):
-        return self.write_cmd('MAG %f\r' % val)
+        return self.write_cmd(b'MAG %f\r' % val)
     
     '''
     37 38 WD
     '''
     def read_WD(self):
-        return self.write_cmd('FOC?\r')
+        return self.write_cmd(b'FOC?\r')
     
     def write_WD(self,val):
         if val>=0.0 and val<=121.0:
-            return self.write_cmd('FOCS %f\r' % val)
+            return self.write_cmd(b'FOCS %f\r' % val)
         else:
             raise ValueError("value %s out of range [0.0,121.0]" % val)  
         
@@ -200,7 +200,7 @@ class ZeissSEMRemCon32(object):
     69 External Scan
     '''
     def read_external_scan(self):
-        return self.write_cmd('EXS?\r')
+        return self.write_cmd(b'EXS?\r')
     
     def write_external_scan(self,val):
         if val==1:
@@ -281,7 +281,7 @@ class ZeissSEMRemCon32(object):
 #     '''
        
     def read_stage_xyz(self):
-        return self.write_cmd('STG?\r')
+        return self.write_cmd(b'STG?\r')
     
     def read_stage_x(self):
         current_pos=self.write_cmd('STG?\r').split(' ')
@@ -332,7 +332,7 @@ class ZeissSEMRemCon32(object):
         self.write_cmd('DET '+val+'\r')
         
     def read_detector(self):
-        return self.write_cmd('DET?\r')
+        return self.write_cmd(b'DET?\r')
     
     def close(self):
         self.ser.close()
