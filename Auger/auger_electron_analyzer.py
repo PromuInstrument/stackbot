@@ -325,7 +325,7 @@ class PrologixGPIB_Omicron(object):
         
         out = bytearray()
         for c in s:
-            if c in (esc, lf, cr, plus ):
+            if bytes([c]) in (esc, lf, cr, plus ):
                 out += esc
             out.append(c)
         out += lf
