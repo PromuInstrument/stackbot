@@ -49,8 +49,8 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
          
         ##self.add_hardware_component(SEMRemCon(self))
         #self.add_hardware_component(SemRasterScanner(self))       
-        #from Auger.sem_sync_raster_hardware import SemSyncRasterDAQ
-        #self.add_hardware_component(SemSyncRasterDAQ(self))
+        from Auger.sem_sync_raster_hardware import SemSyncRasterDAQ
+        self.add_hardware_component(SemSyncRasterDAQ(self))
         
         from Auger.NIFPGA.ext_trig_auger_fpga_hw import AugerFPGA_HW
         self.add_hardware(AugerFPGA_HW(self))
@@ -80,11 +80,11 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
 #        from Auger.sem_slowscan2d import SEMSlowScan
 #        self.add_measurement_component(SEMSlowScan(self))
 #        self.add_measurement_component(AugerSlowMap(self))
-#        from Auger.sem_sync_raster_measure import SemSyncRasterScan
-#        self.add_measurement_component(SemSyncRasterScan(self))
+        from Auger.sem_sync_raster_measure import SemSyncRasterScan
+        self.add_measurement_component(SemSyncRasterScan(self))
         
-#        from Auger.auger_sync_scan import AugerSyncRasterScan
-#        self.add_measurement(AugerSyncRasterScan(self))
+        from Auger.auger_sync_scan import AugerSyncRasterScan
+        self.add_measurement(AugerSyncRasterScan(self))
 
 #        self.phi_ion_gun = self.add_hardware_component(PhiIonGunHardwareComponent(self))
 #        self.ion_gun_status = self.add_measurement_component(IonGunStatus(self))
