@@ -64,6 +64,9 @@ class ExtTrigAugerFPGA(object):
         
         self.FPGA = NI_FPGA(self.bitfilename, self.signature, self.resource, debug=debug) 
         
+        self.actual_depth  = self.FPGA.Configure_Fifo2(fifo=0, reqDepth=int(10e6))
+        print("Configure_Fifo2 actual_depth", self.actual_depth)
+        
         #self.ffi = FFI()
         #self.ffi.cdef(fpga_vi_header)
         #self.C = self.ffi.dlopen(None)

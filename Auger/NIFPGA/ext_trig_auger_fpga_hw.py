@@ -23,7 +23,6 @@ class AugerFPGA_HW(HardwareComponent):
         
         self.fpga = self.ext_trig_dev.FPGA
         
-        self.fpga.load_bitfile()
         self.fpga.reset()
         self.fpga.run()
         
