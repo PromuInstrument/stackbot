@@ -23,27 +23,30 @@ class NI_FPGA(object):
         self.bitfilename = bitfilename
         self.signature = signature
         self.resource = resource
+        
+        self.load_bitfile()
+
         #self.fifo = ctypes.c_uint32(0)
         # NOTE: CounterFifo declared in last lines of
         #NiFpga_CountertoDAC.h as I32 datatype with value of 0
         #However, self.fifo argument warrants use of U32 type   (:c) <-- Disappointment.
-        self.test_array = np.array([1,0,1,1,1,0,0,0])
-        self.test_array2 = np.array([1,0,0,0,0,0,0,1])
+        #self.test_array = np.array([1,0,1,1,1,0,0,0])
+        #self.test_array2 = np.array([1,0,0,0,0,0,0,1])
         # Load error code information from csv file derived from header file
-        self.err_code_list = []
-        with open(os.path.join(os.path.dirname(__file__), 'nifpga_errorcodes_14.csv')) as err_file:
-            csv_read = csv.reader(err_file, quotechar='"') #np.array([])
-            for row in csv_read:
-                self.err_code_list.append(row)
-                # np.concatenate((array1, row), axis=0)
-            #result = np.reshape(array1,(49,3))
-            #print(self.err_code_list)
-        self.err_code_list = self.err_code_list[1:]
-        self.err_bynum = OrderedDict()
-        for code, name, description in self.err_code_list:
-            num = int(code.replace('_','-'))
-            self.err_bynum[num] = name + ": " + description 
-            
+#         self.err_code_list = []
+#         with open(os.path.join(os.path.dirname(__file__), 'nifpga_errorcodes_14.csv')) as err_file:
+#             csv_read = csv.reader(err_file, quotechar='"') #np.array([])
+#             for row in csv_read:
+#                 self.err_code_list.append(row)
+#                 # np.concatenate((array1, row), axis=0)
+#             #result = np.reshape(array1,(49,3))
+#             #print(self.err_code_list)
+#         self.err_code_list = self.err_code_list[1:]
+#         self.err_bynum = OrderedDict()
+#         for code, name, description in self.err_code_list:
+#             num = int(code.replace('_','-'))
+#             self.err_bynum[num] = name + ": " + description 
+#             
             
     def handle_err(self, err_code):
         if err_code != 0:
@@ -131,13 +134,40 @@ class NI_FPGA(object):
      """
 
     def Configure_Fifo2(self, fifo=0, reqDepth=8000):
-        self.requested_depth = ctypes.c_size_t(reqDepth)
-        self.actual_depth = ctypes.c_size_t(0)
-        err = fpga_dll.NiFpga_ConfigureFifo2(self.session, fifo, self.requested_depth, self.actual_depth)
+        #self.requested_depth = ctypes.c_size_t(reqDepth)
+        actual_depth = ctypes.c_size_t(0)
+        err = fpga_dll.NiFpgaDll_ConfigureFifo2(self.session,
+                                                fifo, 
+                                                reqDepth,
+                                                ctypes.byref(actual_depth))
         if self.debug: print("FIFO Configure Status:" + str(err))
         if err == 0:
             if self.debug: print("FIFO Configured")
-    
+        return actual_depth.value
+
+    def Configure_Fifo(self, fifo=0, reqDepth=8000):
+        """
+        /**
+         * Specifies the depth of the host memory part of the DMA FIFO. This method is
+         * optional. In order to see the actual depth configured, use
+         * NiFpga_ConfigureFifo2.
+         *
+         * @param session handle to a currently open session
+         * @param fifo FIFO to configure
+         * @param depth requested number of elements in the host memory part of the
+         *              DMA FIFO
+         * @return result of the call
+         */
+        NiFpga_Status NiFpga_ConfigureFifo(NiFpga_Session session,
+                                   uint32_t       fifo,
+                                   size_t         depth);
+        """
+        #requested_depth = ctypes.c_size_t(reqDepth)
+        err = fpga_dll.NiFpgaDll_ConfigureFifo(self.session, fifo, reqDepth)
+        if self.debug: print("FIFO Configure Status:" + str(err))
+        if err == 0:
+            if self.debug: print("FIFO Configured")
+        
     ##Optional Method:  
     def Start_Fifo(self, fifo=0):
         err = fpga_dll.NiFpgaDll_StartFifo(self.session, fifo)
