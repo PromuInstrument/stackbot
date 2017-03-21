@@ -37,6 +37,8 @@ app.load_view(HyperSpecNPZView(app))
 from viewers.hyperspec_npz import HyperSpecSpecMedianNPZView
 app.load_view(HyperSpecSpecMedianNPZView(app))
 
+from viewers.trpl_t_x_lifetime import TRPL_t_x_lifetime_NPZView
+app.load_view(TRPL_t_x_lifetime_NPZView(app))
 
 from viewers.trpl_npz import TRPLNPZView
 app.load_view(TRPLNPZView(app))
@@ -58,6 +60,9 @@ app.load_view(PowerScanH5View(app))
 
 from viewers.sync_raster_scan_h5 import SyncRasterScanH5
 app.load_view(SyncRasterScanH5(app))
+
+from viewers.auger_spectrum_h5 import AugerSpectrumH5
+app.load_view(AugerSpectrumH5(app))
 
 
 sys.exit(app.exec_())

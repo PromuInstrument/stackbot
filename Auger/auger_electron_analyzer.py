@@ -1,5 +1,6 @@
 from __future__ import division, print_function
 from serial import Serial
+import numpy as np
 import struct
 import time
 from _ast import Add
@@ -9,13 +10,16 @@ class AugerElectronAnalyzer(object):
     "Controls Omicron EAC2200 NanoSAM 570 energy analyzer power supply" 
  
     #class constants
-    quad_cmds = dict(X1=0x81, Y1=0x82, X2=0x83, Y2=0x84)
-    dispersion = 0.02 #analyzer physical property
-    retarding_modes = dict(CAE=0, CRR=1)
     
+    #analyzer physical property
+    quad_cmds = dict(X1=0x81, Y1=0x82, X2=0x83, Y2=0x84)
+    dispersion = 0.02 
+    chan_shift = np.array([0.0,-1.0, +1.0, -2.0, +2.0, -3.0, +3.0])
+    dead_time = 70.0e-9 #estimate
+   
     # State Variables
     work_function = 4.5 #must be defined to calc KE
-    retarding_mode='CAE'
+    CAE_mode=True
     last_mode = None
     KE = 200.0
     pass_energy = 50.0
@@ -23,7 +27,7 @@ class AugerElectronAnalyzer(object):
     resolution = dispersion * pass_energy
     multiplier_state = False
     quad_value = dict(X1=0.0, Y1=0.0, X2=0.0, Y2=0.0)
-    
+            
     def __init__(self, debug=False):        
         self.debug=debug
                
@@ -32,7 +36,7 @@ class AugerElectronAnalyzer(object):
         
         # Initialize to known state
         self.write_KE(self.KE)
-        self.write_state(self.multiplier_state,self.retarding_mode)
+        self.write_state(self.multiplier_state,self.CAE_mode)
         self.write_crr_ratio(self.crr_ratio)
         self.write_pass_energy(self.pass_energy)
         for quad in ['X1', 'Y1', 'X2', 'Y2']:
@@ -89,21 +93,36 @@ class AugerElectronAnalyzer(object):
         self.write_cmd(1, 0x82, ke_int)
         self.get_resolution() #depends on KE in CRR mode
     
+    def write_KE_binary(self, ke):
+        ke_int = int(ke)
+        self.write_cmd(1, 0x82, ke_int)
+
     def get_KE(self):
         return self.KE
     
-
+            
+    def dead_time_correct(self, data, period):
+        scale = self.dead_time / period
+        return data / (1.0 - scale*data)
+    
+    def get_chan_ke(self, ke, CAE_mode):
+        if CAE_mode:
+            epass = self.pass_energy
+        else:
+            epass = ke / self.crr_ratio
+        return ke + epass * self.dispersion * np.copy(self.chan_shift)
+    
     def write_multiplier(self, state):
-        return self.write_state(state, self.retarding_mode)
+        return self.write_state(state, self.CAE_mode)
 
     def get_multiplier(self):
         return self.multiplier_state
 
-    def write_retarding_mode(self, retarding_mode):
-        return self.write_state(self.multiplier_state, retarding_mode)
+    def write_retarding_mode(self, CAE_mode):
+        return self.write_state(self.multiplier_state, CAE_mode)
     
     def get_retarding_mode(self):
-        return self.retarding_mode
+        return self.CAE_mode
 
         #retarding modes
         #command to set CRR ratio and to set pass energy is 'overloaded',
@@ -111,20 +130,30 @@ class AugerElectronAnalyzer(object):
         #also one command sets mode switch and multiplier switch
         
     def write_pass_energy(self, epass):
-        epass = min( 500.0, max( 5.0, epass))
-        self.pass_energy = float(epass)
-        if self.retarding_mode == 'CAE':
-            val = int(float(epass)*44.69)
+        epass = float(min( 500.0, max( 5.0, epass)))
+        self.pass_energy = epass
+        if self.CAE_mode:
+            val = int(epass*44.69)
             self.write_cmd(1, 0x84, val)
-            self.get_resolution() 
-    
+            self.get_resolution()
+             
+    def current_pass_energy(self):
+        if self.CAE_mode:
+            return self.pass_energy
+        else:
+            return self.KE/self.crr_ratio
+
+    def get_resolution(self):
+        self.resolution = self.current_pass_energy() * self.dispersion
+        return self.resolution
+
     def get_pass_energy(self):
         return self.pass_energy   
 
     def write_crr_ratio(self, crr_ratio):
         crr_ratio = min( 20.0, max( 1.5, crr_ratio ))
         self.crr_ratio = crr_ratio
-        if self.retarding_mode == 'CRR':
+        if not self.CAE_mode:
             val = int(crr_ratio*3276.8)
             self.write_cmd(1, 0x84, val)
             self.get_resolution() 
@@ -132,39 +161,21 @@ class AugerElectronAnalyzer(object):
     def get_crr_ratio(self):
         return self.crr_ratio
     
-    def get_resolution(self):
-        # calculate energy resolution in current mode
-        if self.retarding_mode == 'CAE':
-            epass = self.pass_energy
-        else:
-            epass = self.KE/self.crr_ratio
-        self.resolution = epass * self.dispersion
-        return self.resolution
-
-    def write_state(self, multiplier_state, retarding_mode='CAE'):
+    def write_state(self, multiplier_state, CAE_mode=True):
         # update crr_ratio or pass_energy when retarding mode changes...
         self.multiplier_state = bool(multiplier_state)
-        assert retarding_mode in self.retarding_modes.keys()
-        self.retarding_mode = retarding_mode
-        val = 0x0400*bool(multiplier_state) + 0x0200*self.retarding_modes[retarding_mode]
+        self.CAE_mode = bool(CAE_mode)
+        val = 0x0400*bool(self.multiplier_state) + 0x0200*bool(not self.CAE_mode)
         self.write_cmd(1, 0x85, val)
         
-        if self.retarding_mode != self.last_mode:
-            self.last_mode = self.retarding_mode
+        if self.CAE_mode != self.last_mode:
+            self.last_mode = self.CAE_mode
             #make sure overloaded resolution command is correct
             self.write_crr_ratio(self.crr_ratio)
             self.write_pass_energy(self.pass_energy)
             self.get_resolution()
         
         
-        # Alternate method
-        # state is a special command that can be only 2 bytes long (instead of 3)
-        #val = 0x04*bool(multiplier_state) + 0x02*self.retarding_modes[retarding_mode]
-        #self.gpib.set_address(1)
-        #self.gpib.write(b"\x85" + chr(val))
-
-
-  
     ####  Quadrupole
     
     quad_cmds = dict(X1=0x81, Y1=0x82, X2=0x83, Y2=0x84)
@@ -172,7 +183,7 @@ class AugerElectronAnalyzer(object):
     
     def write_quad(self, quad, val):
         assert quad in self.quad_cmds.keys()
-        assert -50 <= val <= 50
+        val = min( 50, max( -50, val ))
         val_int = int((val + 50)*655.35)
         #print( 'cmd {} val {}'.format(self.quad_cmds[quad],val_int))
         self.write_cmd(3,self.quad_cmds[quad], val_int)
@@ -195,24 +206,24 @@ class AugerElectronAnalyzerHW(HardwareComponent):
     name = 'auger_electron_analyzer'
 
     def setup(self):
-        self.settings.New("mode", dtype=str, choices=('CAE', 'CRR'))
+        self.settings.New("CAE_mode", dtype=bool, initial = True    )
         self.settings.New("multiplier", dtype=bool, initial = False)
         self.settings.New("KE", dtype=float, unit='eV', vmin=0, vmax=2200, initial = 200)
         self.settings.New("work_function", dtype=float, unit='eV', vmin=0, vmax=10, initial=4.5)
         self.settings.New("pass_energy", dtype=float, unit='V', vmin=5, vmax=500, initial = 100)
         self.settings.New("crr_ratio", dtype=float, vmin=1.5, vmax=20, initial = 5.0)
         self.settings.New("resolution", dtype=float, ro=True, unit='eV')
-        quad_lq_settings = dict( dtype=float, vmin=-50, vmax=+50, initial=0, unit='%%', si=False)
+        quad_lq_settings = dict( dtype=float, vmin=-50, vmax=+50, initial=0, unit='%', si=False)
         self.settings.New("quad_X1", **quad_lq_settings)
         self.settings.New("quad_Y1", **quad_lq_settings)
         self.settings.New("quad_X2", **quad_lq_settings)
         self.settings.New("quad_Y2", **quad_lq_settings)
                           
     def connect(self):
-        E = self.e_analyzer = AugerElectronAnalyzer(debug=self.debug_mode.val)
-        
-        self.settings.mode.hardware_read_func = E.get_retarding_mode
-        self.settings.mode.hardware_set_func = E.write_retarding_mode
+        E = self.analyzer = AugerElectronAnalyzer(debug=self.debug_mode.val)
+                
+        self.settings.CAE_mode.hardware_read_func = E.get_retarding_mode
+        self.settings.CAE_mode.hardware_set_func = E.write_retarding_mode
         
         self.settings.multiplier.hardware_read_func = E.get_multiplier
         self.settings.multiplier.hardware_set_func = E.write_multiplier
@@ -231,25 +242,23 @@ class AugerElectronAnalyzerHW(HardwareComponent):
 
         self.settings.resolution.hardware_read_func = E.get_resolution
         
-        print("setting quad hardware_set_funcs")
         self.settings.quad_X1.hardware_set_func = lambda val, E=E: E.write_quad('X1', val) 
         self.settings.quad_Y1.hardware_set_func = lambda val, E=E: E.write_quad('Y1', val) 
         self.settings.quad_X2.hardware_set_func = lambda val, E=E: E.write_quad('X2', val) 
-        self.settings.quad_Y2.hardware_set_func = lambda val, E=E: E.write_quad('Y2', val) 
-        print("done quad hardware_set_funcs")
-        
+        self.settings.quad_Y2.hardware_set_func = lambda val, E=E: E.write_quad('Y2', val)        
         
         for lqname in ['KE', 'pass_energy', 'crr_ratio']:
             getattr(self.settings, lqname).add_listener(self.settings.resolution.read_from_hardware)
     
     def disconnect(self):
-        self.settings['multiplier'] = False
-        self.e_analyzer.close()
+
         
         # disconnect lq's
         # TODO
-        
-        del self.e_analyzer
+
+        if hasattr(self, 'analyzer'):
+            self.analyzer.close()        
+            del self.analyzer
         
 
 
@@ -316,7 +325,7 @@ class PrologixGPIB_Omicron(object):
         
         out = bytearray()
         for c in s:
-            if c in (esc, lf, cr, plus ):
+            if bytes([c]) in (esc, lf, cr, plus ):
                 out += esc
             out.append(c)
         out += lf
@@ -349,7 +358,7 @@ class AugerElectronAnalyzerTestApp(BaseMicroscopeApp):
         self.ui_analyzer = load_qt_ui_file(sibling_path(__file__, "auger_electron_analyzer_viewer.ui"))
                 
         widget_connections = [
-         ('mode', 'retarding_mode_comboBox'),
+         ('CAE_mode', 'cae_checkBox'),
          ('multiplier', 'multiplier_checkBox'),
          ('KE', 'KE_doubleSpinBox'),
          ('work_function', 'work_func_doubleSpinBox'),
