@@ -249,6 +249,10 @@ class AugerElectronAnalyzerHW(HardwareComponent):
         
         for lqname in ['KE', 'pass_energy', 'crr_ratio']:
             getattr(self.settings, lqname).add_listener(self.settings.resolution.read_from_hardware)
+            
+        # write state to hardware
+        for lq in self.settings.as_list(): 
+            lq.write_to_hardware()
     
     def disconnect(self):
 
