@@ -8,6 +8,7 @@ Thicker wrapper, some commands left out on purpose (gun off for example)
 import serial
 import numpy as np
 import time
+from sympy.physics.units import current
 
 class Remcon32(object):
     
@@ -33,6 +34,22 @@ class Remcon32(object):
         cmd = cmd.encode('utf-8') + b'\r'
         #print(cmd)
         self.ser.write(cmd)
+        
+        
+    
+
+    remcon_error = {600: 'Unknown command',
+                    601: 'Invalid number of parameters',
+                    602: 'Invalid parameter type',
+                    603: 'Parameter out of range',
+                    604: 'Command timeout',
+                    605: 'Catastrophic error - reboot system',
+                    611: 'Unexpected external control abort',
+                    613: 'Parameter Unattainable',
+                    614: 'Option Not Fitted',
+                    615: 'Cannot change that parameter',
+                    616: 'Cannot execute that command',
+                    617: 'Command exceeded the max length of chars'}
     
     def cmd_response(self,cmd,error_ok=False):
         '''
@@ -51,6 +68,10 @@ class Remcon32(object):
 
         if ( (len(r1)<1) or (r1[0]!=ord(b'@')) or (len(r2)<1) or (r2[0]!=ord(b'>')) ):
             if error_ok:
+                return r2
+            elif r2[0]==ord(b'*'):
+                key = int(r2[1:-2])
+                print( 'remcon error ', key, self.remcon_error[key])
                 return r2
             else:
                 print('remcon32 error, command:', cmd, r1, r2)
@@ -74,10 +95,10 @@ class Remcon32(object):
     def set_kV(self,val):
         #command returns immediately, EHT may take several seconds to reach new value
         #success returns None, system does not echo command
-        val = min(val, 20.0)
+        val = min(val, 30.0)
         return self.cmd_response('EHT %f' % val)
     
-    def eht_state(self,state=True):
+    def set_eht_state(self,state=True):
         if state:
             return self.cmd_response('bmon 1') #turns on EHT, also gun if off
         else:
@@ -89,7 +110,7 @@ class Remcon32(object):
             return True
         return False
 
-    def blank_state(self,state=True):
+    def set_blank_state(self,state=True):
         if state:
             return self.cmd_response('bblk 1') #blanks beam
         else:
@@ -160,7 +181,13 @@ class Remcon32(object):
     def get_scm(self):
         #in amps
         #this command fails if SCM is off
-        return str(self.cmd_response('prb?',error_ok=True),'utf-8')
+        value = str(self.cmd_response('prb?',error_ok=False),'utf-8')
+        try:
+            current = float(value)
+        except ValueError:
+            current = 0.0
+        return current
+        
 
 
     '''
@@ -225,7 +252,7 @@ class Remcon32(object):
     imaging++++++++++++++++++++++++++++++++++++++++++
     '''   
    
-    def extscan_state(self,state=True):
+    def set_extscan_state(self,state=True):
         if state:
             return self.cmd_response('edx 1') #ext scan
         else:
