@@ -187,9 +187,9 @@ class SEM_Remcon_HW(HardwareComponent):
                 )
                 
         S.stig_xy.connect_to_hardware(
-                read_func = R.get_stig,
-                write_func = R.set_stig
-                )
+            read_func=R.get_stig,
+            write_func=lambda XY: R.set_stig(*XY),
+            )
         
 
         S.WD.connect_to_hardware(
@@ -250,11 +250,6 @@ class SEM_Remcon_HW(HardwareComponent):
 
         S.scm_current.connect_to_hardware(
             read_func=R.get_scm
-            )
-        
-        S.stig_xy.connect_to_hardware(
-            read_func=R.get_stig,
-            write_func=lambda XY: R.set_stig(*XY),
             )
         
         
