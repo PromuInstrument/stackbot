@@ -200,8 +200,8 @@ class Remcon32(object):
     detectors and signals++++++++++++++++++++++++++++++++++++
     '''
     def display_focus_state(self,state=True):
-        'this controls which display gets/sets brightness, contrast, detector...'
-        'missing from remcon, do with macros'
+        #this controls which display gets/sets brightness, contrast, detector...'
+        #missing from remcon, do with macros'
         if state:
             self.run_macro(2) # 'Zone = 0'
         else:
@@ -259,8 +259,8 @@ class Remcon32(object):
             self.run_macro(10)
         
     def set_bright(self,val=50):
-        'this actually sets voltage offset of detector output, best 50% neutral for quantitative data'
-        'for currently selected display'
+        #this actually sets voltage offset of detector output, best 50% neutral for quantitative data'
+        #for currently selected display
         val = self.limits(val,0,100)
         return self.cmd_response('bgtt %f' % val)
     
@@ -268,25 +268,25 @@ class Remcon32(object):
         return float(self.cmd_response('bgt?'))
     
     def set_contrast(self,val=50):
-        'this actually sets electron multiplier gain/voltage'
-        'for currently selected display'
+        #this actually sets electron multiplier gain/voltage'
+        #for currently selected display'
         val = self.limits(val,0,100)
         return self.cmd_response('crst %f' % val)
     
     def get_contrast(self):
-        'of active display, which cannot be set'
+        #of active display, which cannot be set'
         return float(self.cmd_response('cst?'))
 
     def get_detector(self):
-        'for currently selected display'
+        #for currently selected display'
         return str(self.cmd_response('det?'),'utf-8')
         
     def set_detector(self, name):
-        'for currently selected display'
+        #for currently selected display'
         return self.cmd_response('det %s' % name)
     
     def set_norm(self):
-        'makes scanning "normal" ie both unfrozen, non spot'
+        #makes scanning "normal" ie both unfrozen, non spot'
         return self.cmd_response('norm')
     
     def run_macro(self,n):
@@ -331,16 +331,16 @@ class Remcon32(object):
         return float(self.cmd_response('mag?'))
    
     def set_wd(self,val=9.2):
-        'in mm, max depends on voltage where obj lens current goes to zero'
+        #in mm, max depends on voltage where obj lens current goes to zero
         val = self.limits(val,0.0,50.0)
         return self.cmd_response('focs %f' % val)
     
     def get_wd(self):
         return float(self.cmd_response('foc?'))
    
-    def get_pixel_nm(self):
-        'may depend on image resolution settings...1024 assumed?'
-        return float(self.cmd_response('pix?'))
+    def get_pixel_size(self):
+        #width of image / 1024, regardless of actual resolution, returned in nm and converted to SI
+        return 1e-9*float(self.cmd_response('pix?'))
    
     def set_spot_mode(self,x_val,y_val):
         x_val = int(self.limits(x_val,0,1023))

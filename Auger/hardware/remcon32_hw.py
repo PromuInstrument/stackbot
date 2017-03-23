@@ -17,14 +17,12 @@ class SEM_Remcon_HW(HardwareComponent):
     
     name = 'sem_remcon'
      
-        #gun xy; app xy; beam_shift xy; 
-      
     def setup(self):
         self.name='sem_remcon'
         self.debug='false'
         
             #create logged quantities
-        #+- 10 V dac output moves within "size" box determined by mag, calculate mag with pixel size
+        #+- 10 V dac output moves within "full_size" box determined by mag, calculate mag with pixel size
         self.settings.New(
             'SEM_mode',dtype=str,initial='default',choices=('default',))
         self.settings.New(
@@ -33,16 +31,16 @@ class SEM_Remcon_HW(HardwareComponent):
             'beam_blanking', dtype=bool, initial=False )        
         self.settings.New(
             'dual_channel', dtype=bool, initial=True )        
+#        self.settings.New(
+#            'high_current', dtype=bool, initial=False ) #not for Auger       
         self.settings.New(
-            'high_current', dtype=bool, initial=False ) #not for Auger       
-        self.settings.New(
-            'size', dtype=float, initial=100e-6, unit = 'm', si=True, vmin=1e-9, vmax=3e-3)
+            'full_size', dtype=float, initial=100e-6, unit = 'm', si=True, vmin=1e-9, vmax=3e-3)
         self.settings.New(
             'magnification', dtype=float, vmin=5.0, vmax=5.0e5, si=True, unit='x')               
         self.settings.New(
             'kV', dtype=float, initial=3.0, unit='kV', vmin=0, vmax = 30.0)
         self.WD = self.settings.New(
-            'WD', dtype=float, vmin=0.0, fmt='%.4f',initial=9.3,unit='mm')        
+            'WD', dtype=float, vmin=0.0, fmt='%4.3f',initial=9.3,unit='mm')        
         self.settings.New(
             'contrast0', dtype=float, unit=r'%', fmt='%.1f' ,vmin=0, vmax=100, initial=30)
         self.settings.New(
@@ -73,17 +71,14 @@ class SEM_Remcon_HW(HardwareComponent):
                                ('[5] 120.00 μm',5),
                                ('[6] 300.00 μm',6)])
            
-        self.select_aperture = self.settings.New( #not for Auger
-            'select_aperture', dtype=int,ro=False, vmin=1, vmax=6, choices=aperture_choices)
+#        self.select_aperture = self.settings.New( #not for Auger
+#            'select_aperture', dtype=int,ro=False, vmin=1, vmax=6, choices=aperture_choices)
         self.settings.New('port', dtype=str, initial='COM4')
         
+        self.settings.magnification.add_listener(self.on_new_mag)
+        self.settings.full_size.add_listener(self.on_new_full_size)
+
         
-        
-        #connect to GUI
-        if False:
-            self.magnification.connect_bidir_to_widget(self.gui.ui.sem_magnification_doubleSpinBox)
-            self.beam_blanking.connect_bidir_to_widget(self.gui.ui.beam_blanking_checkBox)
-            
 #         self.stage_x=self.settings.New(name='stage_x',
 #                                                dtype=float,
 #                                                ro=False,
@@ -109,81 +104,70 @@ class SEM_Remcon_HW(HardwareComponent):
 #                                                unit='mm')
 #         
         
+    def on_new_mag(self):
+        if hasattr(self, 'remcon'):            
+            self.settings['full_size'] = 1024 * self.remcon.get_pixel_size()
         
+    def on_new_full_size(self):
+        if hasattr(self, 'remcon'):
+            # SEM pixel size is always image_width / 1024, regardless of actual resolution
+            old_mag = self.settings['magnification']
+            old_pixel = self.remcon.get_pixel_size()
+            self.settings['magnification'] = old_mag*(1024*old_pixel)/self.settings['full_size']
+                   
     def connect(self):
-        #if self.debug: print "connecting to REMCON32"
         S = self.settings
-        
-        #connecting to hardware
-        R = self.remcon = Remcon32(port=S['port'])
-        
-        
+        R = self.remcon = Remcon32(port=S['port'])  
+                      
         #connect logged quantity
         S.magnification.connect_to_hardware(
                 read_func = R.get_mag,
                 write_func = R.set_mag
-                )
-        
+                )        
         S.eht_on.connect_to_hardware(
                 read_func = R.get_eht_state,
                 write_func = R.set_eht_state
-                )
-                
+                )                
         S.beam_blanking.connect_to_hardware(
                 read_func = R.get_blank_state,
                 write_func = R.set_blank_state
-                )
-                
+                )                
         S.dual_channel.connect_to_hardware(
                 write_func = R.dual_channel_state,
-                )
-                
-        S.high_current.connect_to_hardware(
-                write_func = R.high_current_state,
-                )
-                
+                )                
+#        S.high_current.connect_to_hardware(
+#                write_func = R.high_current_state,
+#                )                
         S.stig_xy.connect_to_hardware(
             read_func=R.get_stig,
             write_func=lambda XY: R.set_stig(*XY),
-            )
-        
+            )        
         S.gun_xy.connect_to_hardware(
             write_func=lambda XY: R.set_gun_align(*XY),
-            )
-        
+            )        
         S.aperture_xy.connect_to_hardware(
             read_func=R.get_ap_xy,
             write_func=lambda XY: R.set_ap_xy(*XY),
-            )
-        
+            )        
         S.beamshift_xy.connect_to_hardware(
             write_func=lambda XY: R.set_beam_shift(*XY)
-            )
-        
-
+            )        
         S.WD.connect_to_hardware(
                 read_func = R.get_wd,
                 write_func = R.set_wd
-                )
-                
-        S.select_aperture.connect_to_hardware(
-                read_func = R.get_ap,
-                write_func = R.set_ap
-                )
-                
-        
+                )                
+#        S.select_aperture.connect_to_hardware(
+#                read_func = R.get_ap,
+#                write_func = R.set_ap
+#                )        
         S.external_scan.connect_to_hardware(
                 read_func = R.get_extscan_state,
-                #write_func = lambda X: R.set_extscan_state(X)
                 write_func = R.set_extscan_state
                 )
-
         S.eht_on.connect_to_hardware(
                 read_func = R.get_eht_state,
                 write_func = R.set_eht_state
-                )
-        
-
+                )        
 #         S.stage_x.hardware_read_func=\
 #             self.remcon.read_stage_x
 #         S.stage_x.hardware_set_func=\
@@ -202,21 +186,17 @@ class SEM_Remcon_HW(HardwareComponent):
         S.detector0.connect_to_hardware(
                 read_func = lambda: R.get_chan_detector(True),
                 write_func = lambda X: R.set_chan_detector(X,True)
-                )
-        
+                )        
         S.detector1.connect_to_hardware(
                 read_func = lambda: R.get_chan_detector(False),
                 write_func = lambda X: R.set_chan_detector(X,False)
-                )
-        
+                )        
         S.kV.connect_to_hardware(
             read_func = R.get_kV,
-            write_func = R.set_kV)
-        
+            write_func = R.set_kV)       
         S.scm_state.connect_to_hardware(
             write_func=R.scm_state
             )
-
         S.scm_current.connect_to_hardware(
             read_func=R.get_scm
             )
@@ -229,21 +209,30 @@ class SEM_Remcon_HW(HardwareComponent):
             write_func=lambda X: R.set_chan_contrast(X,False),            
             )
        
-        
+            # write state to hardware
+        for lq in self.settings.as_list(): 
+            lq.write_to_hardware()
+            #set detector offset to zero so analog data is quantatative
+        R.set_chan_bright(50,True)
+        R.set_chan_bright(50,False)
             
     def disconnect(self):
 #         for lq in self.logged_quantities.values():
 #             lq.hardware_read_func = None
 #             lq.hardware_set_func = None
         #if self.connected.val:
-        self.remcon.close()
-        del self.remcon
+        if hasattr(self, 'remcon'):
+            self.remcon.close()
+            del self.remcon
             
 class Auger_Remcon_HW(SEM_Remcon_HW):
     '''subclass SEM_Remcon_HW to handle Auger-specific command set'''
     
+    name = 'auger_remcon'
+    
     def setup(self):
         SEM_Remcon_HW.setup(self)
+        
         S = self.settings
         #FIX disable or better remove high current and select_aperture from settings...
         for key in S.as_dict().keys():
@@ -251,8 +240,6 @@ class Auger_Remcon_HW(SEM_Remcon_HW):
             if key == 'select_aperture':
                 print("{} ro status:".format(key), S.get_lq(key).ro)
                 S.get_lq(key).change_readonly(ro=True)
-                print("S.get_lq({}) Type:".format(key), type(S.get_lq(key)))
-                print( 'Auger_remcon', S.get_lq(key).name, "{} ro status: {}".format(key,S.get_lq(key).ro) )
         print( 'done with Auger_Remcon_HW setup')
         S.New('probe_current',dtype=str,initial='Max',choices=('Max','3.0 nA','1.0 nA','400 pA'))
        
