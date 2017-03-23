@@ -182,9 +182,10 @@ class AugerElectronAnalyzer(object):
     quad_index = dict(X1=0, Y1=1, X2=2, Y2=3)
     
     def write_quad(self, quad, val):
+        #electronics run 0 to 100, 50 neutral, software -100 to +100 %
         assert quad in self.quad_cmds.keys()
-        val = min( 50, max( -50, val ))
-        val_int = int((val + 50)*655.35)
+        val = min( 100, max( -100, val ))
+        val_int = int((val + 100)*655.35*0.5)
         #print( 'cmd {} val {}'.format(self.quad_cmds[quad],val_int))
         self.write_cmd(3,self.quad_cmds[quad], val_int)
         self.quad_value[quad] = val
@@ -213,7 +214,7 @@ class AugerElectronAnalyzerHW(HardwareComponent):
         self.settings.New("pass_energy", dtype=float, unit='V', vmin=5, vmax=500, initial = 100)
         self.settings.New("crr_ratio", dtype=float, vmin=1.5, vmax=20, initial = 5.0)
         self.settings.New("resolution", dtype=float, ro=True, unit='eV')
-        quad_lq_settings = dict( dtype=float, vmin=-50, vmax=+50, initial=0, unit='%', si=False)
+        quad_lq_settings = dict( dtype=float, vmin=-100, vmax=+100, initial=0, unit='%', si=False)
         self.settings.New("quad_X1", **quad_lq_settings)
         self.settings.New("quad_Y1", **quad_lq_settings)
         self.settings.New("quad_X2", **quad_lq_settings)

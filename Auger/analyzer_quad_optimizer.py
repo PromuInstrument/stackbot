@@ -32,7 +32,7 @@ class AugerQuadOptimizer(Measurement):
                                     S.Energy_step, S.Energy_num_steps)"""
         
         #Settings for quad optimization parameters
-        lq_quad = dict(dtype=float, ro=False, vmin=-50, vmax=50, unit='%')
+        lq_quad = dict(dtype=float, ro=False, vmin=-100, vmax=100, unit='%')
         self.settings.New('Quad_X1_Min', initial=-10, **lq_quad)
         self.settings.New('Quad_X1_Max', initial=10, **lq_quad)
         self.settings.New('Quad_X1_Tol', initial=0.1, dtype=float, ro=False, unit='%', vmin=0)
@@ -48,6 +48,7 @@ class AugerQuadOptimizer(Measurement):
         # Required Hardware objects
         self.auger_fpga_hw = self.app.hardware['auger_fpga']
         self.analyzer_hw = self.app.hardware['auger_electron_analyzer']
+        self.sem_hw = self.app.hardware['sem_remcon']
                 
     def setup_figure(self):
         
