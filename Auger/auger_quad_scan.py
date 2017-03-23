@@ -16,6 +16,13 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
     
     name = "auger_quad_slowscan"
     
+    ''' FIX
+    modified quad scan to do gun align scan, works but slow, 
+    also should detect inlens signal, not auger, which gives odd effects
+    probably should duplicate measurement...
+    
+    Also could use mouse pointer to control stig etc, !
+    '''
     q1 = {'x_slow':'quad_X1', 'x_fast':'X1','y_slow':'quad_Y1', 'y_fast':'Y1'}
     q2 = {'x_slow':'quad_X2', 'x_fast':'X2','y_slow':'quad_Y2', 'y_fast':'Y2'}
     xx = {'x_slow':'quad_X1', 'x_fast':'X1','y_slow':'quad_X2', 'y_fast':'X2'}
@@ -28,8 +35,8 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
         self.settings.continuous_scan.change_readonly(True)
         self.settings.n_frames.change_readonly(True)
         
-        self.settings.New('quad_scan_mode', dtype=int, initial = 0, vmin = 0, vmax = 3, 
-                          choices=(('quad 1',0),('quad 2',1),('x shift/angle',2),('y shift/angle',3)))
+        self.settings.New('quad_scan_mode', dtype=int, initial = 0, vmin = 0, vmax = 4, 
+                          choices=(('quad 1',0),('quad 2',1),('x shift/angle',2),('y shift/angle',3),('SEM gun',4)))
 
         #auger analyzer
         self.settings.New('ke_start', dtype=float, initial=30,unit = 'V',vmin=0,vmax = 2200)
@@ -48,13 +55,14 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
 
         self.auger_fpga_hw = self.app.hardware['auger_fpga']
         self.analyzer_hw = self.app.hardware['auger_electron_analyzer']
+        self.sem_hw = self.app.hardware['sem_remcon']
         #self.analyzer = self.analyzer_hw.analyzer
         NUM_CHANS = self.auger_fpga_hw.NUM_CHANS
         
         #raster scan setup
         #self.h_unit = self.v_unit = "%"
-        self.set_h_limits(-50,50, set_scan_to_max=True)
-        self.set_v_limits(-50,50, set_scan_to_max=True)
+        self.set_h_limits(-100,100, set_scan_to_max=True)
+        self.set_v_limits(-100,100, set_scan_to_max=True)
         
         
     # begining of run
@@ -97,26 +105,36 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
 
     def move_position_start(self, x,y):       
         qmode = self.settings['quad_scan_mode']
-        XX = self.scan_mode[qmode]['x_slow']
-        YY = self.scan_mode[qmode]['y_slow']
-        self.analyzer_hw.settings[XX] = x
-        self.analyzer_hw.settings[YY] = y
+        if qmode == 4:
+            self.sem_hw.settings['gun_xy'] = (x,y)
+        else:
+            XX = self.scan_mode[qmode]['x_slow']
+            YY = self.scan_mode[qmode]['y_slow']
+            self.analyzer_hw.settings[XX] = x
+            self.analyzer_hw.settings[YY] = y
+
         time.sleep(0.2)
     
     def move_position_slow(self, x,y, dx, dy):
         qmode = self.settings['quad_scan_mode']
-        XX = self.scan_mode[qmode]['x_slow']
-        YY = self.scan_mode[qmode]['y_slow']
-        self.analyzer_hw.settings[XX] = x
-        self.analyzer_hw.settings[YY] = y
+        if qmode == 4:
+            self.sem_hw.settings['gun_xy'] = (x,y)
+        else:
+            XX = self.scan_mode[qmode]['x_slow']
+            YY = self.scan_mode[qmode]['y_slow']
+            self.analyzer_hw.settings[XX] = x
+            self.analyzer_hw.settings[YY] = y
         
     def move_position_fast(self, x,y, dx, dy):
         qmode = self.settings['quad_scan_mode']
-        XX = self.scan_mode[qmode]['x_fast']
-        YY = self.scan_mode[qmode]['y_fast']
-        self.analyzer_hw.analyzer.write_quad(XX,x)
-        self.analyzer_hw.analyzer.write_quad(YY,y)
-        #self.move_position_slow(x, y, dx, dy)
+        if qmode == 4:
+            self.sem_hw.settings['gun_xy'] = (x,y)
+        else:
+            XX = self.scan_mode[qmode]['x_fast']
+            YY = self.scan_mode[qmode]['y_fast']
+            self.analyzer_hw.analyzer.write_quad(XX,x)
+            self.analyzer_hw.analyzer.write_quad(YY,y)
+            #self.move_position_slow(x, y, dx, dy)
         
     def on_new_frame(self, frame_i):
         print("New frame", frame_i)

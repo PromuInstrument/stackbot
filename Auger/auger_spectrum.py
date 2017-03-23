@@ -53,6 +53,7 @@ class AugerSpectrum(Measurement):
         
         self.auger_fpga_hw = self.app.hardware['auger_fpga']
         self.analyzer_hw = self.app.hardware['auger_electron_analyzer']
+        self.sem_ = self.app.hardware['sem_remcon']
         #self.analyzer = self.analyzer_hw.analyzer
         NUM_CHANS = self.auger_fpga_hw.NUM_CHANS
         
