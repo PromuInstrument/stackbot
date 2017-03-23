@@ -97,7 +97,7 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
 
 
 
-        self.settings_load_ini('auger_fast_scan_settings.ini')
+        self.settings_load_ini('auger_app_settings.ini')
 
         self.ui.show()
         
