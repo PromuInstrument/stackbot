@@ -324,7 +324,7 @@ class Remcon32(object):
         return bool(int(self.cmd_response('exs?')))
    
     def set_mag(self,val=500):
-        val = self.limits(val,5,5e5)
+        val = self.limits(val,5,1e6)
         return self.cmd_response('mag %f' % val)
     
     def get_mag(self):

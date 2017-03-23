@@ -29,7 +29,7 @@ logging.getLogger('PyQt4').setLevel(logging.WARNING)
 logging.getLogger('PyQt5').setLevel(logging.WARNING)
 logging.getLogger('traitlets').setLevel(logging.WARNING)
 
-logging.getLogger('ScopeFoundry.logged_quantity.LoggedQuantity').setLevel(logging.WARNING)
+#logging.getLogger('ScopeFoundry.logged_quantity.LoggedQuantity').setLevel(logging.WARNING)
 
 class AugerMicroscopeApp(BaseMicroscopeApp):
     
@@ -91,6 +91,9 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         
         from Auger.analyzer_quad_optimizer import AugerQuadOptimizer
         self.add_measurement(AugerQuadOptimizer(self))
+        
+        from Auger.hardware.sem_align import SEMAlignMeasure
+        self.add_measurement(SEMAlignMeasure)
 
 #        self.phi_ion_gun = self.add_hardware_component(PhiIonGunHardwareComponent(self))
 #        self.ion_gun_status = self.add_measurement_component(IonGunStatus(self))

@@ -31,12 +31,12 @@ class SEM_Remcon_HW(HardwareComponent):
             'beam_blanking', dtype=bool, initial=False )        
         self.settings.New(
             'dual_channel', dtype=bool, initial=True )        
-#        self.settings.New(
-#            'high_current', dtype=bool, initial=False ) #not for Auger       
+        self.settings.New(
+            'high_current', dtype=bool, initial=False ) #not for Auger       
         self.settings.New(
             'full_size', dtype=float, initial=100e-6, unit = 'm', si=True, vmin=1e-9, vmax=3e-3)
         self.settings.New(
-            'magnification', dtype=float, vmin=5.0, vmax=5.0e5, si=True, unit='x')               
+            'magnification', dtype=float, vmin=5.0, vmax=1.0e6, si=True, unit='x')               
         self.settings.New(
             'kV', dtype=float, initial=3.0, unit='kV', vmin=0, vmax = 30.0)
         self.WD = self.settings.New(
@@ -71,8 +71,8 @@ class SEM_Remcon_HW(HardwareComponent):
                                ('[5] 120.00 μm',5),
                                ('[6] 300.00 μm',6)])
            
-#        self.select_aperture = self.settings.New( #not for Auger
-#            'select_aperture', dtype=int,ro=False, vmin=1, vmax=6, choices=aperture_choices)
+        self.select_aperture = self.settings.New( #not for Auger
+            'select_aperture', dtype=int,ro=False, vmin=1, vmax=6, choices=aperture_choices)
         self.settings.New('port', dtype=str, initial='COM4')
         
         self.settings.magnification.add_listener(self.on_new_mag)
@@ -105,17 +105,20 @@ class SEM_Remcon_HW(HardwareComponent):
 #         
         
     def on_new_mag(self):
-        if hasattr(self, 'remcon'):            
-            self.settings['full_size'] = 1024 * self.remcon.get_pixel_size()
+        if hasattr(self, 'remcon') and not self.running_on_new_full_size:            
+            self.settings.full_size.update_value(1024 * self.remcon.get_pixel_size())
         
     def on_new_full_size(self):
         if hasattr(self, 'remcon'):
             # SEM pixel size is always image_width / 1024, regardless of actual resolution
             old_mag = self.settings['magnification']
             old_pixel = self.remcon.get_pixel_size()
-            self.settings['magnification'] = old_mag*(1024*old_pixel)/self.settings['full_size']
+            self.running_on_new_full_size = True
+            self.settings.magnification.update_value(old_mag*(1024*old_pixel)/self.settings['full_size'])
+            self.running_on_new_full_size = False
+            
                    
-    def connect(self):
+    def connect(self, write_to_hardware=True):
         S = self.settings
         R = self.remcon = Remcon32(port=S['port'])  
                       
@@ -135,9 +138,9 @@ class SEM_Remcon_HW(HardwareComponent):
         S.dual_channel.connect_to_hardware(
                 write_func = R.dual_channel_state,
                 )                
-#        S.high_current.connect_to_hardware(
-#                write_func = R.high_current_state,
-#                )                
+        S.high_current.connect_to_hardware(
+                write_func = R.high_current_state,
+                )                
         S.stig_xy.connect_to_hardware(
             read_func=R.get_stig,
             write_func=lambda XY: R.set_stig(*XY),
@@ -156,10 +159,10 @@ class SEM_Remcon_HW(HardwareComponent):
                 read_func = R.get_wd,
                 write_func = R.set_wd
                 )                
-#        S.select_aperture.connect_to_hardware(
-#                read_func = R.get_ap,
-#                write_func = R.set_ap
-#                )        
+        S.select_aperture.connect_to_hardware(
+                read_func = R.get_ap,
+                write_func = R.set_ap
+                )        
         S.external_scan.connect_to_hardware(
                 read_func = R.get_extscan_state,
                 write_func = R.set_extscan_state
@@ -209,18 +212,17 @@ class SEM_Remcon_HW(HardwareComponent):
             write_func=lambda X: R.set_chan_contrast(X,False),            
             )
        
-            # write state to hardware
-        for lq in self.settings.as_list(): 
-            lq.write_to_hardware()
-            #set detector offset to zero so analog data is quantatative
+        # write state to hardware
+#         if write_to_hardware:
+#             for lq in self.settings.as_list(): 
+#                 lq.write_to_hardware()
+#                 #set detector offset to zero so analog data is quantatative
         R.set_chan_bright(50,True)
         R.set_chan_bright(50,False)
+        self.read_from_hardware()
             
     def disconnect(self):
-#         for lq in self.logged_quantities.values():
-#             lq.hardware_read_func = None
-#             lq.hardware_set_func = None
-        #if self.connected.val:
+        self.settings.disconnect_all_from_hardware()
         if hasattr(self, 'remcon'):
             self.remcon.close()
             del self.remcon
@@ -228,28 +230,30 @@ class SEM_Remcon_HW(HardwareComponent):
 class Auger_Remcon_HW(SEM_Remcon_HW):
     '''subclass SEM_Remcon_HW to handle Auger-specific command set'''
     
-    name = 'auger_remcon'
-    
+        
     def setup(self):
         SEM_Remcon_HW.setup(self)
-        
-        S = self.settings
-        #FIX disable or better remove high current and select_aperture from settings...
-        for key in S.as_dict().keys():
-            print( 'Auger_Remcon_HW', key )
-            if key == 'select_aperture':
-                print("{} ro status:".format(key), S.get_lq(key).ro)
-                S.get_lq(key).change_readonly(ro=True)
-        print( 'done with Auger_Remcon_HW setup')
-        S.New('probe_current',dtype=str,initial='Max',choices=('Max','3.0 nA','1.0 nA','400 pA'))
+        self.settings.New('probe_current', dtype=str, 
+                          initial='Max',
+                          choices=('Max','3.0 nA','1.0 nA','400 pA'))
        
     def connect(self):
-        SEM_Remcon_HW.connect(self)
+        SEM_Remcon_HW.connect(self, write_to_hardware=False)
+        S = self.settings
         
+        S.select_aperture.disconnect_from_hardware(dis_read=False)
+        S.high_current.disconnect_from_hardware()
+        S.select_aperture.change_readonly(True)
+        S.high_current.change_readonly(True)
+                
         self.settings.probe_current.connect_to_hardware(
                 write_func = self.remcon.set_probe_current
                 )
-                
+        
+        for lq in self.settings.as_list(): 
+                lq.write_to_hardware()
+
     
     def disconnect(self):
         SEM_Remcon_HW.disconnect(self)
+
