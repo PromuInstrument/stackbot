@@ -26,6 +26,9 @@ class SupraCLApp(BaseMicroscopeApp):
         from Auger.sem_sync_raster_hardware import SemSyncRasterDAQ
         self.add_hardware(SemSyncRasterDAQ(self))
 
+        from Auger.hardware.remcon32_hw import SEM_Remcon_HW
+        self.add_hardware(SEM_Remcon_HW(self))
+        
         from Auger.sem_sync_raster_measure import SemSyncRasterScan
         self.add_measurement(SemSyncRasterScan(self))
         

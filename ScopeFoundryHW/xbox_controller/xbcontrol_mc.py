@@ -6,7 +6,6 @@ import time
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 import pygame.event
 from pygame.constants import JOYAXISMOTION, JOYHATMOTION, JOYBUTTONDOWN, JOYBUTTONUP
-from ScopeFoundryHW.xbox_controller.xbcontrol_ec import XboxControlDevice
 
 class XboxControlMeasure(Measurement):
     """This class contains connections to logged quantities and ui elements. 

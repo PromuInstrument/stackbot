@@ -9,6 +9,7 @@ import serial
 import numpy as np
 import time
 
+
 class Remcon32(object):
     
     #direct serial communications, Zeiss Remcon32 response parsing++++++++++++++++++++++++++++++++
@@ -20,19 +21,24 @@ class Remcon32(object):
         self.timeout = 0.50    #readline called twice, timeout only for comm errors
         self.port=port
         self.ser = serial.Serial(port=self.port, baudrate=9600, 
-                                 bytesize= serial.EIGHTBITS, 
-                                 parity=serial.PARITY_NONE, 
-                                 stopbits=serial.STOPBITS_ONE,
-                                 timeout=self.timeout)
+                                    bytesize= serial.EIGHTBITS, parity=serial.PARITY_NONE, 
+                                    stopbits=serial.STOPBITS_ONE, timeout=self.timeout)
     
     def close(self):
         self.ser.close()
         
-    def write_cmd(self,cmd):
-        #sends bytestring, not unicode, text to Remcon32, appends terminating CR
-        cmd = cmd.encode('utf-8') + b'\r'
-        #print(cmd)
-        self.ser.write(cmd)
+    remcon_error = {600: 'Unknown command',
+                    601: 'Invalid number of parameters',
+                    602: 'Invalid parameter type',
+                    603: 'Parameter out of range',
+                    604: 'Command timeout',
+                    605: 'Catastrophic error - reboot system',
+                    611: 'Unexpected external control abort',
+                    613: 'Parameter Unattainable',
+                    614: 'Option Not Fitted',
+                    615: 'Cannot change that parameter',
+                    616: 'Cannot execute that command',
+                    617: 'Command exceeded the max length of chars'}
     
     def cmd_response(self,cmd,error_ok=False):
         '''
@@ -52,10 +58,11 @@ class Remcon32(object):
         if ( (len(r1)<1) or (r1[0]!=ord(b'@')) or (len(r2)<1) or (r2[0]!=ord(b'>')) ):
             if error_ok:
                 return r2
+            elif r2[0]==ord(b'*'):
+                key = int(r2[1:-2])
+                return 'remcon error {} {}'.format(key, self.remcon_error[key])
             else:
-                print('remcon32 error, command:', cmd, r1, r2)
-                return
-        
+                return 'remcon error, command: {} text {} {}'.format( cmd, r1, r2)        
         if len(r2) > 3:
             #return data, if any, always single line
             return r2[1:-2]
@@ -74,10 +81,10 @@ class Remcon32(object):
     def set_kV(self,val):
         #command returns immediately, EHT may take several seconds to reach new value
         #success returns None, system does not echo command
-        val = min(val, 20.0)
+        val = min(val, 30.0)
         return self.cmd_response('EHT %f' % val)
     
-    def eht_state(self,state=True):
+    def set_eht_state(self,state=True):
         if state:
             return self.cmd_response('bmon 1') #turns on EHT, also gun if off
         else:
@@ -89,7 +96,7 @@ class Remcon32(object):
             return True
         return False
 
-    def blank_state(self,state=True):
+    def set_blank_state(self,state=True):
         if state:
             return self.cmd_response('bblk 1') #blanks beam
         else:
@@ -120,13 +127,13 @@ class Remcon32(object):
         resp = self.cmd_response('apr?')
         return int(resp)
         
-    def set_ap_align(self,x_val,y_val):
+    def set_ap_xy(self,x_val,y_val):
         #value for current selected aperture'
         x_val = self.limits( x_val)
         y_val = self.limits( y_val)
         return self.cmd_response('aaln {} {}'.format(x_val, y_val))
         
-    def get_ap_align(self):
+    def get_ap_xy(self):
         #value for current selected aperture'
         resp = self.cmd_response('aln?')
         return np.fromstring(resp,sep=' ')
@@ -142,6 +149,26 @@ class Remcon32(object):
         x = self.limits(x)/100.0
         y = self.limits(y)/100.0
         return self.cmd_response('BEAM {} {}'.format(x,y))
+    
+    def high_current_state(self, state=True):
+        #can only set with macros, not in remcon
+        #not for Auger
+        if state:
+            self.run_macro(8)
+        else:
+            self.run_macro(9)
+    
+    def set_probe_current(self,mode):
+        #only for Auger
+        if mode == '3.0 nA':
+            self.run_macro(5)
+        elif mode == '1.0 nA':
+            self.run_macro(6)
+        elif mode == '400 pA':
+            self.run_macro(7)
+        else:
+            self.run_macro(4)
+           
         
 #    CAN SET BUT NOT READ...
 #    def get_gun_align(self):
@@ -153,34 +180,87 @@ class Remcon32(object):
         #specimen current monitor, when on touch alarm disabled'
         #when off, 10 v bias on sample'
         if state:
-            return self.cmd_response('scm 1') #ext scan
+            return self.cmd_response('scm 1') 
         else:
             return self.cmd_response('scm 0') 
 
     def get_scm(self):
         #in amps
         #this command fails if SCM is off
-        return str(self.cmd_response('prb?',error_ok=True),'utf-8')
+        value = str(self.cmd_response('prb?',error_ok=False),'utf-8')
+        try:
+            current = float(value)
+        except ValueError:
+            current = 0.0
+        return current
+        
 
 
     '''
     detectors and signals++++++++++++++++++++++++++++++++++++
     '''
     def display_focus_state(self,state=True):
-        'this controls which display gets/sets brightness, contrast, detector...'
-        'missing from remcon, do with macros'
+        #this controls which display gets/sets brightness, contrast, detector...'
+        #missing from remcon, do with macros'
         if state:
             self.run_macro(2) # 'Zone = 0'
         else:
             self.run_macro(3) # 'Zone = 1'
     
-    def set_dual_channel(self):
-        self.run_macro(1) # 'DualMonitor = On'
-
+    def set_contrast_primary(self,val):
+        self.set_contrast_bright(val,True)
+        
+    def get_contrast_primary(self):
+        self.get_contrast_bright(True)
+        
+    def set_contrast_secondary(self,val):
+        self.set_contrast_bright(val,True)
+        
+    def get_contrast_secondary(self):
+        self.get_contrast_bright(True)
+        
+    def set_chan_bright(self,val=50,primary=True):
+        self.display_focus_state(primary)
+        self.set_bright(val)
+        self.display_focus_state(True) #focus on primary display
+    
+    def get_chan_bright(self,primary=True):
+        self.display_focus_state(primary)
+        b = self.get_bright()
+        self.display_focus_state(True) #focus on primary display
+        return b
+    
+    def set_chan_contrast(self,val=30,primary=True):
+        self.display_focus_state(primary)
+        self.set_contrast(val)
+        self.display_focus_state(True) #focus on primary display
+    
+    def get_chan_contrast(self,primary=True):
+        self.display_focus_state(primary)
+        c = self.get_contrast()
+        self.display_focus_state(True) #focus on primary display
+        return c
+    
+    def set_chan_detector(self,name,primary=True):
+        self.display_focus_state(primary)
+        self.set_detector(name)
+        self.display_focus_state(True) #focus on primary display
+    
+    def get_chan_detector(self,primary=True):
+        self.display_focus_state(primary)
+        name = self.get_detector()
+        self.display_focus_state(True) #focus on primary display
+        return name
+    
+    def dual_channel_state(self,state=True):
+        if state:
+            self.run_macro(1) # 'DualMonitor = On'
+        else:
+            self.run_macro(10)
         
     def set_bright(self,val=50):
-        'this actually sets voltage offset of detector output, best 50% neutral for quantitative data'
-        'for currently selected display'
+        #this actually sets voltage offset of detector output, best 50% neutral for quantitative data'
+        #for currently selected display
         val = self.limits(val,0,100)
         return self.cmd_response('bgtt %f' % val)
     
@@ -188,44 +268,53 @@ class Remcon32(object):
         return float(self.cmd_response('bgt?'))
     
     def set_contrast(self,val=50):
-        'this actually sets electron multiplier gain/voltage'
-        'for currently selected display'
+        #this actually sets electron multiplier gain/voltage'
+        #for currently selected display'
         val = self.limits(val,0,100)
         return self.cmd_response('crst %f' % val)
     
     def get_contrast(self):
-        'of active display, which cannot be set'
+        #of active display, which cannot be set'
         return float(self.cmd_response('cst?'))
 
     def get_detector(self):
-        'for currently selected display'
+        #for currently selected display'
         return str(self.cmd_response('det?'),'utf-8')
         
     def set_detector(self, name):
-        'for currently selected display'
+        #for currently selected display'
         return self.cmd_response('det %s' % name)
     
+    def set_norm(self):
+        #makes scanning "normal" ie both unfrozen, non spot'
+        return self.cmd_response('norm')
+    
     def run_macro(self,n):
-        'runs macro REMCONn in SmartSem, macro must exist or error'
-        'fill in for missing commands'
+        '''
+        runs macro REMCONn in SmartSem, macro must exist or error'
+        fill in for missing commands
+        
+        REMCON1 sets dual monitor mode ON
+        REMCON2 display focus primary
+        REMCON3 display focus secondary
+        REMCON4 - Auger, set probe currrent Max
+        REMCON5 - Auger, set probe currrent 3.0 nA
+        REMCON6 - Auger, set probe currrent 1.0 nA
+        REMCON7 - Auger, set probe current 400 pA
+        REMCON8 - Except Auger, high current ON
+        REMCON9 - Except Auger, high current OFF
+        REMCON10 - set dual monitor OFF
+        
+        also SmartSem START macro runs Remcon32 in autoconnect mode
+        '''
         return self.cmd_response('mac %i' % n)
    
-    def set_norm(self):
-        'makes scanning "normal" ie both unfrozen, non spot'
-        return self.cmd_response('norm')
         
-    def set_sem_scanning(self,state=True):
-        '(re)starts scan, unfreezes'
-        'this controls which display gets/sets brightness, contrast, detector...'
-        if state:
-            return self.cmd_response('disp 0') #primary display
-        else:
-            return self.cmd_response('disp 1')
     '''
     imaging++++++++++++++++++++++++++++++++++++++++++
     '''   
    
-    def extscan_state(self,state=True):
+    def set_extscan_state(self,state=True):
         if state:
             return self.cmd_response('edx 1') #ext scan
         else:
@@ -235,23 +324,23 @@ class Remcon32(object):
         return bool(int(self.cmd_response('exs?')))
    
     def set_mag(self,val=500):
-        val = self.limits(val,5,5e5)
+        val = self.limits(val,5,1e6)
         return self.cmd_response('mag %f' % val)
     
     def get_mag(self):
         return float(self.cmd_response('mag?'))
    
     def set_wd(self,val=9.2):
-        'in mm, max depends on voltage where obj lens current goes to zero'
+        #in mm, max depends on voltage where obj lens current goes to zero
         val = self.limits(val,0.0,50.0)
         return self.cmd_response('focs %f' % val)
     
     def get_wd(self):
         return float(self.cmd_response('foc?'))
    
-    def get_pixel_nm(self):
-        'may depend on image resolution settings...1024 assumed?'
-        return float(self.cmd_response('pix?'))
+    def get_pixel_size(self):
+        #width of image / 1024, regardless of actual resolution, returned in nm and converted to SI
+        return 1e-9*float(self.cmd_response('pix?'))
    
     def set_spot_mode(self,x_val,y_val):
         x_val = int(self.limits(x_val,0,1023))
