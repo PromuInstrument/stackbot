@@ -81,27 +81,27 @@ class ANC_RemoteMeasure(Measurement):
             self.settings[axis_name + '_pos'] = self.anc_hw.get_pos_by_name(axis_name)
 
     def run(self):
-        
-        self.app.measurements['xbcontrol_mc'].start()
-        self.xb_hw = self.app.hardware['xbox_controller']
-        
-        while not self.interrupt_measurement_called:
-            #grab lq from xbox hw
-            if self.xb_hw.settings['N'] == True:
-                self.move_y_up()
-            elif self.xb_hw.settings['S'] == True:
-                self.move_y_down()
-            elif self.xb_hw.settings['W'] == True:
-                self.move_x_down()
-            elif self.xb_hw.settings['E'] == True:
-                self.move_x_up()
-            elif self.xb_hw.settings['Y'] == True:
-                self.move_yaw_up()
-            elif self.xb_hw.settings['A'] == True:
-                self.move_yaw_down()
-            elif self.xb_hw.settings['X'] == True:
-                self.move_pitch_down()
-            elif self.xb_hw.settings['B'] == True:
-                self.move_pitch_up()   
+        if 'xbcontrol_mc' in self.app.measurements:
+            self.app.measurements['xbcontrol_mc'].start()
+            self.xb_hw = self.app.hardware['xbox_controller']
             
-            #set anc150 lqs / functions
+            while not self.interrupt_measurement_called:
+                #grab lq from xbox hw
+                if self.xb_hw.settings['N'] == True:
+                    self.move_y_up()
+                elif self.xb_hw.settings['S'] == True:
+                    self.move_y_down()
+                elif self.xb_hw.settings['W'] == True:
+                    self.move_x_down()
+                elif self.xb_hw.settings['E'] == True:
+                    self.move_x_up()
+                elif self.xb_hw.settings['Y'] == True:
+                    self.move_yaw_up()
+                elif self.xb_hw.settings['A'] == True:
+                    self.move_yaw_down()
+                elif self.xb_hw.settings['X'] == True:
+                    self.move_pitch_down()
+                elif self.xb_hw.settings['B'] == True:
+                    self.move_pitch_up()   
+                
+                #set anc150 lqs / functions
