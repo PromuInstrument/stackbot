@@ -52,7 +52,7 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from Auger.sem_sync_raster_hardware import SemSyncRasterDAQ
         self.add_hardware_component(SemSyncRasterDAQ(self))
         
-        from Auger.NIFPGA.ext_trig_auger_fpga_hw import AugerFPGA_HW
+        from Auger.NIFPGA.auger_fpga_hw import AugerFPGA_HW
         self.add_hardware(AugerFPGA_HW(self))
         
         from Auger.auger_electron_analyzer import AugerElectronAnalyzerHW
@@ -91,6 +91,9 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         
         from Auger.analyzer_quad_optimizer import AugerQuadOptimizer
         self.add_measurement(AugerQuadOptimizer(self))
+        
+        from Auger.analyzer_simplex_optimizer import AugerSimplexOptimizer
+        self.add_measurement(AugerSimplexOptimizer(self))
         
         from Auger.hardware.sem_align import SEMAlignMeasure
         self.add_measurement(SEMAlignMeasure)
