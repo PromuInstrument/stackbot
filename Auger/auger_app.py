@@ -48,7 +48,8 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         #self.add_hardware_component(SEMSlowscanVoutStage(self)) 
          
         ##self.add_hardware_component(SEMRemCon(self))
-        #self.add_hardware_component(SemRasterScanner(self))       
+        #self.add_hardware_component(SemRasterScanner(self))   
+            
         from Auger.sem_sync_raster_hardware import SemSyncRasterDAQ
         self.add_hardware_component(SemSyncRasterDAQ(self))
         
