@@ -92,14 +92,16 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from Auger.analyzer_quad_optimizer import AugerQuadOptimizer
         self.add_measurement(AugerQuadOptimizer(self))
         
-        from Auger.analyzer_simplex_optimizer import AugerSimplexOptimizer
-        self.add_measurement(AugerSimplexOptimizer(self))
+
         
         from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
         self.add_hardware(XboxControlHW(self))
         
         from Auger.hardware.sem_align import SEMAlignMeasure
         self.add_measurement(SEMAlignMeasure)
+        
+#         from Auger.analyzer_simplex_optimizer import AugerSimplexOptimizer
+#         self.add_measurement(AugerSimplexOptimizer(self))
 
 #        self.phi_ion_gun = self.add_hardware_component(PhiIonGunHardwareComponent(self))
 #        self.ion_gun_status = self.add_measurement_component(IonGunStatus(self))

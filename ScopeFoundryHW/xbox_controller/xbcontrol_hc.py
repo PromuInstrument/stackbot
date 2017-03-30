@@ -32,6 +32,9 @@ class XboxControlHW(HardwareComponent):
                                             dtype=float, fmt="%.3f", 
                                             ro=True, vmin=-1.0, vmax=1.0)
 
+        self.settings.New(name="sensitivity", initial=1.00, dtype=float,
+                                            fmt="%.3f", ro=False,
+                                            vmin=0.01, vmax=5.00)
         
         self.A = self.settings.New(name='A', initial=0,
                                             dtype=bool, ro=True)

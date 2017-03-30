@@ -39,6 +39,8 @@ class SEMAlignMeasure(Measurement):
         
         if self.controller:
             self.sem.settings.stig_xy.add_listener(self.stig_pt_roi.setPos, float)        
+        else:
+            pass
         
         #beam shift=============
         self.beamshift_plot = pg.PlotWidget()
@@ -60,7 +62,9 @@ class SEMAlignMeasure(Measurement):
 
         if self.controller:
             self.sem.settings.beamshift_xy.add_listener(self.beamshift_roi.setPos, float) 
-            
+        else:
+            pass
+        
         #focus==============
         self.wd_widget = QtWidgets.QWidget()
         self.wd_widget.setLayout(QtWidgets.QVBoxLayout())
@@ -89,17 +93,18 @@ class SEMAlignMeasure(Measurement):
     def update_focus_from_controller(self):
         dy = self.controller.settings['Axis_1']
         y = self.sem.settings.WD.val
+        c = self.controller.settings['sensitivity']
         if abs(dy) < 0.15:
             dy = 0
         if dy != 0:
-            self.sem.settings.WD.update_value(y+(0.25*dy))
+            self.sem.settings.WD.update_value(y+(c*dy))
         else:
             pass
         
     def update_stig_from_controller(self):
         dx = self.controller.settings['Axis_4']
         dy = self.controller.settings['Axis_3']
-        c = self.controller.settings.sensitivity.val
+        c = self.controller.settings['sensitivity']
         x, y = self.sem.settings.stig_xy.val
         if abs(dx) < 0.15:
             dx = 0
@@ -125,7 +130,6 @@ class SEMAlignMeasure(Measurement):
         self.controller.connect()
         self.xb_dev = self.controller.xb_dev 
         self.joystick = self.xb_dev.joystick
-        self.sensitivity = self.controller.settings.sensitivity.val
         self.dt = 0.05
 
         
