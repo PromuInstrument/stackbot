@@ -11,6 +11,7 @@ class SEMAlignMeasure(Measurement):
    
     def setup(self):
         self.sem = self.app.hardware['sem_remcon']
+        self.controller = self.app.hardware['xbox_controller']
         
         self.ui = self.dockarea = dockarea.DockArea()
         
@@ -36,6 +37,8 @@ class SEMAlignMeasure(Measurement):
         
         self.stig_plot.showGrid(x=True, y=True, alpha=1.0)
         
+        if self.controller:
+            self.sem.settings.stig_xy.add_listener(self.stig_pt_roi.setPos, float)        
         
         #beam shift=============
         self.beamshift_plot = pg.PlotWidget()
@@ -54,6 +57,9 @@ class SEMAlignMeasure(Measurement):
         self.dockarea.addDock(name='Beam Shift', position='right', widget=self.beamshift_plot)
         
         self.beamshift_plot.showGrid(x=True, y=True, alpha=1.0)
+
+        if self.controller:
+            self.sem.settings.beamshift_xy.add_listener(self.beamshift_roi.setPos, float) 
             
         #focus==============
         self.wd_widget = QtWidgets.QWidget()
@@ -79,7 +85,31 @@ class SEMAlignMeasure(Measurement):
         self.wd_line.sigDragged.connect(self.on_update_wd_line)     
         self.sem.settings.WD.add_listener(self.wd_line.setPos, float)
         
-            
+    
+    def update_focus_from_controller(self):
+        dy = self.controller.settings['Axis_1']
+        y = self.sem.settings.WD.val
+        if abs(dy) < 0.15:
+            dy = 0
+        if dy != 0:
+            self.sem.settings.WD.update_value(y+(0.25*dy))
+        else:
+            pass
+        
+    def update_stig_from_controller(self):
+        dx = self.controller.settings['Axis_4']
+        dy = self.controller.settings['Axis_3']
+        c = self.controller.settings.sensitivity.val
+        x, y = self.sem.settings.stig_xy.val
+        if abs(dx) < 0.15:
+            dx = 0
+        if abs(dy) < 0.15:
+            dy = 0
+        if dx != 0 and dy != 0:
+            self.sem.settings.stig_xy.update_value([x+c*dx, y+c*dy])
+        else:
+            pass
+        
     def on_update_wd_line(self, line=None):
         self.sem.settings['WD'] = self.wd_line.getYPos()
 
@@ -90,6 +120,57 @@ class SEMAlignMeasure(Measurement):
         #print(self.wd_joystick.getState())
 
         
+    def run(self):
+        #Access equipment class:
+        self.controller.connect()
+        self.xb_dev = self.controller.xb_dev 
+        self.joystick = self.xb_dev.joystick
+        self.sensitivity = self.controller.settings.sensitivity.val
+        self.dt = 0.05
+
+        
+        while not self.interrupt_measurement_called:  
+        
+            self.update_stig_from_controller()
+            self.update_focus_from_controller()
+            if self.controller.settings['A'] == True:
+                self.sem.settings.r_stick_control.update_value(1)
+            elif self.controller.settings['B'] == True:
+                self.sem.settings.r_stick_control.update_value(2)
+            
+            time.sleep(self.dt)
+            event_list = pygame.event.get()
+            for event in event_list:
+                if event.type == pygame.JOYAXISMOTION:
+                    for i in range(self.xb_dev.num_axes):
+                        self.controller.settings['Axis_' + str(i)] = self.joystick.get_axis(i)
+
+                elif event.type == pygame.JOYHATMOTION:
+                    for i in range(self.xb_dev.num_hats):
+                        # Clear Directional Pad values
+                        for k in set(self.controller.direction_map.values()):
+                            self.controller.settings[k] = False
+
+                        # Check button status and record it
+                        resp = self.joystick.get_hat(i)
+                        try:
+                            self.controller.settings[self.controller.direction_map[resp]] = True
+                        except KeyError:
+                            self.log.error("Unknown dpad hat: "+ repr(resp))
+
+                elif event.type in [pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP]:
+                    button_state = (event.type == pygame.JOYBUTTONDOWN)
+
+                    for i in range(self.xb_dev.num_buttons):
+                        if self.joystick.get_button(i) == button_state:
+                            try:
+                                self.controller.settings[self.controller.button_map[i]] = button_state
+                            except KeyError:
+                                self.log.error("Unknown button: %i (target state: %s)" % (i,
+                                    'down' if button_state else 'up'))
+
+                else:
+                    self.log.error("Unknown event type: {}".format(event.type))
 
 
 
@@ -135,6 +216,7 @@ class PointLQROI(pg.CrosshairROI):
         if not self.roi_drag:
             x, y = self.lq.val
             self.setPos(x,y)
+
 
 
 class PointROI(pg.ROI):
