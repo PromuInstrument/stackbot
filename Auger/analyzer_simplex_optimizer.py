@@ -117,7 +117,7 @@ class AugerSimplexOptimizer(Measurement):
     def run(self):
         try:
                 #hardware setup
-            self.fpga_hw.setup_single_clock_mode(self.settings['dwell'],delay_fraction = 0.05)
+            self.fpga_hw.setup_single_clock_mode(self.settings['dwell'],delay_fraction = 0.25)
             self.analyzer_hw.settings['multiplier'] = True
             print('ramping multiplier...')
             time.sleep(3.0) #wait while multiplier ramps up

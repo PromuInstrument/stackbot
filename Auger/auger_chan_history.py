@@ -7,31 +7,38 @@ import numpy as np
 import time
 from qtpy import QtWidgets
 
-class AugerAnalyzerChannelHistory(Measurement):
+class AugerChanHistory(Measurement):
     
-    name = "auger_chan_hist"
+    name = "auger_chan_history"
     display_chans = 7
    
     
     def setup(self):
         
-        self.settings.New('chan_history_len', dtype=int, initial=1000,vmin=1)
+        self.settings.New('history_length', dtype=int, initial=1000,vmin=1)
+        self.settings.New('dwell', dtype=float, si=True, initial=.05,vmin=1e-5)
         
+            #setup gui
         self.ui = QtWidgets.QWidget()
-        self.layout = QtWidgets.QGridLayout()
+        self.layout = QtWidgets.QHBoxLayout()
         self.ui.setLayout(self.layout)
+        self.control_widget = QtWidgets.QGroupBox(self.name)
+        self.layout.addWidget(self.control_widget, stretch=0)
+        self.control_widget.setLayout(QtWidgets.QVBoxLayout())
+
         self.start_button= QtWidgets.QPushButton("Start")
-        self.layout.addWidget(self.start_button)
+        self.control_widget.layout().addWidget(self.start_button)
         self.stop_button= QtWidgets.QPushButton("Stop")
-        self.layout.addWidget(self.stop_button)
+        self.control_widget.layout().addWidget(self.stop_button)
         
         self.start_button.clicked.connect(self.start)
         self.stop_button.clicked.connect(self.interrupt)
         
+        ui_list=('dwell','history_length')
+        self.control_widget.layout().addWidget(self.settings.New_UI(include=ui_list))
         
-        self.graph_layout=pg.GraphicsLayoutWidget(border=(100,100,100))
-        
-        self.layout.addWidget(self.graph_layout)
+        self.graph_layout=pg.GraphicsLayoutWidget(border=(100,100,100))        
+        self.layout.addWidget(self.graph_layout,stretch=1)
         
         self.ui.show()
         self.ui.setWindowTitle("AugerAnalyzerChannelHistory")
@@ -70,6 +77,7 @@ class AugerAnalyzerChannelHistory(Measurement):
         self.auger_fpga_hw.settings['trigger_mode'] = 'off' 
         time.sleep(0.01)
         self.auger_fpga_hw.flush_fifo()
+
         
         self.CHAN_HIST_LEN = self.settings['chan_history_len']
         
@@ -80,6 +88,7 @@ class AugerAnalyzerChannelHistory(Measurement):
          
         # start triggering
         self.auger_fpga_hw.settings['trigger_mode'] = 'int'
+        self.auger_fpga_hw.settings['period'] = self.settings['dwell']
 
         try:
             while not self.interrupt_measurement_called:    
