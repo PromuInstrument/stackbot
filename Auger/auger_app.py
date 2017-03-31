@@ -53,7 +53,7 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from Auger.NIFPGA.auger_fpga_hw import AugerFPGA_HW
         self.add_hardware(AugerFPGA_HW(self))
         
-        from Auger.auger_electron_analyzer import AugerElectronAnalyzerHW
+        from Auger.hardware.auger_electron_analyzer_hw import AugerElectronAnalyzerHW
         self.add_hardware(AugerElectronAnalyzerHW(self))
         
         from Auger.hardware.remcon32_hw import Auger_Remcon_HW
