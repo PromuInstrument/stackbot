@@ -14,11 +14,14 @@ class AugerChanHistory(Measurement):
    
     
     def setup(self):
-        
+        self.auger_fpga_hw = self.app.hardware['auger_fpga']
+        self.auger_analyzer_hw = self.app.hardware['auger_electron_analyzer']
+
         self.settings.New('history_length', dtype=int, initial=1000,vmin=1)
-        self.settings.New('dwell', dtype=float, si=True, initial=.05,vmin=1e-5)
+        self.settings.Add(self.auger_fpga_hw.settings.period)
         
-            #setup gui
+
+        #setup gui
         self.ui = QtWidgets.QWidget()
         self.layout = QtWidgets.QHBoxLayout()
         self.ui.setLayout(self.layout)
@@ -34,8 +37,13 @@ class AugerChanHistory(Measurement):
         self.start_button.clicked.connect(self.start)
         self.stop_button.clicked.connect(self.interrupt)
         
-        ui_list=('dwell','history_length')
+        self.control_widget.layout().addWidget(
+            self.auger_analyzer_hw.settings.New_UI(
+                exclude=['work_function', 'resolution', 'debug_mode']))
+        
+        ui_list=('period','history_length')
         self.control_widget.layout().addWidget(self.settings.New_UI(include=ui_list))
+
         
         self.graph_layout=pg.GraphicsLayoutWidget(border=(100,100,100))        
         self.layout.addWidget(self.graph_layout,stretch=1)
@@ -43,7 +51,6 @@ class AugerChanHistory(Measurement):
         self.ui.show()
         self.ui.setWindowTitle("AugerAnalyzerChannelHistory")
         
-        self.auger_fpga_hw = self.app.hardware['auger_fpga']
         NUM_CHANS = self.auger_fpga_hw.NUM_CHANS
         
         self.first_pixel = True
@@ -79,7 +86,7 @@ class AugerChanHistory(Measurement):
         self.auger_fpga_hw.flush_fifo()
 
         
-        self.CHAN_HIST_LEN = self.settings['chan_history_len']
+        self.CHAN_HIST_LEN = self.settings['history_length']
         
         self.chan_history = np.zeros( (NUM_CHANS, self.CHAN_HIST_LEN), dtype=np.uint32 )
         self.chan_history_Hz = np.zeros( (NUM_CHANS, self.CHAN_HIST_LEN) )
@@ -88,11 +95,10 @@ class AugerChanHistory(Measurement):
          
         # start triggering
         self.auger_fpga_hw.settings['trigger_mode'] = 'int'
-        self.auger_fpga_hw.settings['period'] = self.settings['dwell']
 
         try:
             while not self.interrupt_measurement_called:    
-                self.dwell_time = self.app.hardware['auger_fpga'].settings['int_trig_sample_period']/40e6
+                self.dwell_time = self.auger_fpga_hw.settings['period']
     
                 buf_reshaped = self.auger_fpga_hw.read_fifo()                
                 depth = buf_reshaped.shape[0]

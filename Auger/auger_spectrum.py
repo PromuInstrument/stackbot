@@ -43,7 +43,7 @@ class AugerSpectrum(Measurement):
         self.start_button.clicked.connect(self.start)
         self.stop_button.clicked.connect(self.interrupt)
         
-        ui_list = ('ke_start', 'ke_end', 'ke_delta', 'dwell', 'pass_energy', 'crr_ratio')
+        ui_list = ('ke_start', 'ke_end', 'ke_delta', 'dwell', 'pass_energy', 'crr_ratio','CAE_mode')
         self.control_widget.layout().addWidget(self.settings.New_UI(include=ui_list))
         
        

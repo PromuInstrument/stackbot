@@ -162,10 +162,10 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
             self.p_max = max( value, self.p_max)               
         #print(self.name, "collect_pixel", pixel_num, k,j,i, value)
         
-#     def update_LUT(self):
-#         self.hist_lut.imageChanged(autoLevel=False)
-#         if hasattr(self, 'p_min'):
-#             self.hist_lut.setLevels(self.p_min, self.p_max)
+    def update_LUT(self):
+        self.hist_lut.imageChanged(autoLevel=False)
+        if hasattr(self, 'p_min'):
+            self.hist_lut.setLevels(self.p_min, self.p_max)
         
     def post_scan_cleanup(self):
         self.analyzer_hw.settings['multiplier'] = False
