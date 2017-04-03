@@ -75,6 +75,15 @@ class SEM_Remcon_HW(HardwareComponent):
             'select_aperture', dtype=int,ro=False, vmin=1, vmax=6, choices=aperture_choices)
         self.settings.New('port', dtype=str, initial='COM4')
         
+        self.sem_align_widget_choices = list([('Focus', 'focus'),
+                                              ('Stigmation', 'stig'),
+                                              ('Beam Shift', 'beam')]) 
+        
+        self.settings.New('active_widget', 
+                            dtype=str,
+                            ro=False,
+                            choices=self.sem_align_widget_choices)
+        
         self.settings.magnification.add_listener(self.on_new_mag)
         self.settings.full_size.add_listener(self.on_new_full_size)
 
