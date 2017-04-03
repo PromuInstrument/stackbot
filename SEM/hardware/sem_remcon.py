@@ -18,20 +18,20 @@ class SEMRemCon(HardwareComponent):
         self.name='sem_remcon'
         self.debug='false'
         #create logged quantities
-        self.magnification = self.add_logged_quantity('magnification', 
+        self.magnification = self.settings.New('magnification', 
                                                    dtype=float,
                                                    ro=False,
                                                    vmin=5.0,
                                                    vmax=5.0e5,
                                                    unit='x')
-        self.EHT = self.add_logged_quantity('EHT', 
+        self.EHT = self.settings.New('EHT', 
                                                    dtype=float,
                                                    ro=False,
                                                    vmin=0.0,
                                                    vmax=40.0,
                                                    unit='kV')
         
-#         self.beam_status = self.add_logged_quantity('beam_status', 
+#         self.beam_status = self.settings.New('beam_status', 
 #                                                    dtype=int,
 #                                                    ro=False,
 #                                                    vmin=1,
@@ -39,7 +39,7 @@ class SEMRemCon(HardwareComponent):
 #                                                    unit='',
 #                                                    choices=[('EHT Off',2),('EHT On',1)])
         
-        self.beam_blanking = self.add_logged_quantity('beam_blanking', 
+        self.beam_blanking = self.settings.New('beam_blanking', 
                                                    dtype=int,
                                                    ro=False,
                                                    vmin=0,
@@ -47,34 +47,34 @@ class SEMRemCon(HardwareComponent):
                                                    unit='',
                                                    choices=[('Off',0),('On',1)])
         
-        self.stigmatorX = self.add_logged_quantity('stigmatorX', 
+        self.stigmatorX = self.settings.New('stigmatorX', 
                                                    dtype=float,
                                                    ro=False,
                                                    vmin=-100.0,
                                                    vmax=100.0,
                                                    unit='%')
          
-        self.stigmatorY = self.add_logged_quantity('stigmatorY', 
+        self.stigmatorY = self.settings.New('stigmatorY', 
                                                    dtype=float,
                                                    ro=False,
                                                    vmin=-100.0,
                                                    vmax=100.0,
                                                    unit='%')
           
-        self.WD = self.add_logged_quantity('WD', 
+        self.WD = self.settings.New('WD', 
                                                    dtype=float,
                                                    ro=False,
                                                    vmin=0.0,
                                                    vmax=121.0,
                                                    unit='mm')
         
-        self.detector=self.add_logged_quantity(name='detector',
+        self.detector=self.settings.New(name='detector',
                                                dtype=str,
                                                ro=False,
                                                initial='SE2',
                                                choices=[('SE2','SE2'),('VPSE','VPSE'),('InLens','InLens')])
          
-        self.stage_x=self.add_logged_quantity(name='stage_x',
+        self.stage_x=self.settings.New(name='stage_x',
                                                dtype=float,
                                                ro=False,
                                                vmin=5.0,
@@ -82,7 +82,7 @@ class SEMRemCon(HardwareComponent):
                                                initial=50,
                                                unit='mm')
          
-        self.stage_y=self.add_logged_quantity(name='stage_y',
+        self.stage_y=self.settings.New(name='stage_y',
                                                dtype=float,
                                                ro=False,
                                                vmin=5.0,
@@ -90,7 +90,7 @@ class SEMRemCon(HardwareComponent):
                                                initial=50,
                                                unit='mm')
          
-        self.stage_z=self.add_logged_quantity(name='stage_z',
+        self.stage_z=self.settings.New(name='stage_z',
                                                dtype=float,
                                                ro=False,
                                                vmin=0.0,
@@ -98,7 +98,7 @@ class SEMRemCon(HardwareComponent):
                                                initial=1.0,
                                                unit='mm')
         
-#         self.probe_current = self.add_logged_quantity('probe_current', 
+#         self.probe_current = self.settings.New('probe_current', 
 #                                                    dtype=float,
 #                                                    ro=False,
 #                                                    vmin=1.0e-14,
@@ -113,7 +113,7 @@ class SEMRemCon(HardwareComponent):
                                ('[5] 120.00 um',5),
                                ('[6] 300.00 um',6)])
            
-        self.select_aperture = self.add_logged_quantity('select_aperture', 
+        self.select_aperture = self.settings.New('select_aperture', 
                                                    dtype=int,
                                                    ro=True,
                                                    vmin=1,
@@ -121,13 +121,15 @@ class SEMRemCon(HardwareComponent):
                                                    unit='',
                                                    choices=aperture_choices)
         
-        self.external_scan = self.add_logged_quantity('external_scan', 
+        self.external_scan = self.settings.New('external_scan', 
                                                    dtype=int,
                                                    ro=False,
                                                    vmin=0,
                                                    vmax=1,
                                                    unit='',
                                                    choices=[('Off',0),('On',1)])
+        
+
         
         
         #connect to GUI
