@@ -1,4 +1,4 @@
-'''Ed Barnard, Alan Buckley'''
+'''Frank Ogletree'''
 
 from __future__ import division
 from ScopeFoundry import Measurement
@@ -17,7 +17,7 @@ class AugerPressureHistory(Measurement):
         
         self.settings.New('history_length', dtype=int, initial=1000,vmin=1)
         
-            #setup gui
+        #setup gui
         self.ui = QtWidgets.QWidget()
         self.layout = QtWidgets.QHBoxLayout()
         self.ui.setLayout(self.layout)
@@ -50,7 +50,7 @@ class AugerPressureHistory(Measurement):
         for i in range(1):
             plot = self.graph_layout.addPlot(title="Pressure")
             plot.setLogMode(y=True)
-            plot.setYRange(-10,-6)
+            plot.setYRange(-12,-6)
             plot.showGrid(y=True,alpha=1.0)
             plot.addLegend()
             self.graph_layout.nextRow()
