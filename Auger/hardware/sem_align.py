@@ -1,3 +1,6 @@
+"""Module specific Xbox controller interfacing and GUI control by Alan Buckley"""
+
+
 from ScopeFoundry import Measurement
 import pyqtgraph as pg
 import pyqtgraph.dockarea as dockarea
@@ -8,6 +11,10 @@ import pygame.event
 class SEMAlignMeasure(Measurement):
     
     name = 'sem_align'
+   
+    controller_map = {'B': 'stig',
+                      'A': 'beam',
+                      'X': 'focus'}
    
     def setup(self):
         self.sem = self.app.hardware['sem_remcon']
@@ -81,85 +88,94 @@ class SEMAlignMeasure(Measurement):
         self.wd_line.sigDragged.connect(self.on_update_wd_line)     
         self.sem.settings.WD.add_listener(self.wd_line.setPos, float)
         
+        self.sem_align_widget_choices = ('Focus', 'Stigmation', 'Beam Shift') 
+        
+        self.settings.New('active_widget', 
+                            dtype=str,
+                            initial='Focus',
+                            ro=False,
+                            choices=self.sem_align_widget_choices)
+        
+        
+        
         self.dock_config()
-    
+        self.load_control_profile()
+        self.activate_focus_control()
+        
     def dock_config(self):
         
         
-        self.dockarea.addDock(name='Stigmation', position='right', widget=self.stig_plot)
+        self.dockarea.addDock(name='Stigmation (B)', position='right', widget=self.stig_plot)
 
-        self.dockarea.addDock(name='Beam Shift', position='bottom', widget=self.beamshift_plot)
+        self.dockarea.addDock(name='Beam Shift (A)', position='bottom', widget=self.beamshift_plot)
         
-        self.dockarea.addDock(name='Focus', position='left', widget=self.wd_widget)
+        self.dockarea.addDock(name='Focus (X)', position='left', widget=self.wd_widget)
         
         self.dockarea.addDock(name='SEM Settings', position='left', widget=self.sem_controls)
 
-    def update_pos(self, profile):
-        dx = self.dx
-        dy = self.dy*(-1)
+
+    def activate_focus_control(self):
+        self.settings.active_widget.update_value('Focus')
+        obj_inv = self.wd_plot.items()
+        self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
+        self.update_pos()
+        self.update_pan()
+        
+    def activate_stig_control(self):
+        self.settings.active_widget.update_value('Stigmation')
+        obj_inv = self.stig_plot.items()
+        self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
+        self.update_pos()
+        self.update_pan()
+        
+    def activate_beam_control(self):
+        self.settings.active_widget.update_value('Beam Shift')
+        obj_inv = self.beamshift_plot.items()
+        self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
+        self.update_pos()
+        self.update_pan()
+            
+    def load_control_profile(self):
+        self.controller.settings.B.add_listener(self.activate_stig_control)
+        self.controller.settings.A.add_listener(self.activate_beam_control)
+        self.controller.settings.X.add_listener(self.activate_focus_control)
+        
+
+    def update_pos(self):
+        profile = self.settings['active_widget']
+        dx = self.controller.settings['Axis_4']
+        dy = self.controller.settings['Axis_3']*(-1)
         c = self.controller.settings.sensitivity.val
-        x, y = self.sem.settings.stig_xy.val
         if abs(dx) < 0.25:
             dx = 0
         if abs(dy) < 0.25:
             dy = 0
         if dx != 0 or dy != 0:
-            if profile == "stig":
+            if profile == "Stigmation":
+                x, y = self.sem.settings.stig_xy.val
                 self.sem.settings.stig_xy.update_value([x+c*dx, y-c*dy])
-            elif profile == "beam":
+            elif profile == "Beam Shift":
+                x, y = self.sem.settings.beamshift_xy.val
                 self.sem.settings.beamshift_xy.update_value([x+c*dx, y-c*dy])
-            elif profile == "focus":
+            elif profile == "Focus":
+                y = self.sem.settings.WD.val
                 self.sem.settings.WD.update_value(y+(c*dy))
         else:
             pass       
         
     def update_pan(self):
-        dx = self.dx*5
-        dy = self.dy*-5
-        if abs(dx) < 0.25:
-            dx = 0
-        if abs(dy) < 0.25:
-            dy = 0
-        if dx != 0 or dy != 0:
-            self.vb.translateBy((dx,dy))    
+        c = self.controller.settings.sensitivity.val
+        du = self.controller.settings['Axis_0']*c
+        dv = self.controller.settings['Axis_1']*-c
+                                      
+        if abs(du) < 0.25:
+            du = 0
+        if abs(dv) < 0.25:
+            dv = 0
+        if du != 0 or dv != 0:
+            self.vb.translateBy((du,dv))    
 
-    
-    def set_active_viewbox(self, profile):
-        if profile == "stig":
-            obj_inv = self.stig_plot.items()
-        elif profile == "beam":
-            obj_inv = self.beamshift_plot.items()
-        elif profile == "focus":
-            obj_inv = self.wd_plot.items()
-
-        self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
-
-    
-    def load_control_profile(self, profile):
-        self.set_active_viewbox(profile)
-        self.du = self.controller.settings['Axis_0'] #LS-X Axis
-        self.dv = self.controller.settings['Axis_1'] #LS-Y Axis
-        self.dx = self.controller.settings['Axis_4'] #RS-X Axis
-        self.dy = self.controller.settings['Axis_3'] #RS-Y Axis
-        self.pan()
-        self.pos()
-    
-#     def update_focus_from_controller(self):
-#         dy = self.controller.settings['Axis_1']
-#         y = self.sem.settings.WD.val
-#         if abs(dy) < 0.15:
-#             dy = 0
-#         if dy != 0:
-#             self.sem.settings.WD.update_value(y+(0.25*dy))
-#         else:
-#             pass
-#         
-
-    
-
-    
-
-    
+   
     def on_update_wd_line(self, line=None):
         self.sem.settings['WD'] = self.wd_line.getYPos()
 
@@ -169,6 +185,7 @@ class SEMAlignMeasure(Measurement):
         print(jb, state)
         #print(self.wd_joystick.getState())
 
+
         
     def run(self):
         #Access equipment class:
@@ -177,20 +194,11 @@ class SEMAlignMeasure(Measurement):
         self.joystick = self.xb_dev.joystick
         self.sensitivity = self.controller.settings['sensitivity']
         self.dt = 0.05
-        self.set_active_viewbox(self.sem.settings.active_widget.val)
+        
         
         while not self.interrupt_measurement_called:  
-        
-            self.update_pos(self.sem.settings.active_widget.val)
+            self.update_pos()
             self.update_pan()
-            #self.update_focus_from_controller()
-            if self.controller.settings['B'] == True:
-                self.sem.settings.active_widget.update_value('stig')
-            elif self.controller.settings['A'] == True:
-                self.sem.settings.active_widget.update_value('beam')
-            elif self.controller.settings['X'] == True:
-                self.sem.settings.active_widget.update_value('focus')
-            
             time.sleep(self.dt)
             event_list = pygame.event.get()
             for event in event_list:
