@@ -26,7 +26,7 @@ class ANC_HW(HardwareComponent):
     def setup(self):
         
         self.port = self.settings.New(name="port", initial="COM6", dtype=str, ro=False)
-        self.settings.New(name='debug_mode', initial=False, dtype=bool, ro=False)
+#         self.settings.New(name='debug_mode', initial=False, dtype=bool, ro=False)
         
         self.settings.New('frequency', dtype=int, array=True,  ro=False, 
                   initial=[20,20,20,20,20,20])
