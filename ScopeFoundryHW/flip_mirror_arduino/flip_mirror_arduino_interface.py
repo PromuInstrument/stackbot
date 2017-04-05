@@ -46,7 +46,7 @@ class FlipMirrorArduino(object):
     def write_posititon(self, pos):
         pos = int(pos)
         assert pos in [0,1]
-        self.send_cmd(["0","1"][pos])
+        self.send_cmd([b"0",b"1"][pos])
         self.position = pos
         return self.position
         
@@ -57,11 +57,11 @@ class FlipMirrorArduino(object):
         return self.write_position(0)
     
     def read_position(self):
-        resp = self.ask("?")
-        if resp == "0":
+        resp = self.ask(b"?")
+        if resp == b"0":
             self.position = 0
             return self.position
-        elif resp == "1":
+        elif resp == b"1":
             self.position = 1
             return self.position
         else:
