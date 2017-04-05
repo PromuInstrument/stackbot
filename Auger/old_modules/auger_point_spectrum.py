@@ -24,9 +24,6 @@ class AugerPointSpectrum(Measurement):
         self.energy_range = LQRange(S.Energy_min, S.Energy_max, 
                                     S.Energy_step, S.Energy_num_steps)
         
-        #self.counter_dac_hc = self.app.hardware['Counter_DAC_FPGA_VI_HC']
-        #NUM_CHANS = self.counter_dac_hc.NUM_CHANS
-        
         self.graph_layout=pg.GraphicsLayoutWidget(border=(100,100,100))
         self.graph_layout.show()
         self.graph_layout.setWindowTitle("AugerPointSpectrum")

@@ -12,11 +12,28 @@ import time
 import scipy.optimize as opt
 from qtpy import QtWidgets
 
+'''
+Alternative: 
+minimize f(x,*args) where x is 2d quad array, x2=y2=0, *args gives delay/dwell,
+    moves to x then gets -counts
+scipy.optimize.brute()
+    evaluate on grid to get x1 = starting point, use fraction of grid min for ftol
+scipy.optimize.fmin noise-tolerant simplex Nelder-Mead
+    x1 starting, 4d search, xtol = 0.1, 
+
+start with max energy (easier to hit starting point), drop energy in 20% steps
+save coord array, -fmin vs energy 
+'''
+
 
 
 class AugerQuadOptimizer(Measurement):
     
     name = "AugerQuadOptimizer"
+    
+    qmin = -100
+    qmax = 100
+    couple1_2 = -0.52
 
     def setup(self):
         
@@ -32,7 +49,7 @@ class AugerQuadOptimizer(Measurement):
                                     S.Energy_step, S.Energy_num_steps)"""
         
         #Settings for quad optimization parameters
-        lq_quad = dict(dtype=float, ro=False, vmin=-100, vmax=100, unit='%')
+        lq_quad = dict(dtype=float, ro=False, vmin=-self.qmin, vmax=self.qmax, unit='%')
         self.settings.New('Quad_X1_Min', initial=-10, **lq_quad)
         self.settings.New('Quad_X1_Max', initial=10, **lq_quad)
         self.settings.New('Quad_X1_Tol', initial=0.1, dtype=float, ro=False, unit='%', vmin=0)
@@ -185,18 +202,17 @@ class AugerQuadOptimizer(Measurement):
             
             
             #Determine limits to check based on coupling constant
-            xCouple = -0.52  #x1/x2
             #Want to span entire x2 range if possible
-            x2Min = -49
-            x2Max = 49
-            x1Min = xCouple*x2Min + X1
-            x1Max = xCouple*x2Max + X1
+            x2Min = self.qmin+1
+            x2Max = self.qmax-1
+            x1Min = self.couple1_2*x2Min + X1
+            x1Max = self.couple1_2*x2Max + X1
             
             x1Min = self.coerce(x1Min)
-            x2Min = (x1Min - X1)/xCouple
+            x2Min = (x1Min - X1)/self.couple1_2
                 
             x1Max = self.coerce(x1Max)
-            x2Max = (x1Max - X1)/xCouple
+            x2Max = (x1Max - X1)/self.couple1_2
             
             xMin = (x1Min, x2Min)
             xMax = (x1Max, x2Max)
@@ -219,18 +235,17 @@ class AugerQuadOptimizer(Measurement):
             Y1 = octoMax[2]
             
             #Determine limits to check based on coupling constant
-            yCouple = -0.52  #y1/y2
             #Want to span entire y2 range if possible
-            y2Min = -49
-            y2Max = 49
-            y1Min = yCouple*y2Min + Y1
-            y1Max = yCouple*y2Max + Y1
+            y2Min = self.qmin+1
+            y2Max = self.qmax-1
+            y1Min = self.couple1_2*y2Min + Y1
+            y1Max = self.couple1_2*y2Max + Y1
             
             y1Min = self.coerce(y1Min)
-            y2Min = (y1Min - Y1)/yCouple
+            y2Min = (y1Min - Y1)/self.couple1_2
             
             y1Max = self.coerce(y1Max)
-            y2Max = (y1Max - Y1)/yCouple
+            y2Max = (y1Max - Y1)/self.couple1_2
             
             yMin = (y1Min, y2Min)
             yMax = (y1Max, y2Max)
@@ -261,13 +276,13 @@ class AugerQuadOptimizer(Measurement):
             self.auger_fpga_hw.settings['trigger_mode'] = 'off' 
             self.analyzer_hw.settings['multiplier'] = False
         
-    def coerce(self, val, vmin=-49, vmax=49):
-        if val < vmin:
-            val = vmin
-            print('Value too small, coerced to ' + str(vmin))
-        elif val > vmax:
-            val = vmax
-            print('Value too large, coerced to ' + str(vmax))
+    def coerce(self, val):
+        if val < self.qmin+1:
+            val = self.qmin+1
+            print('Value too small, coerced to ' + str(self.qmin+1))
+        elif val > self.qmax-1:
+            val = self.qmax-1
+            print('Value too large, coerced to ' + str(self.qmax-1))
         
         return val
         
