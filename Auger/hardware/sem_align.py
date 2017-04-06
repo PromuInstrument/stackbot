@@ -22,6 +22,8 @@ class SEMAlignMeasure(Measurement):
         
         self.ui = self.dockarea = dockarea.DockArea()
         
+        self.ui.setWindowTitle("sem_align")
+        
         self.sem_controls = self.app.hardware['sem_remcon'].settings.New_UI()
         
         
@@ -194,9 +196,9 @@ class SEMAlignMeasure(Measurement):
         self.joystick = self.xb_dev.joystick
         self.sensitivity = self.controller.settings['sensitivity']
         self.dt = 0.05
-        self.controller_measure = self.app.measurements['xbcontrol_mc']
+        #self.controller_measure = self.app.measurements['xbcontrol_mc']
         
-        self.controller_measure.start()
+        #self.controller_measure.start()
 
         
         while not self.interrupt_measurement_called:  
@@ -205,8 +207,8 @@ class SEMAlignMeasure(Measurement):
             time.sleep(self.dt)
         
         else:
-            self.controller_measure.interrupt()
-
+            #self.controller_measure.interrupt()
+            pass
 
 class PointLQROI(pg.CrosshairROI):
     """
