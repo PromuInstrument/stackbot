@@ -86,6 +86,8 @@ class XboxControlMeasure(Measurement):
     def set_universal_key_map(self):
         self.controller.settings.LB.add_listener(self.prev_tab)
         self.controller.settings.RB.add_listener(self.next_tab)
+        self.controller.settings.Start.add_listener(self.start_measure)
+        self.controller.settings.Back.add_listener(self.interrupt_measure)
     
     def prev_tab(self):
         if self.controller.settings['LB'] == True:
@@ -98,7 +100,22 @@ class XboxControlMeasure(Measurement):
             self.app.ui.mdiArea.activateNextSubWindow()
         else:
             pass
-
+        
+    def start_measure(self):
+        if self.controller.settings['Start'] == True:
+            window = self.app.ui.mdiArea.activeSubWindow().widget().windowTitle()
+            self.app.measurements['{}'.format(window)].start()
+            print(window)
+        else:
+            pass
+    
+    def interrupt_measure(self):
+        if self.controller.settings['Back'] == True:
+            window = self.app.ui.mdiArea.activeSubWindow().widget().windowTitle()
+            self.app.measurements['{}'.format(window)].interrupt()
+            print(window)
+        else: pass
+    
     def run(self):
         """This function is run after having clicked "start" in the ScopeFoundry GUI.
         It essentially runs and listens for Pygame event signals and updates the status
