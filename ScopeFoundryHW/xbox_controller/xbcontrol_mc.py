@@ -40,15 +40,16 @@ class XboxControlMeasure(Measurement):
         Controller name logged quantity referenced below is meant to
         tell the user the name of the connected device as a sanity check."""
         self.dt = 0.05
+
+        self.hw = self.app.hardware['xbox_controller']
+
+        
+    def setup_ui(self):
         self.gui
         
         self.ui_filename = sibling_path(__file__, "Controller.ui")
-        # UI
         self.ui = load_qt_ui_file(self.ui_filename)
         self.ui.setWindowTitle(self.name)
-        
-        self.hw = self.app.hardware['xbox_controller']
-
         
         # Buttons
         self.hw.A.connect_bidir_to_widget(self.ui.a_radio)
