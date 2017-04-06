@@ -144,7 +144,7 @@ class SEMAlignMeasure(Measurement):
     def update_pos(self):
         profile = self.settings['active_widget']
         dx = self.controller.settings['Axis_4']
-        dy = self.controller.settings['Axis_3']*(-1)
+        dy = self.controller.settings['Axis_3']
         c = self.controller.settings.sensitivity.val
         if abs(dx) < 0.25:
             dx = 0
@@ -194,45 +194,18 @@ class SEMAlignMeasure(Measurement):
         self.joystick = self.xb_dev.joystick
         self.sensitivity = self.controller.settings['sensitivity']
         self.dt = 0.05
+        self.controller_measure = self.app.measurements['xbcontrol_mc']
         
+        self.controller_measure.start()
+
         
         while not self.interrupt_measurement_called:  
             self.update_pos()
             self.update_pan()
             time.sleep(self.dt)
-            event_list = pygame.event.get()
-            for event in event_list:
-                if event.type == pygame.JOYAXISMOTION:
-                    for i in range(self.xb_dev.num_axes):
-                        self.controller.settings['Axis_' + str(i)] = self.joystick.get_axis(i)
-
-                elif event.type == pygame.JOYHATMOTION:
-                    for i in range(self.xb_dev.num_hats):
-                        # Clear Directional Pad values
-                        for k in set(self.controller.direction_map.values()):
-                            self.controller.settings[k] = False
-
-                        # Check button status and record it
-                        resp = self.joystick.get_hat(i)
-                        try:
-                            self.controller.settings[self.controller.direction_map[resp]] = True
-                        except KeyError:
-                            self.log.error("Unknown dpad hat: "+ repr(resp))
-
-                elif event.type in [pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP]:
-                    button_state = (event.type == pygame.JOYBUTTONDOWN)
-
-                    for i in range(self.xb_dev.num_buttons):
-                        if self.joystick.get_button(i) == button_state:
-                            try:
-                                self.controller.settings[self.controller.button_map[i]] = button_state
-                            except KeyError:
-                                self.log.error("Unknown button: %i (target state: %s)" % (i,
-                                    'down' if button_state else 'up'))
-
-                else:
-                    self.log.error("Unknown event type: {}".format(event.type))
-
+        
+        else:
+            self.controller_measure.interrupt()
 
 
 class PointLQROI(pg.CrosshairROI):
