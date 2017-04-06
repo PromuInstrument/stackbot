@@ -103,5 +103,5 @@ class ANC_RemoteMeasure(Measurement):
                 self.move_pitch_down()
             elif self.xb_hw.settings['B'] == True:
                 self.move_pitch_up()   
-            
-            #set anc150 lqs / functions
+        else:
+            self.app.measurements['xbcontrol_mc'].interrupt()
