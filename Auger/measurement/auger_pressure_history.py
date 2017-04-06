@@ -40,7 +40,7 @@ class AugerPressureHistory(Measurement):
         self.layout.addWidget(self.graph_layout,stretch=1)
         
         self.ui.show()
-        self.ui.setWindowTitle("AugerPressureHistory")
+        self.ui.setWindowTitle("auger_pressure_history")
         
         self.HIST_LEN = 1000
         self.NUM_CHANS = 2
