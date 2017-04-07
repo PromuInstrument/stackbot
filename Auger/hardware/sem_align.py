@@ -138,19 +138,12 @@ class SEMAlignMeasure(Measurement):
         self.controller.settings.B.add_listener(self.activate_stig_control)
         self.controller.settings.A.add_listener(self.activate_beam_control)
         self.controller.settings.X.add_listener(self.activate_focus_control)
-        
-        self.du = self.controller.settings['Axis_0']
-        self.dv = self.controller.settings['Axis_1']
-        
-        self.dz = self.controller.settings['Axis_2']
-        
-        self.dx = self.controller.settings['Axis_4']
-        self.dy = self.controller.settings['Axis_3']
+    
 
     def update_pos(self):
         profile = self.settings['active_widget']
-        dx = self.dx
-        dy = self.dy
+        dx = self.controller.settings['Axis_4']
+        dy = self.controller.settings['Axis_3']
         if abs(dx) < 0.25:
             dx = 0
         if abs(dy) < 0.25:
@@ -173,8 +166,8 @@ class SEMAlignMeasure(Measurement):
          
     def update_pan(self):
         profile = self.settings['active_widget']
-        du = self.du
-        dv = self.dv
+        du = self.controller.settings['Axis_0']
+        dv = self.controller.settings['Axis_1']
         if profile == "Focus":
             c = self.controller.settings.sensitivity.val/2
         else:
@@ -197,7 +190,7 @@ class SEMAlignMeasure(Measurement):
         elif profile == 'Stigmation':
             x, y = self.sem.settings.beamshift_xy.val
         c = self.controller.settings.sensitivity.val
-        dz = self.dz/10
+        dz = self.controller.settings['Axis_2']/10
         if abs(dz) < 0.05:
             dz = 0 
         if dz != 0:
