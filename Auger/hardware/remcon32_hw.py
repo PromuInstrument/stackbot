@@ -75,6 +75,8 @@ class SEM_Remcon_HW(HardwareComponent):
             'select_aperture', dtype=int,ro=False, vmin=1, vmax=6, choices=aperture_choices)
         self.settings.New('port', dtype=str, initial='COM4')
         
+
+        
         self.settings.magnification.add_listener(self.on_new_mag)
         self.settings.full_size.add_listener(self.on_new_full_size)
 

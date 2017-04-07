@@ -1,5 +1,6 @@
 from ScopeFoundry import HardwareComponent
 from Auger.NIFPGA.ext_trig_auger_fpga import ExtTrigAugerFPGA
+import numpy as np
 
 class AugerFPGA_HW(HardwareComponent):
     
@@ -98,3 +99,45 @@ class AugerFPGA_HW(HardwareComponent):
             
         return self.ext_trig_dev.read_fifo_parse(n_transfers = n_transfers, timeout=timeout, return_remaining=return_remaining)
     
+    #========= Measurement helper functions
+    
+    def setup_single_clock_mode(self, dwell = 0.05, delay_fraction = 0):
+        '''
+        sets internal timer to record counts for dwell*(1+delay_fraction) seconds, 
+        leading delay_fraction data is discarded, to allow for measurement to settle after
+        changing conditions. delay_fraction resolution 1% of dwell
+        '''
+            #flush fifo buffer 
+        self.settings['trigger_mode'] = 'off' 
+        self.flush_fifo()
+        
+            #calculate period and block sizes
+        self.settings['period']=0.01 * dwell
+        self.sample_skip = int(abs(delay_fraction)*100)
+        if self.sample_skip == 0 and delay_fraction != 0:
+            self.sample_skip = 1    #non-zero delay rounded up to 1%        
+
+        self.sample_block = 100+self.sample_skip
+        self.timeout = 2.0*dwell
+            #restart free run counter
+        self.settings['int_trig_sample_count'] = 0 
+        self.settings['trigger_mode'] = 'int'
+
+    def get_single_value(self,flush=False):
+        '''
+        waits for data on call, if too much data is present, flush fifo and repeat
+        keeps async processes consistent
+        '''
+        if flush:
+            self.flush_fifo()            
+        remaining, buf_reshaped = self.read_fifo(n_transfers = self.sample_block,timeout = self.timeout, return_remaining=True)                
+        if remaining > 0:
+            #print( "samples remaining at pixel {}, resyncing".format( remaining))
+            self.flush_fifo()
+            remaining, buf_reshaped = self.read_fifo(n_transfers = self.sample_block,timeout = self.timeout, return_remaining=True)                
+            #print( "{} samples remaining after resync".format( remaining))
+
+        buf_reshaped = buf_reshaped[self.sample_skip:] #discard first samples, transient
+        data = np.sum(buf_reshaped,axis=0)
+        return np.sum(data[0:6]) #sum 7 Auger detector channels return single value
+
