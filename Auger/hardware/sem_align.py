@@ -22,6 +22,8 @@ class SEMAlignMeasure(Measurement):
         
         self.ui = self.dockarea = dockarea.DockArea()
         
+        self.ui.setWindowTitle("sem_align")
+        
         self.sem_controls = self.app.hardware['sem_remcon'].settings.New_UI()
         
         
@@ -99,7 +101,7 @@ class SEMAlignMeasure(Measurement):
         
         
         self.dock_config()
-        self.load_control_profile()
+        
         self.activate_focus_control()
         
     def dock_config(self):
@@ -118,22 +120,19 @@ class SEMAlignMeasure(Measurement):
         self.settings.active_widget.update_value('Focus')
         obj_inv = self.wd_plot.items()
         self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
-        self.update_pos()
-        self.update_pan()
+
         
     def activate_stig_control(self):
         self.settings.active_widget.update_value('Stigmation')
         obj_inv = self.stig_plot.items()
         self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
-        self.update_pos()
-        self.update_pan()
+
         
     def activate_beam_control(self):
         self.settings.active_widget.update_value('Beam Shift')
         obj_inv = self.beamshift_plot.items()
         self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
-        self.update_pos()
-        self.update_pan()
+
             
     def load_control_profile(self):
         self.controller.settings.B.add_listener(self.activate_stig_control)
@@ -144,7 +143,7 @@ class SEMAlignMeasure(Measurement):
     def update_pos(self):
         profile = self.settings['active_widget']
         dx = self.controller.settings['Axis_4']
-        dy = self.controller.settings['Axis_3']*(-1)
+        dy = self.controller.settings['Axis_3']
         c = self.controller.settings.sensitivity.val
         if abs(dx) < 0.25:
             dx = 0
@@ -193,47 +192,16 @@ class SEMAlignMeasure(Measurement):
         self.xb_dev = self.controller.xb_dev 
         self.joystick = self.xb_dev.joystick
         self.sensitivity = self.controller.settings['sensitivity']
+        self.load_control_profile()
         self.dt = 0.05
-        
         
         while not self.interrupt_measurement_called:  
             self.update_pos()
             self.update_pan()
             time.sleep(self.dt)
-            event_list = pygame.event.get()
-            for event in event_list:
-                if event.type == pygame.JOYAXISMOTION:
-                    for i in range(self.xb_dev.num_axes):
-                        self.controller.settings['Axis_' + str(i)] = self.joystick.get_axis(i)
-
-                elif event.type == pygame.JOYHATMOTION:
-                    for i in range(self.xb_dev.num_hats):
-                        # Clear Directional Pad values
-                        for k in set(self.controller.direction_map.values()):
-                            self.controller.settings[k] = False
-
-                        # Check button status and record it
-                        resp = self.joystick.get_hat(i)
-                        try:
-                            self.controller.settings[self.controller.direction_map[resp]] = True
-                        except KeyError:
-                            self.log.error("Unknown dpad hat: "+ repr(resp))
-
-                elif event.type in [pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP]:
-                    button_state = (event.type == pygame.JOYBUTTONDOWN)
-
-                    for i in range(self.xb_dev.num_buttons):
-                        if self.joystick.get_button(i) == button_state:
-                            try:
-                                self.controller.settings[self.controller.button_map[i]] = button_state
-                            except KeyError:
-                                self.log.error("Unknown button: %i (target state: %s)" % (i,
-                                    'down' if button_state else 'up'))
-
-                else:
-                    self.log.error("Unknown event type: {}".format(event.type))
-
-
+        
+        else:
+            pass
 
 class PointLQROI(pg.CrosshairROI):
     """

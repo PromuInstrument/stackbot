@@ -49,7 +49,7 @@ class AugerChanHistory(Measurement):
         self.layout.addWidget(self.graph_layout,stretch=1)
         
         self.ui.show()
-        self.ui.setWindowTitle("AugerAnalyzerChannelHistory")
+        self.ui.setWindowTitle("auger_chan_history")
         
         NUM_CHANS = self.auger_fpga_hw.NUM_CHANS
         

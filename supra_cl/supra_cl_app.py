@@ -35,6 +35,8 @@ class SupraCLApp(BaseMicroscopeApp):
         from supra_cl.sem_sync_raster_quad_measure import SemSyncRasterScanQuadView
         self.add_measurement(SemSyncRasterScanQuadView(self))
 
+        self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
+
         self.settings_load_ini('supra_cl_defaults.ini')
 
         self.ui.show()
