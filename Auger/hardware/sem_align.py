@@ -101,7 +101,7 @@ class SEMAlignMeasure(Measurement):
         
         
         self.dock_config()
-        self.load_control_profile()
+        
         self.activate_focus_control()
         
     def dock_config(self):
@@ -120,22 +120,19 @@ class SEMAlignMeasure(Measurement):
         self.settings.active_widget.update_value('Focus')
         obj_inv = self.wd_plot.items()
         self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
-        self.update_pos()
-        self.update_pan()
+
         
     def activate_stig_control(self):
         self.settings.active_widget.update_value('Stigmation')
         obj_inv = self.stig_plot.items()
         self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
-        self.update_pos()
-        self.update_pan()
+
         
     def activate_beam_control(self):
         self.settings.active_widget.update_value('Beam Shift')
         obj_inv = self.beamshift_plot.items()
         self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
-        self.update_pos()
-        self.update_pan()
+
             
     def load_control_profile(self):
         self.controller.settings.B.add_listener(self.activate_stig_control)
@@ -195,11 +192,8 @@ class SEMAlignMeasure(Measurement):
         self.xb_dev = self.controller.xb_dev 
         self.joystick = self.xb_dev.joystick
         self.sensitivity = self.controller.settings['sensitivity']
+        self.load_control_profile()
         self.dt = 0.05
-        #self.controller_measure = self.app.measurements['xbcontrol_mc']
-        
-        #self.controller_measure.start()
-
         
         while not self.interrupt_measurement_called:  
             self.update_pos()
@@ -207,7 +201,6 @@ class SEMAlignMeasure(Measurement):
             time.sleep(self.dt)
         
         else:
-            #self.controller_measure.interrupt()
             pass
 
 class PointLQROI(pg.CrosshairROI):
