@@ -17,3 +17,4 @@ dist
 *.autosave
 *.mat
 ScopeFoundry/ScopeFoundry.egg-info
+ScopeFoundry/__pycache__/

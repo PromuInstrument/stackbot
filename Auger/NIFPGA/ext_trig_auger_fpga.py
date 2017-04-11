@@ -64,6 +64,9 @@ class ExtTrigAugerFPGA(object):
         
         self.FPGA = NI_FPGA(self.bitfilename, self.signature, self.resource, debug=debug) 
         
+        self.actual_depth  = self.FPGA.Configure_Fifo2(fifo=0, reqDepth=int(10e6))
+        print("Configure_Fifo2 actual_depth", self.actual_depth)
+        
         #self.ffi = FFI()
         #self.ffi.cdef(fpga_vi_header)
         #self.C = self.ffi.dlopen(None)
@@ -115,24 +118,41 @@ class ExtTrigAugerFPGA(object):
         if err == 0:
             if self.debug: print(  "Sample count", sampleCount )
     
-    def write_samplePeriod(self, samplePeriod=2500):
+    def read_sampleCount(self):
+        indicator = 0x8110    #NiFpga_CtrExtTrigAuger_ControlU32_SampleCount = 0x8110,
+        err, value = self.FPGA.Read_U32( indicator )
+        if self.debug: print(  "read_sampleCount {} Status: {}".format(value, str(err)))
+        if err == 0:
+            if self.debug: print(  "Sample count {}".format(value))
+        return value
+    
+    def write_samplePeriod(self, samplePeriod=4000):
         indicator = 0x8114    #NiFpga_CtrExtTrigAuger_ControlU32_SamplePeriod = 0x8114,
         err = self.FPGA.Write_U32( indicator, samplePeriod )
         if self.debug: print(  "samplePeriod Status:" + str(err))
         if err == 0:
             if self.debug: print(  "Sample period", samplePeriod )
     
+    def read_samplePeriod(self):
+        indicator = 0x8114    #NiFpga_CtrExtTrigAuger_ControlU32_SamplePeriod = 0x8114,
+        err, value = self.FPGA.Read_U32( indicator )
+        if self.debug: print(  "samplePeriod {} status {}:".format( value, str(err)))
+        if err == 0:
+            if self.debug: print(  "Sample period", value )
+        return value
+    
     def read_num_transfers_in_fifo(self):
         elements_remain, buf = self.read_fifo_raw(numberOfElements=0, timeout=0)
         return int(np.floor(elements_remain/5))
 
     def read_fifo_raw(self, numberOfElements=5, timeout=0):
+        itime = int(1000*timeout)#convert to msec
         return self.FPGA.Read_Fifo( fifo=0, 
                                     numberOfElements=numberOfElements, 
-                                    timeout=timeout,
+                                    timeout=itime,
                                     dtype='U64')
     
-    def read_fifo_parse(self, n_transfers=1, timeout=0):
+    def read_fifo_parse(self, n_transfers=1, timeout=0, return_remaining = False):
         """
         for each transfer we expect 5 U64 words
         Each trigger transfers 5 x U64 in FIFO in 200 ns
@@ -142,8 +162,8 @@ class ExtTrigAugerFPGA(object):
         data channels 00 to 07
         """
         
-        numberofElements=5*n_transfers
-        remaining_words, buffer = self.read_fifo_raw(numberofElements, timeout)
+        count=5*n_transfers
+        remaining_words, buffer = self.read_fifo_raw(count, timeout)
         if self.debug: print('read_fifo_parse remaining_words', remaining_words)
         
         if len(buffer) == 0:
@@ -169,7 +189,10 @@ class ExtTrigAugerFPGA(object):
             # and place it in the correct column of data
             data[:, header] = wide_buf[:, jj] & 0x0FFFFFFF 
         
-        return data
+        if return_remaining: 
+            return remaining_words, data 
+        else: 
+            return data
     
     def flush_fifo(self):
         elements_remain, buf =self.read_fifo_raw(0)

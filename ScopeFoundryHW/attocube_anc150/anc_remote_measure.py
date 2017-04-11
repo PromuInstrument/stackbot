@@ -26,6 +26,9 @@ class ANC_RemoteMeasure(Measurement):
                 getattr(self.ui, lq_name + '_doubleSpinBox'))
         
         self.anc_hw = self.app.hardware['anc150']
+        self.xb_hw = self.app.hardware['xbox_controller']
+
+        
         
         for axis_name in ['x', 'y', 'pitch', 'yaw']:
             for direction in ['up', 'down']:
@@ -49,7 +52,20 @@ class ANC_RemoteMeasure(Measurement):
         self.anc_hw.settings.ground_all.connect_to_widget(self.ui.ground_all_checkBox)
         
         self.ui.zero_position_pushButton.clicked.connect(self.anc_hw.zero_position)
-                  
+        
+        
+#         self.listener_setup()
+#         
+#     def listener_setup(self):
+#         self.xb_hw.settings.N.add_listener(self.move_y_up)
+#         self.xb_hw.settings.S.add_listener(self.move_y_down)
+#         self.xb_hw.settings.W.add_listener(self.move_x_down)
+#         self.xb_hw.settings.E.add_listener(self.move_x_up)
+#         self.xb_hw.settings.Y.add_listener(self.move_yaw_up)
+#         self.xb_hw.settings.A.add_listener(self.move_yaw_down)
+#         self.xb_hw.settings.X.add_listener(self.move_pitch_down)
+#         self.xb_hw.settings.B.add_listener(self.move_pitch_up)   
+          
     def move_x_up(self):
         self.anc_hw.move_axis_delta_by_name('x', self.settings['steps_xy'])
         
@@ -77,3 +93,29 @@ class ANC_RemoteMeasure(Measurement):
     def on_new_positions(self):
         for axis_name in ['x', 'y', 'pitch', 'yaw']:
             self.settings[axis_name + '_pos'] = self.anc_hw.get_pos_by_name(axis_name)
+
+    def run(self):
+        if 'xbcontrol_mc' in self.app.measurements:
+            self.app.measurements['xbcontrol_mc'].start()
+        if self.interrupt_measurement_called:
+            self.app.measurements['xbcontrol_mc'].interrupt()
+            
+        while not self.interrupt_measurement_called:
+            if self.xb_hw.settings['N'] == True:
+                self.move_y_up()
+            elif self.xb_hw.settings['S'] == True:
+                self.move_y_down()
+            elif self.xb_hw.settings['W'] == True:
+                self.move_x_down()
+            elif self.xb_hw.settings['E'] == True:
+                self.move_x_up()
+            elif self.xb_hw.settings['Y'] == True:
+                self.move_yaw_up()
+            elif self.xb_hw.settings['A'] == True:
+                self.move_yaw_down()
+            elif self.xb_hw.settings['X'] == True:
+                self.move_pitch_down()
+            elif self.xb_hw.settings['B'] == True:
+                self.move_pitch_up()   
+            
+                #set anc150 lqs / functions

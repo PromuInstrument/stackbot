@@ -25,14 +25,6 @@ class SemSyncRasterScan(BaseRaster2DScan):
         self.Nv.update_value(1000)
                 
         self.display_update_period = 0.050 #seconds
-
-        # Created logged quantities
-        
-        self.settings.New('n_frames', dtype=int, initial=1, vmin=1)
-        
-        self.settings.New('pixel_time', dtype=float, ro=True, si=True, unit='s')
-        self.settings.New('line_time' , dtype=float, ro=True, si=True, unit='s')
-        self.settings.New('frame_time' , dtype=float, ro=True, si=True, unit='s')        
         
         
         
@@ -89,10 +81,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
         # previously set samples_per_point in scanDAQ hardware
                
 
-        
- 
         try:
-            ##### HDF5 Data file
             if self.settings['save_h5']:
                 self.h5_file = h5_io.h5_base_file(self.app, measurement=self)
                 self.h5_m = h5_io.h5_create_measurement_group(measurement=self, h5group=self.h5_file)
@@ -126,11 +115,12 @@ class SemSyncRasterScan(BaseRaster2DScan):
                 #print("num_blocks", num_blocks)
         
             self.num_pixels_per_block = num_pixels_per_block = int(self.Npixels / num_blocks)
-            self.log.info("num_pixels_per_block", num_pixels_per_block)
+            self.log.info("num_pixels_per_block {}".format( num_pixels_per_block))
             
             ##### Data array
             # ADC
             self.adc_pixels = np.zeros((self.Npixels, self.scanDAQ.adc_chan_count), dtype=float)
+            #self.adc_pixels_oversample = np.zeros((self.Npixels, self.scanDAQ.adc_chan_count*self.scanDAQ.settings['adc_oversample']))
             #self.pixels_remaining = self.Npixels # in frame
             self.new_adc_data_queue = [] # will contain numpy arrays (data blocks) from adc to be processed
             self.adc_map = np.zeros(self.scan_shape + (self.scanDAQ.adc_chan_count,), dtype=float)
@@ -205,6 +195,14 @@ class SemSyncRasterScan(BaseRaster2DScan):
             self.num_pixels_per_block)
         self.new_adc_data_queue.append(new_adc_data)
         #self.on_new_adc_data(new_data)
+        num_new_pixels = new_adc_data.shape[0]
+        pixel_index = self.pixel_index + num_new_pixels
+        total_pixel_index =  self.total_pixel_index + num_new_pixels
+        pixel_index %= self.Npixels
+        if pixel_index == 0:
+            frame_num = (total_pixel_index // self.Npixels) - 1
+            self.on_new_frame(frame_num)
+        
         return 0
     
     def every_n_callback_func_ctr(self, ctr_i):
@@ -238,7 +236,6 @@ class SemSyncRasterScan(BaseRaster2DScan):
     def on_new_adc_data(self, new_data):
         self.set_progress(100*self.pixel_index / self.Npixels )
         #print('callback block', self.pixel_index, new_data.shape, 'remaining px', self.Npixels - self.pixel_index)
-        new_data = new_data.reshape(-1,  self.scanDAQ.settings['adc_oversample'], self.scanDAQ.adc_chan_count).swapaxes(1,2)
         ii = self.pixel_index
         dii = num_new_pixels = new_data.shape[0]
         # average over samples (takes oversampled adc data and
@@ -247,13 +244,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
 
         #stuff into pixel data array
         self.adc_pixels[ii:ii+dii , :] = new_data
-        
-        """        DISPLAY_CHAN = 1                    
-        x = self.scan_index_array[ii:ii+dii,:].T
-        x1 = self.scan_index_array[(ii+dii+1)%self.Npixels,:]
-        self.display_image_map[x[0], x[1], x[2]] = self.adc_pixels[ii:ii+dii, DISPLAY_CHAN]
-        """
-        
+                
         self.current_scan_index = self.scan_index_array[self.pixel_index]
 
         self.pixel_index += num_new_pixels
@@ -278,10 +269,19 @@ class SemSyncRasterScan(BaseRaster2DScan):
                 self.adc_map_h5[frame_num, :,:,:,:] = self.adc_map
                 self.h5_file.flush()
             
+            self.on_end_frame(frame_num - 1)
+            
             # Stop scan if n_frames reached:
             if (not self.settings['continuous_scan']) \
                     and (frame_num >= self.settings['n_frames'] - 1) :
                 self.task_done = True
+            
+    
+    def on_new_frame(self, frame_i):
+        pass
+    
+    def on_end_frame(self, frame_i):
+        pass
 
     def on_new_ctr_data(self, ctr_i, new_data):
         #print("on_new_ctr_data {} {}".format(ctr_i, new_data))
@@ -374,6 +374,6 @@ class SemSyncRasterScan(BaseRaster2DScan):
             return False
                 
     def compute_times(self):
-        self.settings['pixel_time'] = 1.0/self.scanDAQ.settings['dac_rate']
-        self.settings['line_time'] = self.settings['pixel_time'] * self.settings['Nh']
-        self.settings['frame_time'] = self.settings['pixel_time'] * self.Npixels
+        if hasattr(self, 'scanDAQ'):
+            self.settings['pixel_time'] = 1.0/self.scanDAQ.settings['dac_rate']
+        BaseRaster2DScan.compute_times(self)

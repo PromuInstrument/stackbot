@@ -315,7 +315,8 @@ class NI_AdcTask(NI_TaskWrap):
             self.error(err)
             #not sure how to handle actual samples read, resize array??
         if read_count.value < count:
-            logger.warning( 'requested {} values for {} channels, only {} read'.format( count, self._chan_count, read_count.value) )
+            pass
+            #logger.warning( 'requested {} values for {} channels, only {} read'.format( count, self._chan_count, read_count.value) )
 #        print "samples {} written {}".format( self._sample_count, writeCount.value)
 #        assert read_count.value == 1, \
 #           "sample count {} transfer count {}".format( 1, read_count.value )
@@ -684,8 +685,8 @@ class NI_SyncTaskSet(object):
         """
         Set the i/o rates and size of buffers
         
-        *rate_out*: DAC rate (Hz)
-        *rate_in*: ADC rate (Hz), counters are also clocked at this rate
+        *rate_out*: DAC rate (Hz), counters are also clocked at this rate
+        *rate_in*: ADC rate (Hz)
         
         *is_finite* defines if single shot or continuous
         
@@ -708,7 +709,7 @@ class NI_SyncTaskSet(object):
         self.adc.set_rate(rate_in,  count_in  ,finite=is_finite, clk_source=self.clock_source)
         for i in range(self.num_ctrs):
             self.ctrs[i].set_rate(rate_in,count_in,
-                                  clk_source='ai/SampleClock',finite=is_finite)
+                                  clk_source='ao/SampleClock',finite=is_finite)
             
         
     def write_output_data_to_buffer(self, data):

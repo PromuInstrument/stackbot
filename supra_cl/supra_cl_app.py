@@ -26,11 +26,23 @@ class SupraCLApp(BaseMicroscopeApp):
         from Auger.sem_sync_raster_hardware import SemSyncRasterDAQ
         self.add_hardware(SemSyncRasterDAQ(self))
 
+        from Auger.hardware.remcon32_hw import SEM_Remcon_HW
+        self.add_hardware(SEM_Remcon_HW(self))
+        
         from Auger.sem_sync_raster_measure import SemSyncRasterScan
         self.add_measurement(SemSyncRasterScan(self))
         
         from supra_cl.sem_sync_raster_quad_measure import SemSyncRasterScanQuadView
         self.add_measurement(SemSyncRasterScanQuadView(self))
+        
+        from ScopeFoundryHW.andor_camera import AndorCCDHW, AndorCCDReadoutMeasure
+        self.add_hardware(AndorCCDHW(self))
+        self.add_measurement(AndorCCDReadoutMeasure(self))
+
+        from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
+        self.add_hardware(ActonSpectrometerHW(self))
+
+        self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
 
         self.settings_load_ini('supra_cl_defaults.ini')
 

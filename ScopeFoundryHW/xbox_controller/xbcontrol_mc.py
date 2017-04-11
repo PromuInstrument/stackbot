@@ -6,7 +6,6 @@ import time
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 import pygame.event
 from pygame.constants import JOYAXISMOTION, JOYHATMOTION, JOYBUTTONDOWN, JOYBUTTONUP
-from ScopeFoundryHW.xbox_controller.xbcontrol_ec import XboxControlDevice
 
 class XboxControlMeasure(Measurement):
     """This class contains connections to logged quantities and ui elements. 
@@ -41,47 +40,82 @@ class XboxControlMeasure(Measurement):
         Controller name logged quantity referenced below is meant to
         tell the user the name of the connected device as a sanity check."""
         self.dt = 0.05
+
+        self.controller = self.app.hardware['xbox_controller']
+
+        self.set_universal_key_map()
+        
+    def setup_ui(self):
         self.gui
         
         self.ui_filename = sibling_path(__file__, "Controller.ui")
-        # UI
         self.ui = load_qt_ui_file(self.ui_filename)
         self.ui.setWindowTitle(self.name)
         
-        self.hw = self.app.hardware['xbox_controller']
-
-        
         # Buttons
-        self.hw.A.connect_bidir_to_widget(self.ui.a_radio)
-        self.hw.B.connect_bidir_to_widget(self.ui.b_radio)
-        self.hw.X.connect_bidir_to_widget(self.ui.x_radio)
-        self.hw.Y.connect_bidir_to_widget(self.ui.y_radio)
-        self.hw.LB.connect_bidir_to_widget(self.ui.LB_radio)
-        self.hw.RB.connect_bidir_to_widget(self.ui.RB_radio)
-        self.hw.ls_lr.connect_bidir_to_widget(self.ui.ls_hdsb)
-        self.hw.ls_ud.connect_bidir_to_widget(self.ui.ls_vdsb)
-        self.hw.rs_lr.connect_bidir_to_widget(self.ui.rs_hdsb)
-        self.hw.rs_ud.connect_bidir_to_widget(self.ui.rs_vdsb)
-        self.hw.triggers.connect_bidir_to_widget(self.ui.trig_dsb)
-        self.hw.Back.connect_bidir_to_widget(self.ui.back_radio)
-        self.hw.Start.connect_bidir_to_widget(self.ui.start_radio)
-        self.hw.LP.connect_bidir_to_widget(self.ui.lpress)
-        self.hw.RP.connect_bidir_to_widget(self.ui.rpress)
+        self.controller.A.connect_bidir_to_widget(self.ui.a_radio)
+        self.controller.B.connect_bidir_to_widget(self.ui.b_radio)
+        self.controller.X.connect_bidir_to_widget(self.ui.x_radio)
+        self.controller.Y.connect_bidir_to_widget(self.ui.y_radio)
+        self.controller.LB.connect_bidir_to_widget(self.ui.LB_radio)
+        self.controller.RB.connect_bidir_to_widget(self.ui.RB_radio)
+        self.controller.ls_lr.connect_bidir_to_widget(self.ui.ls_hdsb)
+        self.controller.ls_ud.connect_bidir_to_widget(self.ui.ls_vdsb)
+        self.controller.rs_lr.connect_bidir_to_widget(self.ui.rs_hdsb)
+        self.controller.rs_ud.connect_bidir_to_widget(self.ui.rs_vdsb)
+        self.controller.triggers.connect_bidir_to_widget(self.ui.trig_dsb)
+        self.controller.Back.connect_bidir_to_widget(self.ui.back_radio)
+        self.controller.Start.connect_bidir_to_widget(self.ui.start_radio)
+        self.controller.LP.connect_bidir_to_widget(self.ui.lpress)
+        self.controller.RP.connect_bidir_to_widget(self.ui.rpress)
         
         # Dpad positions
-        self.hw.N.connect_bidir_to_widget(self.ui.north)
-        self.hw.NW.connect_bidir_to_widget(self.ui.northwest)
-        self.hw.W.connect_bidir_to_widget(self.ui.west)
-        self.hw.SW.connect_bidir_to_widget(self.ui.southwest)
-        self.hw.S.connect_bidir_to_widget(self.ui.south)
-        self.hw.SE.connect_bidir_to_widget(self.ui.southeast)
-        self.hw.E.connect_bidir_to_widget(self.ui.east)
-        self.hw.NE.connect_bidir_to_widget(self.ui.northeast)
-        self.hw.origin.connect_bidir_to_widget(self.ui.origin)
+        self.controller.N.connect_bidir_to_widget(self.ui.north)
+        self.controller.NW.connect_bidir_to_widget(self.ui.northwest)
+        self.controller.W.connect_bidir_to_widget(self.ui.west)
+        self.controller.SW.connect_bidir_to_widget(self.ui.southwest)
+        self.controller.S.connect_bidir_to_widget(self.ui.south)
+        self.controller.SE.connect_bidir_to_widget(self.ui.southeast)
+        self.controller.E.connect_bidir_to_widget(self.ui.east)
+        self.controller.NE.connect_bidir_to_widget(self.ui.northeast)
+        self.controller.origin.connect_bidir_to_widget(self.ui.origin)
         
         # Controller name readout in ui element
-        self.hw.controller_name.connect_bidir_to_widget(self.ui.control_name_field)
+        self.controller.controller_name.connect_bidir_to_widget(self.ui.control_name_field)
 
+    def set_universal_key_map(self):
+        self.controller.settings.LB.add_listener(self.prev_tab)
+        self.controller.settings.RB.add_listener(self.next_tab)
+        self.controller.settings.Start.add_listener(self.start_measure)
+        self.controller.settings.Back.add_listener(self.interrupt_measure)
+    
+    def prev_tab(self):
+        if self.controller.settings['LB'] == True:
+            self.app.ui.mdiArea.activatePreviousSubWindow()
+        else:
+            pass
+            
+    def next_tab(self):
+        if self.controller.settings['RB'] == True:
+            self.app.ui.mdiArea.activateNextSubWindow()
+        else:
+            pass
+        
+    def start_measure(self):
+        if self.controller.settings['Start'] == True:
+            window = self.app.ui.mdiArea.activeSubWindow().widget().windowTitle()
+            self.app.measurements['{}'.format(window)].start()
+            print(window)
+        else:
+            pass
+    
+    def interrupt_measure(self):
+        if self.controller.settings['Back'] == True:
+            window = self.app.ui.mdiArea.activeSubWindow().widget().windowTitle()
+            self.app.measurements['{}'.format(window)].interrupt()
+            print(window)
+        else: pass
+    
     def run(self):
         """This function is run after having clicked "start" in the ScopeFoundry GUI.
         It essentially runs and listens for Pygame event signals and updates the status
@@ -90,13 +124,13 @@ class XboxControlMeasure(Measurement):
         self.log.debug("run")
         
         #Access equipment class:
-        self.hw.connect()
-        self.xb_dev = self.hw.xb_dev 
+        self.controller.connect()
+        self.xb_dev = self.controller.xb_dev 
         self.joystick = self.xb_dev.joystick
         
         self.log.debug("ran")
         
-        self.hw.settings['Controller_Name'] = self.joystick.get_name()
+        self.controller.settings['Controller_Name'] = self.joystick.get_name()
         
         while not self.interrupt_measurement_called:  
             time.sleep(self.dt)
@@ -104,18 +138,18 @@ class XboxControlMeasure(Measurement):
             for event in event_list:
                 if event.type == pygame.JOYAXISMOTION:
                     for i in range(self.xb_dev.num_axes):
-                        self.hw.settings['Axis_' + str(i)] = self.joystick.get_axis(i)
+                        self.controller.settings['Axis_' + str(i)] = self.joystick.get_axis(i)
 
                 elif event.type == pygame.JOYHATMOTION:
                     for i in range(self.xb_dev.num_hats):
                         # Clear Directional Pad values
                         for k in set(self.direction_map.values()):
-                            self.hw.settings[k] = False
+                            self.controller.settings[k] = False
 
                         # Check button status and record it
                         resp = self.joystick.get_hat(i)
                         try:
-                            self.hw.settings[self.direction_map[resp]] = True
+                            self.controller.settings[self.direction_map[resp]] = True
                         except KeyError:
                             self.log.error("Unknown dpad hat: "+ repr(resp))
 
@@ -125,7 +159,7 @@ class XboxControlMeasure(Measurement):
                     for i in range(self.xb_dev.num_buttons):
                         if self.joystick.get_button(i) == button_state:
                             try:
-                                self.hw.settings[self.button_map[i]] = button_state
+                                self.controller.settings[self.button_map[i]] = button_state
                             except KeyError:
                                 self.log.error("Unknown button: %i (target state: %s)" % (i,
                                     'down' if button_state else 'up'))

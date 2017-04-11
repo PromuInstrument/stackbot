@@ -4,6 +4,7 @@ Created on Feb 28, 2017
 @author: Alan Buckley
 '''
 from ScopeFoundry.base_app import BaseMicroscopeApp
+from ScopeFoundry.helper_funcs import sibling_path
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
@@ -23,10 +24,15 @@ class AttocubeANCApp(BaseMicroscopeApp):
         #from ScopeFoundryHW.attocube_anc150.anc150_optimizer import ANC_Optimizer
         #self.add_measurement(ANC_Optimizer(self))
         
-        from ScopeFoundryHW.attocube_anc150.anc_explore_measure import ANC_RemoteMeasure
+        from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
+        self.add_hardware(XboxControlHW(self))
+        
+        from ScopeFoundryHW.attocube_anc150.anc_remote_measure import ANC_RemoteMeasure
         self.add_measurement(ANC_RemoteMeasure(self))
         
         self.ui.lq_trees_groupBox.hide()
+        
+        self.settings_load_ini(sibling_path(__file__, 'anc_defaults.ini'))
         
 if __name__ == '__main__':
     import sys
