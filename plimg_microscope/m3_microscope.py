@@ -47,8 +47,8 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW
         self.add_hardware_component(ThorlabsPowerMeterHW(self))
 
-        from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYStageHW
-        self.add_hardware_component(AttoCubeXYStageHW(self))
+        from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYZStageHW
+        self.add_hardware_component(AttoCubeXYZStageHW(self))
 
         
         #Add measurement components

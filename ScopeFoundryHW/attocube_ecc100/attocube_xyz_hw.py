@@ -11,10 +11,10 @@ except Exception as err:
     print("could not load modules needed for AttoCubeECC100: {}".format(err))
     
 
-class AttoCubeXYStageHW(HardwareComponent):
+class AttoCubeXYZStageHW(HardwareComponent):
 
     def setup(self):
-        self.name = 'attocube_xy_stage'
+        self.name = 'attocube_xyz_stage'
         # if attocube pro is activated
         self.pro = False
         
@@ -24,9 +24,10 @@ class AttoCubeXYStageHW(HardwareComponent):
             self.settings.New(axis + "_position", 
                                dtype=float,
                                ro=True,
-                               vmin=-1e6,
-                               vmax=1e6,
-                               unit='nm'
+                               vmin=-10e3,
+                               vmax=10e3,
+                               unit='um',
+                               si=False
                                )
             
             #self.settings.New(axis + "_ref_position", dtype=float, ro=True, unit='nm')
@@ -34,9 +35,10 @@ class AttoCubeXYStageHW(HardwareComponent):
             self.settings.New(axis + "_target_position",
                                 dtype=float,
                                 ro=False,
-                                vmin=-10e6,
-                                vmax=10e6,
-                                unit='nm')
+                                vmin=-10e3,
+                                vmax=10e3,
+                                unit='um',
+                                si=False)
         
             self.settings.New(axis + "_step_voltage",
                                 dtype=float, unit='V',
@@ -57,6 +59,9 @@ class AttoCubeXYStageHW(HardwareComponent):
         
             self.settings.New(axis + "_enable_closedloop", dtype=bool,
                                                                  ro=False)
+            
+            # Target Status is NCB_FeatureNotAvailable
+            #self.settings.New(axis + "_target_status", dtype=bool, ro=True)
                 
         
         self.settings.New('device_num', dtype=int, initial=0)
@@ -85,16 +90,16 @@ class AttoCubeXYStageHW(HardwareComponent):
                 # connect logged quantities
                 
                 self.settings.get_lq(axis_name + "_position").hardware_read_func = \
-                    lambda a=axis_num: self.ecc100.read_position_axis(a)
+                    lambda a=axis_num: 1e-3*self.ecc100.read_position_axis(a)
         
                 self.settings.get_lq(axis_name + "_target_position").hardware_read_func = \
-                    lambda a=axis_num: self.ecc100.read_target_position_axis(a)
+                    lambda a=axis_num: 1e-3*self.ecc100.read_target_position_axis(a)
                 self.settings.get_lq(axis_name + "_target_position").hardware_set_func  = \
-                    lambda new_pos, a=axis_num: self.ecc100.write_target_position_axis(a, new_pos)
+                    lambda new_pos, a=axis_num: self.ecc100.write_target_position_axis(a, 1e3*new_pos)
                     
                 
                 self.settings.get_lq(axis_name + "_step_voltage").hardware_read_func = \
-                    lambda a=axis_num: self.ecc100.read_step_voltage(a)
+                    lambda a=axis_num: 1e-3*self.ecc100.read_step_voltage(a)
                     
                 self.settings.get_lq(axis_name + "_electrically_connected").hardware_read_func = \
                     lambda a=axis_num: self.ecc100.is_electrically_connected(a)
@@ -104,10 +109,15 @@ class AttoCubeXYStageHW(HardwareComponent):
                 self.settings.get_lq(axis_name + "_enable_output").hardware_set_func = \
                     lambda enable, a=axis_num: self.ecc100.enable_axis(a, enable)
                     
-                self.settings.get_lq(axis_name + "_enable_closedloop").hardware_read_func = \
-                    lambda a=axis_num: self.ecc100.read_enable_closedloop_axis(a)
-                self.settings.get_lq(axis_name + "_enable_closedloop").hardware_set_func = \
-                    lambda enable, a=axis_num: self.ecc100.enable_closedloop_axis(a, enable)
+                self.settings.get_lq(axis_name + "_enable_closedloop").connect_to_hardware(
+                    read_func = lambda a=axis_num: self.ecc100.read_enable_closedloop_axis(a),
+                    write_func = lambda enable, a=axis_num: self.ecc100.enable_closedloop_axis(a, enable)
+                    )
+                    
+                # Target Status is NCB_FeatureNotAvailable
+                #self.settings.get_lq(axis_name + "_target_status").connect_to_hardware(
+                #    read_func = lambda a=axis_num: self.ecc100.read_target_status(a) 
+                #    )
 
 
 
