@@ -52,7 +52,7 @@ class AugerSpectrum(Measurement):
         self.layout.addWidget(self.graph_layout, stretch=1)
         
         self.ui.show()
-        self.ui.setWindowTitle("AugerSpectrum")
+        self.ui.setWindowTitle("auger_spectrum")
         
             #hardware setup
         self.auger_fpga_hw = self.app.hardware['auger_fpga']

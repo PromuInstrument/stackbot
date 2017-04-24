@@ -5,7 +5,7 @@ from ScopeFoundry import BaseMicroscopeApp
 import logging
 
 logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
-logging.getLogger('').setLevel(logging.WARNING)
+#logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
 logging.getLogger('ScopeFoundry.logged_quantity.LoggedQuantity').setLevel(logging.WARNING)
@@ -47,8 +47,8 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW
         self.add_hardware_component(ThorlabsPowerMeterHW(self))
 
-        from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYStageHW
-        self.add_hardware_component(AttoCubeXYStageHW(self))
+        from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYZStageHW
+        self.add_hardware_component(AttoCubeXYZStageHW(self))
 
         
         #Add measurement components

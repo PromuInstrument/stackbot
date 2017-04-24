@@ -93,6 +93,9 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
         self.add_hardware(XboxControlHW(self))
         
+        from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
+        self.add_measurement(XboxControlMeasure(self))
+        
         from Auger.hardware.sem_align import SEMAlignMeasure
         self.add_measurement(SEMAlignMeasure)
 
@@ -102,6 +105,7 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
 #        self.phi_ion_gun = self.add_hardware_component(PhiIonGunHardwareComponent(self))
 #        self.ion_gun_status = self.add_measurement_component(IonGunStatus(self))
 
+        self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
 
 
         self.settings_load_ini('auger_app_settings.ini')
