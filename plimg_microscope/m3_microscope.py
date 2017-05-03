@@ -8,7 +8,7 @@ logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
 #logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
-logging.getLogger('ScopeFoundry.logged_quantity.LoggedQuantity').setLevel(logging.WARNING)
+logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
 
 """logging.basicConfig(filename='m3_log.txt')
 stderrLogger=logging.StreamHandler()
@@ -88,6 +88,13 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         
         from ScopeFoundryHW.attocube_ecc100.attocube_slowscan import AttoCube2DSlowScan
         self.add_measurement(AttoCube2DSlowScan(self))
+
+        from plimg_microscope.fiber_scan import FiberPowerMeterScan, FiberAPDScan, FiberPicoharpScan
+        self.add_measurement(FiberPowerMeterScan(self))
+        self.add_measurement(FiberAPDScan(self))
+        self.add_measurement(FiberPicoharpScan(self))
+                
+        
         #set some default logged quantities
         #
         
