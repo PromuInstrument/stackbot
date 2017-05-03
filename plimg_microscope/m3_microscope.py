@@ -50,6 +50,8 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYZStageHW
         self.add_hardware_component(AttoCubeXYZStageHW(self))
 
+        from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
+        self.add_hardware_component(ESP300AxisHW(self))
         
         #Add measurement components
         print("Create Measurement objects")
