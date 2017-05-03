@@ -83,6 +83,11 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from confocal_measure import WinSpecMCL2DSlowScan
         self.add_measurement_component(WinSpecMCL2DSlowScan(self))
         
+        from ScopeFoundryHW.attocube_ecc100.attocube_stage_control import AttoCubeStageControlMeasure
+        self.add_measurement(AttoCubeStageControlMeasure(self))
+        
+        from ScopeFoundryHW.attocube_ecc100.attocube_slowscan import AttoCube2DSlowScan
+        self.add_measurement(AttoCube2DSlowScan(self))
         #set some default logged quantities
         #
         
