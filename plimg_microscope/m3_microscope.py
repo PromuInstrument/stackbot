@@ -74,6 +74,9 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         self.add_measurement_component(PowerScanMeasure(self))
         
         # Mapping measurements
+        from ScopeFoundryHW.mcl_stage.mcl_stage_slowscan import Delay_MCL_2DSlowScan
+        self.add_measurement(Delay_MCL_2DSlowScan(self))
+        
         from confocal_measure import APD_MCL_2DSlowScan
         self.add_measurement_component(APD_MCL_2DSlowScan(self))        
         
