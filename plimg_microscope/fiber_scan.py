@@ -47,7 +47,16 @@ class FiberPicoharpScan(AttoCube2DSlowScan):
     name = 'fiber_picoharp_scan'
 
     def pre_scan_setup(self):
+        print("="*60)
+        print(self.name, "pre_scan_setup")
         Picoharp_MCL_2DSlowScan.pre_scan_setup(self)
 
     def collect_pixel(self, pixel_num, k, j, i):
+        print(self.name, "collect_pixel", pixel_num, k, j, i)
         Picoharp_MCL_2DSlowScan.collect_pixel(self, pixel_num, k, j, i)
+        
+    def post_scan_cleanup(self):
+        Picoharp_MCL_2DSlowScan.post_scan_cleanup(self)
+        
+    def update_display(self):
+        Picoharp_MCL_2DSlowScan.update_display(self)
