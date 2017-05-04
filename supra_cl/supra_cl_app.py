@@ -34,6 +34,13 @@ class SupraCLApp(BaseMicroscopeApp):
         
         from supra_cl.sem_sync_raster_quad_measure import SemSyncRasterScanQuadView
         self.add_measurement(SemSyncRasterScanQuadView(self))
+        
+        from ScopeFoundryHW.andor_camera import AndorCCDHW, AndorCCDReadoutMeasure
+        self.add_hardware(AndorCCDHW(self))
+        self.add_measurement(AndorCCDReadoutMeasure(self))
+
+        from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
+        self.add_hardware(ActonSpectrometerHW(self))
 
         self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
 

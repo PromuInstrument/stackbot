@@ -54,7 +54,7 @@ class ShutterServoHW(HardwareComponent):
         self.debug_mode.hardware_set_func = set_debug
         
         #connect logged quantities together        
-        self.shutter_open.updated_value[(None,)].connect(self.angle.read_from_hardware)
+        self.shutter_open.add_listener(self.angle.read_from_hardware)
 
         
     def disconnect(self):

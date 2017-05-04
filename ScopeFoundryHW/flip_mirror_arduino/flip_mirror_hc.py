@@ -12,19 +12,19 @@ except Exception as err:
     print("Cannot load required modules for FlipMirrorArduino:", err)
 
 
-FLIP_MIRROR_PORT = "COM8"
 
 class FlipMirrorHW(HardwareComponent):
     
     def setup(self):
         self.name = 'flip_mirror'
-        self.debug = False
         
+        
+        self.settings.New('port', dtype=str, initial='COM8')
         # Create logged quantities        
         self.flip_mirror_position = self.add_logged_quantity("mirror_position", dtype=bool,
                                                                 choices = [
-                                                                        ("Spectrometer", 0),
-                                                                        ("APD", 1)]
+                                                                        ("Spectrometer", False),
+                                                                        ("APD", True)]
                                                              )
         self.POSITION_SPEC = False
         self.POSITION_APD = True
@@ -34,10 +34,11 @@ class FlipMirrorHW(HardwareComponent):
             self.flip_mirror_position.connect_bidir_to_widget(self.gui.ui.flip_mirror_checkBox)
         
     def connect(self):
-        if self.debug: self.log.debug( "connecting to flip mirror arduino")
+        if self.settings['debug_mode']: self.log.debug( "connecting to flip mirror arduino")
         
         # Open connection to hardware
-        self.flip_mirror = FlipMirrorArduino(port=FLIP_MIRROR_PORT, debug=True)
+        self.flip_mirror = FlipMirrorArduino(port=self.settings['port'], 
+                                             debug=self.settings['debug_mode'])
 
         # connect logged quantities
         self.flip_mirror_position.hardware_read_func = \
