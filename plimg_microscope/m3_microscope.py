@@ -69,6 +69,9 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_powermeter import PowerMeterOptimizerMeasure
         self.add_measurement_component(PowerMeterOptimizerMeasure(self))
         
+        from ScopeFoundryHW.picoharp.picoharp_hist_measure import PicoHarpHistogramMeasure
+        self.add_measurement(PicoHarpHistogramMeasure(self))
+        
         # combined measurements
         from confocal_measure.power_scan import PowerScanMeasure
         self.add_measurement_component(PowerScanMeasure(self))
