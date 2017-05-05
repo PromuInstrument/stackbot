@@ -5,10 +5,10 @@ from ScopeFoundry import BaseMicroscopeApp
 import logging
 
 logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
-logging.getLogger('').setLevel(logging.WARNING)
+#logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
-logging.getLogger('ScopeFoundry.logged_quantity.LoggedQuantity').setLevel(logging.WARNING)
+logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
 
 """logging.basicConfig(filename='m3_log.txt')
 stderrLogger=logging.StreamHandler()
@@ -47,9 +47,11 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW
         self.add_hardware_component(ThorlabsPowerMeterHW(self))
 
-        from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYStageHW
-        self.add_hardware_component(AttoCubeXYStageHW(self))
+        from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYZStageHW
+        self.add_hardware_component(AttoCubeXYZStageHW(self))
 
+        from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
+        self.add_hardware_component(ESP300AxisHW(self))
         
         #Add measurement components
         print("Create Measurement objects")
@@ -67,11 +69,17 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_powermeter import PowerMeterOptimizerMeasure
         self.add_measurement_component(PowerMeterOptimizerMeasure(self))
         
+        from ScopeFoundryHW.picoharp.picoharp_hist_measure import PicoHarpHistogramMeasure
+        self.add_measurement(PicoHarpHistogramMeasure(self))
+        
         # combined measurements
         from confocal_measure.power_scan import PowerScanMeasure
         self.add_measurement_component(PowerScanMeasure(self))
         
         # Mapping measurements
+        from ScopeFoundryHW.mcl_stage.mcl_stage_slowscan import Delay_MCL_2DSlowScan
+        self.add_measurement(Delay_MCL_2DSlowScan(self))
+        
         from confocal_measure import APD_MCL_2DSlowScan
         self.add_measurement_component(APD_MCL_2DSlowScan(self))        
         
@@ -80,6 +88,18 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         
         from confocal_measure import WinSpecMCL2DSlowScan
         self.add_measurement_component(WinSpecMCL2DSlowScan(self))
+        
+        from ScopeFoundryHW.attocube_ecc100.attocube_stage_control import AttoCubeStageControlMeasure
+        self.add_measurement(AttoCubeStageControlMeasure(self))
+        
+        from ScopeFoundryHW.attocube_ecc100.attocube_slowscan import AttoCube2DSlowScan
+        self.add_measurement(AttoCube2DSlowScan(self))
+
+        from plimg_microscope.fiber_scan import FiberPowerMeterScan, FiberAPDScan, FiberPicoharpScan
+        self.add_measurement(FiberPowerMeterScan(self))
+        self.add_measurement(FiberAPDScan(self))
+        self.add_measurement(FiberPicoharpScan(self))
+                
         
         #set some default logged quantities
         #

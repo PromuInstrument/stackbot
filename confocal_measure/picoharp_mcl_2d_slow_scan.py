@@ -60,10 +60,25 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
     def collect_pixel(self, pixel_num, k, j, i):
         
         # collect data
-        print(pixel_num, k, j, i)
+        print('Picoharp_MCL_2DSlowScan', 'collect_pixel', pixel_num, k, j, i)
         t0 = time.time()
+
+        #hist_data, elapsed_time = self.read_picoharp_histogram()
         
-        hist_data, elapsed_time = self.read_picoharp_histogram()
+        ph = self.picoharp_hw.picoharp
+        ph.start_histogram()
+        while not ph.check_done_scanning():
+            self.picoharp_hw.settings.count_rate0.read_from_hardware()
+            self.picoharp_hw.settings.count_rate1.read_from_hardware()
+            if self.picoharp_hw.settings['Tacq'] > 0.2:
+                ph.read_histogram_data()
+            time.sleep(0.005) #self.sleep_time)  
+        ph.stop_histogram()
+        #ta = time.time()
+        ph.read_histogram_data()
+
+        hist_data = ph.histogram_data
+        elapsed_time = ph.read_elapsed_meas_time()
         
         # store in arrays
         self.time_trace_map[k,j,i, :] = hist_data[0:self.num_hist_chans]
@@ -77,6 +92,8 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
         print( 'pixel done' )
     
     def read_picoharp_histogram(self):
+        print("asdf")
+
         ph = self.picoharp_hw.picoharp
 
         ph.start_histogram()
