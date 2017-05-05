@@ -50,9 +50,9 @@ class NI_FPGA(object):
             
     def handle_err(self, err_code):
         if err_code != 0:
-            #print "Error {}. Consult FPGA Interface C API > API Reference > Errors using provided status code for more details ".format(err_code)
+            raise IOError( "Error {}. Consult FPGA Interface C API > API Reference > Errors using provided status code for more details ".format(err_code))
             #print "Error {}: {}".format(err_code, self.err_bynum[err_code])
-            raise IOError("NI_FPGA Error {}: {}".format(err_code, self.err_bynum[err_code]))
+            #raise IOError("NI_FPGA Error {}: {}".format(err_code, self.err_bynum[err_code]))
         return err_code
     
     def load_bitfile(self):
