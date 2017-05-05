@@ -47,7 +47,7 @@ class Remcon32(object):
             if error_ok is set, this info returned instead of throwing errors
         '''
         self.ser.reset_input_buffer()    #clear any leftover stuff
-        cmd = cmd.encode('utf-8') + b'\r'
+        cmd = cmd.encode('ascii') + b'\r'
         self.ser.write(cmd)
 
         r1 =self.ser.readline() #is '@\r\n' for success or '#\r\n' for failure
@@ -57,7 +57,7 @@ class Remcon32(object):
 
         if ( (len(r1)<1) or (r1[0]!=ord(b'@')) or (len(r2)<1) or (r2[0]!=ord(b'>')) ):
             if error_ok:
-                return r2
+                return r2.decode('ascii')
             elif r2[0]==ord(b'*'):
                 key = int(r2[1:-2])
                 return 'remcon error {} {}'.format(key, self.remcon_error[key])
@@ -65,7 +65,7 @@ class Remcon32(object):
                 return 'remcon error, command: {} text {} {}'.format( cmd, r1, r2)        
         if len(r2) > 3:
             #return data, if any, always single line
-            return r2[1:-2]
+            return r2[1:-2].decode('ascii')
         
     def limits(self, x, xmin=-100.0, xmax=100.0):
         #force value between limits, many params +- 100
@@ -187,7 +187,7 @@ class Remcon32(object):
     def get_scm(self):
         #in amps
         #this command fails if SCM is off
-        value = str(self.cmd_response('prb?',error_ok=False),'utf-8')
+        value = self.cmd_response('prb?',error_ok=False)
         try:
             current = float(value)
         except ValueError:
@@ -279,7 +279,7 @@ class Remcon32(object):
 
     def get_detector(self):
         #for currently selected display'
-        return str(self.cmd_response('det?'),'utf-8')
+        return self.cmd_response('det?')
         
     def set_detector(self, name):
         #for currently selected display'
