@@ -57,7 +57,7 @@ class SemSyncRasterScanQuadView(Measurement):
             self.sync_scan.settings['Nv'] = self.settings['n_pixels']
         self.settings.n_pixels.add_listener(on_new_n_pixels)
         
-        self.scanDAQ.settings.adc_oversample.connect_to_widget(
+        self.sync_scan.settings.adc_oversample.connect_to_widget(
             self.ui.adc_oversample_doubleSpinBox)
         
         self.ui.pixel_time_pgSpinBox = \
@@ -200,7 +200,10 @@ class SemSyncRasterScanQuadView(Measurement):
         for name, px_map in self.display_maps.items():
             #self.hist_luts[name].setImageItem(self.img_items[name])
             self.img_items[name].setImage(px_map[0,:,:], autoDownsample=True, autoRange=False, autoLevels=False)
-            self.hist_luts[name].imageChanged(autoLevel=self.settings[name + '_autolevel'])
+            #self.hist_luts[name].imageChanged(autoLevel=self.settings[name + '_autolevel'])
+            self.hist_luts[name].imageChanged(autoLevel=False)
+            if self.settings[name + '_autolevel']:
+                self.hist_luts[name].setLevels(*np.percentile(px_map[0,:,:],(1,99)))
             
             self.hist_buffers[name][self.hist_i] = px_map.mean()
             

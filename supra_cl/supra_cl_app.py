@@ -9,7 +9,7 @@ logging.getLogger('PyQt4').setLevel(logging.WARNING)
 logging.getLogger('PyQt5').setLevel(logging.WARNING)
 logging.getLogger('traitlets').setLevel(logging.WARNING)
 
-logging.getLogger('ScopeFoundry.logged_quantity.LoggedQuantity').setLevel(logging.WARNING)
+logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
 
 
 class SupraCLApp(BaseMicroscopeApp):
@@ -42,7 +42,7 @@ class SupraCLApp(BaseMicroscopeApp):
         from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
         self.add_hardware(ActonSpectrometerHW(self))
 
-        self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
+        #self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
 
         self.settings_load_ini('supra_cl_defaults.ini')
 
