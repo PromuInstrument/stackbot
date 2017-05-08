@@ -17,18 +17,12 @@
    <item row="0" column="1">
     <widget class="QDoubleSpinBox" name="n_frames_doubleSpinBox"/>
    </item>
-   <item row="0" column="2">
-    <spacer name="horizontalSpacer">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+   <item row="2" column="0">
+    <widget class="QLabel" name="label_3">
+     <property name="text">
+      <string>Display Channel</string>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>40</width>
-       <height>20</height>
-      </size>
-     </property>
-    </spacer>
+    </widget>
    </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label">
@@ -38,17 +32,17 @@
     </widget>
    </item>
    <item row="1" column="1">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
+    <widget class="QDoubleSpinBox" name="adc_oversample_doubleSpinBox"/>
+   </item>
+   <item row="1" column="0">
+    <widget class="QLabel" name="label_2">
+     <property name="text">
+      <string>ADC Oversample</string>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>40</height>
-      </size>
-     </property>
-    </spacer>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QComboBox" name="display_chan_comboBox"/>
    </item>
   </layout>
  </widget>

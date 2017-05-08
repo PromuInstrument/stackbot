@@ -138,42 +138,66 @@ class SEMAlignMeasure(Measurement):
         self.controller.settings.B.add_listener(self.activate_stig_control)
         self.controller.settings.A.add_listener(self.activate_beam_control)
         self.controller.settings.X.add_listener(self.activate_focus_control)
-        
+    
 
     def update_pos(self):
         profile = self.settings['active_widget']
         dx = self.controller.settings['Axis_4']
         dy = self.controller.settings['Axis_3']
-        c = self.controller.settings.sensitivity.val
         if abs(dx) < 0.25:
             dx = 0
         if abs(dy) < 0.25:
             dy = 0
         if dx != 0 or dy != 0:
             if profile == "Stigmation":
+                c = self.controller.settings.sensitivity.val
                 x, y = self.sem.settings.stig_xy.val
                 self.sem.settings.stig_xy.update_value([x+c*dx, y-c*dy])
             elif profile == "Beam Shift":
+                c = self.controller.settings.sensitivity.val
                 x, y = self.sem.settings.beamshift_xy.val
                 self.sem.settings.beamshift_xy.update_value([x+c*dx, y-c*dy])
             elif profile == "Focus":
+                c = self.controller.settings.sensitivity.val/10
                 y = self.sem.settings.WD.val
-                self.sem.settings.WD.update_value(y+(c*dy))
+                self.sem.settings.WD.update_value(y+(.5*c*dy))
         else:
             pass       
-        
+         
     def update_pan(self):
-        c = self.controller.settings.sensitivity.val
-        du = self.controller.settings['Axis_0']*c
-        dv = self.controller.settings['Axis_1']*-c
-                                      
+        profile = self.settings['active_widget']
+        du = self.controller.settings['Axis_0']
+        dv = self.controller.settings['Axis_1']
+        if profile == "Focus":
+            c = self.controller.settings.sensitivity.val/2
+        else:
+            c = self.controller.settings.sensitivity.val
+
         if abs(du) < 0.25:
             du = 0
         if abs(dv) < 0.25:
             dv = 0
         if du != 0 or dv != 0:
-            self.vb.translateBy((du,dv))    
+            self.vb.translateBy((c*du,-c*dv))    
 
+    def update_zoom(self):
+        """Zoom around cursor"""
+        profile = self.settings['active_widget']
+        if profile == 'Focus':
+            y = self.wd_line.getYPos()
+        elif profile == 'Stigmation':
+            x, y = self.sem.settings.stig_xy.val
+        elif profile == 'Stigmation':
+            x, y = self.sem.settings.beamshift_xy.val
+        c = self.controller.settings.sensitivity.val
+        dz = self.controller.settings['Axis_2']/10
+        if abs(dz) < 0.05:
+            dz = 0 
+        if dz != 0:
+            if profile == 'Focus':
+                self.vb.scaleBy(s=(dz+1), y=y)
+            else:
+                self.vb.scaleBy(s=(dz+1), x=x, y=y)
    
     def on_update_wd_line(self, line=None):
         self.sem.settings['WD'] = self.wd_line.getYPos()
@@ -198,6 +222,7 @@ class SEMAlignMeasure(Measurement):
         while not self.interrupt_measurement_called:  
             self.update_pos()
             self.update_pan()
+            self.update_zoom()
             time.sleep(self.dt)
         
         else:
