@@ -1,20 +1,56 @@
 from .sem_sync_raster_measure import SemSyncRasterScan
 import time
 import numpy as np
+from Auger.auger_spectrum import AugerSpectrum
 
 
 class AugerSyncRasterScan(SemSyncRasterScan):
     
     name = "auger_sync_raster_scan"
     
-    def scan_specific_setup(self):
+    def setup(self):
+        SemSyncRasterScan.setup(self)
         self.display_update_period = 0.1
-        SemSyncRasterScan.scan_specific_setup(self)
         
+        self.disp_chan_choices +=  ['auger{}'.format(i) for i in range(10)] + ['sum_auger']
+        self.settings.display_chan.change_choice_list(tuple(self.disp_chan_choices))
+        
+        self.settings.New('ke_start', dtype=float, initial=30,unit = 'V',vmin=0,vmax = 2200)
+        self.settings.New('ke_end',   dtype=float, initial=600,unit = 'V',vmin=1,vmax = 2200)
+        self.settings.New('ke_delta', dtype=float, initial=0.5,unit = 'V',vmin=0.02979,vmax = 2200,si=True)
+        self.settings.New('pass_energy', dtype=float, initial=50,unit = 'V', vmin=5,vmax=500)
+        self.settings.New('crr_ratio', dtype=float, initial=5, vmin=1.5,vmax=20)
+        self.settings.New('CAE_mode', dtype=bool, initial=False)
+        self.settings.New('No_dispersion', dtype=bool, initial=False)
+        self.settings.New('Chan_sum', dtype=bool, initial=True)       
+
+        for lq_name in ['ke_start', 'ke_end', 'ke_delta']:
+            self.settings.get_lq(lq_name).add_listener(self.compute_ke)
+            
+        self.ui.details_groupBox.layout().addWidget(self.settings.New_UI()) # comment out?
+
         #self.ui.centralwidget.layout().addWidget(self.settings.New_UI(), 0,0)
-        self.testui = self.settings.New_UI()
-        self.testui.show()
+        #self.testui = self.settings.New_UI()
+        #self.testui.show()
         
+    def compute_ke(self):
+        self.analyzer_hw = self.app.hardware['auger_electron_analyzer']
+
+        CAE_mode = self.settings['CAE_mode']
+        ke_start = self.settings['ke_start']
+        low_ke = min( self.analyzer_hw.analyzer.get_chan_ke(ke_start,CAE_mode))
+        ke_end = self.settings['ke_end']
+        high_ke = max( self.analyzer_hw.analyzer.get_chan_ke(ke_end,CAE_mode))
+        ke_delta = self.settings['ke_delta']
+        self.npoints = int((high_ke-low_ke)/ke_delta)+1
+        self.ke = np.zeros((7,self.npoints))
+        self.ke[0,:] = np.linspace(low_ke,high_ke,num=self.npoints)
+        for i in range(self.npoints):
+            ke0 = self.ke[0,i]
+            self.ke[:,i] = self.analyzer_hw.analyzer.get_chan_ke(ke0,CAE_mode)
+        self.settings['n_frames'] = self.npoints
+        return self.ke
+
     def pre_scan_setup(self):
         # Hardware
         self.auger_fpga_hw = self.app.hardware['auger_fpga']
@@ -24,6 +60,19 @@ class AugerSyncRasterScan(SemSyncRasterScan):
 
         self.auger_fpga_hw.settings['trigger_mode'] = 'pxi'
 
+        
+        self.analyzer_hw = self.app.hardware['auger_electron_analyzer']
+        self.analyzer_hw.settings['multiplier'] = True
+        self.analyzer_hw.settings['CAE_mode'] = self.settings['CAE_mode']
+        self.analyzer_hw.settings['KE'] = self.settings['ke_start']
+        self.analyzer_hw.settings['pass_energy'] = self.settings['pass_energy']
+        self.analyzer_hw.settings['crr_ratio'] = self.settings['crr_ratio']
+        
+        time.sleep(3.0) #let electronics settle
+
+        # set up KE array
+        self.compute_ke()
+        
         # Data Arrays
         self.auger_queue = []
         self.auger_i = 0
@@ -31,9 +80,8 @@ class AugerSyncRasterScan(SemSyncRasterScan):
         self.auger_chan_pixels = np.zeros((self.Npixels, 10), dtype=np.uint32)
         self.auger_chan_map = np.zeros( self.scan_shape + (10,), dtype=np.uint32)
         if self.settings['save_h5']:
-            self.auger_chan_map_h5 = self.create_h5_framed_dataset("auger_chan_map", self.auger_chan_map)
-                                                                   
-                                                                    
+            self.auger_chan_map_h5 = self.create_h5_framed_dataset("auger_chan_map", self.auger_chan_map)            
+            self.h5_m['ke'] = self.ke
         # figure?
         
     def handle_new_data(self):
@@ -85,13 +133,34 @@ class AugerSyncRasterScan(SemSyncRasterScan):
     
     def post_scan_cleanup(self):
         self.auger_fpga_hw.settings['trigger_mode'] = 'off'
-
-
+        self.analyzer_hw.settings['multiplier'] = False
+        self.analyzer_hw.settings['KE'] = self.ke[0,0]     
+            
     def get_display_pixels(self):
         #SemSyncRasterScan.get_display_pixels(self)
-        self.display_pixels = self.auger_chan_pixels[:,0:8].sum(axis=1)
-        self.display_pixels[0] = 0
+        #self.display_pixels = self.auger_chan_pixels[:,0:8].sum(axis=1)
+        #self.display_pixels[0] = 0
         #self.display_pixels = self._pixels[:,0]
+        
+        #DISPLAY_CHAN = 0
+        #self.display_pixels = self.adc_pixels[:,DISPLAY_CHAN]
+        #self.display_pixels[0] = 0
+        
+        chan = self.settings['display_chan']
+        if 'auger' in chan:
+            if chan == 'sum_auger':
+                self.display_pixels = self.auger_chan_pixels[:,0:8].sum(axis=1)
+            else:
+                self.display_pixels = self.auger_chan_pixels[:,int(chan[-1])]
+        else:
+            return SemSyncRasterScan.get_display_pixels(self)
+
+
     
+    def on_new_frame(self, frame_i):
+        SemSyncRasterScan.on_new_frame(self, frame_i)
+        
+        self.analyzer_hw.settings['KE'] = self.ke[0,frame_i]
+
         
         

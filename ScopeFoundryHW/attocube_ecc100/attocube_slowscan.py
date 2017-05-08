@@ -7,6 +7,7 @@ import time
 class AttoCube2DSlowScan(BaseRaster2DSlowScan):
     
     name = "AttoCube2DSlowScan"
+    
     def __init__(self, app):
         BaseRaster2DSlowScan.__init__(self, app, h_limits=(-10e3,10e3), v_limits=(-10e3,10e3), h_unit="um", v_unit="um")        
     
@@ -15,12 +16,12 @@ class AttoCube2DSlowScan(BaseRaster2DSlowScan):
         #Hardware
         self.stage = self.app.hardware['attocube_xyz_stage']
         self.target_range = 0.050 # um
-        self.slow_move_timeout = 1.0 # sec
+        self.slow_move_timeout = 10. # sec
 
     def move_position_start(self, x,y):
-        self.move_position_slow(x,y, 0, 0)
+        self.move_position_slow(x,y, 0, 0, timeout=30)
     
-    def move_position_slow(self, x,y, dx,dy):
+    def move_position_slow(self, x,y, dx,dy, timeout=10):
         # update target position
         self.stage.settings.x_target_position.update_value(x)
         self.stage.settings.y_target_position.update_value(y)
@@ -34,7 +35,7 @@ class AttoCube2DSlowScan(BaseRaster2DSlowScan):
             if self.distance_from_target() < self.target_range:
                 #print("settle time {}".format(time.time() - t0))
                 break
-            if (time.time() - t0) > self.slow_move_timeout:
+            if (time.time() - t0) > timeout:
                 raise IOError("AttoCube ECC100 took too long to reach position")
             time.sleep(0.005)
 
