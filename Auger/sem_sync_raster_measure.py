@@ -151,7 +151,9 @@ class SemSyncRasterScan(BaseRaster2DScan):
             #self.pixels_remaining = self.Npixels # in frame
             self.new_adc_data_queue = [] # will contain numpy arrays (data blocks) from adc to be processed
             self.adc_map = np.zeros(self.scan_shape + (self.scanDAQ.adc_chan_count,), dtype=float)
-            self.adc_map_h5 = self.create_h5_framed_dataset('adc_map', self.adc_map, chunks=(1,1, num_pixels_per_block/self.Nh.val, self.Nh.val ,self.scanDAQ.adc_chan_count ), compression='gzip')
+            adc_chunk_size = (1,1, max(1,num_pixels_per_block/self.Nh.val), self.Nh.val ,self.scanDAQ.adc_chan_count )
+            print('adc_chunk_size', adc_chunk_size)
+            self.adc_map_h5 = self.create_h5_framed_dataset('adc_map', self.adc_map, chunks=adc_chunk_size, compression='gzip')
                     
             # Ctr
             # ctr_pixel_index contains index of next pixel to be processed, 
@@ -162,7 +164,9 @@ class SemSyncRasterScan(BaseRaster2DScan):
             self.new_ctr_data_queue = [] # list will contain tuples (ctr_number, data_block) to be processed
             self.ctr_map = np.zeros(self.scan_shape + (self.scanDAQ.num_ctrs,), dtype=int)
             self.ctr_map_Hz = np.zeros(self.ctr_map.shape, dtype=float)
-            self.ctr_map_h5 = self.create_h5_framed_dataset('ctr_map', self.ctr_map, chunks=(1,1, num_pixels_per_block/self.Nh.val, self.Nh.val, self.scanDAQ.num_ctrs ), compression='gzip')
+            ctr_chunk_size = (1,1, max(1,num_pixels_per_block/self.Nh.val), self.Nh.val, self.scanDAQ.num_ctrs)
+            print('ctr_chunk_size', ctr_chunk_size)
+            self.ctr_map_h5 = self.create_h5_framed_dataset('ctr_map', self.ctr_map, chunks=ctr_chunk_size, compression='gzip')
                         
             ##### register callbacks
             self.scanDAQ.set_adc_n_pixel_callback(
