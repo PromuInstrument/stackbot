@@ -67,10 +67,7 @@ class DLIPowerSwitchHW(HardwareComponent):
         # Open connection to hardware
 
         if not self.dummy_mode.val:
-            # Normal APD:  "/Dev1/PFI0"
-            # APD on monochromator: "/Dev1/PFI2"
             self.switch = dlipower.PowerSwitch(hostname=self.host.val, userid=self.userid.val, password=self.key.val) #ParameterstoLQ
-            #self.ni_counter = NI_FreqCounter(debug = self.debug_mode.val, mode='high_freq', input_terminal = "/Dev1/PFI0")
         else:
             if self.debug_mode.val: self.log.debug( "Connecting to Power Switch (Dummy Mode)" )
 
@@ -119,10 +116,9 @@ class DLIPowerSwitchHW(HardwareComponent):
         #self.switch.close()
         
         #disconnect logged quantities from hardware
-        for lq in self.logged_quantities.values():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
+        self.settings.disconnect_all_from_hardware()
         
         # clean up hardware object
-        del self.switch
+        if hasattr(self, 'switch'):
+            del self.switch
         
