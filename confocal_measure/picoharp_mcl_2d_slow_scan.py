@@ -89,6 +89,9 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
         # display count-rate
         self.display_image_map[k,j,i] = hist_data[0:self.num_hist_chans].sum() * 1.0/elapsed_time
         
+        import datetime
+        print('pixel',  datetime.timedelta(seconds=(self.Npixels - pixel_num)*elapsed_time*1e-3), 'left')
+        
         print( 'pixel done' )
     
     def read_picoharp_histogram(self):
@@ -116,7 +119,7 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
         if not hasattr(self, 'lifetime_graph_layout'):
             self.lifetime_graph_layout = pg.GraphicsLayoutWidget()
             self.lifetime_plot = self.lifetime_graph_layout.addPlot()
-            self.lifetime_plotdata = self.lifetime_plot.spec_plot()
+            self.lifetime_plotdata = self.lifetime_plot.plot()
             self.lifetime_plot.setLogMode(False, True)
         self.lifetime_graph_layout.show()
         
