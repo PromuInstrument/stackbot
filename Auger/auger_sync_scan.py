@@ -1,15 +1,15 @@
-from .sem_sync_raster_measure import SemSyncRasterScan
+from ScopeFoundryHW.sync_raster_daq import SyncRasterScan
 import time
 import numpy as np
 from Auger.auger_spectrum import AugerSpectrum
 
 
-class AugerSyncRasterScan(SemSyncRasterScan):
+class AugerSyncRasterScan(SyncRasterScan):
     
     name = "auger_sync_raster_scan"
     
     def setup(self):
-        SemSyncRasterScan.setup(self)
+        SyncRasterScan.setup(self)
         self.display_update_period = 0.1
         
         self.disp_chan_choices +=  ['auger{}'.format(i) for i in range(10)] + ['sum_auger']
@@ -86,7 +86,7 @@ class AugerSyncRasterScan(SemSyncRasterScan):
         
     def handle_new_data(self):
         """ Called during measurement thread wait loop"""
-        SemSyncRasterScan.handle_new_data(self)
+        SyncRasterScan.handle_new_data(self)
         
         new_auger_data = self.auger_fpga_hw.read_fifo()
         self.auger_queue.append(new_auger_data)
@@ -137,7 +137,7 @@ class AugerSyncRasterScan(SemSyncRasterScan):
         self.analyzer_hw.settings['KE'] = self.ke[0,0]     
             
     def get_display_pixels(self):
-        #SemSyncRasterScan.get_display_pixels(self)
+        #SyncRasterScan.get_display_pixels(self)
         #self.display_pixels = self.auger_chan_pixels[:,0:8].sum(axis=1)
         #self.display_pixels[0] = 0
         #self.display_pixels = self._pixels[:,0]
@@ -153,12 +153,12 @@ class AugerSyncRasterScan(SemSyncRasterScan):
             else:
                 self.display_pixels = self.auger_chan_pixels[:,int(chan[-1])]
         else:
-            return SemSyncRasterScan.get_display_pixels(self)
+            return SyncRasterScan.get_display_pixels(self)
 
 
     
     def on_new_frame(self, frame_i):
-        SemSyncRasterScan.on_new_frame(self, frame_i)
+        SyncRasterScan.on_new_frame(self, frame_i)
         
         self.analyzer_hw.settings['KE'] = self.ke[0,frame_i]
 

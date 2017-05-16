@@ -7,21 +7,21 @@ import numpy as np
 import time
 from pandas.core.internals import BoolBlock
 
-class SemSyncRasterScanQuadView(Measurement):
+class SyncRasterScanQuadView(Measurement):
     
-    name = 'sem_sync_raster_scan_quad_view'
+    name = 'sync_raster_scan_quad_view'
     
     def setup(self):
         
-        self.scanDAQ   = self.app.hardware['SemSyncRasterDAQ']
-        self.sync_scan = self.app.measurements['sem_sync_raster_scan'] 
+        self.scanDAQ   = self.app.hardware['sync_raster_daq']
+        self.sync_scan = self.app.measurements['sync_raster_scan'] 
 
         
         self.names = ['ai0', 'ctr0', 'ai1', 'ctr1']
 
 
         
-        self.ui_filename = sibling_path(__file__, 'sem_sync_raster_quad_measure.ui')
+        self.ui_filename = sibling_path(__file__, 'sync_raster_quad_measure.ui')
         self.ui = load_qt_ui_file(self.ui_filename)
         self.graph_layout=pg.GraphicsLayoutWidget()
         self.ui.plot_widget.layout().addWidget(self.graph_layout)

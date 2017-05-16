@@ -14,10 +14,6 @@ from ScopeFoundry import BaseMicroscopeApp
 #from SEM.hardware.sem_remcon import SEMRemCon
 
 
-#from SEM.measurements.sem_raster_scan import SemRasterScan
-#from Auger.sem_sync_raster_measure import SemSyncRasterScan
-#from Auger.auger_sync_scan import AugerSyncScan
-
 # SEM Measurement Components
 #from SEM.sem_slowscan_single_chan import SEMSlowscanSingleChan
 
@@ -47,8 +43,8 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         #from ScopeFoundryHW.sem_analog.sem_slowscan_vout import SEMSlowscanVoutStage
         #self.add_hardware_component(SEMSlowscanVoutStage(self)) 
          
-        from Auger.sem_sync_raster_hardware import SemSyncRasterDAQ
-        self.add_hardware_component(SemSyncRasterDAQ(self))
+        from ScopeFoundryHW.sync_raster_daq import SyncRasterDAQ
+        self.add_hardware_component(SyncRasterDAQ(self))
         
         from Auger.NIFPGA.auger_fpga_hw import AugerFPGA_HW
         self.add_hardware(AugerFPGA_HW(self))
@@ -75,8 +71,8 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from Auger.auger_spectrum import AugerSpectrum
         self.add_measurement_component(AugerSpectrum(self))
         
-        from Auger.sem_sync_raster_measure import SemSyncRasterScan
-        self.add_measurement_component(SemSyncRasterScan(self))
+        from ScopeFoundryHW.sync_raster_daq import SyncRasterScan
+        self.add_measurement_component(SyncRasterScan(self))
         
         from Auger.auger_sync_scan import AugerSyncRasterScan
         self.add_measurement(AugerSyncRasterScan(self))
