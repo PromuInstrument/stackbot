@@ -23,17 +23,17 @@ class SupraCLApp(BaseMicroscopeApp):
         #pg.setConfigOption('foreground', 'k')
 
         
-        from Auger.sem_sync_raster_hardware import SemSyncRasterDAQ
-        self.add_hardware(SemSyncRasterDAQ(self))
+        from ScopeFoundryHW.sync_raster_daq import SyncRasterDAQ
+        self.add_hardware(SyncRasterDAQ(self))
 
         from Auger.hardware.remcon32_hw import SEM_Remcon_HW
         self.add_hardware(SEM_Remcon_HW(self))
         
-        from Auger.sem_sync_raster_measure import SemSyncRasterScan
-        self.add_measurement(SemSyncRasterScan(self))
+        from ScopeFoundryHW.sync_raster_daq import SyncRasterScan
+        self.add_measurement(SyncRasterScan(self))
         
-        from supra_cl.sem_sync_raster_quad_measure import SemSyncRasterScanQuadView
-        self.add_measurement(SemSyncRasterScanQuadView(self))
+        from supra_cl.sync_raster_quad_measure import SyncRasterScanQuadView
+        self.add_measurement(SyncRasterScanQuadView(self))
         
         from ScopeFoundryHW.andor_camera import AndorCCDHW, AndorCCDReadoutMeasure
         self.add_hardware(AndorCCDHW(self))

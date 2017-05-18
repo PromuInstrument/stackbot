@@ -12,9 +12,9 @@ import numpy as np
 import time
 from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path
 
-class SemSyncRasterScan(BaseRaster2DScan):
+class SyncRasterScan(BaseRaster2DScan):
 
-    name = "sem_sync_raster_scan"
+    name = "sync_raster_scan"
     
     def setup(self):
         self.h_unit = self.v_unit = "V"
@@ -33,13 +33,13 @@ class SemSyncRasterScan(BaseRaster2DScan):
         self.disp_chan_choices = ['adc0', 'adc1', 'ctr0', 'ctr1'] 
         self.settings.New("display_chan", dtype=str, initial='adc0', choices=tuple(self.disp_chan_choices))        
         
-        self.scanDAQ = self.app.hardware['SemSyncRasterDAQ']        
+        self.scanDAQ = self.app.hardware['sync_raster_daq']        
         self.scan_on=False
         
-        self.details_ui = load_qt_ui_file(sibling_path(__file__, 'sem_sync_raster_details.ui'))
+        self.details_ui = load_qt_ui_file(sibling_path(__file__, 'sync_raster_details.ui'))
         self.ui.details_groupBox.layout().addWidget(self.details_ui) # comment out?
         
-        # self.ui.setWindowTitle('sem_sync_raster_scan') #restore?
+        # self.ui.setWindowTitle('sync_raster_scan') #restore?
         
         self.settings.n_frames.connect_to_widget(self.details_ui.n_frames_doubleSpinBox)
         self.settings.adc_oversample.connect_to_widget(self.details_ui.adc_oversample_doubleSpinBox)
@@ -218,7 +218,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
         self.current_stage_pos_arrow.setVisible(False)
         t0 = time.time()
         BaseRaster2DScan.update_display(self)
-        #print("sem_sync_raster_scan timing {}".format(time.time()-t0))
+        #print("sync_raster_scan timing {}".format(time.time()-t0))
     
     ##### Callback functions
     def every_n_callback_func_adc(self):
