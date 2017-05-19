@@ -142,6 +142,8 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         andor.settings.em_gain.connect_to_widget(Q.andor_ccd_emgain_doubleSpinBox)
         andor.settings.temperature.connect_to_widget(Q.andor_ccd_temp_doubleSpinBox)
         andor.settings.ccd_status.connect_to_widget(Q.andor_ccd_status_label)
+        andor.settings.shutter_open.connect_to_widget(Q.andor_ccd_shutter_open_checkBox)
+
         
         # Andor Readout
         aro = self.measurements['andor_ccd_readout']
