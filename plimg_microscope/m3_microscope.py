@@ -100,6 +100,8 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(FiberAPDScan(self))
         self.add_measurement(FiberPicoharpScan(self))
                 
+        from ScopeFoundryHW.dli_powerswitch import DLIPowerSwitchHW
+        self.add_hardware(DLIPowerSwitchHW(self))
         
         #set some default logged quantities
         #

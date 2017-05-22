@@ -30,7 +30,7 @@ class DLIPowerSwitchHW(HardwareComponent):
         #self.int_time.spinbox_decimals = 3
 
 
-        self.dummy_mode = self.add_logged_quantity(name='dummy_mode', dtype=bool, initial=False, ro=False)
+        #self.dummy_mode = self.add_logged_quantity(name='dummy_mode', dtype=bool, initial=False, ro=False)
         
         # connect to gui
         #try:
@@ -39,6 +39,7 @@ class DLIPowerSwitchHW(HardwareComponent):
         #    print "APDCounterHardwareComponent: could not connect to custom GUI", err
 
         self.add_operation('read_all_states', self.read_all_states)
+        
 
     def read_status(self, socket):
         status = self.switch[socket].state
@@ -65,11 +66,9 @@ class DLIPowerSwitchHW(HardwareComponent):
         if self.debug_mode.val: self.log.debug( "Connecting to Power Switch (Debug)" )
         
         # Open connection to hardware
-
-        if not self.dummy_mode.val:
-            self.switch = dlipower.PowerSwitch(hostname=self.host.val, userid=self.userid.val, password=self.key.val) #ParameterstoLQ
-        else:
-            if self.debug_mode.val: self.log.debug( "Connecting to Power Switch (Dummy Mode)" )
+        self.switch = dlipower.PowerSwitch(hostname=self.host.val,
+                                           userid=self.userid.val,
+                                           password=self.key.val) #ParameterstoLQ
 
         # connect logged quantities
 
@@ -81,8 +80,8 @@ class DLIPowerSwitchHW(HardwareComponent):
                 name = self.read_name(ii)
                 return name
             #self.sockets[ii].hardware_read_func = read
-            self.sockets[ii].hardware_read_func = read_ii
-            self.names[ii].hardware_read_func = read_name
+            #self.sockets[ii].hardware_read_func = read_ii
+            #self.names[ii].hardware_read_func = read_name
             #... = lambda ii=ii: self.read_status(ii)
             def write_ii(new_val, ii=ii):
                 return self.write_status(ii, new_val)
@@ -97,6 +96,8 @@ class DLIPowerSwitchHW(HardwareComponent):
 
         #except Exception as err:
         #    print "missing gui", err
+        
+        self.read_all_states()
 
 
     def read_all_states(self):
