@@ -11,7 +11,7 @@ SAMPLE_BUFFER_SIZE = 32768
 
 class NI_FreqCounterUSB(object):
     """ National Instruments DAQmx interface to a frequency counter
-        Tested on an X-series PCIe DAQ card
+        Tested on an USB DAQ
     """
     
     def __init__(self, counter_chan="Dev1/ctr1", input_terminal = "/Dev1/PFI0", mode = "large_range", debug=False):

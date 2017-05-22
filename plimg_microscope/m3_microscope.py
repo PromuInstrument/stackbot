@@ -99,7 +99,10 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(FiberPowerMeterScan(self))
         self.add_measurement(FiberAPDScan(self))
         self.add_measurement(FiberPicoharpScan(self))
-                
+        
+        from ScopeFoundryHW.ni_daq.hw.ni_freq_counter_callback import NI_FreqCounterCallBackHW
+        self.add_hardware(NI_FreqCounterCallBackHW(self))
+        
         from ScopeFoundryHW.dli_powerswitch import DLIPowerSwitchHW
         self.add_hardware(DLIPowerSwitchHW(self))
         
