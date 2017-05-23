@@ -8,6 +8,8 @@ logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
 #logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
+logging.getLogger('PyQt5').setLevel(logging.WARNING)
+
 logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
 
 """logging.basicConfig(filename='m3_log.txt')
@@ -24,8 +26,10 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         #Add hardware components
         print("Adding Hardware Components")
         
-        from ScopeFoundryHW.apd_counter.apd_counter import APDCounterHW
-        self.add_hardware_component(APDCounterHW(self))
+        #from ScopeFoundryHW.apd_counter.apd_counter import APDCounterHW
+        #self.add_hardware_component(APDCounterHW(self))
+        from ScopeFoundryHW.ni_daq.hw.ni_freq_counter_callback import NI_FreqCounterCallBackHW
+        self.add_hardware(NI_FreqCounterCallBackHW(self, name='apd_counter'))
         
         from ScopeFoundryHW.mcl_stage.mcl_xyz_stage import MclXYZStageHW
         self.add_hardware_component(MclXYZStageHW(self))
@@ -57,8 +61,10 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         print("Create Measurement objects")
 
         # hardware specific measurements
-        from ScopeFoundryHW.apd_counter import APDOptimizerMeasure
-        self.add_measurement_component(APDOptimizerMeasure(self))
+        #from ScopeFoundryHW.apd_counter import APDOptimizerMeasure
+        #self.add_measurement_component(APDOptimizerMeasure(self))
+        from confocal_measure.apd_optimizer_cb import APDOptimizerCBMeasurement
+        self.add_measurement_component(APDOptimizerCBMeasurement(self))
         
         from ScopeFoundryHW.ascom_camera import ASCOMCameraCaptureMeasure
         self.add_measurement_component(ASCOMCameraCaptureMeasure(self))
@@ -100,8 +106,6 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(FiberAPDScan(self))
         self.add_measurement(FiberPicoharpScan(self))
         
-        from ScopeFoundryHW.ni_daq.hw.ni_freq_counter_callback import NI_FreqCounterCallBackHW
-        self.add_hardware(NI_FreqCounterCallBackHW(self))
         
         from ScopeFoundryHW.dli_powerswitch import DLIPowerSwitchHW
         self.add_hardware(DLIPowerSwitchHW(self))
