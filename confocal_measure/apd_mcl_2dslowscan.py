@@ -9,7 +9,7 @@ class APD_MCL_2DSlowScan(MCLStage2DSlowScan):
     def pre_scan_setup(self):
         #hardware 
         self.apd_counter_hc = self.app.hardware.apd_counter
-        self.apd_count_rate = self.apd_counter_hc.apd_count_rate
+        self.apd_count_rate = self.apd_counter_hc.settings.count_rate
 
 
         #scan specific setup
@@ -51,7 +51,7 @@ class APD_MCL_3DSlowScan(MCLStage3DStackSlowScan):
     def pre_scan_setup(self):
         #hardware 
         self.apd_counter_hc = self.app.hardware.apd_counter
-        self.apd_count_rate = self.apd_counter_hc.apd_count_rate
+        self.apd_count_rate = self.apd_counter_hc.settings.count_rate
 
 
         #scan specific setup
