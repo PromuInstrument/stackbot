@@ -12,9 +12,9 @@ import numpy as np
 import time
 from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path
 
-class SemSyncRasterScan(BaseRaster2DScan):
+class SyncRasterScan(BaseRaster2DScan):
 
-    name = "sem_sync_raster_scan"
+    name = "sync_raster_scan"
     
     def setup(self):
         self.h_unit = self.v_unit = "V"
@@ -26,16 +26,24 @@ class SemSyncRasterScan(BaseRaster2DScan):
                 
         self.display_update_period = 0.050 #seconds
         
+        self.settings.New("adc_oversample", dtype=int, 
+                            initial=1, 
+                            vmin=1, vmax=1e10,
+                            unit='x')
+        self.disp_chan_choices = ['adc0', 'adc1', 'ctr0', 'ctr1'] 
+        self.settings.New("display_chan", dtype=str, initial='adc0', choices=tuple(self.disp_chan_choices))        
         
-        
-        self.scanDAQ = self.app.hardware['SemSyncRasterDAQ']        
+        self.scanDAQ = self.app.hardware['sync_raster_daq']        
         self.scan_on=False
         
-        self.details_ui = load_qt_ui_file(sibling_path(__file__, 'sem_sync_raster_details.ui'))
-        self.ui.details_groupBox.layout().addWidget(self.details_ui)
+        self.details_ui = load_qt_ui_file(sibling_path(__file__, 'sync_raster_details.ui'))
+        self.ui.details_groupBox.layout().addWidget(self.details_ui) # comment out?
+        
+        # self.ui.setWindowTitle('sync_raster_scan') #restore?
         
         self.settings.n_frames.connect_to_widget(self.details_ui.n_frames_doubleSpinBox)
-        
+        self.settings.adc_oversample.connect_to_widget(self.details_ui.adc_oversample_doubleSpinBox)
+        self.settings.display_chan.connect_to_widget(self.details_ui.display_chan_comboBox)
         
         self.scanDAQ.settings.dac_rate.add_listener(self.compute_times)
         self.settings.Nh.add_listener(self.compute_times)
@@ -43,7 +51,21 @@ class SemSyncRasterScan(BaseRaster2DScan):
         
         if hasattr(self.app,'sem_remcon'):#FIX re-implement later
             self.sem_remcon=self.app.sem_remcon
-        
+    
+#     def dock_config(self):
+#         
+#         del self.ui.plot_groupBox
+#         
+#         
+#         self.dockarea.addDock(name='SEM Sync Settings', position='left', widget=self.sem_controls)
+# 
+#         self.dockarea.addDock(name='Details', position='right', widget=self.details_ui)
+# 
+#         self.dockarea.addDock(name='Image', position='bottom', widget=self.graph_layout)
+#         
+# 
+#     WIP
+    
     def run(self):
         # if hardware is not connected, connect it
         if not self.scanDAQ.settings['connected']:
@@ -53,6 +75,8 @@ class SemSyncRasterScan(BaseRaster2DScan):
             # we need to wait while the task is created before 
             # measurement thread continues
             time.sleep(0.2)
+            
+        self.scanDAQ.settings['adc_oversample'] = self.settings['adc_oversample']
 
         # Compute data arrays        
         self.log.debug( "computing scan arrays")
@@ -85,6 +109,9 @@ class SemSyncRasterScan(BaseRaster2DScan):
             if self.settings['save_h5']:
                 self.h5_file = h5_io.h5_base_file(self.app, measurement=self)
                 self.h5_m = h5_io.h5_create_measurement_group(measurement=self, h5group=self.h5_file)
+                self.display_update_period = 0.05
+            else:
+                self.display_update_period = 0.01
 
             ##### Start indexing            
             #self.frame_num = 0
@@ -124,7 +151,9 @@ class SemSyncRasterScan(BaseRaster2DScan):
             #self.pixels_remaining = self.Npixels # in frame
             self.new_adc_data_queue = [] # will contain numpy arrays (data blocks) from adc to be processed
             self.adc_map = np.zeros(self.scan_shape + (self.scanDAQ.adc_chan_count,), dtype=float)
-            self.adc_map_h5 = self.create_h5_framed_dataset('adc_map', self.adc_map, chunks=(1,1, 64, 64,self.scanDAQ.adc_chan_count ))
+            adc_chunk_size = (1,1, max(1,num_pixels_per_block/self.Nh.val), self.Nh.val ,self.scanDAQ.adc_chan_count )
+            print('adc_chunk_size', adc_chunk_size)
+            self.adc_map_h5 = self.create_h5_framed_dataset('adc_map', self.adc_map, chunks=adc_chunk_size, compression='gzip')
                     
             # Ctr
             # ctr_pixel_index contains index of next pixel to be processed, 
@@ -135,7 +164,9 @@ class SemSyncRasterScan(BaseRaster2DScan):
             self.new_ctr_data_queue = [] # list will contain tuples (ctr_number, data_block) to be processed
             self.ctr_map = np.zeros(self.scan_shape + (self.scanDAQ.num_ctrs,), dtype=int)
             self.ctr_map_Hz = np.zeros(self.ctr_map.shape, dtype=float)
-            self.ctr_map_h5 = self.create_h5_framed_dataset('ctr_map', self.ctr_map, chunks=(1,1, 64, 64,self.scanDAQ.num_ctrs ))
+            ctr_chunk_size = (1,1, max(1,num_pixels_per_block/self.Nh.val), self.Nh.val, self.scanDAQ.num_ctrs)
+            print('ctr_chunk_size', ctr_chunk_size)
+            self.ctr_map_h5 = self.create_h5_framed_dataset('ctr_map', self.ctr_map, chunks=ctr_chunk_size, compression='gzip')
                         
             ##### register callbacks
             self.scanDAQ.set_adc_n_pixel_callback(
@@ -187,7 +218,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
         self.current_stage_pos_arrow.setVisible(False)
         t0 = time.time()
         BaseRaster2DScan.update_display(self)
-        #print("sem_sync_raster_scan timing {}".format(time.time()-t0))
+        #print("sync_raster_scan timing {}".format(time.time()-t0))
     
     ##### Callback functions
     def every_n_callback_func_adc(self):
@@ -305,7 +336,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
             #print('ctr frame complete', frame_num)
             # Copy data to H5 file, if a frame is complete
             if self.settings['save_h5']:
-                print('save data ctr')
+                #print('save data ctr')
                 self.extend_h5_framed_dataset(self.ctr_map_h5, frame_num)
                 self.ctr_map_h5[frame_num,:,:,:,ctr_i] = self.ctr_map[:,:,:,ctr_i]
                 self.h5_file.flush()
@@ -318,8 +349,19 @@ class SemSyncRasterScan(BaseRaster2DScan):
         pass
     
     def get_display_pixels(self):
-        DISPLAY_CHAN = 0
-        self.display_pixels = self.adc_pixels[:,DISPLAY_CHAN]
+        #DISPLAY_CHAN = 0
+        #self.display_pixels = self.adc_pixels[:,DISPLAY_CHAN]
+        #self.display_pixels[0] = 0
+        
+        chan_data = dict(
+            adc0 = self.adc_pixels[:,0],
+            adc1 = self.adc_pixels[:,1],
+            ctr0 = self.ctr_pixels[:,0],
+            ctr1 = self.ctr_pixels[:,1],
+            )
+        
+        self.display_pixels = chan_data[self.settings['display_chan']]
+        
         #self.display_pixels = self.ctr_pixels[:,DISPLAY_CHAN]
         
     def create_h5_framed_dataset(self, name, single_frame_map, **kwargs):
@@ -345,6 +387,7 @@ class SemSyncRasterScan(BaseRaster2DScan):
                 shape=shape,
                 dtype=single_frame_map.dtype,
                 #chunks=(1,),
+                chunks=(1,)+single_frame_map.shape,
                 maxshape=maxshape,
                 compression='gzip',
                 #shuffle=True,

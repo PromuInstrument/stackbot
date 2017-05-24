@@ -12,13 +12,13 @@ from ScopeFoundry.helper_funcs import str2bool
 try:
     from ScopeFoundryHW.ni_daq import NI_SyncTaskSet
 except Exception as err:
-    print("could not load modules needed for SemSyncRasterDAQ:", err)
+    print("could not load modules needed for SyncRasterDAQ:", err)
 
 import numpy as np
 
-class SemSyncRasterDAQ(HardwareComponent):
+class SyncRasterDAQ(HardwareComponent):
     
-    name = 'SemSyncRasterDAQ'
+    name = 'sync_raster_daq'
     
     def setup(self):
         self.display_update_period = 0.050 #seconds
