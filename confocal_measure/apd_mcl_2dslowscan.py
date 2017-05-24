@@ -1,6 +1,7 @@
 from ScopeFoundryHW.mcl_stage import MCLStage2DSlowScan
 import numpy as np
 from ScopeFoundryHW.mcl_stage.mcl_stage_slowscan import MCLStage3DStackSlowScan
+import time
 
 class APD_MCL_2DSlowScan(MCLStage2DSlowScan):
     
@@ -8,8 +9,8 @@ class APD_MCL_2DSlowScan(MCLStage2DSlowScan):
     
     def pre_scan_setup(self):
         #hardware 
-        self.apd_counter_hc = self.app.hardware.apd_counter
-        self.apd_count_rate = self.apd_counter_hc.settings.count_rate
+        self.apd_counter_hw = self.app.hardware['apd_counter']
+        self.apd_count_rate = self.apd_counter_hw.settings.count_rate
 
 
         #scan specific setup
@@ -34,9 +35,10 @@ class APD_MCL_2DSlowScan(MCLStage2DSlowScan):
     
     def collect_pixel(self, pixel_num, k, j, i):
         # collect data
-        print(pixel_num, k, j, i)
+        #print(pixel_num, k, j, i)
+        time.sleep(self.apd_counter_hw.settings['int_time'])
         self.apd_count_rate.read_from_hardware()
-                          
+
         # store in arrays
         self.count_rate_map[k,j,i] = self.apd_count_rate.val
         if self.settings['save_h5']:

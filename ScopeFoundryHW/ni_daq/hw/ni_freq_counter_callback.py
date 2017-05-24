@@ -24,7 +24,7 @@ class NI_FreqCounterCallBackHW(HardwareComponent):
         self.settings.New('live_update', dtype=bool, initial=True)
 
         self.settings.New('cb_interval', dtype=float, unit='s', si=True,
-                          initial=5e-3, vmin=1e-3)
+                          initial=10e-3, vmin=5e-3)
         
         self.settings.New('buffer_size', dtype=int, initial=1000)
 
@@ -59,7 +59,7 @@ class NI_FreqCounterCallBackHW(HardwareComponent):
                 )
         
         self.settings.count_rate.connect_to_hardware(
-                read_func = self.wait_and_read_count_rate
+                read_func = self.read_count_rate
             )
         
         self.create_buffers()
@@ -115,7 +115,7 @@ class NI_FreqCounterCallBackHW(HardwareComponent):
         print('restart_task', self.n_samples_cb)
         C.stop()
         C.set_rate(rate=SAMPLE_RATE, finite=False,
-               count=self.n_samples_cb,
+               count=self.n_samples_cb*10,
                clk_source="/{}/100kHzTimebase".format(self.settings['dev']))
         C.set_n_sample_callback(n_samples=self.n_samples_cb,
                                 cb_func=self.counter_callback)
@@ -133,4 +133,7 @@ class NI_FreqCounterCallBackHW(HardwareComponent):
         
     def wait_and_read_count_rate(self):
         time.sleep(self.settings['int_time'])
+        return self.read_count_rate()
+    
+    def read_count_rate(self):
         return self.mean_buffer[self.mean_buffer_i-1]
