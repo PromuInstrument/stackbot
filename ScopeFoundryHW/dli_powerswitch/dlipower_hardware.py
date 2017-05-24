@@ -60,7 +60,7 @@ class DLIPowerSwitchHW(HardwareComponent):
         """
         SERVER = "http://192.168.0.100/"
         full_url = "{}{}".format(SERVER, url)
-        request = requests.get(full_url, auth=(self.userid, self.key,))
+        request = requests.get(full_url, auth=(self.userid.val, self.key.val,))
         return request.content
     
     def read_outlets(self):
