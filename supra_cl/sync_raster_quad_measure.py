@@ -5,7 +5,6 @@ from ScopeFoundry import h5_io
 import pyqtgraph as pg
 import numpy as np
 import time
-from pandas.core.internals import BoolBlock
 
 class SyncRasterScanQuadView(Measurement):
     
@@ -152,6 +151,8 @@ class SyncRasterScanQuadView(Measurement):
     def run(self):
         self.display_update_period = 0.050
         #self.sync_scan.start()
+        self.app.hardware['sem_remcon'].read_from_hardware()
+        
         if not self.sync_scan.settings['activation']:
             self.sync_scan.settings['activation'] =True
             time.sleep(0.3)
