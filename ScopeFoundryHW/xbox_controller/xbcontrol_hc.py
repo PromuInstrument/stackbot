@@ -9,6 +9,28 @@ class XboxControlHW(HardwareComponent):
 
     name = "xbox_controller"
 
+    direction_map = {
+        (0,1): 'N', 
+        (-1,1): 'NW',
+        (-1,0): 'W',
+        (-1,-1): 'SW',
+        (0,-1): 'S',
+        (1,-1): 'SE',
+        (1,0): 'E',
+        (1,1): 'NE',
+        (0,0): 'Origin'}
+    button_map = {
+        0: 'A',
+        1: 'B',
+        2: 'X',
+        3: 'Y',
+        4: 'LB',
+        5: 'RB',
+        6: 'Back',
+        7: 'Start',
+        8: 'LP',
+        9: 'RP'}
+
     def setup(self):
         """Create logged quantities for each HID object including all hats, 
         sticks and buttons specific to the Xbox controller."""
@@ -32,9 +54,13 @@ class XboxControlHW(HardwareComponent):
                                             dtype=float, fmt="%.3f", 
                                             ro=True, vmin=-1.0, vmax=1.0)
 
+<<<<<<< HEAD
         self.settings.New(name="sensitivity", initial=1.00, dtype=float,
                                             fmt="%.3f", ro=False,
                                             vmin=0.01, vmax=5.00)
+=======
+        self.settings.New(name="sensitivity", initial=1.0, dtype=float, fmt="%.3f", ro=False, vmin=-5.0, vmax=5.0)
+>>>>>>> 42a3e93531e3b27e3c8d068e5a4e1dd336b861d4
         
         self.A = self.settings.New(name='A', initial=0,
                                             dtype=bool, ro=True)

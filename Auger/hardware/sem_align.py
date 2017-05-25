@@ -1,3 +1,6 @@
+"""Module specific Xbox controller interfacing and GUI control by Alan Buckley"""
+
+
 from ScopeFoundry import Measurement
 import pyqtgraph as pg
 import pyqtgraph.dockarea as dockarea
@@ -9,15 +12,20 @@ class SEMAlignMeasure(Measurement):
     
     name = 'sem_align'
    
+    controller_map = {'B': 'stig',
+                      'A': 'beam',
+                      'X': 'focus'}
+   
     def setup(self):
         self.sem = self.app.hardware['sem_remcon']
         self.controller = self.app.hardware['xbox_controller']
         
         self.ui = self.dockarea = dockarea.DockArea()
         
+        self.ui.setWindowTitle("sem_align")
+        
         self.sem_controls = self.app.hardware['sem_remcon'].settings.New_UI()
         
-        self.dockarea.addDock(name='SEM Settings', position='left', widget=self.sem_controls)
         
         #stig=============
         self.stig_plot = pg.PlotWidget()
@@ -33,7 +41,6 @@ class SEMAlignMeasure(Measurement):
         
         self.stig_pt_roi.removeHandle(0)
                 
-        self.dockarea.addDock(name='Stigmation', position='right', widget=self.stig_plot)
         
         self.stig_plot.showGrid(x=True, y=True, alpha=1.0)
         
@@ -56,7 +63,6 @@ class SEMAlignMeasure(Measurement):
         
         self.beamshift_roi.removeHandle(0)
                 
-        self.dockarea.addDock(name='Beam Shift', position='right', widget=self.beamshift_plot)
         
         self.beamshift_plot.showGrid(x=True, y=True, alpha=1.0)
 
@@ -68,7 +74,6 @@ class SEMAlignMeasure(Measurement):
         #focus==============
         self.wd_widget = QtWidgets.QWidget()
         self.wd_widget.setLayout(QtWidgets.QVBoxLayout())
-        self.dockarea.addDock(name='Focus', position='left', widget=self.wd_widget)
         
         self.wd_joystick = pg.JoystickButton()
         self.wd_joystick.sigStateChanged.connect(self.on_wd_joystick)
@@ -89,6 +94,7 @@ class SEMAlignMeasure(Measurement):
         self.wd_line.sigDragged.connect(self.on_update_wd_line)     
         self.sem.settings.WD.add_listener(self.wd_line.setPos, float)
         
+<<<<<<< HEAD
     
     def update_focus_from_controller(self):
         dy = self.controller.settings['Axis_1']
@@ -100,21 +106,123 @@ class SEMAlignMeasure(Measurement):
             self.sem.settings.WD.update_value(y+(c*dy))
         else:
             pass
+=======
+        self.sem_align_widget_choices = ('Focus', 'Stigmation', 'Beam Shift') 
         
-    def update_stig_from_controller(self):
+        self.settings.New('active_widget', 
+                            dtype=str,
+                            initial='Focus',
+                            ro=False,
+                            choices=self.sem_align_widget_choices)
+        
+        
+        
+        self.dock_config()
+        
+        self.activate_focus_control()
+        
+    def dock_config(self):
+        
+        
+        self.dockarea.addDock(name='Stigmation (B)', position='right', widget=self.stig_plot)
+
+        self.dockarea.addDock(name='Beam Shift (A)', position='bottom', widget=self.beamshift_plot)
+        
+        self.dockarea.addDock(name='Focus (X)', position='left', widget=self.wd_widget)
+        
+        self.dockarea.addDock(name='SEM Settings', position='left', widget=self.sem_controls)
+
+
+    def activate_focus_control(self):
+        self.settings.active_widget.update_value('Focus')
+        obj_inv = self.wd_plot.items()
+        self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
+
+        
+    def activate_stig_control(self):
+        self.settings.active_widget.update_value('Stigmation')
+        obj_inv = self.stig_plot.items()
+        self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
+
+>>>>>>> 42a3e93531e3b27e3c8d068e5a4e1dd336b861d4
+        
+    def activate_beam_control(self):
+        self.settings.active_widget.update_value('Beam Shift')
+        obj_inv = self.beamshift_plot.items()
+        self.vb = list(filter(lambda x: isinstance(x, pg.graphicsItems.ViewBox.ViewBox), obj_inv))[0]
+
+            
+    def load_control_profile(self):
+        self.controller.settings.B.add_listener(self.activate_stig_control)
+        self.controller.settings.A.add_listener(self.activate_beam_control)
+        self.controller.settings.X.add_listener(self.activate_focus_control)
+    
+
+    def update_pos(self):
+        profile = self.settings['active_widget']
         dx = self.controller.settings['Axis_4']
         dy = self.controller.settings['Axis_3']
+<<<<<<< HEAD
         c = self.controller.settings['sensitivity']
         x, y = self.sem.settings.stig_xy.val
         if abs(dx) < 0.15:
+=======
+        if abs(dx) < 0.25:
+>>>>>>> 42a3e93531e3b27e3c8d068e5a4e1dd336b861d4
             dx = 0
-        if abs(dy) < 0.15:
+        if abs(dy) < 0.25:
             dy = 0
-        if dx != 0 and dy != 0:
-            self.sem.settings.stig_xy.update_value([x+c*dx, y+c*dy])
+        if dx != 0 or dy != 0:
+            if profile == "Stigmation":
+                c = self.controller.settings.sensitivity.val
+                x, y = self.sem.settings.stig_xy.val
+                self.sem.settings.stig_xy.update_value([x+c*dx, y-c*dy])
+            elif profile == "Beam Shift":
+                c = self.controller.settings.sensitivity.val
+                x, y = self.sem.settings.beamshift_xy.val
+                self.sem.settings.beamshift_xy.update_value([x+c*dx, y-c*dy])
+            elif profile == "Focus":
+                c = self.controller.settings.sensitivity.val/10
+                y = self.sem.settings.WD.val
+                self.sem.settings.WD.update_value(y+(.5*c*dy))
         else:
-            pass
-        
+            pass       
+         
+    def update_pan(self):
+        profile = self.settings['active_widget']
+        du = self.controller.settings['Axis_0']
+        dv = self.controller.settings['Axis_1']
+        if profile == "Focus":
+            c = self.controller.settings.sensitivity.val/2
+        else:
+            c = self.controller.settings.sensitivity.val
+
+        if abs(du) < 0.25:
+            du = 0
+        if abs(dv) < 0.25:
+            dv = 0
+        if du != 0 or dv != 0:
+            self.vb.translateBy((c*du,-c*dv))    
+
+    def update_zoom(self):
+        """Zoom around cursor"""
+        profile = self.settings['active_widget']
+        if profile == 'Focus':
+            y = self.wd_line.getYPos()
+        elif profile == 'Stigmation':
+            x, y = self.sem.settings.stig_xy.val
+        elif profile == 'Stigmation':
+            x, y = self.sem.settings.beamshift_xy.val
+        c = self.controller.settings.sensitivity.val
+        dz = self.controller.settings['Axis_2']/10
+        if abs(dz) < 0.05:
+            dz = 0 
+        if dz != 0:
+            if profile == 'Focus':
+                self.vb.scaleBy(s=(dz+1), y=y)
+            else:
+                self.vb.scaleBy(s=(dz+1), x=x, y=y)
+   
     def on_update_wd_line(self, line=None):
         self.sem.settings['WD'] = self.wd_line.getYPos()
 
@@ -124,59 +232,28 @@ class SEMAlignMeasure(Measurement):
         print(jb, state)
         #print(self.wd_joystick.getState())
 
+
         
     def run(self):
         #Access equipment class:
         self.controller.connect()
         self.xb_dev = self.controller.xb_dev 
         self.joystick = self.xb_dev.joystick
+<<<<<<< HEAD
+=======
+        self.sensitivity = self.controller.settings['sensitivity']
+        self.load_control_profile()
+>>>>>>> 42a3e93531e3b27e3c8d068e5a4e1dd336b861d4
         self.dt = 0.05
-
         
         while not self.interrupt_measurement_called:  
-        
-            self.update_stig_from_controller()
-            self.update_focus_from_controller()
-            if self.controller.settings['A'] == True:
-                self.sem.settings.r_stick_control.update_value(1)
-            elif self.controller.settings['B'] == True:
-                self.sem.settings.r_stick_control.update_value(2)
-            
+            self.update_pos()
+            self.update_pan()
+            self.update_zoom()
             time.sleep(self.dt)
-            event_list = pygame.event.get()
-            for event in event_list:
-                if event.type == pygame.JOYAXISMOTION:
-                    for i in range(self.xb_dev.num_axes):
-                        self.controller.settings['Axis_' + str(i)] = self.joystick.get_axis(i)
-
-                elif event.type == pygame.JOYHATMOTION:
-                    for i in range(self.xb_dev.num_hats):
-                        # Clear Directional Pad values
-                        for k in set(self.controller.direction_map.values()):
-                            self.controller.settings[k] = False
-
-                        # Check button status and record it
-                        resp = self.joystick.get_hat(i)
-                        try:
-                            self.controller.settings[self.controller.direction_map[resp]] = True
-                        except KeyError:
-                            self.log.error("Unknown dpad hat: "+ repr(resp))
-
-                elif event.type in [pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP]:
-                    button_state = (event.type == pygame.JOYBUTTONDOWN)
-
-                    for i in range(self.xb_dev.num_buttons):
-                        if self.joystick.get_button(i) == button_state:
-                            try:
-                                self.controller.settings[self.controller.button_map[i]] = button_state
-                            except KeyError:
-                                self.log.error("Unknown button: %i (target state: %s)" % (i,
-                                    'down' if button_state else 'up'))
-
-                else:
-                    self.log.error("Unknown event type: {}".format(event.type))
-
-
+        
+        else:
+            pass
 
 class PointLQROI(pg.CrosshairROI):
     """
@@ -201,11 +278,11 @@ class PointLQROI(pg.CrosshairROI):
         
 
     def _start_drag(self, x):
-        print("start moving")
+        #print("start moving")
         self.roi_drag=True
         
     def _finish_drag(self, x):
-        print("finish moving")
+        #print("finish moving")
         self.roi_drag=False
         
     def on_update_roi(self, _=None):

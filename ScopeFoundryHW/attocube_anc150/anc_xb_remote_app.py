@@ -22,11 +22,11 @@ class ANC_Remote_App(BaseMicroscopeApp):
         from ScopeFoundryHW.attocube_anc150.anc150_HW import ANC_HW
         self.add_hardware(ANC_HW(self))
         
-        from ScopeFoundryHW.attocube_anc150.anc_remote_measure import ANC_RemoteMeasure
-        self.add_measurement(ANC_RemoteMeasure(self))
-
         from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
         self.add_hardware(XboxControlHW(self))
+
+        from ScopeFoundryHW.attocube_anc150.anc_remote_measure import ANC_RemoteMeasure
+        self.add_measurement(ANC_RemoteMeasure(self)) 
         
         from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
         self.add_measurement(XboxControlMeasure(self))

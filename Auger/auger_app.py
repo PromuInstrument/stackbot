@@ -14,10 +14,6 @@ from ScopeFoundry import BaseMicroscopeApp
 #from SEM.hardware.sem_remcon import SEMRemCon
 
 
-#from SEM.measurements.sem_raster_scan import SemRasterScan
-#from Auger.sem_sync_raster_measure import SemSyncRasterScan
-#from Auger.auger_sync_scan import AugerSyncScan
-
 # SEM Measurement Components
 #from SEM.sem_slowscan_single_chan import SEMSlowscanSingleChan
 
@@ -47,15 +43,13 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         #from ScopeFoundryHW.sem_analog.sem_slowscan_vout import SEMSlowscanVoutStage
         #self.add_hardware_component(SEMSlowscanVoutStage(self)) 
          
-        ##self.add_hardware_component(SEMRemCon(self))
-        #self.add_hardware_component(SemRasterScanner(self))       
-        from Auger.sem_sync_raster_hardware import SemSyncRasterDAQ
-        self.add_hardware_component(SemSyncRasterDAQ(self))
+        from ScopeFoundryHW.sync_raster_daq import SyncRasterDAQ
+        self.add_hardware_component(SyncRasterDAQ(self))
         
         from Auger.NIFPGA.auger_fpga_hw import AugerFPGA_HW
         self.add_hardware(AugerFPGA_HW(self))
         
-        from Auger.auger_electron_analyzer import AugerElectronAnalyzerHW
+        from Auger.hardware.auger_electron_analyzer_hw import AugerElectronAnalyzerHW
         self.add_hardware(AugerElectronAnalyzerHW(self))
         
         from Auger.hardware.remcon32_hw import Auger_Remcon_HW
@@ -63,19 +57,6 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
 
         ########## Measurements
         
-        from Auger.auger_electron_analyzer_viewer import AugerElectronAnalyzerViewer
-        self.add_measurement(AugerElectronAnalyzerViewer(self))
-        
-        #self.add_measurement_component(SemRasterScan(self))
-        from Auger.auger_analyzer_channel_history import AugerAnalyzerChannelHistory
-        self.add_measurement_component(AugerAnalyzerChannelHistory(self))
-        
-        from Auger.auger_spectrum import AugerSpectrum
-        self.add_measurement_component(AugerSpectrum(self))
-        
-        from Auger.auger_quad_scan import AugerQuadSlowScan
-        self.add_measurement_component(AugerQuadSlowScan(self))
-
 #        self.add_measurement_component(AugerPointSpectrum(self))
 #        self.add_measurement_component(AugerQuadOptimizer(self))
  
@@ -83,12 +64,22 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
 #        from Auger.sem_slowscan2d import SEMSlowScan
 #        self.add_measurement_component(SEMSlowScan(self))
 #        self.add_measurement_component(AugerSlowMap(self))
-        from Auger.sem_sync_raster_measure import SemSyncRasterScan
-        self.add_measurement_component(SemSyncRasterScan(self))
+
+        from Auger.auger_chan_history import AugerChanHistory
+        self.add_measurement_component(AugerChanHistory(self))
+
+        from Auger.auger_spectrum import AugerSpectrum
+        self.add_measurement_component(AugerSpectrum(self))
+        
+        from ScopeFoundryHW.sync_raster_daq import SyncRasterScan
+        self.add_measurement_component(SyncRasterScan(self))
         
         from Auger.auger_sync_scan import AugerSyncRasterScan
         self.add_measurement(AugerSyncRasterScan(self))
         
+        from Auger.measurement.auger_pressure_history import AugerPressureHistory
+        self.add_measurement_component(AugerPressureHistory(self))
+
         from Auger.analyzer_quad_optimizer import AugerQuadOptimizer
         self.add_measurement(AugerQuadOptimizer(self))
         
@@ -97,15 +88,22 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
         self.add_hardware(XboxControlHW(self))
         
+        from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
+        self.add_measurement(XboxControlMeasure(self))
+        
         from Auger.hardware.sem_align import SEMAlignMeasure
         self.add_measurement(SEMAlignMeasure)
         
 #         from Auger.analyzer_simplex_optimizer import AugerSimplexOptimizer
 #         self.add_measurement(AugerSimplexOptimizer(self))
 
+        from Auger.auger_quad_scan import AugerQuadSlowScan
+        self.add_measurement_component(AugerQuadSlowScan(self))
+
 #        self.phi_ion_gun = self.add_hardware_component(PhiIonGunHardwareComponent(self))
 #        self.ion_gun_status = self.add_measurement_component(IonGunStatus(self))
 
+        self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
 
 
         self.settings_load_ini('auger_app_settings.ini')

@@ -206,6 +206,21 @@ class AttoCubeECC100(object):
         if self.debug: print('ecc100 read_target_position_axis', axis, tpos.value)
 
         return tpos.value
+    
+    def read_target_status(self, axis):
+        """
+        Target status. 
+
+        Retrieves the target status. Indicates whether the actual 
+        position is within the target range.
+        """
+        target_status = c_uint32()
+        handle_err(ecc.ECC_getStatusTargetRange(
+                            self.devhandle,
+                            axis, #Int32 axis
+                            byref(target_status), # Bln32* target                            
+                            ))
+        return bool(target_status.value)
 
     def read_frequency(self, axis):
         """returns Frequency in mHz"""

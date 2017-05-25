@@ -24,8 +24,9 @@ class PowerMeterOptimizerMeasure(Measurement):
         self.display_update_period = 0.1 #seconds
 
         # logged quantities
-        self.save_data = self.add_logged_quantity(name='save_data', dtype=bool, initial=False, ro=False)
-
+        self.save_data = self.settings.New(name='save_data', dtype=bool, initial=False, ro=False)
+        self.settings.New(name='update_period', dtype=float, si=True, initial=0.1, unit='s')
+        
         # create data array
         self.OPTIMIZE_HISTORY_LEN = 500
 
@@ -91,18 +92,20 @@ class PowerMeterOptimizerMeasure(Measurement):
                 self.full_optimize_history.append(pow_reading)
                 self.full_optimize_history_time.append(time.time() - self.t0)
             
+            time.sleep(self.settings['update_period'])
             #time.sleep(0.02)
             
         if self.settings['save_data']:
-            self.h5_file = h5_io.h5_base_file(self.app, "%i_%s.h5" % (self.t0, self.name) )
-            self.h5_file.attrs['time_id'] = self.t0
-            H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
-        
-            #create h5 data arrays
-            H['power_optimze_history'] = self.full_optimize_history
-            H['optimze_history_time'] = self.full_optimize_history_time
-        
-            self.h5_file.close()
+            try:
+                self.h5_file = h5_io.h5_base_file(self.app, measurement=self )
+                self.h5_file.attrs['time_id'] = self.t0
+                H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
+            
+                #create h5 data arrays
+                H['power_optimze_history'] = self.full_optimize_history
+                H['optimze_history_time'] = self.full_optimize_history_time
+            finally:
+                self.h5_file.close()
             
     
     def update_display(self):        

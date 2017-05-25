@@ -27,6 +27,7 @@ class AugerSpectrum(Measurement):
        
         self.display_update_period = 0.01 
         
+            #setup gui
         self.ui = QtWidgets.QWidget()
         self.layout = QtWidgets.QHBoxLayout()
         self.ui.setLayout(self.layout)
@@ -38,19 +39,22 @@ class AugerSpectrum(Measurement):
         self.control_widget.layout().addWidget(self.start_button)
         self.stop_button= QtWidgets.QPushButton("Stop")
         self.control_widget.layout().addWidget(self.stop_button)
-        self.control_widget.layout().addWidget(self.settings.New_UI())
         
         self.start_button.clicked.connect(self.start)
         self.stop_button.clicked.connect(self.interrupt)
-        self.display_chans = 7
         
+        ui_list = ('ke_start', 'ke_end', 'ke_delta', 'dwell', 'pass_energy', 'crr_ratio','CAE_mode')
+        self.control_widget.layout().addWidget(self.settings.New_UI(include=ui_list))
+        
+       
+        self.display_chans = 7        
         self.graph_layout=pg.GraphicsLayoutWidget(border=(100,100,100))
-        
         self.layout.addWidget(self.graph_layout, stretch=1)
         
         self.ui.show()
-        self.ui.setWindowTitle("AugerSpectrum")
+        self.ui.setWindowTitle("auger_spectrum")
         
+            #hardware setup
         self.auger_fpga_hw = self.app.hardware['auger_fpga']
         self.analyzer_hw = self.app.hardware['auger_electron_analyzer']
         self.sem_ = self.app.hardware['sem_remcon']

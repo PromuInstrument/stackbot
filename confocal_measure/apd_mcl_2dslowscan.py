@@ -16,10 +16,11 @@ class APD_MCL_2DSlowScan(MCLStage2DSlowScan):
         
         # create data arrays
         self.count_rate_map = np.zeros(self.scan_shape, dtype=float)
-        self.count_rate_map_h5 = self.h5_meas_group.create_dataset('count_rate_map', 
-                                                                   shape=self.scan_shape,
-                                                                   dtype=float, 
-                                                                   compression='gzip')
+        if self.settings['save_h5']:
+            self.count_rate_map_h5 = self.h5_meas_group.create_dataset('count_rate_map', 
+                                                                       shape=self.scan_shape,
+                                                                       dtype=float, 
+                                                                       compression='gzip')
         
         
         # open shutter 
@@ -38,7 +39,8 @@ class APD_MCL_2DSlowScan(MCLStage2DSlowScan):
                           
         # store in arrays
         self.count_rate_map[k,j,i] = self.apd_count_rate.val
-        self.count_rate_map_h5[k,j,i] = self.apd_count_rate.val
+        if self.settings['save_h5']:
+            self.count_rate_map_h5[k,j,i] = self.apd_count_rate.val
   
         self.display_image_map[k,j,i] = self.apd_count_rate.val
         
@@ -56,7 +58,8 @@ class APD_MCL_3DSlowScan(MCLStage3DStackSlowScan):
         
         # create data arrays
         self.count_rate_map = np.zeros(self.scan_shape, dtype=float)
-        self.count_rate_map_h5 = self.create_h5_framed_dataset('count_rate_map', self.count_rate_map)
+        if self.settings['save_h5']:
+            self.count_rate_map_h5 = self.create_h5_framed_dataset('count_rate_map', self.count_rate_map)
         
         # open shutter 
         # self.gui.shutter_servo_hc.shutter_open.update_value(True)
@@ -74,7 +77,8 @@ class APD_MCL_3DSlowScan(MCLStage3DStackSlowScan):
                           
         # store in arrays
         self.count_rate_map[k,j,i] = self.apd_count_rate.val
-        self.count_rate_map_h5[frame_i, k,j,i] = self.apd_count_rate.val
+        if self.settings['save_h5']:
+            self.count_rate_map_h5[frame_i, k,j,i] = self.apd_count_rate.val
   
         self.display_image_map[k,j,i] = self.apd_count_rate.val
     
