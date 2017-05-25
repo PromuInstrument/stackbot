@@ -45,6 +45,9 @@ class SupraCLApp(BaseMicroscopeApp):
         
         from supra_cl.hyperspec_cl_measure import HyperSpecCLMeasure
         self.add_measurement(HyperSpecCLMeasure(self))
+        
+        from supra_cl.hyperspec_cl_quad_measure import HyperSpecCLQuadView
+        self.add_measurement(HyperSpecCLQuadView(self))
 
         from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
         self.add_hardware(XboxControlHW(self))
