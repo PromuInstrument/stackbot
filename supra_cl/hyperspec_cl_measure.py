@@ -50,8 +50,6 @@ class HyperSpecCLMeasure(SyncRasterScan):
         
         ccd.set_readout()
         
-        
-    
         ccd_Ny, ccd_Nx = ccd.settings['readout_shape']
     
         assert ccd_Ny == 1
@@ -77,12 +75,6 @@ class HyperSpecCLMeasure(SyncRasterScan):
         """ Called during measurement thread wait loop"""
         SyncRasterScan.handle_new_data(self)
         
-        # new frame
-        if self.andor_ccd_pixel_i == 0:
-            frame_num = (self.andor_ccd_total_i // self.Npixels) - 1
-            if self.settings['save_h5']:
-                self.extend_h5_framed_dataset(self.spec_map_h5, frame_num)
-                #self.spec_map_h5[frame_num,:,:,:,:] = self.spec_map
 
         #print("handle andor")
         ccd_dev = self.andor_ccd.ccd_dev
@@ -100,6 +92,21 @@ class HyperSpecCLMeasure(SyncRasterScan):
             while 1:
                 if self.interrupt_measurement_called:
                     break
+                
+                # new frame
+                frame_num = (self.andor_ccd_total_i // self.Npixels)
+                if self.andor_ccd_pixel_i == 0:
+                    if self.settings['save_h5']:
+                        print("extend h5", frame_num)
+                        self.extend_h5_framed_dataset(self.spec_map_h5, frame_num)
+                        # TODO: For multiframe imaging, we need to restart
+                        #if self.andor_ccd_total_i !=0:
+                        #    self.andor_ccd.ccd_dev.start_acquisition()
+
+                        #self.spec_map_h5[frame_num,:,:,:,:] = self.spec_map
+
+                
+                
                 # grab the next ccd image, place it into buffer
                 t0 = time.time()
                 arr = ccd_dev.get_oldest_image(self.spec_buffer[self.andor_ccd_pixel_i,:])
@@ -112,8 +119,8 @@ class HyperSpecCLMeasure(SyncRasterScan):
                 #self.spec_map[x[0], x[1], x[2],:] = arr
                 kk, jj, ii = self.scan_index_array[i,:]
                 self.spec_map[kk,jj,ii,:] = arr
-                frame_num = (self.andor_ccd_total_i // self.Npixels)
                 if self.settings['save_h5']:
+                    print('save h5', frame_num, kk,jj,ii)
                     self.spec_map_h5[frame_num, kk,jj,ii,:] = arr
 
                 
