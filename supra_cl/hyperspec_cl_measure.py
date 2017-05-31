@@ -36,12 +36,12 @@ class HyperSpecCLMeasure(SyncRasterScan):
         
         sync_raster_daq = self.app.hardware['sync_raster_daq']
         self.andor_ccd = ccd = self.app.hardware['andor_ccd']
-        ccd.settings['acq_mode'] = 'kinetic'
+        ccd.settings['acq_mode'] = 'run_till_abort'
         ccd.settings['trigger_mode'] = 'external'
-        ccd.settings['readout_mode'] = 0
+        ccd.settings['readout_mode'] = 0 # FVB
         ccd.settings['num_kin'] = self.Npixels
         ccd.settings['exposure_time'] = (1.0 / sync_raster_daq.settings['dac_rate']) - 3.0e-3
-        
+        ccd.settings['kin_time'] = (1.0 / sync_raster_daq.settings['dac_rate'])
         # Other useful defaults
         ccd.settings['output_amp'] = 0
         ccd.settings['ad_chan'] = 1
@@ -68,17 +68,15 @@ class HyperSpecCLMeasure(SyncRasterScan):
 
         # start ccd camera, wait for trigger
         ccd.ccd_dev.start_acquisition()
-        
-        #self.time_of_last_andor_get = time.time()
+        print(self.andor_ccd.settings.ccd_status.read_from_hardware())
+
     
     def handle_new_data(self):
         """ Called during measurement thread wait loop"""
         SyncRasterScan.handle_new_data(self)
         
-
-        #print("handle andor")
         ccd_dev = self.andor_ccd.ccd_dev
-#        print("get_number_new_images", ccd_dev.get_number_new_images()
+        #print("get_number_new_images", ccd_dev.get_number_new_images()
         #print("get_total_number_images_acquired", ccd_dev.get_total_number_images_acquired())
         if ccd_dev.get_total_number_images_acquired() > 0:
             #print("get_number_available_images", ccd_dev.get_number_available_images())
@@ -89,27 +87,28 @@ class HyperSpecCLMeasure(SyncRasterScan):
             #validfirst, validlast, buf = ccd_dev.get_images(first, last, self.buffer[first-1:last-1,:])
             #print("get_images", validfirst, validlast)
 
+            # Loop through available images in Andor buffer
             while 1:
+                self.andor_ccd.settings.ccd_status.read_from_hardware()
+
                 if self.interrupt_measurement_called:
                     break
                 
                 # new frame
                 frame_num = (self.andor_ccd_total_i // self.Npixels)
                 if self.andor_ccd_pixel_i == 0:
+                    # stop if new frame is past requested frames
+                    if (not self.settings['continuous_scan']) and frame_num >= self.settings['n_frames']:
+                        break
+                    # extend H5 array to fit new frame
                     if self.settings['save_h5']:
-                        print("extend h5", frame_num)
                         self.extend_h5_framed_dataset(self.spec_map_h5, frame_num)
-                        # TODO: For multiframe imaging, we need to restart
-                        #if self.andor_ccd_total_i !=0:
-                        #    self.andor_ccd.ccd_dev.start_acquisition()
 
-                        #self.spec_map_h5[frame_num,:,:,:,:] = self.spec_map
-
-                
                 
                 # grab the next ccd image, place it into buffer
                 t0 = time.time()
-                arr = ccd_dev.get_oldest_image(self.spec_buffer[self.andor_ccd_pixel_i,:])
+                arr = ccd_dev.get_oldest_image(
+                            self.spec_buffer[self.andor_ccd_pixel_i,:])
                 if arr is None:
                     break
                 
@@ -120,26 +119,16 @@ class HyperSpecCLMeasure(SyncRasterScan):
                 kk, jj, ii = self.scan_index_array[i,:]
                 self.spec_map[kk,jj,ii,:] = arr
                 if self.settings['save_h5']:
-                    print('save h5', frame_num, kk,jj,ii)
+                    #print('save h5', frame_num, kk,jj,ii, i)
                     self.spec_map_h5[frame_num, kk,jj,ii,:] = arr
 
-                
                 self.andor_ccd_pixel_i += 1
                 self.andor_ccd_total_i += 1
                 self.andor_ccd_pixel_i %= self.Npixels
                 
-                
                 #print('oldest image', arr.shape, np.max(arr), "%f" % (time.time()-t0) )
 
-#         if (time.time() - self.time_of_last_andor_get) > 1:
-#             self.time_of_last_andor_get = time.time()
-# 
-#             frame_num = (self.andor_ccd_total_i // self.Npixels)
-#             print(frame_num)
-#             self.spec_map_h5[frame_num, :,:,:,:] = self.spec_map                
-# 
-#             print("save h5 chunk", time.time() - self.time_of_last_andor_get)
-#             
+             
         
     def post_scan_cleanup(self):
         self.andor_ccd.interrupt_acquisition()
