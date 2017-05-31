@@ -4,6 +4,7 @@ Created on Feb 28, 2017
 @author: Alan Buckley
 '''
 from ScopeFoundry.base_app import BaseMicroscopeApp
+from ScopeFoundry.flask_web_view import flask_web_view
 from ScopeFoundry.helper_funcs import sibling_path
 import logging
 
@@ -26,5 +27,7 @@ class DLIApp(BaseMicroscopeApp):
 if __name__ == '__main__':
     import sys
     app = DLIApp(sys.argv)
+    app.flask_thread = flask_web_view.MicroscopeFlaskWebThread(app)
+    app.flask_thread.start()
     sys.exit(app.exec_())    
         
