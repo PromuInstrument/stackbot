@@ -8,6 +8,9 @@ import requests
 
 class DLIPowerSwitchHW(HardwareComponent):
 
+    def web_ui(self):
+        return "WWWWEEEEE"
+
     def setup(self):
 
         """
@@ -99,10 +102,4 @@ class DLIPowerSwitchHW(HardwareComponent):
         Disconnects logged quantities from hardware objects.
         :returns: None
         """
-        for lq in self.logged_quantities.values():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
-        
-        # clean up hardware object
-        del self.switch
-        
+        self.settings.disconnect_all_from_hardware()        

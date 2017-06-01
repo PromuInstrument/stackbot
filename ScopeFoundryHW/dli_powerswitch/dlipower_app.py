@@ -29,5 +29,7 @@ if __name__ == '__main__':
     app = DLIApp(sys.argv)
     app.flask_thread = flask_web_view.MicroscopeFlaskWebThread(app)
     app.flask_thread.start()
+    
+    app.flask_thread.flask_app.route('/asdf')(lambda: "asdf!")
     sys.exit(app.exec_())    
         
