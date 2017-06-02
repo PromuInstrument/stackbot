@@ -1,15 +1,15 @@
 """Wrapper written by Alan Buckley"""
 from __future__ import division, absolute_import, print_function
 from ScopeFoundry import HardwareComponent
-
 from bs4 import BeautifulSoup
 import binascii
 import requests
+import os
+from ScopeFoundry.flask_web_view.flask_helper_funcs import load_template_by_dir
 
 class DLIPowerSwitchHW(HardwareComponent):
 
-    def web_ui(self):
-        return "WWWWEEEEE"
+    name = "dli_powerswitch"
 
     def setup(self):
 
@@ -18,7 +18,7 @@ class DLIPowerSwitchHW(HardwareComponent):
         `self.outlet_dict` contains the aforementioned bit mapping and is used by :meth:`self.read_outlets`
         :returns: None
         """
-        self.name = "dli_powerswitch"
+        
         
         self.outlet_dict = {0b00000001: "Outlet_1",
                        0b00000010: "Outlet_2",
@@ -96,6 +96,14 @@ class DLIPowerSwitchHW(HardwareComponent):
                        False: "OFF"}
         status_key = truth_table[status]
         self.geturl(url='outlet?{}={}'.format(i, status_key))
+
+
+    def web_ui(self):
+        PATH = os.path.dirname(os.path.abspath(__file__))
+        TEMPLATE_DIR = os.path.join(PATH, 'templates')
+        TEMPLATE_FILENAME = 'socket_table'
+        return load_template_by_dir(TEMPLATE_DIR, TEMPLATE_FILENAME, dict(app=self.app))
+
 
     def disconnect(self):
         """
