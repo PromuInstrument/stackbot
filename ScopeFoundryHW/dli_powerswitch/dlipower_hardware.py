@@ -42,7 +42,7 @@ class DLIPowerSwitchHW(HardwareComponent):
         self.dummy_mode = self.add_logged_quantity(name='dummy_mode', dtype=bool, initial=False, ro=False)
         
         self.add_operation('read_all_states', self.read_outlets)
-       
+        self.web_ui()
 
     def connect(self):
         """Connects logged quantities to hardware write functions with :meth:`connect_to_hardware` (:class:`LoggedQuantity`)"""
@@ -99,6 +99,10 @@ class DLIPowerSwitchHW(HardwareComponent):
 
 
     def web_ui(self):
+        """
+        Loads local, module specific Flask template for use in web ui.
+        :returns: A rendered template
+        """
         PATH = os.path.dirname(os.path.abspath(__file__))
         TEMPLATE_DIR = os.path.join(PATH, 'templates')
         TEMPLATE_FILENAME = 'socket_table'
