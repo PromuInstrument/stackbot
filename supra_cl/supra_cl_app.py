@@ -22,6 +22,14 @@ class SupraCLApp(BaseMicroscopeApp):
         #pg.setConfigOption('background', 'w')
         #pg.setConfigOption('foreground', 'k')
 
+        from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
+        self.add_hardware(XboxControlHW(self))
+         
+        from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
+        self.add_measurement(XboxControlMeasure(self))
+
+
+#         self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
         
         from ScopeFoundryHW.sync_raster_daq import SyncRasterDAQ
         self.add_hardware(SyncRasterDAQ(self))
@@ -50,14 +58,7 @@ class SupraCLApp(BaseMicroscopeApp):
         from supra_cl.hyperspec_cl_quad_measure import HyperSpecCLQuadView
         self.add_measurement(HyperSpecCLQuadView(self))
 
-        from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
-        self.add_hardware(XboxControlHW(self))
-        
-        from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
-        self.add_measurement(XboxControlMeasure(self))
 
-
-        #self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
 
         self.settings_load_ini('supra_cl_defaults.ini')
 
