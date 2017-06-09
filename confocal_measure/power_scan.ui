@@ -101,6 +101,16 @@
           <item row="3" column="0">
            <widget class="QDoubleSpinBox" name="ascom_img_int_time_doubleSpinBox"/>
           </item>
+          <item row="2" column="1">
+           <widget class="QCheckBox" name="collect_picoharp_checkBox">
+            <property name="text">
+             <string>PicoHarp</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QDoubleSpinBox" name="picoharp_int_time_doubleSpinBox"/>
+          </item>
          </layout>
         </widget>
        </item>

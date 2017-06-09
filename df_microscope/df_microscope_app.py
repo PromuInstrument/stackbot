@@ -26,6 +26,10 @@ class DFMicroscopeApp(BaseMicroscopeApp):
 
         from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
         self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
+        
+        from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
+        self.add_hardware_component(ESP300AxisHW(self))
+
 
         print("Adding Measurement Components")
         
@@ -57,6 +61,8 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         # load default settings 
         self.hardware['thorlabs_powermeter'].settings['port'] = 'USB0::0x1313::0x8078::P0013111::INSTR'
         self.hardware['power_wheel_arduino'].settings['ser_port'] = 'COM5'
+        self.hardware['esp300'].settings['port'] = 'COM6'
+
         
 if __name__ == '__main__':
     import sys

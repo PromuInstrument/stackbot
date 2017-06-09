@@ -1,26 +1,26 @@
 from ScopeFoundry import Measurement
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file,\
     replace_spinbox_in_layout
-from ScopeFoundry import h5_io
 import pyqtgraph as pg
 import numpy as np
 import time
 
-class SyncRasterScanQuadView(Measurement):
+
+class HyperSpecCLQuadView(Measurement):
     
-    name = 'sync_raster_scan_quad_view'
-    
+    name = 'hyperspec_cl_quad_view'
+
     def setup(self):
         
         self.scanDAQ   = self.app.hardware['sync_raster_daq']
-        self.sync_scan = self.app.measurements['sync_raster_scan'] 
+        #self.sync_scan = self.app.measurements['sync_raster_scan'] 
+        self.sync_scan = self.hyperspec_scan = self.app.measurements['hyperspec_cl']
 
-        
         self.names = ['ai0', 'ctr0', 'ai1', 'ctr1']
 
 
         
-        self.ui_filename = sibling_path(__file__, 'sync_raster_quad_measure.ui')
+        self.ui_filename = sibling_path(__file__, 'hyperspec_cl_quad_measure.ui')
         self.ui = load_qt_ui_file(self.ui_filename)
         self.graph_layout=pg.GraphicsLayoutWidget()
         self.ui.plot_widget.layout().addWidget(self.graph_layout)
@@ -88,6 +88,18 @@ class SyncRasterScanQuadView(Measurement):
         self.sync_scan.settings.description.connect_to_widget(
             self.ui.description_plaintTextEdit)
         
+        # Spectrometer settings
+        self.app.hardware['andor_ccd'].settings.em_gain.connect_to_widget(
+            self.ui.andor_emgain_doubleSpinBox)
+        spec = self.app.hardware['acton_spectrometer']
+        spec.settings.center_wl.connect_to_widget(
+            self.ui.spec_center_wl_doubleSpinBox)
+        spec.settings.entrance_slit.connect_to_widget(
+            self.ui.spec_ent_slit_doubleSpinBox)
+        spec.settings.grating_id.connect_to_widget(
+            self.ui.spec_grating_id_comboBox)
+
+        
     def setup_figure(self):
         
         
@@ -121,48 +133,35 @@ class SyncRasterScanQuadView(Measurement):
             hist_lut.setImageItem(img_item)
             self.graph_layout.addItem(hist_lut)
 
-        self.graph_layout.nextRow()
-        self.optimizer_plot_adc = self.graph_layout.addPlot(
-            title='Analog Optimizer', colspan=2)
-        self.optimizer_plot_adc.addLegend()
-        self.optimizer_plot_adc.showButtons()
-        self.optimizer_plot_adc.setLabel('left', text='SEM Signal', units='V')
+        self.graph_layout.nextRow() 
         
-        self.optimizer_plot_ctr = self.graph_layout.addPlot(
-            title='Counter Optimizer', colspan=2)
-        self.optimizer_plot_ctr.addLegend()
-        self.optimizer_plot_ctr.showButtons()
-        self.optimizer_plot_ctr.setLabel('left', text='Count Rate', units='Hz')
+        self.spectrum_plot = self.graph_layout.addPlot(
+            title="Spectrum", colspan=2)
+        self.spectrum_plot.addLegend()
+        self.spectrum_plot.showButtons()
+        self.spectrum_plot.setLabel('bottom', text='wavelength', units='nm')
+        self.current_spec_plotline = self.spectrum_plot.plot()
+        #self.roi_spec_plotline = self.spectrum_plot.plot()
+
+        self.bp_img_plot = self.graph_layout.addPlot(
+            title="Band Pass Image", colspan=2)
+
+        self.bp_img_item = pg.ImageItem()
+        self.bp_img_item.setOpts(axisOrder='row-major')
+        self.bp_img_item .setAutoDownsample(True)
+        plot.addItem(self.bp_img_item )
+        plot.showGrid(x=True, y=True)
+        plot.setAspectLocked(lock=True, ratio=1)
 
 
         
-        self.hist_buffer_plot_lines = dict()
-        
-        opt_plots = dict(
-            ai0=self.optimizer_plot_adc,
-            ai1=self.optimizer_plot_adc,
-            ctr0=self.optimizer_plot_ctr,
-            ctr1=self.optimizer_plot_ctr,
-            )
-        
-        for i, name in enumerate(self.names):
-            self.hist_buffer_plot_lines[name] = opt_plots[name].plot(pen=(i,len(self.names)), name=name)
 
     def run(self):
         self.display_update_period = 0.050
         #self.sync_scan.start()
-        self.app.hardware['sem_remcon'].read_from_hardware()
-        
         if not self.sync_scan.settings['activation']:
             self.sync_scan.settings['activation'] =True
             time.sleep(0.3)
-        
-        self.HIST_N = 500
-        
-        self.hist_buffers = dict()
-        self.hist_i = 0
-        for name in self.names:
-            self.hist_buffers[name] = np.zeros(self.HIST_N, dtype=float)
 
         for name in self.names:
             self.img_items[name].setAutoDownsample(True)
@@ -198,6 +197,7 @@ class SyncRasterScanQuadView(Measurement):
         
         t0 = time.time()
         
+        # Update Quad Images
         for name, px_map in self.display_maps.items():
             #self.hist_luts[name].setImageItem(self.img_items[name])
             self.img_items[name].setImage(px_map[0,:,:], autoDownsample=True, autoRange=False, autoLevels=False)
@@ -206,13 +206,11 @@ class SyncRasterScanQuadView(Measurement):
             if self.settings[name + '_autolevel']:
                 self.hist_luts[name].setLevels(*np.percentile(px_map[0,:,:],(1,99)))
             
-            self.hist_buffers[name][self.hist_i] = px_map.mean()
-            
-            self.hist_buffer_plot_lines[name].setData(self.hist_buffers[name])
- 
-        self.hist_i += 1
-        self.hist_i %= self.HIST_N
-            
+        # Update Spectrum
+        # need wavelength
+        M = self.hyperspec_scan
+        self.current_spec_plotline.setData(
+            M.spec_buffer[M.andor_ccd_pixel_i-1])
 
         #print('quad display {}'.format(time.time() -t0))
         
@@ -224,5 +222,3 @@ class SyncRasterScanQuadView(Measurement):
                 hLine, vLine = self.cross_hair_lines[name]
                 hLine.setVisible(vis)
                 vLine.setVisible(vis)
-
-        

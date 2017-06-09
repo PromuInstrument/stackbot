@@ -35,12 +35,26 @@ class SupraCLApp(BaseMicroscopeApp):
         from supra_cl.sync_raster_quad_measure import SyncRasterScanQuadView
         self.add_measurement(SyncRasterScanQuadView(self))
         
-        from ScopeFoundryHW.andor_camera import AndorCCDHW, AndorCCDReadoutMeasure
+        from ScopeFoundryHW.andor_camera import AndorCCDHW, AndorCCDReadoutMeasure, AndorCCDKineticMeasure
         self.add_hardware(AndorCCDHW(self))
         self.add_measurement(AndorCCDReadoutMeasure(self))
+        self.add_measurement(AndorCCDKineticMeasure(self))
 
         from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
         self.add_hardware(ActonSpectrometerHW(self))
+        
+        from supra_cl.hyperspec_cl_measure import HyperSpecCLMeasure
+        self.add_measurement(HyperSpecCLMeasure(self))
+        
+        from supra_cl.hyperspec_cl_quad_measure import HyperSpecCLQuadView
+        self.add_measurement(HyperSpecCLQuadView(self))
+
+        from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
+        self.add_hardware(XboxControlHW(self))
+        
+        from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
+        self.add_measurement(XboxControlMeasure(self))
+
 
         #self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
 

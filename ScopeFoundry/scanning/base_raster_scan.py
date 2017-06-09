@@ -10,7 +10,7 @@ import numpy as np
 import pyqtgraph as pg
 import time
 from ScopeFoundry import h5_io
-from qtpy import QtCore
+from qtpy import QtCore, QtWidgets
 from ScopeFoundry import LQRange
 import os
 
@@ -271,6 +271,36 @@ class BaseRaster2DScan(Measurement):
             self.settings.as_dict()[lqname].updated_value.connect(self.update_scan_roi)
                     
         self.img_plot.scene().sigMouseMoved.connect(self.mouseMoved)
+        
+        # GoTo position context menu
+        #self.goto_cmenu_action = QtWidgets.QAction("GoTo Position", self.img_plot.scene())
+        #self.img_plot.scene().contextMenu.append(self.goto_cmenu_action)
+        #self.goto_cmenu_action.triggered.connect(self.on_goto_position)
+        
+        # Point ROI
+        self.pt_roi = pg.CircleROI( (0,0), (2,2) , movable=True, pen=(0,9))
+        #self.pt_roi.removeHandle(self.pt_roi.getHandles()[0])
+        h = self.pt_roi.addTranslateHandle((0.5,.5))
+        h.pen = pg.mkPen('r')
+        h.update()
+        self.img_plot.addItem(self.pt_roi)
+        self.pt_roi.removeHandle(0)
+        #self.pt_roi_plotline = pg.PlotCurveItem([0], pen=(0,9))
+        #self.imview.getView().addItem(self.pt_roi_plotline) 
+        self.pt_roi.sigRegionChangeFinished[object].connect(self.on_update_pt_roi)
+
+    def on_update_pt_roi(self, roi=None):
+        if roi is None:
+            roi = self.circ_roi
+        roi_state = roi.saveState()
+        x0, y0 = roi_state['pos']
+        xc = x0 + 1
+        yc = y0 + 1
+        self.new_pt_pos(xc,yc)
+    
+    def new_pt_pos(self, x,y):
+        print('new_pt_pos', x,y)
+
     
     def mouse_update_scan_roi(self):
         x0,y0 =  self.scan_roi.pos()
@@ -296,6 +326,9 @@ class BaseRaster2DScan(Measurement):
         y = self.stage.settings['y_position']
         self.current_stage_pos_arrow.setPos(x,y)
     
+    def on_goto_position(self):
+        pass
+    
     def update_display(self):
         #self.log.debug('update_display')
         if self.initial_scan_setup_plotting:
@@ -316,13 +349,15 @@ class BaseRaster2DScan(Measurement):
         else:
             #if self.settings.scan_type.val in ['raster']
             kk, jj, ii = self.current_scan_index
-            self.img_item.setImage(self.display_image_map[kk,:,:].T, autoRange=False, autoLevels=False)
+            self.disp_img = self.display_image_map[kk,:,:].T
+            self.img_item.setImage(self.disp_img, autoRange=False, autoLevels=False)
             self.img_item.setRect(self.img_item_rect) # Important to set rectangle after setImage for non-square pixels
             self.update_LUT()
             
     def update_LUT(self):
         ''' override this function to control display LUT scaling'''
-        self.hist_lut.imageChanged(autoLevel=True)
+        self.hist_lut.imageChanged(autoLevel=False)
+        self.hist_lut.setLevels(*np.percentile(self.disp_img,(1,99)))
                
     def clear_previous_scans(self):
         #current_img = img_items.pop()
