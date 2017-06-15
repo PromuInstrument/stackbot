@@ -31,6 +31,10 @@ class SEMAlignMeasure(Measurement):
         self.stig_plot = pg.PlotWidget()
         self.stig_plot.setAspectLocked(1.0)
         
+        self.roi_map = {'Focus': 'wd_line',
+                        'Beam Shift': 'beamshift_roi',
+                        'Stigmation': 'stig_pt_roi'}
+        
         a = 100
         # Boundary
         self.stig_plot.plot([-a, a, a, -a, -a], [-a,-a, a, a, -a])
@@ -138,7 +142,7 @@ class SEMAlignMeasure(Measurement):
         self.controller.settings.B.add_listener(self.activate_stig_control)
         self.controller.settings.A.add_listener(self.activate_beam_control)
         self.controller.settings.X.add_listener(self.activate_focus_control)
-    
+        self.controller.settings.RP.add_listener(self.recenter)
 
     def update_pos(self):
         profile = self.settings['active_widget']
@@ -150,11 +154,11 @@ class SEMAlignMeasure(Measurement):
             dy = 0
         if dx != 0 or dy != 0:
             if profile == "Stigmation":
-                c = self.controller.settings.sensitivity.val
+                c = self.controller.settings.sensitivity.val/10
                 x, y = self.sem.settings.stig_xy.val
                 self.sem.settings.stig_xy.update_value([x+c*dx, y-c*dy])
             elif profile == "Beam Shift":
-                c = self.controller.settings.sensitivity.val
+                c = self.controller.settings.sensitivity.val/10
                 x, y = self.sem.settings.beamshift_xy.val
                 self.sem.settings.beamshift_xy.update_value([x+c*dx, y-c*dy])
             elif profile == "Focus":
@@ -171,7 +175,7 @@ class SEMAlignMeasure(Measurement):
         if profile == "Focus":
             c = self.controller.settings.sensitivity.val/2
         else:
-            c = self.controller.settings.sensitivity.val
+            c = self.controller.settings.sensitivity.val/5
 
         if abs(du) < 0.25:
             du = 0
@@ -180,24 +184,42 @@ class SEMAlignMeasure(Measurement):
         if du != 0 or dv != 0:
             self.vb.translateBy((c*du,-c*dv))    
 
+    def recenter(self):
+        profile = self.settings['active_widget']
+        if profile == "Focus":
+            y = getattr(self, self.roi_map[profile]).getYPos()
+            ymin, ymax = self.vb.viewRange()[1]
+            midpoint_dist = (ymax - ymin)/2
+            self.vb.setYRange(min=y-midpoint_dist, max=y+midpoint_dist)
+        else:
+            x, y = getattr(self, self.roi_map[profile]).pos()
+            xmin, xmax = self.vb.viewRange()[0]
+            ymin, ymax = self.vb.viewRange()[1]
+            x_mid_dist = (xmax - xmin)/2
+            y_mid_dist = (ymax - ymin)/2
+            self.vb.setXRange(min=x-x_mid_dist, max=x+x_mid_dist)
+            self.vb.setYRange(min=y-y_mid_dist, max=y+y_mid_dist)
+            
+            
     def update_zoom(self):
         """Zoom around cursor"""
         profile = self.settings['active_widget']
         if profile == 'Focus':
             y = self.wd_line.getYPos()
-        elif profile == 'Stigmation':
-            x, y = self.sem.settings.stig_xy.val
-        elif profile == 'Stigmation':
-            x, y = self.sem.settings.beamshift_xy.val
-        c = self.controller.settings.sensitivity.val
+        else:
+            x, y = getattr(self, self.roi_map[profile]).pos()
+        ymin, ymax = self.vb.viewRange()[1]
+        yrange = ymax - ymin
+        self.controller.settings.sensitivity.update_value(yrange/10)
         dz = self.controller.settings['Axis_2']/10
         if abs(dz) < 0.05:
             dz = 0 
         if dz != 0:
             if profile == 'Focus':
-                self.vb.scaleBy(s=(dz+1), y=y)
+                self.vb.scaleBy(s=(dz+1), center=(0,y))
             else:
-                self.vb.scaleBy(s=(dz+1), x=x, y=y)
+                self.vb.scaleBy(s=(dz+1), center=(x,y))            
+
    
     def on_update_wd_line(self, line=None):
         self.sem.settings['WD'] = self.wd_line.getYPos()
