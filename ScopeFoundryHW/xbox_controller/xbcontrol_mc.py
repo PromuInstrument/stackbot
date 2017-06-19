@@ -4,8 +4,7 @@ from __future__ import absolute_import
 from ScopeFoundry.measurement import Measurement
 import time
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
-import pygame.event
-from pygame.constants import JOYAXISMOTION, JOYHATMOTION, JOYBUTTONDOWN, JOYBUTTONUP
+import pygame
 
 class XboxControlMeasure(Measurement):
     """This class contains connections to logged quantities and ui elements. 
@@ -164,6 +163,4 @@ class XboxControlMeasure(Measurement):
                                 self.log.error("Unknown button: %i (target state: %s)" % (i,
                                     'down' if button_state else 'up'))
 
-                else:
-                    self.log.error("Unknown event type: {}".format(event.type))
 
