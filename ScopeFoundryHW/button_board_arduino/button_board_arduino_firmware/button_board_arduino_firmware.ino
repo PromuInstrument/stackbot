@@ -112,7 +112,7 @@ void setup() {
   pinMode(button4Pin, INPUT_PULLUP);
   pinMode(led4Pin, OUTPUT); 
 
-  tft.setRotation(3);
+  tft.setRotation(0);
   // NOTE: The test pattern at the start will NOT be rotated!  The code
   // for rendering the test pattern talks directly to the display and
   // ignores any rotation.
@@ -125,10 +125,10 @@ void setup() {
 
   int titleCursor[2] = {
     0,0                };
-  printTextCursor(titleCursor, "WELCOME TO \nTRPL MICROSCOPE\n---------------------", YELLOW);
-  updateDisplayButton("shutter is open  ",
-  "shutter is closed",  
-  button1State,button1_color,button1_cursor);
+  printTextCursor(titleCursor, "WELCOME TO \nTRPL MICROSCOPE\n---------------------", WHITE);
+  //updateDisplayButton("Shutter open.",
+  //"Shutter closed.",  
+  //button1State,button1_color,button1_cursor);
   updateLed(led1Pin,button1State);
 }
 
@@ -164,34 +164,34 @@ void loop() {
       button4PressedSinceLastSinc = 0;
     }
     else {
-      int buttomNumber = interpret_int_from_string(inputString);
-      switch (buttomNumber){
+      int buttonNumber = interpret_int_from_string(inputString);
+      switch (buttonNumber){
       case 1:
         button1State = !button1State;
-        updateDisplayButton("shutter is open    ",
-        "shutter is closed  ",
-        button1State,button1_color,button1_cursor);
+        //updateDisplayButton("Shutter open.",
+        //"Shutter closed.",
+        //button1State,button1_color,button1_cursor);
         updateLed(led1Pin,button1State);
         break;     
       case 2:
         button2State = !button2State;
-        updateDisplayButton("button2 not defined   ",
-        "button2 not defined  ",
-        button2State,button2_color,button2_cursor);
+        //updateDisplayButton("button2 not defined   ",
+        //"button2 not defined  ",
+        //button2State,button2_color,button2_cursor);
         updateLed(led2Pin,button2State);
         break;      
       case 3:
         button3State = !button3State;
-        updateDisplayButton("button3 not defined   ",
-        "button3 not defined  ",
-        button3State,button3_color,button3_cursor);
+        //updateDisplayButton("button3 not defined   ",
+        //"button3 not defined  ",
+        //button3State,button3_color,button3_cursor);
         updateLed(led3Pin,button3State);
         break;      
       case 4:
         button4State = !button4State;
-        updateDisplayButton("button4 not defined   ",
-        "button4 not defined  ",
-        button4State,button4_color,button4_cursor);
+        //updateDisplayButton("button4 not defined   ",
+        //"button4 not defined  ",
+        //button4State,button4_color,button4_cursor);
         updateLed(led4Pin,button4State);
         break;          
 
