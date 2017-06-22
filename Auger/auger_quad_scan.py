@@ -37,7 +37,8 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
         
         self.settings.New('quad_scan_mode', dtype=int, initial = 0, vmin = 0, vmax = 4, 
                           choices=(('quad 1',0),('quad 2',1),('x shift/angle',2),('y shift/angle',3),('SEM gun',4)))
-
+        self.settings.New('smooth',dtype=bool, initial=True)
+        
         #auger analyzer
         self.settings.New('ke_start', dtype=float, initial=30,unit = 'V',vmin=0,vmax = 2200)
         self.settings.New('ke_end',   dtype=float, initial=600,unit = 'V',vmin=1,vmax = 2200)
@@ -111,17 +112,13 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
             YY = self.scan_mode[qmode]['y_slow']
             self.analyzer_hw.settings[XX] = x
             self.analyzer_hw.settings[YY] = y
-        
+         
     def move_position_fast(self, x,y, dx, dy):
         qmode = self.settings['quad_scan_mode']
         if qmode == 4:
             self.sem_hw.settings['gun_xy'] = (x,y)
         else:
-            XX = self.scan_mode[qmode]['x_fast']
-            YY = self.scan_mode[qmode]['y_fast']
-            self.analyzer_hw.analyzer.write_quad(XX,x)
-            self.analyzer_hw.analyzer.write_quad(YY,y)
-            #self.move_position_slow(x, y, dx, dy)
+            self.move_position_slow(x, y, 0, 0)
         
     def on_new_frame(self, frame_i):
         print("New frame", frame_i)
@@ -134,14 +131,17 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
     def on_end_frame(self, frame_i):
         #filter image before finding max
         A = self.quad_count_map
-        B = ndimage.gaussian_filter(A[0,:,:], sigma=2)
+        if self.settings['smooth']:
+            B = ndimage.gaussian_filter(A[0,:,:], sigma=2)
+        else:
+            B = A[0,:,:]
         self.p_max = np.amax(B)
         self.p_min = np.amin(B)
         self.display_image_map[0,:,:] = B
         j,i = np.unravel_index(B.argmax(), B.shape)
         k = 0
          
-        print("found quad opt peak at ", k,j,i, A[k,j,i], self.h_array[i], self.v_array[j])
+        print("found quad opt peak at ", k,j,i, 'value', A[k,j,i], 'coords', self.h_array[i], self.v_array[j])
         #self.move_position_slow(self.h_array[i],self.v_array[j],0,0)
         if self.settings['save_h5']:
             self.quad_count_map_h5[frame_i,:,:] = A

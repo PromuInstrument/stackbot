@@ -60,10 +60,25 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
     def collect_pixel(self, pixel_num, k, j, i):
         
         # collect data
-        print(pixel_num, k, j, i)
+        print('Picoharp_MCL_2DSlowScan', 'collect_pixel', pixel_num, k, j, i)
         t0 = time.time()
+
+        #hist_data, elapsed_time = self.read_picoharp_histogram()
         
-        hist_data, elapsed_time = self.read_picoharp_histogram()
+        ph = self.picoharp_hw.picoharp
+        ph.start_histogram()
+        while not ph.check_done_scanning():
+            self.picoharp_hw.settings.count_rate0.read_from_hardware()
+            self.picoharp_hw.settings.count_rate1.read_from_hardware()
+            if self.picoharp_hw.settings['Tacq'] > 0.2:
+                ph.read_histogram_data()
+            time.sleep(0.005) #self.sleep_time)  
+        ph.stop_histogram()
+        #ta = time.time()
+        ph.read_histogram_data()
+
+        hist_data = ph.histogram_data
+        elapsed_time = ph.read_elapsed_meas_time()
         
         # store in arrays
         self.time_trace_map[k,j,i, :] = hist_data[0:self.num_hist_chans]
@@ -74,9 +89,14 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
         # display count-rate
         self.display_image_map[k,j,i] = hist_data[0:self.num_hist_chans].sum() * 1.0/elapsed_time
         
+        import datetime
+        print('pixel',  datetime.timedelta(seconds=(self.Npixels - pixel_num)*elapsed_time*1e-3), 'left')
+        
         print( 'pixel done' )
     
     def read_picoharp_histogram(self):
+        print("asdf")
+
         ph = self.picoharp_hw.picoharp
 
         ph.start_histogram()
@@ -99,7 +119,7 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
         if not hasattr(self, 'lifetime_graph_layout'):
             self.lifetime_graph_layout = pg.GraphicsLayoutWidget()
             self.lifetime_plot = self.lifetime_graph_layout.addPlot()
-            self.lifetime_plotdata = self.lifetime_plot.spec_plot()
+            self.lifetime_plotdata = self.lifetime_plot.plot()
             self.lifetime_plot.setLogMode(False, True)
         self.lifetime_graph_layout.show()
         
