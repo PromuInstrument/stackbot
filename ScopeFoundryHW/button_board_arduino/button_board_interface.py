@@ -37,6 +37,7 @@ class ButtonBoardInterface(object):
         resp = self.ser.readline()
         if self.debug:
             logger.debug("readout: {}".format(cmd))
+        self.ser.flush()
         return resp
     
     def send_cmd(self, cmd):
@@ -46,6 +47,7 @@ class ButtonBoardInterface(object):
         self.ser.write(message)
         if self.debug:
             logger.debug("message: {}".format(message))
+        self.ser.flush()
     
     def listen(self):    
         rdata = self.ser.read(3)
@@ -63,11 +65,31 @@ class ButtonBoardInterface(object):
             logger.debug("state_cmd: {}".format(cmd))
 
     def write_instrument_name(self, line, name):
+#         cmd = "D{}".format(line).encode()
+#         self.send_cmd(cmd)
         cmd = "L{}{}".format(line, name).encode()
         self.send_cmd(cmd)
         if self.debug:
             logger.debug("instrument command sent: {}".format(cmd))
+        time.sleep(0.1)
         
+    def line_blackout(self, line):
+        cmd = "D{}".format(line).encode()
+        self.send_cmd(cmd)
+        if self.debug:
+            logger.debug("blackout command sent: {}".format(cmd))
+            
+    def full_screen_blackout(self):
+        cmd = "B".encode()
+        self.send_cmd(cmd)
+        if self.debug:
+            logger.debug("screen blackout command sent")
+            
+    def full_button_blackout(self):
+        cmd = "R".encode()
+        self.send_cmd(cmd)
+        if self.debug:
+            logger.debug("screen blackout command sent")
         
     def poll(self):
         resp = self.ask_cmd(b"?")

@@ -166,8 +166,14 @@ void loop() {
     }
 
     else if (inputString[0] == 'L') {
+      // Black out line
       int lineNo = (inputString[1] - 0x30);
-      //Serial.println(lineNo);
+      int yPos = lineNo*20;
+      int boxh = 20;
+      int boxw = 100;
+      tft.fillRect(0, yPos, boxw, boxh, BLACK);
+      
+      // Print out new line
       int linecursor[2]={0, lineNo*20};
       String message = inputString.substring(2);
       //Serial.println(message);
@@ -188,6 +194,26 @@ void loop() {
         color = WHITE;
       }
       printTextCursor(linecursor, (char*) message.c_str(), color);
+    }
+
+    else if (inputString[0] == 'D') {
+      // Black out line only
+      int lineNo = (inputString[1] - 0x30);
+      int yPos = lineNo*20;
+      int boxh = 20;
+      int boxw = 100;
+      tft.fillRect(0, yPos, boxw, boxh, BLACK);
+    }
+
+    else if (inputString[0] == 'B') {
+      tft.fillScreen(BLACK);      
+    }
+
+    else if (inputString[0] == 'R') {
+      updateLed(led1Pin, 0);
+      updateLed(led2Pin, 0);
+      updateLed(led3Pin, 0);
+      updateLed(led4Pin, 0);
     }
     
     else {
