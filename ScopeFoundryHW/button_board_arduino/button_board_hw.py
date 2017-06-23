@@ -41,6 +41,16 @@ class ButtonBoardHW(HardwareComponent):
             write_func = self.write_button3)
         self.chan4.connect_to_hardware(
             write_func = self.write_button4)
+        
+        self.settings.inst_name1.connect_to_hardware(
+            write_func = self.write_inst_name1)
+        self.settings.inst_name2.connect_to_hardware(
+            write_func = self.write_inst_name2)
+        self.settings.inst_name3.connect_to_hardware(
+            write_func = self.write_inst_name3)
+        self.settings.inst_name4.connect_to_hardware(
+            write_func = self.write_inst_name4)
+        
 
     def update_chan_lq(self):
         self.settings['Channel_1'] = self.button_interface.button_poll[0]
@@ -68,6 +78,18 @@ class ButtonBoardHW(HardwareComponent):
     
     def write_button4(self, value):
         self.button_interface.write_state(4, value)
+    
+    def write_inst_name1(self, name):
+        self.button_interface.write_instrument_name(1, name)
+    
+    def write_inst_name2(self, name):
+        self.button_interface.write_instrument_name(2, name)
+    
+    def write_inst_name3(self, name):
+        self.button_interface.write_instrument_name(3, name)
+    
+    def write_inst_name4(self, name):
+        self.button_interface.write_instrument_name(4, name)
          
     def disconnect(self):
         self.settings.disconnect_all_from_hardware()

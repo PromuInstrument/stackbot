@@ -62,13 +62,22 @@ class ButtonBoardInterface(object):
         if self.debug:
             logger.debug("state_cmd: {}".format(cmd))
 
-
+    def write_instrument_name(self, line, name):
+        cmd = "L{}{}".format(line, name).encode()
+        self.send_cmd(cmd)
+        if self.debug:
+            logger.debug("instrument command sent: {}".format(cmd))
+        
+        
     def poll(self):
         resp = self.ask_cmd(b"?")
         print("resp:", resp)
         data = resp.strip().decode().split(',')
         print("data:", data)
-        self.button_poll = poll = [int(x) for x in data]
+        if len(data) > 0:
+            self.button_poll = poll = [int(x) for x in data]
+        else:
+            pass
         print("poll:", poll)
         if self.debug:
             logger.debug("stored val: {}".format(self.relays))
