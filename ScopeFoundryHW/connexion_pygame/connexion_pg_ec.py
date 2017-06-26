@@ -6,7 +6,7 @@ import time
 import logging
 
 logger = logging.getLogger(__name__)
-class XboxControlDevice(object):
+class ConnexionDevice(object):
         
     def __init__(self):
         """Creates and initializes pygame.joystick object and creates 
@@ -16,16 +16,24 @@ class XboxControlDevice(object):
         pygame.joystick.init()
         if pygame.joystick.get_init():
             logger.debug("Joystick module initialized!")
+            
+            self.count = pygame.joystick.get_count()
             logger.debug("%s joysticks detected." % pygame.joystick.get_count())
-
-        self.joystick = pygame.joystick.Joystick(0)
+#         for i in range(pygame.joystick.get_count()):
+        self.controllers = []
+        for i in range(self.count):
+            self.controllers.append(pygame.joystick.Joystick(i))
+            self.joystick = self.controllers[i]
+            print(self.joystick)
         logger.debug("Joystick instance created.")
         
         """Initializes joystick hardware and scans for number of 
         available HID features such as hats, sticks and buttons."""
         self.joystick.init()
         if self.joystick.get_init():
-            print("Joystick initialized:", self.joystick.get_name())
+#             print("Joystick initialized:", self.joystick.get_name())
+            self.joystick_name = self.joystick.get_name()
+            print("Joystick initialized:", self.joystick_name)
         self.num_buttons = self.joystick.get_numbuttons()
         self.num_hats = self.joystick.get_numhats()
         self.num_axes = self.joystick.get_numaxes()

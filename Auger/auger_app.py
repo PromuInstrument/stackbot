@@ -83,8 +83,7 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from Auger.analyzer_quad_optimizer import AugerQuadOptimizer
         self.add_measurement(AugerQuadOptimizer(self))
         
-        from Auger.analyzer_simplex_optimizer import AugerSimplexOptimizer
-        self.add_measurement(AugerSimplexOptimizer(self))
+
         
         from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
         self.add_hardware(XboxControlHW(self))
@@ -94,6 +93,12 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         
         from Auger.hardware.sem_align import SEMAlignMeasure
         self.add_measurement(SEMAlignMeasure)
+        
+#         from Auger.analyzer_simplex_optimizer import AugerSimplexOptimizer
+#         self.add_measurement(AugerSimplexOptimizer(self))
+
+        from Auger.auger_quad_scan import AugerQuadSlowScan
+        self.add_measurement_component(AugerQuadSlowScan(self))
 
         from Auger.auger_quad_scan import AugerQuadSlowScan
         self.add_measurement_component(AugerQuadSlowScan(self))

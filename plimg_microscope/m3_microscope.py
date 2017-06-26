@@ -8,8 +8,11 @@ logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
 #logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
+<<<<<<< HEAD
 logging.getLogger('PyQt5').setLevel(logging.WARNING)
 
+=======
+>>>>>>> d23eddb51984f311015483594899062df7612379
 logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
 
 """logging.basicConfig(filename='m3_log.txt')
@@ -105,10 +108,14 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(FiberPowerMeterScan(self))
         self.add_measurement(FiberAPDScan(self))
         self.add_measurement(FiberPicoharpScan(self))
+<<<<<<< HEAD
         
         
         from ScopeFoundryHW.dli_powerswitch import DLIPowerSwitchHW
         self.add_hardware(DLIPowerSwitchHW(self))
+=======
+                
+>>>>>>> d23eddb51984f311015483594899062df7612379
         
         #set some default logged quantities
         #
