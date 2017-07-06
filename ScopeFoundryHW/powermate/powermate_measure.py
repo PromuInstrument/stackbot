@@ -29,14 +29,14 @@ class PowermateMeasure(Measurement):
 
     def cycle(self):
         self.interrupt()
-#         if self.interrupt_measurement_called:
-#             self.start()
+        time.sleep(0.11)
+        self.start()
             
     def run(self):
         self.powermate.open_active_device()
         self.powermate.set_data_handler()
         try:
             while not self.interrupt_measurement_called:
-                time.sleep(0.5)
+                time.sleep(0.1)
         finally:
             self.powermate.active_device.close()
