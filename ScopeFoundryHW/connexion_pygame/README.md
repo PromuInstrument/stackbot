@@ -15,11 +15,12 @@ Author
 ------
 
 Alan Buckley <alanbuckley@lbl.gov>
-
+			 <alanbuckley@berkeley.edu>
+			 
 Contributors
 ------------
 Edward S. Barnard <esbarnard@lbl.gov>
-
+Lev Lozhkin
 
 Requirements
 ------------

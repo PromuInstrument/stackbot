@@ -1,5 +1,5 @@
-"""Xbox ScopeFoundry demonstration module written by Alan Buckley with suggestions for improvement 
-from Ed Barnard and Lev Lozhkin"""
+"""Xbox ScopeFoundry demonstration module upon which this module is based, 
+is written by Alan Buckley with suggestions for improvement from Ed Barnard and Lev Lozhkin"""
 import pygame
 import time
 #from pygame.constants import JOYAXISMOTION, JOYHATMOTION, JOYBUTTONDOWN, JOYBUTTONUP
