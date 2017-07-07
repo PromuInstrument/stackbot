@@ -97,6 +97,9 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
 
         from Auger.auger_quad_scan import AugerQuadSlowScan
         self.add_measurement_component(AugerQuadSlowScan(self))
+        
+        from Auger.sem_auto_focus import SEMAutoFocus
+        self.add_measurement_component(SEMAutoFocus(self))
 
 #        self.phi_ion_gun = self.add_hardware_component(PhiIonGunHardwareComponent(self))
 #        self.ion_gun_status = self.add_measurement_component(IonGunStatus(self))
