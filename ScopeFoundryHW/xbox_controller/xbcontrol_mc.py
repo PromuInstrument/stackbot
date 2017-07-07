@@ -44,6 +44,7 @@ class XboxControlMeasure(Measurement):
         self.controller = self.app.hardware['xbox_controller']
 
         self.set_universal_key_map()
+        #self.setup_ui()
         
     def setup_ui(self):
         self.gui
@@ -103,17 +104,23 @@ class XboxControlMeasure(Measurement):
         
     def start_measure(self):
         if self.controller.settings['Start'] == True:
-            window = self.app.ui.mdiArea.activeSubWindow().widget().windowTitle()
-            self.app.measurements['{}'.format(window)].start()
-            print(window)
+            #window = self.app.ui.mdiArea.activeSubWindow().windowTitle()
+            #self.app.measurements['{}'.format(window)].start()
+            measure = self.app.ui.mdiArea.activeSubWindow().measure
+            measure.start()
+            #print(window)
+            print(measure.name)
         else:
             pass
     
+    
     def interrupt_measure(self):
         if self.controller.settings['Back'] == True:
-            window = self.app.ui.mdiArea.activeSubWindow().widget().windowTitle()
-            self.app.measurements['{}'.format(window)].interrupt()
-            print(window)
+            #window = self.app.ui.mdiArea.activeSubWindow().windowTitle()
+            #self.app.measurements['{}'.format(window)].interrupt()
+            #print(window)
+            measure = self.app.ui.mdiArea.activeSubWindow().measure
+            measure.interrupt()
         else: pass
     
     def run(self):
@@ -165,5 +172,5 @@ class XboxControlMeasure(Measurement):
                                     'down' if button_state else 'up'))
 
                 else:
-                    self.log.error("Unknown event type: {}".format(event.type))
+                    self.log.error("Unknown event type: {} {}".format(event, event.type))
 

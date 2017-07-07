@@ -22,6 +22,14 @@ class SupraCLApp(BaseMicroscopeApp):
         #pg.setConfigOption('background', 'w')
         #pg.setConfigOption('foreground', 'k')
 
+        from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
+        self.add_hardware(XboxControlHW(self))
+         
+        from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
+        self.add_measurement(XboxControlMeasure(self))
+
+
+#         self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
         
         from ScopeFoundryHW.sync_raster_daq import SyncRasterDAQ
         self.add_hardware(SyncRasterDAQ(self))
@@ -35,31 +43,22 @@ class SupraCLApp(BaseMicroscopeApp):
         from supra_cl.sync_raster_quad_measure import SyncRasterScanQuadView
         self.add_measurement(SyncRasterScanQuadView(self))
         
-        from ScopeFoundryHW.andor_camera import AndorCCDHW, AndorCCDReadoutMeasure, AndorCCDKineticMeasure
-        self.add_hardware(AndorCCDHW(self))
-        self.add_measurement(AndorCCDReadoutMeasure(self))
-        self.add_measurement(AndorCCDKineticMeasure(self))
+        from ScopeFoundryHW import andor_camera
+        self.add_hardware(andor_camera.AndorCCDHW(self))
+        self.add_measurement(andor_camera.AndorCCDReadoutMeasure(self))
+        self.add_measurement(andor_camera.AndorCCDKineticMeasure(self))
+        self.add_measurement(andor_camera.AndorSpecCalibMeasure(self))
 
         from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
         self.add_hardware(ActonSpectrometerHW(self))
         
         from supra_cl.hyperspec_cl_measure import HyperSpecCLMeasure
         self.add_measurement(HyperSpecCLMeasure(self))
-<<<<<<< HEAD
         
         from supra_cl.hyperspec_cl_quad_measure import HyperSpecCLQuadView
         self.add_measurement(HyperSpecCLQuadView(self))
-=======
->>>>>>> d23eddb51984f311015483594899062df7612379
-
-        from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
-        self.add_hardware(XboxControlHW(self))
-        
-        from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
-        self.add_measurement(XboxControlMeasure(self))
 
 
-        #self.hardware['xbox_controller'].settings.get_lq('connected').update_value(True)
 
         self.settings_load_ini('supra_cl_defaults.ini')
 

@@ -1,38 +1,21 @@
 """Wrapper written by Alan Buckley"""
 from __future__ import division, absolute_import, print_function
 from ScopeFoundry import HardwareComponent
-<<<<<<< HEAD
-from bs4 import BeautifulSoup
-import binascii
-import requests
-import os
-from ScopeFoundry.flask_web_view.flask_helper_funcs import load_template_by_dir
-=======
 
 from bs4 import BeautifulSoup
 import binascii
 import requests
->>>>>>> d23eddb51984f311015483594899062df7612379
 
 class DLIPowerSwitchHW(HardwareComponent):
 
-    name = "dli_powerswitch"
-
-<<<<<<< HEAD
     def setup(self):
 
-=======
->>>>>>> d23eddb51984f311015483594899062df7612379
         """
         Sets up LoggedQuantities (see :class:`LoggedQuantity`) and defines which bits are indicative of which outlet.
         `self.outlet_dict` contains the aforementioned bit mapping and is used by :meth:`self.read_outlets`
         :returns: None
         """
-<<<<<<< HEAD
-        
-=======
         self.name = "dli_powerswitch"
->>>>>>> d23eddb51984f311015483594899062df7612379
         
         self.outlet_dict = {0b00000001: "Outlet_1",
                        0b00000010: "Outlet_2",
@@ -56,11 +39,7 @@ class DLIPowerSwitchHW(HardwareComponent):
         self.dummy_mode = self.add_logged_quantity(name='dummy_mode', dtype=bool, initial=False, ro=False)
         
         self.add_operation('read_all_states', self.read_outlets)
-<<<<<<< HEAD
-        self.web_ui()
-=======
        
->>>>>>> d23eddb51984f311015483594899062df7612379
 
     def connect(self):
         """Connects logged quantities to hardware write functions with :meth:`connect_to_hardware` (:class:`LoggedQuantity`)"""
@@ -98,36 +77,6 @@ class DLIPowerSwitchHW(HardwareComponent):
             else:
                 self.settings['{}'.format(j)] = False
     
-<<<<<<< HEAD
-
-    def write_outlet(self, i, status):
-        """
-        Sends URL based command to power switch in order to toggle a specified outlet.
-        ==============  =========  ====================  =============================
-        **Arguments:**  **Type:**  **Description:**      **Available values:**
-        i               int        index of outlet       1-8
-        status          bool       status of the outlet  ON (True)
-                                                         OFF (False)
-        ==============  =========  ====================  =============================
-        :returns: None
-        """
-        truth_table = {True: "ON",
-                       False: "OFF"}
-        status_key = truth_table[status]
-        self.geturl(url='outlet?{}={}'.format(i, status_key))
-
-
-    def web_ui(self):
-        """
-        Loads local, module specific Flask template for use in web ui.
-        :returns: A rendered template
-        """
-        PATH = os.path.dirname(os.path.abspath(__file__))
-        TEMPLATE_DIR = os.path.join(PATH, 'templates')
-        TEMPLATE_FILENAME = 'socket_table'
-        return load_template_by_dir(TEMPLATE_DIR, TEMPLATE_FILENAME, dict(app=self.app))
-=======
->>>>>>> d23eddb51984f311015483594899062df7612379
 
     def write_outlet(self, i, status):
         """
@@ -150,9 +99,6 @@ class DLIPowerSwitchHW(HardwareComponent):
         Disconnects logged quantities from hardware objects.
         :returns: None
         """
-<<<<<<< HEAD
-        self.settings.disconnect_all_from_hardware()        
-=======
         for lq in self.logged_quantities.values():
             lq.hardware_read_func = None
             lq.hardware_set_func = None
@@ -160,4 +106,3 @@ class DLIPowerSwitchHW(HardwareComponent):
         # clean up hardware object
         del self.switch
         
->>>>>>> d23eddb51984f311015483594899062df7612379
