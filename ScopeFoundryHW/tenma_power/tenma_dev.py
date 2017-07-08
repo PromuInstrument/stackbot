@@ -27,6 +27,8 @@ class TenmaDev(object):
 
         self.ser.flush()
         time.sleep(0.2)
+        self.status_dict = {0b1000000: "OUTPUT_ON",
+                            0b0000001: "CV_mode"}
         
     def ask_cmd(self, cmd):
         if self.debug: 
@@ -40,8 +42,9 @@ class TenmaDev(object):
         return resp
     
     def write_voltage(self, chan=1, voltage):
-        resp = self.ask_cmd("VSET{}:{:1.3f}".format(chan, voltage))
+        resp = self.ask_cmd("VSET{}:{:05.2f}".format(chan, voltage))
         return resp
+    
     def read_set_voltage(self, chan=1):
         resp = self.ask_cmd("VSET{}?".format(chan))
         return resp
@@ -62,6 +65,30 @@ class TenmaDev(object):
         resp = self.ask_cmd("IOUT{}?".format(chan))
         return resp
     
+    def write_ocp(self, on=False):
+        if on:
+            _setting = 1
+        else:
+            _setting = 0
+        resp = self.ask_cmd("OCP{}".format(_setting))
+        return resp
     
-    def read_actual_current(self, chan=1):
-        pass
+    def lock(self, locked=False):
+        if locked:
+            _setting = 1
+        else:
+            _setting = 0
+        self.ask_cmd("LOCK{}".format(_setting))
+    
+            
+    def get_status(self):
+        resp = self.ask_cmd("STATUS?")
+        return ord(resp)
+    
+    def read_device_name(self):
+        resp = self.ask_cmd("*IDN?")
+        return resp
+    
+    def close(self):
+        self.ser.close()
+        del self.ser
