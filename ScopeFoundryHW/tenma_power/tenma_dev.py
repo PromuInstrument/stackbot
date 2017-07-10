@@ -27,21 +27,19 @@ class TenmaDev(object):
 
         self.ser.flush()
         time.sleep(0.2)
-        self.status_dict = {0b1000000: "OUTPUT_ON",
-                            0b0000001: "CV_mode"}
         
     def ask_cmd(self, cmd):
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
-        message = cmd+b'\n'
+        message = cmd.encode()+b'\n'
         self.ser.write(message)
-        resp = self.ser.readline()
+        resp = self.ser.readline().decode()
         if self.debug:
             logger.debug("readout: {}".format(cmd))
         self.ser.flush()
         return resp
     
-    def write_voltage(self, chan=1, voltage):
+    def write_voltage(self, voltage, chan=1):
         resp = self.ask_cmd("VSET{}:{:05.2f}".format(chan, voltage))
         return resp
     
@@ -53,7 +51,7 @@ class TenmaDev(object):
         resp = self.ask_cmd("VOUT{}?".format(chan))
         return resp
     
-    def write_current(self, chan=1, current):
+    def write_current(self, current, chan=1):
         resp = self.ask_cmd("ISET{}:{:1.3f}".format(chan, current))
         return resp 
     
@@ -65,14 +63,13 @@ class TenmaDev(object):
         resp = self.ask_cmd("IOUT{}?".format(chan))
         return resp
     
-    def write_ocp(self, on=False):
-        if on:
-            _setting = 1
-        else:
-            _setting = 0
-        resp = self.ask_cmd("OCP{}".format(_setting))
-        return resp
-    
+#     def write_ocp(self, on=False):
+#         if on:
+#             _setting = 1
+#         else:
+#             _setting = 0
+#         resp = self.ask_cmd("OCP{}".format(_setting))
+        
     def lock(self, locked=False):
         if locked:
             _setting = 1
@@ -82,8 +79,9 @@ class TenmaDev(object):
     
             
     def get_status(self):
-        resp = self.ask_cmd("STATUS?")
-        return ord(resp)
+        resp = self.ask_cmd("STATUS?").strip()
+        #print(resp)
+        return resp
     
     def read_device_name(self):
         resp = self.ask_cmd("*IDN?")
