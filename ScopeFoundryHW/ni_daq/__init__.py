@@ -5,7 +5,7 @@ from ScopeFoundryHW.ni_daq.hw.ni_adc_hw import NI_ADC_HW
 from ScopeFoundryHW.ni_daq.hw.ni_dac_hw import NI_DAC_HW
 
 # Devices: NI tasks
-from ScopeFoundryHW.ni_daq.devices.NI_Daq import NI_AdcTask, NI_SyncTaskSet,  NI_CounterTask, NI_DacTask
+from ScopeFoundryHW.ni_daq.devices import NI_AdcTask, NI_SyncTaskSet,  NI_CounterTask, NI_DacTask
 from .devices.ni_freq_counter import NI_FreqCounter
 
 # Measurements
