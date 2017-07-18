@@ -17,8 +17,10 @@ app = DataBrowser(sys.argv)
 # views are loaded in order of more generic to more specific.
 ## ie the last loaded views are checked first for compatibility
 
-from FoundryDataBrowser.viewers.h5_tree import H5TreeView
+from FoundryDataBrowser.viewers.h5_tree import H5TreeView, H5TreeSearchView
 app.load_view(H5TreeView(app))
+app.load_view(H5TreeSearchView(app))
+
 
 from FoundryDataBrowser.viewers.gauss2d_fit_img import Gauss2DFitImgView, Gauss2DFitAPD_MCL_2dSlowScanView
 app.load_view(Gauss2DFitImgView(app))
@@ -38,7 +40,7 @@ app.load_view(ApdConfocal3dNPZView(app))
 from FoundryDataBrowser.viewers.picoharp_npz import PicoHarpNPZView
 app.load_view(PicoHarpNPZView(app))
 
-from viewers.hyperspec_npz import HyperSpecNPZView
+from FoundryDataBrowser.viewers.hyperspec_npz import HyperSpecNPZView
 app.load_view(HyperSpecNPZView(app))
 
 from FoundryDataBrowser.viewers.hyperspec_npz import HyperSpecSpecMedianNPZView
@@ -79,11 +81,16 @@ app.load_view(AugerSpectrumH5(app))
 from FoundryDataBrowser.viewers.auger_sync_raster_scan_h5 import AugerSyncRasterScanH5View
 app.load_view(AugerSyncRasterScanH5View(app))
 
+from FoundryDataBrowser.viewers.auger_spec_map import AugerSpecMapView
+app.load_view(AugerSpecMapView(app))
+
 from FoundryDataBrowser.viewers.power_scan_npz import PowerScanNPZView
 app.load_view(PowerScanNPZView(app))
 
 from FoundryDataBrowser.viewers.andor_ccd_readout_npz import AndorCCDReadoutNPZ
 app.load_view(AndorCCDReadoutNPZ(app))
 
+from FoundryDataBrowser.viewers.hyperspec_cl_h5 import HyperSpecCLH5View
+app.load_view(HyperSpecCLH5View(app))
 
 sys.exit(app.exec_())

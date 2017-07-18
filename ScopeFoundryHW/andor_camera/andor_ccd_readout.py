@@ -54,11 +54,11 @@ class AndorCCDReadoutMeasure(Measurement):
         
         self.settings.New('calib_offset', unit='nm', initial=0)
         self.settings.New('calib_focal_length', unit='mm', initial=300)
-        self.settings.New('calib_delta', unit='radian')
-        self.settings.New('calib_gamma', unit='radian')
-        self.settings.New('calib_grating_groves', unit='1/mm')
-        self.settings.New('calib_pixel_size', unit='um')
-        self.settings.New('calib_m_order', dtype=int)
+        self.settings.New('calib_delta', unit='radian', initial=0)
+        self.settings.New('calib_gamma', unit='radian', initial=0)
+        self.settings.New('calib_grating_groves', unit='1/mm',initial=150)
+        self.settings.New('calib_pixel_size', unit='um', initial=16)
+        self.settings.New('calib_m_order', dtype=int, initial=1)
         
         self.add_operation('run_acquire_bg', self.acquire_bg_start)
         self.add_operation('run_acquire_single', self.acquire_single_start)
@@ -214,8 +214,8 @@ class AndorCCDReadoutMeasure(Measurement):
                     #print("get_number_new_images", ccd_dev.get_number_new_images())
                     #print("get_number_available_images", ccd_dev.get_number_available_images())
                     sleep(0.01)
-        except Exception as err:
-            self.log.error( "{} error: {}".format(self.name, err))
+        #except Exception as err:
+        #    self.log.error( "{} error: {}".format(self.name, err))
         finally:            
             # while-loop is complete
             self.app.hardware['andor_ccd'].interrupt_acquisition()

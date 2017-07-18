@@ -35,6 +35,11 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
                  
         # SEM Hardware Components
 
+        from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
+        self.add_hardware(XboxControlHW(self))
+        
+        from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
+        self.add_measurement(XboxControlMeasure(self))
         
         #from ScopeFoundryHW.sem_analog.sem_singlechan_signal import SEMSingleChanSignal
         #self.add_hardware_component(SEMSingleChanSignal(self))
@@ -86,17 +91,15 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from Auger.analyzer_simplex_optimizer import AugerSimplexOptimizer
         self.add_measurement(AugerSimplexOptimizer(self))
         
-        from ScopeFoundryHW.xbox_controller.xbcontrol_hc import XboxControlHW
-        self.add_hardware(XboxControlHW(self))
-        
-        from ScopeFoundryHW.xbox_controller.xbcontrol_mc import XboxControlMeasure
-        self.add_measurement(XboxControlMeasure(self))
         
         from Auger.hardware.sem_align import SEMAlignMeasure
         self.add_measurement(SEMAlignMeasure)
 
         from Auger.auger_quad_scan import AugerQuadSlowScan
         self.add_measurement_component(AugerQuadSlowScan(self))
+        
+        from Auger.sem_auto_focus import SEMAutoFocus
+        self.add_measurement_component(SEMAutoFocus(self))
 
 #        self.phi_ion_gun = self.add_hardware_component(PhiIonGunHardwareComponent(self))
 #        self.ion_gun_status = self.add_measurement_component(IonGunStatus(self))
