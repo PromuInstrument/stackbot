@@ -22,7 +22,10 @@ class AugerSyncRasterScan(SyncRasterScan):
         self.settings.New('crr_ratio', dtype=float, initial=5, vmin=1.5,vmax=20)
         self.settings.New('CAE_mode', dtype=bool, initial=False)
         self.settings.New('No_dispersion', dtype=bool, initial=False)
-        self.settings.New('Chan_sum', dtype=bool, initial=True)       
+        self.settings.New('Chan_sum', dtype=bool, initial=True)
+        
+        self.settings.New('auto_focus', dtype=bool, initial=False)
+        self.settings.New('frames_before_focus', dtype=int, initial=5, vmin=1)       
 
         for lq_name in ['ke_start', 'ke_end', 'ke_delta']:
             self.settings.get_lq(lq_name).add_listener(self.compute_ke)
@@ -67,6 +70,8 @@ class AugerSyncRasterScan(SyncRasterScan):
         self.analyzer_hw.settings['KE'] = self.settings['ke_start']
         self.analyzer_hw.settings['pass_energy'] = self.settings['pass_energy']
         self.analyzer_hw.settings['crr_ratio'] = self.settings['crr_ratio']
+        
+        self.app.hardware['sem_remcon'].read_from_hardware()
         
         time.sleep(3.0) #let electronics settle
 
@@ -161,6 +166,19 @@ class AugerSyncRasterScan(SyncRasterScan):
         SyncRasterScan.on_new_frame(self, frame_i)
         
         self.analyzer_hw.settings['KE'] = self.ke[0,frame_i]
+    
+    def on_end_frame(self, frame_i):
+        SyncRasterScan.on_end_frame(self, frame_i)
+        
+        # Need to figure out how to pause scanning for auto-focus
+        
+#         # Auto-focus -- Run auto-focus routine here
+#         if np.mod(frame_i+1, self.settings['frames_before_focus']) == 0:
+#             wd_cur = self.app.hardware['sem_remcon'].settings['WD'] # Gives value in mm
+#             # Take images at working distances over a +- 50 um range with 5 um precision (20 images)
+#             wd_range = np.arange(wd_cur-0.050,wd_cur+0.050,0.005)
+#             # Need to perform the scans...
+            
 
         
         
