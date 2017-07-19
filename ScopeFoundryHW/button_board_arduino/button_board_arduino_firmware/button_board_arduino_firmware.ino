@@ -83,6 +83,7 @@ int button4_color= RED;
 
 void printTextCursor(int cursor_[], char *text, uint16_t color){
   tft.setCursor(cursor_[0],cursor_[1]);
+  tft.setTextSize(1);
   tft.setTextColor(color,BLACK);
   tft.print(text);  
 }
@@ -112,7 +113,7 @@ void setup() {
   pinMode(button4Pin, INPUT_PULLUP);
   pinMode(led4Pin, OUTPUT); 
 
-  tft.setRotation(3);
+  tft.setRotation(0);
   // NOTE: The test pattern at the start will NOT be rotated!  The code
   // for rendering the test pattern talks directly to the display and
   // ignores any rotation.
@@ -123,12 +124,12 @@ void setup() {
   tft.fillScreen(BLACK);
 
 
-  int titleCursor[2] = {
-    0,0                };
-  printTextCursor(titleCursor, "WELCOME TO \nTRPL MICROSCOPE\n---------------------", YELLOW);
-  updateDisplayButton("shutter is open  ",
-  "shutter is closed",  
-  button1State,button1_color,button1_cursor);
+  //int titleCursor[2] = {
+  //  0,0                };
+  //printTextCursor(titleCursor, "WELCOME TO \nTRPL MICROSCOPE\n---------------------", WHITE);
+  //updateDisplayButton("Shutter open.",
+  //"Shutter closed.",  
+  //button1State,button1_color,button1_cursor);
   updateLed(led1Pin,button1State);
 }
 
@@ -163,35 +164,87 @@ void loop() {
       button3PressedSinceLastSinc = 0;
       button4PressedSinceLastSinc = 0;
     }
+
+    else if (inputString[0] == 'L') {
+      // Black out line
+      int lineNo = (inputString[1] - 0x30);
+      int yPos = lineNo*20;
+      int boxh = 20;
+      int boxw = 100;
+      tft.fillRect(0, yPos, boxw, boxh, BLACK);
+      
+      // Print out new line
+      int linecursor[2]={0, lineNo*20};
+      String message = inputString.substring(2);
+      //Serial.println(message);
+      int color = WHITE;
+      if (lineNo == 1) {
+        color = BLUE;
+      }
+      else if (lineNo == 2) {
+        color = GREEN;
+      }
+      else if (lineNo == 3) {
+        color = YELLOW;
+      }
+      else if (lineNo == 4) {
+        color = RED;
+      }
+      else {
+        color = WHITE;
+      }
+      printTextCursor(linecursor, (char*) message.c_str(), color);
+    }
+
+    else if (inputString[0] == 'D') {
+      // Black out line only
+      int lineNo = (inputString[1] - 0x30);
+      int yPos = lineNo*20;
+      int boxh = 20;
+      int boxw = 100;
+      tft.fillRect(0, yPos, boxw, boxh, BLACK);
+    }
+
+    else if (inputString[0] == 'B') {
+      tft.fillScreen(BLACK);      
+    }
+
+    else if (inputString[0] == 'R') {
+      updateLed(led1Pin, 0);
+      updateLed(led2Pin, 0);
+      updateLed(led3Pin, 0);
+      updateLed(led4Pin, 0);
+    }
+    
     else {
-      int buttomNumber = interpret_int_from_string(inputString);
-      switch (buttomNumber){
+      int buttonNumber = interpret_int_from_string(inputString);
+      switch (buttonNumber){
       case 1:
         button1State = !button1State;
-        updateDisplayButton("shutter is open    ",
-        "shutter is closed  ",
-        button1State,button1_color,button1_cursor);
+        //updateDisplayButton("Shutter open.",
+        //"Shutter closed.",
+        //button1State,button1_color,button1_cursor);
         updateLed(led1Pin,button1State);
         break;     
       case 2:
         button2State = !button2State;
-        updateDisplayButton("button2 not defined   ",
-        "button2 not defined  ",
-        button2State,button2_color,button2_cursor);
+        //updateDisplayButton("button2 not defined   ",
+        //"button2 not defined  ",
+        //button2State,button2_color,button2_cursor);
         updateLed(led2Pin,button2State);
         break;      
       case 3:
         button3State = !button3State;
-        updateDisplayButton("button3 not defined   ",
-        "button3 not defined  ",
-        button3State,button3_color,button3_cursor);
+        //updateDisplayButton("button3 not defined   ",
+        //"button3 not defined  ",
+        //button3State,button3_color,button3_cursor);
         updateLed(led3Pin,button3State);
         break;      
       case 4:
         button4State = !button4State;
-        updateDisplayButton("button4 not defined   ",
-        "button4 not defined  ",
-        button4State,button4_color,button4_cursor);
+        //updateDisplayButton("button4 not defined   ",
+        //"button4 not defined  ",
+        //button4State,button4_color,button4_cursor);
         updateLed(led4Pin,button4State);
         break;          
 
