@@ -15,7 +15,8 @@ class AugerPressureHistory(Measurement):
     
     def setup(self):
         
-        self.settings.New('history_length', dtype=int, initial=1000,vmin=1)
+        self.settings.New('delta_t', dtype=float, vmin=0.0, initial=1.0)
+        #self.settings.New('start_time', dtype=str, )
         
         #setup gui
         self.ui = QtWidgets.QWidget()
@@ -33,8 +34,7 @@ class AugerPressureHistory(Measurement):
         self.start_button.clicked.connect(self.start)
         self.stop_button.clicked.connect(self.interrupt)
         
-        ui_list=('history_length',)
-        self.control_widget.layout().addWidget(self.settings.New_UI(include=ui_list))
+        self.control_widget.layout().addWidget(self.settings.New_UI())
         
         self.graph_layout=pg.GraphicsLayoutWidget(border=(100,100,100))        
         self.layout.addWidget(self.graph_layout,stretch=1)
@@ -42,38 +42,30 @@ class AugerPressureHistory(Measurement):
         self.ui.show()
         self.ui.setWindowTitle("auger_pressure_history")
         
-        self.HIST_LEN = 1000
         self.NUM_CHANS = 2
-        self.history_i = 0
         
         self.plots = []
         for i in range(1):
             plot = self.graph_layout.addPlot(title="Pressure")
             plot.setLogMode(y=True)
-            plot.setYRange(-12,-6)
+            plot.setYRange(-11,-6)
             plot.showGrid(y=True,alpha=1.0)
             plot.addLegend()
             self.graph_layout.nextRow()
             self.plots.append(plot)
         
-        names=('Nano','Prep')
+        names=('Prep','Nano')
         self.plot_lines = []
         for i in range(self.NUM_CHANS):
             color = pg.intColor(i)
             plot_line = self.plots[0].plot([1], pen=pg.mkPen(color, width=4), name=names[i])
             self.plot_lines.append(plot_line)
         
-        self.vLine = pg.InfiniteLine(angle=90, movable=False)
-        self.plots[0].addItem(self.vLine)
-        
-        self.HIST_LEN = 1000
-        self.NUM_CHANS = 2
-        self.history_i = 0
-    
         
     def volts_to_pressure(self,volts):
         '''
         convert log output of ion gauge into mBarr)
+        FIX not working for prep ion gauge, vmin or vmax must be wrong...
         '''
         vmin=np.array([0.0,0.078])
         vmax=np.array([10.0,2.89])
@@ -90,34 +82,35 @@ class AugerPressureHistory(Measurement):
     def run(self):
         print(self.name, 'run')
         
-        self.HIST_LEN = self.settings['history_length']
-        
-        self.chan_history = np.zeros( (self.NUM_CHANS, self.HIST_LEN), dtype=float )
-        self.chan_history_Hz = np.zeros( (self.NUM_CHANS, self.HIST_LEN) )
-        
+        block = 20
+        self.chan_history_pressure = np.zeros( (self.NUM_CHANS, block) )
+        self.chan_history_pressure[:,:] = 1e-11
         self.history_i = 0
-        self.ring_buf_index = 0
         
         chans='X-6368/ai5:6'
         self.adc = NI_AdcTask(chans,name='pressure')
         try:
             while not self.interrupt_measurement_called:
-                self.ring_buf_index = self.history_i % self.HIST_LEN
-                volts = self.adc.get()
-                #print( self.ring_buf_index, pressure)
-                self.chan_history[:, self.ring_buf_index] = volts
-                self.chan_history_Hz[:,self.ring_buf_index] = self.volts_to_pressure(volts) 
-                              
+                volts=0.0
+                i_ave = 0
+                start = time.time()
+                while (time.time() - start) < self.settings['delta_t'] or i_ave == 0:
+                    i_ave += 1
+                    volts += self.adc.get()
+                volts /= i_ave
+                pressure = self.volts_to_pressure(volts)
+                if self.history_i < block:
+                    self.chan_history_pressure[:,self.history_i] = pressure
+                else:
+                    self.chan_history_pressure \
+                        = np.append(self.chan_history_pressure,pressure[:,np.newaxis],axis=1)
+                #print(volts, self.chan_history_pressure.shape)
                 self.history_i += 1       
         finally:
             self.adc.close()
             self.adc = None
         
             
-    def update_display(self):
-        #print("chan_history shape", self.chan_history.shape)
-        
-        self.vLine.setPos(self.ring_buf_index)
+    def update_display(self):        
         for i in range(self.NUM_CHANS):
-            self.plot_lines[i].setData(self.chan_history_Hz[i,:])
-            #self.plots[i].setTitle("Channel {}: {}".format(i, self.chan_history[i,self.history_i]))
+            self.plot_lines[i].setData(self.chan_history_pressure[i,:])           #self.plots[i].setTitle("Channel {}: {}".format(i, self.chan_history[i,self.history_i]))
