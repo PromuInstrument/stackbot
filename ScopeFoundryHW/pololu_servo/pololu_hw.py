@@ -3,6 +3,8 @@ Polulu Micro Maestro ScopeFoundry module
 Created on Jul 19, 2017
 
 @author: Alan Buckley
+
+Logistical advice given by Ed Barnard.
 """
 
 from __future__ import division, absolute_import, print_function
@@ -21,67 +23,75 @@ class PololuHW(HardwareComponent):
     
     name = 'pololu_servo_hw'
     
-    servo_choices = ("Linear", "Rotary")
+    servo_type_choices = ("Linear", "Rotary")
                         
-    servo_limits = {'Rotary': (544,2544),
+    servo_type_limit = {'Rotary': (544,2544),
                     'Linear': (1008,2000)}
-                    
+     
     
     def setup(self):
         self.dev = PololuDev()
         
-        self.settings.New(name="servo_0_type", dtype=str, initial='Rotary', choices=self.servo_choices, ro=False)
-        self.settings.New(name="servo_1_type", dtype=str, initial='Linear', choices=self.servo_choices, ro=False)
-        self.settings.New(name="servo_0_position", dtype=int, 
-                                    vmin=self.servo_limits[self.settings['servo_0_type']][0], 
-                                    vmax=self.servo_limits[self.settings['servo_0_type']][1],
-                                    ro=False)
-        self.settings.New(name="servo_1_position", dtype=int, 
-                                    vmin=self.servo_limits[self.settings['servo_1_type']][0], 
-                                    vmax=self.servo_limits[self.settings['servo_1_type']][1],
-                                    ro=False)
-        print(self.servo_limits[self.settings['servo_1_type']][0], self.servo_limits[self.settings['servo_1_type']][1])
+        self.servo_range = 2
+        
+#         self.settings.New(name="servo_0_type", dtype=str, initial='Rotary', choices=self.servo_type_choices, ro=False)
+#         self.settings.New(name="servo_1_type", dtype=str, initial='Linear', choices=self.servo_type_choices, ro=False)
+        for i in range(self.servo_range):
+            self.settings.New(name="servo_{}_type", dtype=str, initial='Linear', choices=self.servo_type_choices, ro=False)
+            _vmin, _vmax = self.servo_type_limit[self.settings['servo_{}_type'.format(i)]]
+            self.settings.New(name="servo_{}_position".format(i), dtype=int, 
+                                            vmin=_vmin, vmax=_vmax, ro=False)
+        
+        ## In my particular setup, I want to override the default value set by the above for loop in the case of servo_0    
+        self.settings.get_lq('servo_0_type').update_value('Rotary')
         
     def connect(self):
         
-        self.settings.get_lq('servo_0_position').connect_to_hardware(
-                                                    write_func=self.write_position0,
-                                                    read_func=self.read_position0
+        for i in range(self.servo_range):
+            self.settings.get_lq('servo_{}_position'.format(i)).connect_to_hardware(
+                                                    write_func=getattr(self, 'write_position{}'.format(i)),
+                                                    read_func=getattr(self, 'read_position{}'.format(i))
                                                     )
         
-        self.settings.get_lq('servo_1_position').connect_to_hardware(
-                                                    write_func=self.write_position1,
-                                                    read_func=self.read_position1
-                                                    )
-        
-        profile0 = {"lqname": "servo_0_position",
-                    "servo_type": "servo_0_type"}
-        profile1 = {"lqname": "servo_1_position",
-                    "servo_type": "servo_1_type"}
-        
-        self.settings.get_lq('servo_0_type').add_listener(self.update_threshold, str, **profile0)
-#    Traceback:
-#>       self.settings.get_lq('servo_0_type').add_listener(self.update_threshold, str, **profile0)
-#>       self.updated_value[argtype].connect(func, **kwargs)
-#>       TypeError: 'lqname' is an invalid keyword argument for this function  
 
-        self.settings.get_lq('servo_1_type').add_listener(self.update_threshold, str, **profile1)
+        for i in range(self.servo_range):
+            
+            self.settings.get_lq('servo_{}_type'.format(i)).add_listener(
+                lambda servo_number=i: self.update_min_max(servo_number))
+
+     
      
     
-    def update_threshold(self, lqname, servo_type):
-        print(lqname, servo_type)
-#         new_servo_type = self.settings.get_lq(servo_type).val
-#         vmin, vmax = self.servo_limits[new_servo_type]
-#         self.settings.get_lq(lqname).change_min_max(vmin,vmax)
-         
+    def update_min_max(self, servo_number):
+        servo_type = self.settings['servo_{}_type'.format(servo_number)]
+        vmin, vmax = self.servo_type_limit[servo_type]
+        self.settings.get_lq("servo_{}_position".format(servo_number)).change_min_max(vmin,vmax)
+
         
     def write_position0(self, position):
         self.dev.write_position(0, target=position)
     def write_position1(self, position):
         self.dev.write_position(1, target=position)
+    def write_position2(self, position):
+        self.dev.write_position(2, target=position)
+    def write_position3(self, position):
+        self.dev.write_position(3, target=position)
+    def write_position4(self, position):
+        self.dev.write_position(4, target=position)
+    def write_position5(self, position):
+        self.dev.write_position(5, target=position)
+    
+    
         
     def read_position0(self):
         return self.dev.read_position(0)/4
     def read_position1(self):
         return self.dev.read_position(1)/4
-            
+    def read_position2(self):
+        return self.dev.read_position(2)/4
+    def read_position3(self):
+        return self.dev.read_position(3)/4
+    def read_position4(self):
+        return self.dev.read_position(4)/4
+    def read_position5(self):
+        return self.dev.read_position(5)/4
