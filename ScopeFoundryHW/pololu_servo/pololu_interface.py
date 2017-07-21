@@ -17,7 +17,7 @@ class PololuDev(object):
     
     name="pololu_servo_device"
     
-    def __init__(self, port="COM7", device_addr=0x0C, debug = False):
+    def __init__(self, port, device_addr=0x0C, debug = False):
         self.port = port
         self.debug = debug
         if self.debug:
