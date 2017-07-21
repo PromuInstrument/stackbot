@@ -30,42 +30,45 @@ class PololuHW(HardwareComponent):
      
     
     def setup(self):
-        self.dev = PololuDev()
+        
+        self.settings.New(name='port', initial='COM7', dtype=str, ro=False)
+        
+        self.dev = PololuDev(port=self.settings['port'])
         
         self.servo_range = 2
         
-#         self.settings.New(name="servo_0_type", dtype=str, initial='Rotary', choices=self.servo_type_choices, ro=False)
-#         self.settings.New(name="servo_1_type", dtype=str, initial='Linear', choices=self.servo_type_choices, ro=False)
+        
         for i in range(self.servo_range):
-            self.settings.New(name="servo_{}_type", dtype=str, initial='Linear', choices=self.servo_type_choices, ro=False)
-            _vmin, _vmax = self.servo_type_limit[self.settings['servo_{}_type'.format(i)]]
-            self.settings.New(name="servo_{}_position".format(i), dtype=int, 
+            self.settings.New(name="servo{}_type".format(i), dtype=str, initial='Linear', choices=self.servo_type_choices, ro=False)
+            _vmin, _vmax = self.servo_type_limit[self.settings['servo{}_type'.format(i)]]
+            self.settings.New(name="servo{}_position".format(i), dtype=int, 
                                             vmin=_vmin, vmax=_vmax, ro=False)
         
         ## In my particular setup, I want to override the default value set by the above for loop in the case of servo_0    
-        self.settings.get_lq('servo_0_type').update_value('Rotary')
+        self.settings.get_lq('servo0_type').update_value('Rotary')
+        self.update_min_max(0)
         
     def connect(self):
         
         for i in range(self.servo_range):
-            self.settings.get_lq('servo_{}_position'.format(i)).connect_to_hardware(
+            self.settings.get_lq('servo{}_position'.format(i)).connect_to_hardware(
                                                     write_func=getattr(self, 'write_position{}'.format(i)),
                                                     read_func=getattr(self, 'read_position{}'.format(i))
                                                     )
-        
 
         for i in range(self.servo_range):
-            
-            self.settings.get_lq('servo_{}_type'.format(i)).add_listener(
-                lambda servo_number=i: self.update_min_max(servo_number))
-
+            self.settings.get_lq('servo{}_type'.format(i)).add_listener(
+                    lambda servo_number=i: self.update_min_max(servo_number)
+                    )
+        
+        self.read_from_hardware()
      
      
     
     def update_min_max(self, servo_number):
-        servo_type = self.settings['servo_{}_type'.format(servo_number)]
+        servo_type = self.settings['servo{}_type'.format(servo_number)]
         vmin, vmax = self.servo_type_limit[servo_type]
-        self.settings.get_lq("servo_{}_position".format(servo_number)).change_min_max(vmin,vmax)
+        self.settings.get_lq("servo{}_position".format(servo_number)).change_min_max(vmin,vmax)
 
         
     def write_position0(self, position):
