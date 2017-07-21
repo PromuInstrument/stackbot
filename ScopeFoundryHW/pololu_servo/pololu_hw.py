@@ -65,12 +65,23 @@ class PololuHW(HardwareComponent):
             self.settings.get_lq('servo{}_type'.format(i)).add_listener(
                     lambda servo_number=i: self.update_min_max(servo_number)
                     )
+        self.settings.get_lq('port').add_listener(self.update_new_port)
         
         self.read_from_hardware()
      
-     
+    def update_new_port(self):
+        """
+        Upon update of LQ specified port, reinstantiates the device class.
+        """
+        del self.dev
+        self.dev = PololuDev(port=self.settings['port'])
+        print('port updated:', self.settings['port'])
+ 
     
     def update_min_max(self, servo_number):
+        """
+        Reads the servo type from the logged quantity, updates servo specific software limits.
+        """
         servo_type = self.settings['servo{}_type'.format(servo_number)]
         vmin, vmax = self.servo_type_limit[servo_type]
         self.settings.get_lq("servo{}_position".format(servo_number)).change_min_max(vmin,vmax)
