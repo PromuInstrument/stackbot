@@ -14,7 +14,9 @@ class PololuApp(BaseMicroscopeApp):
     name = 'pololu_servo_app'
     
     def setup(self):
-        
+        """
+        Adds Pololu servo hardware component into ScopeFoundry application. Tells Qt to show user interface.
+        """
         from ScopeFoundryHW.pololu_servo.pololu_hw import PololuHW
         self.add_hardware(PololuHW(self))
         

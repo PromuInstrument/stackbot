@@ -30,6 +30,14 @@ class PololuDev(object):
         time.sleep(0.2)
         
     def ask_cmd(self, cmd):
+        """
+        Device specific serial write and query function.
+        ==============  ==========  ==========================================================================
+        **Arguments:**  **Type:**   **Description:**
+        cmd             str         Serial command to be converted to byte string and sent via serial protocol                                      
+        ==============  ==========  ==========================================================================
+        :returns: byte str, serial response. 
+        """
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
         message = self.polulu_header + cmd
@@ -42,6 +50,15 @@ class PololuDev(object):
     
     
     def write_position(self, chan, target):
+        """
+        ==============  ==========  ==============  =======================================================
+        **Arguments:**  **Type:**   **Range:**      **Description:**
+        chan            int         (1,6)           Servo channel/address                                    
+        target          int         (544,2544)      Rotary servo position in units of microseconds or...
+                                    (1008,2000)     Linear servo position in units of microseconds.
+        ==============  ==========  ==============  =======================================================
+        :returns: None
+        """
         base_qty = target * 4 
         cmd_hex = 0x84
         cl_hex = cmd_hex & 0x7F
@@ -51,14 +68,25 @@ class PololuDev(object):
         self.ask_cmd(cmd)
         
     def read_position(self, chan):
+        """
+        ==============  ==========  ==============  =======================================================
+        **Arguments:**  **Type:**   **Range:**      **Description:**
+        chan            int         (1,6)           Servo channel/address                                  
+        ==============  ==========  ==============  =======================================================
+        :returns: int, Position of selected servo in units of microseconds.
+        """
         cmd_hex = 0x10
         cmd = chr(cmd_hex) + chr(chan)
         resp = self.ask_cmd(cmd)
-#         return resp
         lsb = resp[0]
         msb = resp[1]
         data = (msb << 8) + lsb
         return data
         
     def close(self):
+        """
+        Closes serial connection
+        :returns: None
+        """
         self.ser.close()
+        del self.ser
