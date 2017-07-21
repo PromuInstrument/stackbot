@@ -30,11 +30,11 @@ class PololuHW(HardwareComponent):
      
     
     def setup(self):
+        """Sets up logged quantities. Sets presets and constants."""
         
         self.settings.New(name='port', initial='COM7', dtype=str, ro=False)
         
-        self.dev = PololuDev(port=self.settings['port'])
-        
+        ## Increase/decrease number of servo slots by modifying the below value.
         self.servo_range = 2
         
         
@@ -49,6 +49,11 @@ class PololuHW(HardwareComponent):
         self.update_min_max(0)
         
     def connect(self):
+        """
+        Instantiates device class object, sets up read/write signals, sets up listeners which: update software servo limits, 
+        and reinstantiates device object, should the port value be updated. Finally, the function reads all values from hardware.
+        """
+        self.dev = PololuDev(port=self.settings['port'])
         
         for i in range(self.servo_range):
             self.settings.get_lq('servo{}_position'.format(i)).connect_to_hardware(
