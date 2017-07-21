@@ -57,10 +57,14 @@ class SEM_Remcon_HW(HardwareComponent):
             'eht_on', dtype=bool, initial=False)         
         self.settings.New(
             'stig_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
-        self.settings.New(
-            'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+# Since it can't be read, it's not very useful
+#         self.settings.New(
+#             'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
         self.settings.New(
             'aperture_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+        # Since beamshift can't be read, give option to control or not
+        self.settings.New(
+            'control_beamshift', dtype=bool, initial=False)        
         self.settings.New(
             'beamshift_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
         
@@ -76,7 +80,7 @@ class SEM_Remcon_HW(HardwareComponent):
         self.settings.New('port', dtype=str, initial='COM4')
         
 
-        
+        self.settings.control_beamshift.add_listener(self.on_change_control_beamshift)
         self.settings.magnification.add_listener(self.on_new_mag)
         self.settings.full_size.add_listener(self.on_new_full_size)
 
@@ -105,7 +109,17 @@ class SEM_Remcon_HW(HardwareComponent):
 #                                                initial=1.0,
 #                                                unit='mm')
 #         
-        
+        self.running_on_new_full_size = False
+    
+    def on_change_control_beamshift(self):
+        print('control beamshift',self.settings['control_beamshift'])
+        if self.settings['control_beamshift']:
+            self.settings.beamshift_xy.connect_to_hardware(
+                write_func=lambda XY: self.remcon.set_beam_shift(*XY)
+                )
+        else:
+            self.settings.beamshift_xy.disconnect_from_hardware()      
+    
     def on_new_mag(self):
         if hasattr(self, 'remcon') and not self.running_on_new_full_size:            
             self.settings.full_size.update_value(1024 * self.remcon.get_pixel_size())
@@ -115,8 +129,11 @@ class SEM_Remcon_HW(HardwareComponent):
             # SEM pixel size is always image_width / 1024, regardless of actual resolution
             old_mag = self.settings['magnification']
             old_pixel = self.remcon.get_pixel_size()
+            scale_factor = old_mag*(1024*old_pixel)
+            print(scale_factor)
+            new_mag = scale_factor/self.settings['full_size']
             self.running_on_new_full_size = True
-            self.settings.magnification.update_value(old_mag*(1024*old_pixel)/self.settings['full_size'])
+            self.settings.magnification.update_value(new_mag)
             self.running_on_new_full_size = False
             
                    
@@ -147,16 +164,16 @@ class SEM_Remcon_HW(HardwareComponent):
             read_func=R.get_stig,
             write_func=lambda XY: R.set_stig(*XY),
             )        
-        S.gun_xy.connect_to_hardware(
-            write_func=lambda XY: R.set_gun_align(*XY),
-            )        
+#         S.gun_xy.connect_to_hardware(
+#             write_func=lambda XY: R.set_gun_align(*XY),
+#             )        
         S.aperture_xy.connect_to_hardware(
             read_func=R.get_ap_xy,
             write_func=lambda XY: R.set_ap_xy(*XY),
             )        
-        S.beamshift_xy.connect_to_hardware(
-            write_func=lambda XY: R.set_beam_shift(*XY)
-            )        
+#         S.beamshift_xy.connect_to_hardware(
+#             write_func=lambda XY: R.set_beam_shift(*XY)
+#             )        
         S.WD.connect_to_hardware(
                 read_func = R.get_wd,
                 write_func = R.set_wd
@@ -218,7 +235,7 @@ class SEM_Remcon_HW(HardwareComponent):
 #         if write_to_hardware:
 #             for lq in self.settings.as_list(): 
 #                 lq.write_to_hardware()
-#                 #set detector offset to zero so analog data is quantatative
+#                 #set detector offset to zero so analog data is quantitative
         R.set_chan_bright(50,True)
         R.set_chan_bright(50,False)
         self.read_from_hardware()
