@@ -98,7 +98,7 @@ class NI_DacTask(NI_TaskWrap):
             self.set_channel(self._channel)
             self._mode = 'single'
               
-    def load_buffer(self, data, auto = False ):
+    def load_buffer(self, data, auto = False, timeout=0 ):
         '''  writes data to output buffer, array-like objects converted to np arrays if required
             data is interleved, i.e. x1, y1, x2, y2, x3, y3... for output on x and y
             implicitly COMMITs task, also starts if autostart is True
@@ -116,7 +116,7 @@ class NI_DacTask(NI_TaskWrap):
             #  WriteAnalogF64 (int32 numSampsPerChan, bool32 autoStart, float64 timeout, 
             #    bool32 dataLayout, float64 writeArray[], int32 *sampsPerChanWritten, bool32 *reserved)
             #self.task.SetWriteRelativeTo(mx.DAQmx_Val_FirstSample)
-            self.task.WriteAnalogF64(dac_samples, auto_start, 1.0, mx.DAQmx_Val_GroupByScanNumber, 
+            self.task.WriteAnalogF64(dac_samples, auto_start, timeout, mx.DAQmx_Val_GroupByScanNumber, 
                                   data, mx.byref(writeCount), None)
         except mx.DAQError as err:
             self.error(err)
