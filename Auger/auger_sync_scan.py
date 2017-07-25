@@ -3,6 +3,21 @@ import time
 import numpy as np
 from Auger.auger_spectrum import AugerSpectrum
 
+'''
+    Todo list
+    Finish output scan callback low level
+    track per-frame offset due to rt drift correction or operator action in HDF and display
+        get display working in real distance units
+    Should CTR be dropped since not used? 
+    Implement shutdown of EHT, mult after acq
+    Implement multi-peak hyperspectral acq, HDF, viewer...
+        config-parser ini to save peak data [name, 
+    Add area-integrated spectrum to RT display
+    Save/load SEM params, requires manual gun align info
+    
+    Modify remcon32_hw so kV is only updated from HW if EHT is on (otherwise 
+        saved value set to zero. kV control should remember target while EHT is off
+'''
 
 class AugerSyncRasterScan(SyncRasterScan):
     
@@ -15,7 +30,7 @@ class AugerSyncRasterScan(SyncRasterScan):
         self.disp_chan_choices +=  ['auger{}'.format(i) for i in range(10)] + ['sum_auger']
         self.settings.display_chan.change_choice_list(tuple(self.disp_chan_choices))
         
-        self.settings.New('ke_start', dtype=float, initial=30,unit = 'V',vmin=0,vmax = 2200)
+        self.settings.New('ke_start', dtype=float, initial=30,unit = 'V',vmin=5,vmax = 2200)
         self.settings.New('ke_end',   dtype=float, initial=600,unit = 'V',vmin=1,vmax = 2200)
         self.settings.New('ke_delta', dtype=float, initial=0.5,unit = 'V',vmin=0.02979,vmax = 2200,si=True)
         self.settings.New('pass_energy', dtype=float, initial=50,unit = 'V', vmin=5,vmax=500)
@@ -37,6 +52,10 @@ class AugerSyncRasterScan(SyncRasterScan):
         #self.testui.show()
         
     def compute_ke(self):
+        '''
+        calculate ke[i] for each channel over spectral region based on dispersion and
+        analyzer parameters
+        '''
         self.analyzer_hw = self.app.hardware['auger_electron_analyzer']
 
         CAE_mode = self.settings['CAE_mode']
@@ -73,7 +92,7 @@ class AugerSyncRasterScan(SyncRasterScan):
         
         self.app.hardware['sem_remcon'].read_from_hardware()
         
-        time.sleep(3.0) #let electronics settle
+        time.sleep(3.0) #let electronics settle, multiplier ramp up finish
 
         # set up KE array
         self.compute_ke()
