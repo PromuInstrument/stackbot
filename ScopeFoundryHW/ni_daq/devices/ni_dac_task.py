@@ -67,6 +67,10 @@ class NI_DacTask(NI_TaskWrap):
             self.task.GetSampClkRate(mx.byref(dac_rate));
             self._rate = dac_rate.value
             self._mode = 'buffered'
+            
+            #self.task.CfgOutputBuffer(count*30) #
+            #print("set buffer size", count, "--> actual", x)
+            
         except mx.DAQError as err:
             self.error(err)
             self._rate = 0
@@ -119,6 +123,7 @@ class NI_DacTask(NI_TaskWrap):
             self.task.WriteAnalogF64(dac_samples, auto_start, timeout, mx.DAQmx_Val_GroupByScanNumber, 
                                   data, mx.byref(writeCount), None)
         except mx.DAQError as err:
+            #print("sample load count {} transfer count {}".format( self._sample_count, writeCount.value ))
             self.error(err)
         #print "samples {} written {}".format( self._sample_count, writeCount.value)
         if writeCount.value != self._sample_count:
@@ -144,12 +149,26 @@ class NI_DacTask(NI_TaskWrap):
         assert writeCount.value == 1, \
             "sample count {} transfer count {}".format( 1, writeCount.value )
 
-    def EveryNCallback(self):
-        #np.copyto(self.data_buffer,self._source,None)
-        self.load_buffer(self.data_buffer)
-        return 0 # The function should return an integer
-    
-    def DoneCallback(self, status):
-        #print "Status",status.value
-        return 0 # The function should return an integer
+#     def EveryNCallback(self):
+#         #np.copyto(self.data_buffer,self._source,None)
+#         self.load_buffer(self.data_buffer)
+#         return 0 # The function should return an integer
+#     
+#     def DoneCallback(self, status):
+#         #print "Status",status.value
+#         return 0 # The function should return an integer
 
+
+    def set_n_sample_callback(self, n_samples, cb_func):
+        """
+        Setup callback functions for EveryNSamplesEvent
+        *cb_func* will be called with when new output data is needed
+        after every *n_samples* are output.
+        """
+        self.cb_nSamples = n_samples
+        self.cb_func = cb_func
+        self.task.EveryNCallback = cb_func
+        self.task.AutoRegisterEveryNSamplesEvent(
+            everyNsamplesEventType=mx.DAQmx_Val_Transferred_From_Buffer, 
+            nSamples=self.cb_nSamples,
+            options=0)
