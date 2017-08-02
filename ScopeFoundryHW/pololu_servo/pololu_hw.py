@@ -27,7 +27,9 @@ class PololuHW(HardwareComponent):
                         
     servo_type_limit = {'Rotary': (544,2544),
                     'Linear': (1008,2000)}
-     
+    
+    servo_toggle_settings = {'Rotary': (600, 2100),
+                            'Linear': (1200, 1800)}
     
     def setup(self):
         """Sets up logged quantities. Sets presets and constants."""
@@ -43,6 +45,7 @@ class PololuHW(HardwareComponent):
             _vmin, _vmax = self.servo_type_limit[self.settings['servo{}_type'.format(i)]]
             self.settings.New(name="servo{}_position".format(i), dtype=int, 
                                             vmin=_vmin, vmax=_vmax, ro=False)
+            self.settings.New(name="servo{}_toggle".format(i), dtype=bool, initial=False, ro=False)
         
         ## In my particular setup, I want to override the default value set by the above for loop in the case of servo_0    
         self.settings.get_lq('servo0_type').update_value('Rotary')
@@ -60,11 +63,13 @@ class PololuHW(HardwareComponent):
                                                     write_func=getattr(self, 'write_position{}'.format(i)),
                                                     read_func=getattr(self, 'read_position{}'.format(i))
                                                     )
-
-        for i in range(self.servo_range):
             self.settings.get_lq('servo{}_type'.format(i)).add_listener(
                     lambda servo_number=i: self.update_min_max(servo_number)
                     )
+            self.settings.get_lq('servo{}_toggle'.format(i)).add_listener(
+                    lambda servo_number=i: self.toggle_servo(servo_number)
+                    )
+            
         self.settings.get_lq('port').add_listener(self.update_new_port)
         
         self.read_from_hardware()
@@ -86,7 +91,17 @@ class PololuHW(HardwareComponent):
         vmin, vmax = self.servo_type_limit[servo_type]
         self.settings.get_lq("servo{}_position".format(servo_number)).change_min_max(vmin,vmax)
 
-        
+    def toggle_servo(self, number):
+        servo_type = self.settings['servo{}_type'.format(number)]
+        value = self.settings['servo{}_toggle'.format(number)]
+        off, on = self.servo_toggle_settings[servo_type]
+        if value:
+            self.dev.write_position(number, on)
+        else:
+            self.dev.write_position(number, off)
+        self.read_from_hardware()
+    
+    
     def write_position0(self, position):
         self.dev.write_position(0, target=position)
     def write_position1(self, position):
