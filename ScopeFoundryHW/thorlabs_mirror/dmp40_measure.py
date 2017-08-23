@@ -26,10 +26,12 @@ class ThorlabsDMP40_Measure(Measurement):
     
     def run(self):
         while not self.interrupt_measurement_called:
-            IC1, IC2, Mir, E = self.dmp40_hw.dev.get_temperatures()
-            self.dmp40_hw.settings['IC1_temp'] = IC1
-            self.dmp40_hw.settings['IC2_temp'] = IC2
-            self.dmp40_hw.settings['Mirror_temp'] = Mir
-            self.dmp40_hw.settings['Electronics_temp'] = E
-            time.sleep(1)
-        
+            if hasattr(self.dmp40_hw, "dev"):
+                IC1, IC2, Mir, E = self.dmp40_hw.dev.get_temperatures()
+                self.dmp40_hw.settings['IC1_temp'] = IC1
+                self.dmp40_hw.settings['IC2_temp'] = IC2
+                self.dmp40_hw.settings['Mirror_temp'] = Mir
+                self.dmp40_hw.settings['Electronics_temp'] = E
+                time.sleep(1)
+            else:
+                self.interrupt()
