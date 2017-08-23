@@ -7,6 +7,7 @@ Created on Aug 22, 2017
 
 from ScopeFoundry import Measurement
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
+import time 
 
 class ThorlabsDMP40_Measure(Measurement):
     
@@ -19,43 +20,16 @@ class ThorlabsDMP40_Measure(Measurement):
         self.ui = load_qt_ui_file(self.ui_filename)
         self.ui.setWindowTitle(self.name)
         
-        self.dmp40_hw.settings.get_lq('Z4_Astigmatism_45').connect_to_widget(
-            self.ui.Z4_checkBox)
-        self.dmp40_hw.settings.get_lq('Z5_Defocus').connect_to_widget(
-            self.ui.Z5_checkBox)
-        self.dmp40_hw.settings.get_lq('Z6_Astigmatism_0').connect_to_widget(
-            self.ui.Z6_checkBox)
-        self.dmp40_hw.settings.get_lq('Z7_Trefoil_Y').connect_to_widget(
-            self.ui.Z7_checkBox)
-        self.dmp40_hw.settings.get_lq('Z8_Coma_X').connect_to_widget(
-            self.ui.Z8_checkBox)
-        self.dmp40_hw.settings.get_lq('Z9_Coma_Y').connect_to_widget(
-            self.ui.Z9_checkBox)
-        self.dmp40_hw.settings.get_lq('Z10_Trefoil_X').connect_to_widget(
-            self.ui.Z10_checkBox)
-        self.dmp40_hw.settings.get_lq('Z11_Tetrafoil_Y').connect_to_widget(
-            self.ui.Z11_checkBox)
-        self.dmp40_hw.settings.get_lq('Z12_Sec_Astig_Y').connect_to_widget(
-            self.ui.Z12_checkBox)
-        self.dmp40_hw.settings.get_lq('Z13_3O_Sph_Abberation').connect_to_widget(
-            self.ui.Z13_checkBox)
-        self.dmp40_hw.settings.get_lq('Z14_Sec_Astig_X').connect_to_widget(
-            self.ui.Z14_checkBox)
-        self.dmp40_hw.settings.get_lq('Z15_Tetrafoil_X').connect_to_widget(
-            self.ui.Z15_checkBox)
-        
-        self.dmp40_hw.settings.get_lq("Z4_Amplitude").connect_to_widget(self.ui.Z4_Astigmatism_45)
-        self.dmp40_hw.settings.get_lq("Z5_Amplitude").connect_to_widget(self.ui.Z5_Defocus)
-        self.dmp40_hw.settings.get_lq("Z6_Amplitude").connect_to_widget(self.ui.Z6_Astigmatism_0)
-        self.dmp40_hw.settings.get_lq("Z7_Amplitude").connect_to_widget(self.ui.Z7_Trefoil_Y)
-        self.dmp40_hw.settings.get_lq("Z8_Amplitude").connect_to_widget(self.ui.Z8_Coma_X)
-        self.dmp40_hw.settings.get_lq("Z9_Amplitude").connect_to_widget(self.ui.Z9_Coma_Y)
-        self.dmp40_hw.settings.get_lq("Z10_Amplitude").connect_to_widget(self.ui.Z10_Trefoil_X)
-        self.dmp40_hw.settings.get_lq("Z11_Amplitude").connect_to_widget(self.ui.Z11_Tetrafoil_Y)
-        self.dmp40_hw.settings.get_lq("Z12_Amplitude").connect_to_widget(self.ui.Z12_Sec_Astig_Y)
-        self.dmp40_hw.settings.get_lq("Z13_Amplitude").connect_to_widget(self.ui.Z13_3O_Sph_Abberation)
-        self.dmp40_hw.settings.get_lq("Z14_Amplitude").connect_to_widget(self.ui.Z14_Sec_Astig_X)
-        self.dmp40_hw.settings.get_lq("Z15_Amplitude").connect_to_widget(self.ui.Z15_Tetrafoil_X)
-        
-        
+        for k in self.dmp40_hw.zernike.keys():
+            widget = getattr(self.ui, k)
+            self.dmp40_hw.settings.get_lq(k).connect_to_widget(widget)
+    
+    def run(self):
+        while not self.interrupt_measurement_called:
+            IC1, IC2, Mir, E = self.dmp40_hw.dev.get_temperatures()
+            self.dmp40_hw.settings['IC1_temp'] = IC1
+            self.dmp40_hw.settings['IC2_temp'] = IC2
+            self.dmp40_hw.settings['Mirror_temp'] = Mir
+            self.dmp40_hw.settings['Electronics_temp'] = E
+            time.sleep(1)
         
