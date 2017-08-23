@@ -14,7 +14,7 @@ from operator import itemgetter
 class ThorlabsDMP40(object):
     """Thorlabs DMP40 Deformable Mirror for optical tables"""
 
-
+    
     errors = {
             -1073807202: "VISA or a code library required by VISA could not be located or loaded. This is usually due to a required driver not being installed on the system.",
             -1073807360: "Unknown system error (miscellaneous error).",
@@ -118,6 +118,7 @@ class ThorlabsDMP40(object):
             1073676457: "The operation succeeded, but a lower level driver did not implement the extended functionality."}
     
     def __init__(self, debug=False):
+        self.debug = debug
         self.sessionHandle = ctypes.c_uint32(0)
         thorlib_path = r'C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLDFM_64.dll' 
         thorlib_ext_path = r'C:\Program Files\IVI Foundation\VISA\Win64\Bin\TLDFMX_64.dll'
@@ -128,7 +129,8 @@ class ThorlabsDMP40(object):
         ID_query = ctypes.c_bool(False)
         resetDevice = ctypes.c_bool(False)
         status = self.dll_ext.TLDFMX_init(self.resourceName, ID_query, resetDevice, ctypes.byref(self.instHandle))
-        print("Connect:", self.errors[status])
+        if self.debug:
+            print("Connect:", self.errors[status])
         self.segment_count = self.get_segment_count()
         self.tilt_count = self.get_tilt_count()
     
@@ -136,7 +138,8 @@ class ThorlabsDMP40(object):
         VI_NULL = ctypes.c_uint32(0)
         deviceCount = ctypes.c_uint32(0)
         status = self.dll.TLDFM_get_device_count(VI_NULL, ctypes.byref(deviceCount))
-        print("get_count", self.errors[status])
+        if self.debug:
+            print("get_count", self.errors[status])
         return deviceCount
     
     def get_device_info(self):
@@ -152,8 +155,32 @@ class ThorlabsDMP40(object):
                                                          ctypes.byref(deviceAvailable), resourceName)
         if deviceAvailable.value:
             self.resourceName = resourceName.value
-        print("get_device_info:", self.errors[status], deviceAvailable)
+        if self.debug:
+            print("get_device_info:", self.errors[status], deviceAvailable)
     
+    def get_device_configuration(self):
+        segCount = ctypes.c_uint32(0)
+        minSegV = ctypes.c_uint64(0)
+        maxSegV = ctypes.c_uint64(0)
+        segCommonVMax = ctypes.c_uint64(0)
+        tiltElementCount = ctypes.c_uint32(0)
+        minTiltV = ctypes.c_uint64(0)
+        maxTiltV = ctypes.c_uint64(0)
+        tiltCommonVMax = ctypes.c_uint64(0)
+        status = self.dll.TLDFM_get_device_configuration(self.instHandle, 
+                                                         ctypes.byref(segCount), 
+                                                         ctypes.byref(minSegV), 
+                                                         ctypes.byref(maxSegV), 
+                                                         ctypes.byref(segCommonVMax), 
+                                                         ctypes.byref(tiltElementCount),
+                                                         ctypes.byref(minTiltV),
+                                                         ctypes.byref(maxTiltV), 
+                                                         ctypes.byref(tiltCommonVMax))
+        if self.debug:
+            print("get_device_config:", self.errors[status])
+        seg = (minSegV.value, maxSegV.value)
+        tilt = (minTiltV.value, maxTiltV.value)
+        return seg, tilt
     
     def get_segment_count(self):
         count = ctypes.c_uint32(0)
@@ -212,6 +239,35 @@ class ThorlabsDMP40(object):
         status = self.dll.TLDFM_self_test(self.instHandle, ctypes.byref(result), ctypes.byref(message))
         print("self_test:", self.errors[status])
         return result, message
+    
+    def relax(self):
+        devicePart = ctypes.c_uint32(2) # MIRROR 0, TILT 1, BOTH 2
+        isFirstStep = ctypes.c_bool(True)
+        reload = ctypes.c_bool(False)
+        relaxPatternMirror = (ctypes.c_double * 40)()
+        relaxPatternArms = (ctypes.c_double * 40)()
+        remainingSteps = ctypes.c_uint32(0)
+        status = self.dll_ext.TLDFMX_relax(self.instHandle, devicePart, isFirstStep, reload,
+                                           relaxPatternMirror, relaxPatternArms, ctypes.byref(remainingSteps))
+        if self.debug:
+            print("relax:", self.errors[status])
+        if status == 0:
+            self.dll.TLDFM_set_segment_voltages(self.instHandle, relaxPatternMirror)
+            self.dll.TLDFM_set_tilt_voltages(self.instHandle, relaxPatternArms)
+        else:
+            print("relax:", self.errors[status])
+            
+        isFirstStep = ctypes.c_bool(False)
+        while remainingSteps.value > 0:
+
+            status = self.dll_ext.TLDFMX_relax(self.instHandle, devicePart, isFirstStep, reload,
+                                            relaxPatternMirror, relaxPatternArms, ctypes.byref(remainingSteps))
+            if status == 0:
+                self.dll.TLDFM_set_segment_voltages(self.instHandle, relaxPatternMirror)
+                self.dll.TLDFM_set_tilt_voltages(self.instHandle, relaxPatternArms)
+            else:
+                print("relax:", self.errors[status])
+            
     
     def reset(self):
         """Places the instrument in a default state. 
