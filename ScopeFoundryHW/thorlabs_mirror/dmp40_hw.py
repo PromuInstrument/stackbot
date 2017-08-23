@@ -36,10 +36,10 @@ class ThorlabsDMP40_HW(HardwareComponent):
         for k in self.zernike_ordered.keys():
             self.settings.New(name=k, dtype=float, initial=0.0, fmt="%.3f", vmin=-1.0, vmax=1.0, ro=False)
 
-        self.settings.New(name="IC1_temp", dtype=float, initial=0.0, fmt="%.3f", vmin=0.0, vmax=45.0, ro=True)
-        self.settings.New(name="IC2_temp", dtype=float, initial=0.0, fmt="%.3f", vmin=0.0, vmax=45.0, ro=True)
-        self.settings.New(name="Mirror_temp", dtype=float, initial=0.0, fmt="%.3f", vmin=0.0, vmax=45.0, ro=True)
-        self.settings.New(name="Electronics_temp", dtype=float, initial=0.0, fmt="%.3f", vmin=0.0, vmax=45.0, ro=True)
+        self.settings.New(name="IC1_temp", dtype=float, initial=0.0, fmt="%.3f", vmin=0.0, vmax=50.0, ro=True)
+        self.settings.New(name="IC2_temp", dtype=float, initial=0.0, fmt="%.3f", vmin=0.0, vmax=50.0, ro=True)
+        self.settings.New(name="Mirror_temp", dtype=float, initial=0.0, fmt="%.3f", vmin=0.0, vmax=50.0, ro=True)
+        self.settings.New(name="Electronics_temp", dtype=float, initial=0.0, fmt="%.3f", vmin=0.0, vmax=50.0, ro=True)
         
 
         self.add_operation(name="apply_Zernike_pattern", op_func=self.set_zernike_patterns)
