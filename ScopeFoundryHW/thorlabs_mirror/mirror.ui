@@ -292,7 +292,7 @@
    <property name="title">
     <string>Enable Pattern</string>
    </property>
-   <widget class="QCheckBox" name="Z4_checkBox">
+   <widget class="QCheckBox" name="Z4_Astigmatism_45_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -305,7 +305,7 @@
      <string>Z4 Astigmatism 45°</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z11_checkBox">
+   <widget class="QCheckBox" name="Z11_Tetrafoil_Y_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -318,7 +318,7 @@
      <string>Z11 Tetrafoil Y</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z15_checkBox">
+   <widget class="QCheckBox" name="Z15_Tetrafoil_X_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -331,7 +331,7 @@
      <string>Z15 Tetrafoil X</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z8_checkBox">
+   <widget class="QCheckBox" name="Z8_Coma_X_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -344,7 +344,7 @@
      <string>Z8 Coma X</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z13_checkBox">
+   <widget class="QCheckBox" name="Z13_3O_Sph_Abberation_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -357,7 +357,7 @@
      <string>Z13 3rd Order Spherical Abberation</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z10_checkBox">
+   <widget class="QCheckBox" name="Z10_Trefoil_X_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -370,7 +370,7 @@
      <string>Z10 Trefoil X</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z9_checkBox">
+   <widget class="QCheckBox" name="Z9_Coma_Y_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -383,7 +383,7 @@
      <string>Z9 Coma Y</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z6_checkBox">
+   <widget class="QCheckBox" name="Z6_Astigmatism_0_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -396,7 +396,7 @@
      <string>Z6 Astigmatism 0°</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z12_checkBox">
+   <widget class="QCheckBox" name="Z12_Sec_Astig_Y_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -409,7 +409,7 @@
      <string>Z12 Secondary Astigmatism Y</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z5_checkBox">
+   <widget class="QCheckBox" name="Z5_Defocus_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -422,7 +422,7 @@
      <string>Z5 Defocus</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z14_checkBox">
+   <widget class="QCheckBox" name="Z14_Sec_Astig_X_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -435,7 +435,7 @@
      <string>Z14 Secondary Astigmatism X</string>
     </property>
    </widget>
-   <widget class="QCheckBox" name="Z7_checkBox">
+   <widget class="QCheckBox" name="Z7_Trefoil_Y_checkBox">
     <property name="geometry">
      <rect>
       <x>30</x>
