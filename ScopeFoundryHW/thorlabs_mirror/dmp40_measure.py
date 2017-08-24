@@ -23,7 +23,19 @@ class ThorlabsDMP40_Measure(Measurement):
         for k in self.dmp40_hw.zernike.keys():
             widget = getattr(self.ui, k)
             self.dmp40_hw.settings.get_lq(k).connect_to_widget(widget)
-    
+            self.dmp40_hw.settings.get_lq(k).add_listener(self.sync_checkBoxes)    
+            
+    def sync_checkBoxes(self):
+        for k in self.dmp40_hw.zernike.keys():
+            cb = getattr(self.ui, "{}_checkBox".format(k))
+            if self.dmp40_hw.settings[k] != 0.0:
+                if self.ui is not None:       
+                    cb.setChecked(True)
+            else:
+                if self.ui is not None:
+                    cb.setChecked(False)
+
+        
     def run(self):
         while not self.interrupt_measurement_called:
             if hasattr(self.dmp40_hw, "dev"):
