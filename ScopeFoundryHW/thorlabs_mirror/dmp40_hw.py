@@ -32,7 +32,6 @@ class ThorlabsDMP40_HW(HardwareComponent):
     zernike_ordered = OrderedDict(sorted(zernike.items(), key=lambda t: t[0]))
     
     def setup(self):
-        
         for k in self.zernike_ordered.keys():
             self.settings.New(name=k, dtype=float, initial=0.0, fmt="%.3f", vmin=-1.0, vmax=1.0, ro=False)
 
@@ -47,7 +46,7 @@ class ThorlabsDMP40_HW(HardwareComponent):
         self.add_operation(name="reset", op_func=self.reset)
                    
     def connect(self):
-        self.dev = ThorlabsDMP40(debug=self.debug_mode)
+        self.dev = ThorlabsDMP40(debug=self.settings.debug_mode.val)
         
 
     def zernike_active_readout(self):
@@ -55,7 +54,8 @@ class ThorlabsDMP40_HW(HardwareComponent):
         selected = []
         for k, _ in self.zernike.items():
             if self.settings[k] != 0.0:
-                print(k)
+                if self.settings.debug_mode.val:
+                    print(k)
                 selected.append(k)
         return selected
     
@@ -73,7 +73,7 @@ class ThorlabsDMP40_HW(HardwareComponent):
     
     def calculate_zernike_integer(self):
         selected_zernikes = self.zernike_active_readout()
-        if self.debug_mode:
+        if self.settings.debug_mode.val:
             print(selected_zernikes, self.zernike)
             print(itemgetter(*selected_zernikes))
         zernike_integers = itemgetter(*selected_zernikes)(self.zernike)

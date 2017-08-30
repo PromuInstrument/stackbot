@@ -185,40 +185,44 @@ class ThorlabsDMP40(object):
     def get_segment_count(self):
         count = ctypes.c_uint32(0)
         status = self.dll.TLDFM_get_segment_count(self.instHandle, ctypes.byref(count))
-        print("get_segment_count:", self.errors[status])
+        if self.debug:
+            print("get_segment_count:", self.errors[status])
         return count
     
     def get_tilt_count(self):
         count = ctypes.c_uint32(0)
         status = self.dll.TLDFM_get_segment_count(self.instHandle, ctypes.byref(count))
-        print("get_tilt_count:", self.errors[status])
+        if self.debug:
+            print("get_tilt_count:", self.errors[status])
         return count
     
     def get_segment_voltages(self):
         segmentVoltages = (ctypes.c_double * 40)()
         status = self.dll.TLDFM_get_segment_voltages(self.instHandle, segmentVoltages)
-        print("get_segment_voltages:", self.errors[status])
+        if self.debug:
+            print("get_segment_voltages:", self.errors[status])
         return np.frombuffer(segmentVoltages)
     
     def get_tilt_voltages(self):
         tiltVoltages = (ctypes.c_double * 40)()
         status = self.dll.TLDFM_get_tilt_voltages(self.instHandle, tiltVoltages)
-        print("get_tilt_voltages:", self.errors[status])
+        if self.debug:
+            print("get_tilt_voltages:", self.errors[status])
         return np.frombuffer(tiltVoltages)
     
     def set_segment_voltages(self, np_arr):
         c_array = self.np64_to_ctypes64(np_arr)
         status = self.dll.TLDFM_set_segment_voltages(self.instHandle, c_array)
-        print("set_segment_voltages:", self.errors[status])
+        if self.debug:
+            print("set_segment_voltages:", self.errors[status])
     
     def set_tilt_voltages(self, np_arr):
         c_array = self.np64_to_ctypes64(np_arr)
         status = self.dll.TLDFM_set_tilt_voltages(self.instHandle, c_array)
-        print("set_tilt_voltages:", self.errors[status])
+        if self.debug:
+            print("set_tilt_voltages:", self.errors[status])
     
-    def set_zernike_pattern(self, command):
-        pass
-    
+
     def get_temperatures(self):
         IC1Temperatur = ctypes.c_double(0)
         IC2Temperatur = ctypes.c_double(0)
@@ -229,7 +233,8 @@ class ThorlabsDMP40(object):
                                             ctypes.byref(electronicTemperatur))
         data = (IC1Temperatur.value, IC2Temperatur.value,
                 mirrorTemperatur.value, electronicTemperatur.value)
-        print("get_temperatures", self.errors[status])
+        if self.debug:
+            print("get_temperatures", self.errors[status])
         return list(data)
     
     def self_test(self):
@@ -237,7 +242,8 @@ class ThorlabsDMP40(object):
         result = ctypes.c_uint16(0)
         message = ctypes.create_string_buffer(256)
         status = self.dll.TLDFM_self_test(self.instHandle, ctypes.byref(result), ctypes.byref(message))
-        print("self_test:", self.errors[status])
+        if self.debug:
+            print("self_test:", self.errors[status])
         return result, message
     
     def relax(self):
@@ -273,7 +279,8 @@ class ThorlabsDMP40(object):
         """Places the instrument in a default state. 
         All segment and tilt arm voltages are reset to 0V."""
         status = self.dll.TLDFM_reset(self.instHandle)
-        print("reset:", self.errors[status])
+        if self.debug:
+            print("reset:", self.errors[status])
         
     def np64_to_ctypes64(self, np_arr):
         data = np_arr.astype(np.float64)
@@ -284,4 +291,5 @@ class ThorlabsDMP40(object):
     def close(self):
         self.reset()
         status = self.dll_ext.TLDFMX_close(self.instHandle)
-        print("close:", self.errors[status])
+        if self.debug:
+            print("close:", self.errors[status])
