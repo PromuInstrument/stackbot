@@ -79,8 +79,9 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.sync_raster_daq import SyncRasterScan
         self.add_measurement_component(SyncRasterScan(self))
         
-        from Auger.auger_sync_scan import AugerSyncRasterScan
+        from Auger.auger_sync_scan import AugerSyncRasterScan, MultiSpecAugerScan
         self.add_measurement(AugerSyncRasterScan(self))
+        self.add_measurement(MultiSpecAugerScan(self))
         
         from Auger.measurement.auger_pressure_history import AugerPressureHistory
         self.add_measurement_component(AugerPressureHistory(self))
@@ -100,6 +101,8 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         
         from Auger.sem_auto_focus import SEMAutoFocus
         self.add_measurement_component(SEMAutoFocus(self))
+        
+
 
 #        self.phi_ion_gun = self.add_hardware_component(PhiIonGunHardwareComponent(self))
 #        self.ion_gun_status = self.add_measurement_component(IonGunStatus(self))
