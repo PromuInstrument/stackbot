@@ -78,20 +78,17 @@ class PicamHW(HardwareComponent):
                                   y=S['roi_y'], height=S['roi_h'], y_binning=S['roi_y_bin'])
 
     def disconnect(self):
-        
-        #disconnect hardware
-        self.cam.close()
-        
+
         #disconnect logged quantities from hardware
-        for lq in self.logged_quantities.values():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
+        self.settings.disconnect_all_from_hardware()
         
-        # clean up hardware object
-        del self.cam
-        
-        #self.is_connected = False
-    
+        if hasattr(self, 'cam'):
+            #disconnect hardware
+            self.cam.close()
+            
+            # clean up hardware object
+            del self.cam
+            
     def commit_parameters(self):
         self.cam.commit_parameters()
     
