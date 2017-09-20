@@ -16,6 +16,7 @@ class HyperSpecPicam2DScan(MCLStage2DSlowScan):
         # FIXME hard-coded CCD dimension
         self.spec_map = np.zeros(self.scan_shape + (1340,), dtype=np.float)
         self.spec_map_h5 = self.h5_meas_group.create_dataset('spec_map', self.scan_shape + (1340,), dtype=np.float)
+        self.app.measurements.picam_readout.interrupt()
         
     def collect_pixel(self, pixel_num, k, j, i):
         # collect data
@@ -35,7 +36,8 @@ class HyperSpecPicam2DScan(MCLStage2DSlowScan):
         
         print(self.name, "post_scan_cleanup")
         import scipy.io
-        scipy.io.savemat(file_name="%i_%s.mat" % (self.t0, self.name), mdict=dict(spec_map=self.spec_map))
+        print(self.h5_filename)
+        scipy.io.savemat(file_name=self.h5_filename +".mat", mdict=dict(spec_map=self.spec_map))
 
     def update_display(self):
         super().update_display()
