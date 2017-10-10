@@ -1,0 +1,2 @@
+sqlite3.ProgrammingError: SQLite objects created in a thread can only be used in that same thread.The object was created in thread id 1996103680 and this is thread id 1685832800
+
