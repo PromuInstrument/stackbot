@@ -108,9 +108,10 @@ class XboxControlHW(HardwareComponent):
         
     def disconnect(self):
         """Disconnects and removes modules when no longer needed by the application."""
-        self.xb_dev.close()
-        # delete object
-        del self.xb_dev
+        if hasattr(self, 'xb_dev'):
+            self.xb_dev.close()
+            # delete object
+            del self.xb_dev
         
     
 
