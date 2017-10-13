@@ -1,41 +1,27 @@
 from __future__ import division, print_function
 import numpy as np
-from ScopeFoundry.scanning.base_cartesian_scan import BaseCartesian2DSlowScan
+from ScopeFoundryHW.mcl_stage import MCLStage2DSlowScan
 from ScopeFoundry import Measurement, LQRange
 import time
 
-class HyperSpecPicam2DScan(BaseCartesian2DSlowScan):
+class HyperSpecPicam2DScan(MCLStage2DSlowScan):
     
     name = "hyperspec_picam_mcl"
     
     def scan_specific_setup(self):
         #Hardware
-        self.stage = self.gui.hardware.mcl_xyz_stage
-        self.picam = self.gui.hardware.picam    
-
-    def move_position_start(self, x,y):
-        #self.stage.y_position.update_value(x)
-        #self.stage.y_position.update_value(y)
-        self.stage.nanodrive.set_pos_slow(x,y,None)
-    
-    def move_position_slow(self, x,y, dx,dy):
-        #self.stage.y_position.update_value(y)
-        self.stage.nanodrive.set_pos_slow(x,y,None)
-        self.stage.x_position.read_from_hardware()
-        self.stage.y_position.read_from_hardware()
-
-    def move_position_fast(self, x,y, dx,dy):
-        #self.stage.x_position.update_value(x)
-        self.stage.nanodrive.set_pos(x, y, None)            
+        self.picam = self.app.hardware['picam']    
     
     def pre_scan_setup(self):
+        # FIXME hard-coded CCD dimension
         self.spec_map = np.zeros(self.scan_shape + (1340,), dtype=np.float)
         self.spec_map_h5 = self.h5_meas_group.create_dataset('spec_map', self.scan_shape + (1340,), dtype=np.float)
+        self.app.measurements.picam_readout.interrupt()
         
-
     def collect_pixel(self, pixel_num, k, j, i):
         # collect data
         # store in arrays        
+        print("collect_pixel:",  pixel_num, k, j, i)
         dat = self.picam.cam.acquire(readout_count=1, readout_timeout=-1)
             
         self.roi_data = self.picam.cam.reshape_frame_data(dat)
@@ -50,13 +36,15 @@ class HyperSpecPicam2DScan(BaseCartesian2DSlowScan):
         
         print(self.name, "post_scan_cleanup")
         import scipy.io
-        scipy.io.savemat(file_name="%i_%s.mat" % (self.t0, self.name), mdict=dict(spec_map=self.spec_map))
+        print(self.h5_filename)
+        scipy.io.savemat(file_name=self.h5_filename +".mat", mdict=dict(spec_map=self.spec_map))
 
     def update_display(self):
-        BaseCartesian2DSlowScan.update_display(self)
+        super().update_display()
         
-        self.app.measurements.picam_readout.roi_data = self.roi_data
-        self.app.measurements.picam_readout.update_display()
+        if hasattr(self, 'roi_data'):
+            self.app.measurements.picam_readout.roi_data = self.roi_data
+            self.app.measurements.picam_readout.update_display()
     
 
 class HyperSpecPicam3DStack(Measurement):
