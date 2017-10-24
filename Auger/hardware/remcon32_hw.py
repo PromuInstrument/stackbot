@@ -61,10 +61,11 @@ class SEM_Remcon_HW(HardwareComponent):
         self.settings.New(
             'detector1', dtype=str, initial='SE2', choices=('SE2','VPSE','InLens'))       
         self.settings.New(
-            'stig_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
-# Since it can't be read, it's not very useful
-#         self.settings.New(
-#             'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+            'stig_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')\
+            # THIS IS CRITICALY IMPORTANT, do NOT remove again. Frank Oct 10, 2017
+            # Since it can't be read, it's not very useful
+        self.settings.New(
+             'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
         self.settings.New(
             'aperture_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
         # Since beamshift can't be read, give option to control or not
