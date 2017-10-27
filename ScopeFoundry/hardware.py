@@ -1,6 +1,6 @@
 from __future__ import absolute_import, print_function
 from qtpy import QtCore, QtWidgets, QtGui
-from .logged_quantity import LQCollection#, LoggedQuantity
+from ScopeFoundry.logged_quantity import LQCollection#, LoggedQuantity
 from collections import OrderedDict
 import pyqtgraph as pg
 import warnings
@@ -36,10 +36,12 @@ class HardwareComponent(QtCore.QObject):
         
         self.operations[name] = op_func   
             
-    def __init__(self, app, debug=False):
+    def __init__(self, app, debug=False, name=None):
         """
         create new HardwareComponent attached to *app*
         """
+        if name is not None:
+            self.name = name
         
         QtCore.QObject.__init__(self)
         self.log = get_logger_from_class(self)
@@ -192,3 +194,6 @@ class HardwareComponent(QtCore.QObject):
     def gui(self):
         warnings.warn("Hardware.gui is deprecated, use Hardware.app", DeprecationWarning)
         return self.app
+    
+    def web_ui(self):
+        return "Hardware {}".format(self.name)

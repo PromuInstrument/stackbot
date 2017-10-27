@@ -26,8 +26,10 @@ class PowerScanMeasure(Measurement):
 
         self.collect_apd      = self.add_logged_quantity("collect_apd",      dtype=bool, initial=True)
         self.collect_spectrum = self.add_logged_quantity("collect_spectrum", dtype=bool, initial=False)
-        #self.collect_lifetime = self.add_logged_quantity("collect_lifetime", dtype=bool, initial=True)
+        self.collect_lifetime = self.add_logged_quantity("collect_lifetime", dtype=bool, initial=True)
         self.collect_ascom_img = self.add_logged_quantity('collect_ascom_img', dtype=bool, initial=False)
+        
+        self.settings.New("x_axis", dtype=str, initial='power_wheel', choices=('power_wheel', 'pm_power'))
     
     
     
@@ -36,15 +38,17 @@ class PowerScanMeasure(Measurement):
         self.ui.start_pushButton.clicked.connect(self.start)
         self.ui.interrupt_pushButton.clicked.connect(self.interrupt)
 
-        self.power_wheel_min.connect_bidir_to_widget(self.ui.powerwheel_min_doubleSpinBox)
-        self.power_wheel_max.connect_bidir_to_widget(self.ui.powerwheel_max_doubleSpinBox)
-        self.power_wheel_ndatapoints.connect_bidir_to_widget(self.ui.num_datapoints_doubleSpinBox)
+        self.power_wheel_min.connect_to_widget(self.ui.powerwheel_min_doubleSpinBox)
+        self.power_wheel_max.connect_to_widget(self.ui.powerwheel_max_doubleSpinBox)
+        self.power_wheel_ndatapoints.connect_to_widget(self.ui.num_datapoints_doubleSpinBox)
 
         self.up_and_down_sweep.connect_bidir_to_widget(self.ui.updown_sweep_checkBox)
 
-        self.collect_apd.connect_bidir_to_widget(self.ui.collect_apd_checkBox)
-        self.collect_spectrum.connect_bidir_to_widget(self.ui.collect_spectrum_checkBox)
-        self.collect_ascom_img.connect_bidir_to_widget(self.ui.collect_ascom_img_checkBox)
+        self.collect_apd.connect_to_widget(self.ui.collect_apd_checkBox)
+        self.collect_spectrum.connect_to_widget(self.ui.collect_spectrum_checkBox)
+        self.collect_lifetime.connect_to_widget(self.ui.collect_picoharp_checkBox)
+        self.collect_ascom_img.connect_to_widget(self.ui.collect_ascom_img_checkBox)
+        
         
         
         # Hardware connections
@@ -69,11 +73,19 @@ class PowerScanMeasure(Measurement):
             self.collect_ascom_img.update_value(False)
             self.collect_ascom_img.change_readonly(True)
             
+        if 'picoharp' in self.app.hardware.keys():
+            self.app.hardware['picoharp'].settings.Tacq.connect_to_widget(
+                self.ui.picoharp_int_time_doubleSpinBox)
+        else:
+            self.collect_lifetime.update_value(False)
+            self.collect_lifetime.change_readonly(True)
+            
+            
         # Plot
         if hasattr(self, 'graph_layout'):
             self.graph_layout.deleteLater() # see http://stackoverflow.com/questions/9899409/pyside-removing-a-widget-from-a-layout
             del self.graph_layout
-        self.graph_layout=pg.GraphicsLayoutWidget(border=(100,100,100))
+        self.graph_layout=pg.GraphicsLayoutWidget()
         self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
         
         self.plot1 = self.graph_layout.addPlot(title="Power Scan")
@@ -82,11 +94,15 @@ class PowerScanMeasure(Measurement):
 
     def update_display(self):
         ii = self.ii
-        #X = self.pm_powers[:self.ii]
-        X = self.power_wheel_position[:ii]
+        if self.settings['x_axis'] == 'power_wheel':
+            X = self.power_wheel_position[:ii]
+        else:
+            X = self.pm_powers[:self.ii]
         
         if self.settings['collect_apd']:
             self.plot_line1.setData(X, self.apd_count_rates[:ii])
+        elif self.settings['collect_lifetime']:
+            self.plot_line1.setData(X, self.picoharp_histograms[:ii, :].sum(axis=1)/self.picoharp_elapsed_time[:ii])
         elif self.settings['collect_spectrum']:
             self.plot_line1.setData(X, self.integrated_spectra[:ii])
             self.winspec_readout.update_display()
@@ -103,8 +119,11 @@ class PowerScanMeasure(Measurement):
         self.power_wheel_dev = self.power_wheel_hw.power_wheel_dev
         
         if self.settings['collect_apd']:
-            self.apd_counter_hc = self.app.hardware.apd_counter
-            self.apd_count_rate_lq = self.apd_counter_hc.settings.apd_count_rate     
+            self.apd_counter_hw = self.app.hardware.apd_counter
+            self.apd_count_rate_lq = self.apd_counter_hw.settings.count_rate     
+
+        if self.settings['collect_lifetime']:
+            self.ph_hw = self.app.hardware['picoharp']
 
         if self.settings['collect_spectrum']:
             self.winspec_readout = self.app.measurements['winspec_readout']
@@ -112,6 +131,7 @@ class PowerScanMeasure(Measurement):
         if self.settings['collect_ascom_img']:
             self.ascom_camera_capture = self.app.measurements.ascom_camera_capture
             self.ascom_camera_capture.settings['continuous'] = False
+            
             
         
         #####
@@ -135,6 +155,11 @@ class PowerScanMeasure(Measurement):
 
         if self.settings['collect_apd']:
             self.apd_count_rates = np.zeros(Np, dtype=float)
+        if self.settings['collect_lifetime']:
+            Nt = self.num_hist_chans = self.ph_hw.calc_num_hist_chans()
+            self.picoharp_time_array = np.zeros(Nt, dtype=float)
+            self.picoharp_elapsed_time = np.zeros(Np, dtype=float)
+            self.picoharp_histograms = np.zeros((Np,Nt ), dtype=int)
         if self.settings['collect_spectrum']:
             self.spectra = [] # don't know size of ccd until after measurement
             self.integrated_spectra = []
@@ -167,6 +192,21 @@ class PowerScanMeasure(Measurement):
             if self.settings['collect_apd']:
                 self.apd_count_rates[ii] = \
                     self.apd_counter_hc.apd_count_rate.read_from_hardware()
+            if self.settings['collect_lifetime']:
+                ph = self.ph_hw.picoharp
+                ph.start_histogram()
+                while not ph.check_done_scanning():
+                    if self.interrupt_measurement_called:
+                        break
+                    ph.read_histogram_data()
+                    self.ph_hw.settings.count_rate0.read_from_hardware()
+                    self.ph_hw.settings.count_rate1.read_from_hardware()
+                    time.sleep(0.1)        
+                ph.stop_histogram()
+                ph.read_histogram_data()
+                self.picoharp_histograms[ii,:] = ph.histogram_data[0:Nt]
+                self.picoharp_time_array =  ph.time_array[0:Nt]
+                self.picoharp_elapsed_time[ii] = ph.read_elapsed_meas_time()
             if self.settings['collect_spectrum']:
                 self.winspec_readout.run()
                 spec = np.array(self.winspec_readout.data)
@@ -190,28 +230,35 @@ class PowerScanMeasure(Measurement):
         # write data to h5 file on disk
         
         self.t0 = time.time()
-        self.fname = "%i_%s.h5" % (self.t0, self.name)
-        self.h5_file = h5_io.h5_base_file(self.app, self.fname )
-        self.h5_file.attrs['time_id'] = self.t0
-        H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
+        #self.fname = "%i_%s.h5" % (self.t0, self.name)
+        #self.h5_file = h5_io.h5_base_file(self.app, self.fname )
+        self.h5_file = h5_io.h5_base_file(app=self.app,measurement=self)
+        try:
+            self.h5_file.attrs['time_id'] = self.t0
+            H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
+        
+            #create h5 data arrays
     
-        #create h5 data arrays
-
-        if self.settings['collect_apd']:
-            H['apd_count_rates'] = self.apd_count_rates
-        if self.settings['collect_spectrum']:
-            H['wls'] = self.winspec_readout.wls
-            H['spectra'] = np.squeeze(np.array(self.spectra))
-            H['integrated_spectra'] = np.array(self.integrated_spectra)
-        if self.settings['collect_ascom_img']:
-            H['ascom_img_stack'] = np.array(self.ascom_img_stack)
-            H['ascom_img_integrated'] = np.array(self.ascom_img_integrated)
-            
-        H['pm_powers'] = self.pm_powers
-        H['pm_powers_after'] = self.pm_powers_after
-        H['power_wheel_position'] = self.power_wheel_position
-        H['direction'] = self.direction
-        self.h5_file.close()
+            if self.settings['collect_apd']:
+                H['apd_count_rates'] = self.apd_count_rates
+            if self.settings['collect_lifetime']:
+                H['picoharp_elapsed_time'] = self.picoharp_elapsed_time
+                H['picoharp_histograms'] = self.picoharp_histograms
+                H['picoharp_time_array'] = self.picoharp_time_array
+            if self.settings['collect_spectrum']:
+                H['wls'] = self.winspec_readout.wls
+                H['spectra'] = np.squeeze(np.array(self.spectra))
+                H['integrated_spectra'] = np.array(self.integrated_spectra)
+            if self.settings['collect_ascom_img']:
+                H['ascom_img_stack'] = np.array(self.ascom_img_stack)
+                H['ascom_img_integrated'] = np.array(self.ascom_img_integrated)
+                
+            H['pm_powers'] = self.pm_powers
+            H['pm_powers_after'] = self.pm_powers_after
+            H['power_wheel_position'] = self.power_wheel_position
+            H['direction'] = self.direction
+        finally:
+            self.h5_file.close()
         
         print(self.name, 'data saved', self.fname)
 

@@ -18,7 +18,7 @@ class AndorCCDHW(HardwareComponent):
         self.background = None
         
         # Create logged quantities
-        self.status = self.add_logged_quantity(name='ccd_satus', dtype=str, fmt="%s",ro=True)
+        self.status = self.add_logged_quantity(name='ccd_status', dtype=str, fmt="%s",ro=True)
         
         self.temperature = self.add_logged_quantity(name="temperature", dtype=int,
                                                     ro=True, unit = "C", vmin = -300, vmax = 300, si=False)
@@ -35,7 +35,17 @@ class AndorCCDHW(HardwareComponent):
                                                 si=False,
                                                 vmin=1, vmax=4096)
         
-        # Ouput amplifer ( EMCCD or conventional)
+        self.acq_mode = self.add_logged_quantity('acq_mode', dtype=str, 
+                                 initial='single', choices=('single', 'accumulate', 'kinetic', 'run_till_abort') )
+        
+        
+        self.acc_time = self.add_logged_quantity('acc_time', dtype=float, unit='s', initial=0.1, si=True)
+        self.kin_time = self.add_logged_quantity('kin_time', dtype=float, unit='s', initial=0.1, si=True)
+        self.num_acc = self.add_logged_quantity('num_acc', dtype=int, initial=1, vmin=1)
+        self.num_kin = self.add_logged_quantity('num_kin', dtype=int, initial=1, vmin=1)
+        
+        
+        # Output amplifier ( EMCCD or conventional)
         self.output_amp = self.add_logged_quantity("output_amp", dtype=int, ro=False,
                                                    choices = [
                                                               ("EMCCD", 0), 
@@ -111,20 +121,9 @@ class AndorCCDHW(HardwareComponent):
         # A single operation to update the ROI values in the camera
         self.add_operation("set_readout", self.set_readout)
         
-        #connect to custom gui - NOTE:  these are not disconnected!
-        if hasattr(self.gui.ui, 'andor_ccd_int_time_doubleSpinBox'):
-            self.exposure_time.connect_bidir_to_widget(self.gui.ui.andor_ccd_int_time_doubleSpinBox) 
-            #self.gui.ui.andor_ccd_int_time_doubleSpinBox.valueChanged[float].connect(self.exposure_time.update_value)
-            self.exposure_time.updated_value[float].connect(self.gui.ui.andor_ccd_int_time_doubleSpinBox.setValue)
-            self.temperature.updated_value[float].connect(self.gui.ui.andor_ccd_temp_doubleSpinBox.setValue)
-            self.gui.ui.andor_ccd_emgain_doubleSpinBox.valueChanged[float].connect(self.em_gain.update_value)
-            self.em_gain.updated_value[float].connect(self.gui.ui.andor_ccd_emgain_doubleSpinBox.setValue)
-            self.gui.ui.andor_ccd_shutter_open_checkBox.stateChanged[int].connect(self.shutter_open.update_value)
-            self.shutter_open.updated_value[bool].connect(self.gui.ui.andor_ccd_shutter_open_checkBox.setChecked)
-            self.status.updated_text_value[str].connect(self.gui.ui.andor_ccd_status_label.setText)
         
     def connect(self):
-        if self.debug: self.log.debug( "Connecting to Andor EMCCD Counter" )
+        if self.debug: self.log.debug( "Connecting to Andor EMCCD " )
         
         # Open connection to hardware
         self.ccd_dev = AndorCCD(debug = self.debug)
@@ -149,6 +148,23 @@ class AndorCCDHW(HardwareComponent):
         self.vflip.hardware_read_func = self.ccd_dev.get_image_vflip
         self.vflip.hardware_set_func = self.ccd_dev.set_image_vflip
         
+        self.acq_mode.connect_to_hardware(
+            read_func=self.ccd_dev.get_aq_mode,
+            write_func=self.ccd_dev.set_aq_mode)
+        
+        self.num_acc.connect_to_hardware(
+            read_func=self.ccd_dev.get_num_accumulations,
+            write_func=self.ccd_dev.set_num_accumulations)
+        
+        self.num_kin.connect_to_hardware(
+            read_func=self.ccd_dev.get_num_kinetics,
+            write_func=self.ccd_dev.set_num_kinetics)
+        
+        self.acc_time.connect_to_hardware(
+            write_func=self.ccd_dev.set_accumulation_cycle_time)
+        self.kin_time.connect_to_hardware(
+            write_func=self.ccd_dev.set_kinetic_cycle_time)
+        
         # Update the ROI min and max values to the CCD dimensions
         width = self.ccd_dev.Nx
         height = self.ccd_dev.Ny
@@ -164,7 +180,7 @@ class AndorCCDHW(HardwareComponent):
         self.roi_st_hbin.change_min_max(1, width)
         self.roi_st_width.change_min_max(1, height)
         
-        #Choics for Readout mode
+        #Choices for Readout mode
         choices = [("FullVerticalBinning", AndorReadMode.FullVerticalBinning.value),
                       ("SingleTrack", AndorReadMode.SingleTrack.value),
                       ("Image", AndorReadMode.Image.value)
@@ -223,6 +239,8 @@ class AndorCCDHW(HardwareComponent):
             self.shutter_open.update_value(False)  #Close the shutter.
             self.em_gain.update_value(10)
             self.cooler_on.update_value(True)
+            
+            self.acq_mode.update_value('single')
         
             # Readout and ROI parameters
             self.readout_mode.update_value(AndorReadMode.Image.value)  #Full image readout mode
@@ -273,9 +291,12 @@ class AndorCCDHW(HardwareComponent):
     def interrupt_acquisition(self):
         '''If the camera status is not IDLE, calls abort_acquisition()
         '''
-        stat = self.ccd_dev.get_status()
+        #stat = self.ccd_dev.get_status()
+        stat = self.settings.ccd_status.read_from_hardware()
         if stat != 'IDLE':
             self.ccd_dev.abort_acquisition()
+        stat = self.settings.ccd_status.read_from_hardware()
+        
     
     def set_readout(self):
         """Sets ROI based on values in LoggedQuantities for the current readout mode

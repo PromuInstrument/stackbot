@@ -12,13 +12,13 @@ from ScopeFoundry.helper_funcs import str2bool
 try:
     from ScopeFoundryHW.ni_daq import NI_SyncTaskSet
 except Exception as err:
-    print("could not load modules needed for SemSyncRasterDAQ:", err)
+    print("could not load modules needed for SyncRasterDAQ:", err)
 
 import numpy as np
 
-class SemSyncRasterDAQ(HardwareComponent):
+class SyncRasterDAQ(HardwareComponent):
     
-    name = 'SemSyncRasterDAQ'
+    name = 'sync_raster_daq'
     
     def setup(self):
         self.display_update_period = 0.050 #seconds
@@ -201,6 +201,9 @@ class SemSyncRasterDAQ(HardwareComponent):
         self.XY = self.interleave_xy_arrays(X, Y)                
         self.sync_analog_io.write_output_data_to_buffer(self.XY)
         
+    def update_output_data(self, new_XY, timeout=0):
+        self.current_XY = new_XY
+        self.sync_analog_io.write_output_data_to_buffer(new_XY, timeout=timeout)
     
     def interleave_xy_arrays(self, X, Y):
         """take 1D X and Y arrays to create a flat interleaved XY array
@@ -238,14 +241,24 @@ class SemSyncRasterDAQ(HardwareComponent):
         self.sync_analog_io.stop()
         
         
-    def set_adc_n_pixel_callback(self, n_pixels, cb_func):
+    def set_n_pixel_callback_adc(self, n_pixels, adc_cb_func):
         """
         Setup callback functions for EveryNSamplesEvent
         *cb_func* will be called 
         after every *n_pixels* are acquired. 
         """
         n_samples = n_pixels*self.settings['adc_oversample']
-        self.sync_analog_io.adc.set_n_sample_callback(n_samples, cb_func)
+        self.sync_analog_io.adc.set_n_sample_callback(n_samples, adc_cb_func)
+
+    def set_n_pixel_callback_dac(self, n_pixels, dac_cb_func):
+        """
+        Setup callback functions for EveryNSamplesEvent
+        *cb_func* will be called 
+        after every *n_pixels* are acquired. 
+        """
+        self.sync_analog_io.dac.set_n_sample_callback(n_pixels, dac_cb_func)
+        
+        
     
     def set_ctr_n_pixel_callback(self, ctr_i, n_pixels, cb_func):
         """

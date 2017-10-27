@@ -5,23 +5,22 @@ from ScopeFoundry import h5_io
 import pyqtgraph as pg
 import numpy as np
 import time
-from pandas.core.internals import BoolBlock
 
-class SemSyncRasterScanQuadView(Measurement):
+class SyncRasterScanQuadView(Measurement):
     
-    name = 'sem_sync_raster_scan_quad_view'
+    name = 'sync_raster_scan_quad_view'
     
     def setup(self):
         
-        self.scanDAQ   = self.app.hardware['SemSyncRasterDAQ']
-        self.sync_scan = self.app.measurements['sem_sync_raster_scan'] 
+        self.scanDAQ   = self.app.hardware['sync_raster_daq']
+        self.sync_scan = self.app.measurements['sync_raster_scan'] 
 
         
         self.names = ['ai0', 'ctr0', 'ai1', 'ctr1']
 
 
         
-        self.ui_filename = sibling_path(__file__, 'sem_sync_raster_quad_measure.ui')
+        self.ui_filename = sibling_path(__file__, 'sync_raster_quad_measure.ui')
         self.ui = load_qt_ui_file(self.ui_filename)
         self.graph_layout=pg.GraphicsLayoutWidget()
         self.ui.plot_widget.layout().addWidget(self.graph_layout)
@@ -57,7 +56,7 @@ class SemSyncRasterScanQuadView(Measurement):
             self.sync_scan.settings['Nv'] = self.settings['n_pixels']
         self.settings.n_pixels.add_listener(on_new_n_pixels)
         
-        self.scanDAQ.settings.adc_oversample.connect_to_widget(
+        self.sync_scan.settings.adc_oversample.connect_to_widget(
             self.ui.adc_oversample_doubleSpinBox)
         
         self.ui.pixel_time_pgSpinBox = \
@@ -152,6 +151,8 @@ class SemSyncRasterScanQuadView(Measurement):
     def run(self):
         self.display_update_period = 0.050
         #self.sync_scan.start()
+        self.app.hardware['sem_remcon'].read_from_hardware()
+        
         if not self.sync_scan.settings['activation']:
             self.sync_scan.settings['activation'] =True
             time.sleep(0.3)
@@ -200,7 +201,10 @@ class SemSyncRasterScanQuadView(Measurement):
         for name, px_map in self.display_maps.items():
             #self.hist_luts[name].setImageItem(self.img_items[name])
             self.img_items[name].setImage(px_map[0,:,:], autoDownsample=True, autoRange=False, autoLevels=False)
-            self.hist_luts[name].imageChanged(autoLevel=self.settings[name + '_autolevel'])
+            #self.hist_luts[name].imageChanged(autoLevel=self.settings[name + '_autolevel'])
+            self.hist_luts[name].imageChanged(autoLevel=False)
+            if self.settings[name + '_autolevel']:
+                self.hist_luts[name].setLevels(*np.percentile(px_map[0,:,:],(1,99)))
             
             self.hist_buffers[name][self.hist_i] = px_map.mean()
             

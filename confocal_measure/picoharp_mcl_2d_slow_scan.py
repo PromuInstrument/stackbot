@@ -19,10 +19,7 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
         
         # create data arrays
         
-        cr0 = self.picoharp_hw.settings.count_rate0.read_from_hardware()
-        rep_period_s = 1.0/cr0
-        time_bin_resolution = self.picoharp_hw.settings['Resolution']*1e-12
-        self.num_hist_chans = int(np.ceil(rep_period_s/time_bin_resolution))
+        self.num_hist_chans = self.picoharp_hw.calc_num_hist_chans()
 
         time_trace_map_shape = self.scan_shape + (self.num_hist_chans,)
         self.time_trace_map = np.zeros(time_trace_map_shape, dtype=float)
@@ -89,6 +86,9 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
         # display count-rate
         self.display_image_map[k,j,i] = hist_data[0:self.num_hist_chans].sum() * 1.0/elapsed_time
         
+        import datetime
+        print('pixel',  datetime.timedelta(seconds=(self.Npixels - pixel_num)*elapsed_time*1e-3), 'left')
+        
         print( 'pixel done' )
     
     def read_picoharp_histogram(self):
@@ -116,7 +116,7 @@ class Picoharp_MCL_2DSlowScan(MCLStage2DSlowScan):
         if not hasattr(self, 'lifetime_graph_layout'):
             self.lifetime_graph_layout = pg.GraphicsLayoutWidget()
             self.lifetime_plot = self.lifetime_graph_layout.addPlot()
-            self.lifetime_plotdata = self.lifetime_plot.spec_plot()
+            self.lifetime_plotdata = self.lifetime_plot.plot()
             self.lifetime_plot.setLogMode(False, True)
         self.lifetime_graph_layout.show()
         

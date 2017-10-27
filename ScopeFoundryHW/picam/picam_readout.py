@@ -1,6 +1,8 @@
 from ScopeFoundry import Measurement
 import pyqtgraph as pg
 import numpy as np
+from qtpy import QtWidgets
+from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 
 class PicamReadoutMeasure(Measurement):
 
@@ -9,17 +11,16 @@ class PicamReadoutMeasure(Measurement):
     def setup(self):
         
         self.display_update_period = 0.050 #seconds
-
+        self.hw  = self.app.hardware['picam']
         #connect events
 
         #local logged quantities
 
     def run(self):
 
-        picam_hw = self.app.hardware.picam
-        cam = picam_hw.cam
+        cam = self.hw.cam
 
-        print "rois|-->", cam.read_rois()
+        print("rois|-->", cam.read_rois())
 
         cam.commit_parameters()
         
@@ -33,13 +34,23 @@ class PicamReadoutMeasure(Measurement):
 
     def setup_figure(self):
 
+
+        self.ui = load_qt_ui_file(sibling_path(__file__, 'picam_readout.ui'))
+        
+        self.hw.settings.ExposureTime.connect_to_widget(self.ui.int_time_doubleSpinBox) 
+        self.hw.settings.SensorTemperatureReading.connect_to_widget(self.ui.temp_doubleSpinBox) 
+
+        self.ui.start_pushButton.clicked.connect(self.start)
+        self.ui.interrupt_pushButton.clicked.connect(self.interrupt)
+        self.ui.commit_pushButton.clicked.connect(self.hw.commit_parameters)
+
+
         if hasattr(self, 'graph_layout'):
             self.graph_layout.deleteLater() # see http://stackoverflow.com/questions/9899409/pyside-removing-a-widget-from-a-layout
             del self.graph_layout
-
-        self.ui = self.graph_layout = pg.GraphicsLayoutWidget(border=(100,100,100))
-        self.ui.setWindowTitle(self.name)
-
+        self.graph_layout = pg.GraphicsLayoutWidget(border=(0,0,0))
+        self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
+        
         self.spec_plot = self.graph_layout.addPlot()
         self.spec_plot_line = self.spec_plot.plot([1,3,2,4,3,5])
         self.spec_plot.enableAutoRange()
@@ -56,8 +67,6 @@ class PicamReadoutMeasure(Measurement):
         self.hist_lut.autoHistogramRange()
         self.hist_lut.setImageItem(self.img_item)
         self.graph_layout.addItem(self.hist_lut)
-
-        self.show_ui()
 
     def update_display(self):
         self.img_item.setImage(self.roi_data[0].T.astype(float), autoLevels=False)

@@ -35,7 +35,8 @@ class BaseRaster2DSlowScan(BaseRaster2DScan):
 
                 if self.settings['save_h5']:
                     self.h5_file = h5_io.h5_base_file(self.app, measurement=self)
-                          
+                    self.h5_filename = self.h5_file.filename
+                    
                     self.h5_file.attrs['time_id'] = self.t0
                     H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
                 
@@ -140,5 +141,8 @@ class BaseRaster2DSlowScan(BaseRaster2DScan):
     
     def post_scan_cleanup(self):
         print(self.name, "post_scan_setup not implemented")
+
+    def new_pt_pos(self, x,y):
+        self.move_position_start(x, y)
 
  
