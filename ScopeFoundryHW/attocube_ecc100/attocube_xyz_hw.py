@@ -13,14 +13,20 @@ except Exception as err:
 
 class AttoCubeXYZStageHW(HardwareComponent):
 
+    name = 'attocube_xyz_stage'
+
+    def __init__(self, app, debug=False, name=None, ax_names='xyz'):
+        self.ax_names = ax_names
+        HardwareComponent.__init__(self, app, debug=debug, name=name)
+        
+
     def setup(self):
-        self.name = 'attocube_xyz_stage'
         # if attocube pro is activated
         self.pro = False
         
         # Created logged quantities
         
-        for axis in 'xyz':          
+        for axis in self.ax_names:          
             self.settings.New(axis + "_position", 
                                dtype=float,
                                ro=True,

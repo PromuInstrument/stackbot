@@ -13,7 +13,8 @@ class AttocubeTestApp(BaseMicroscopeApp):
     
     def setup(self):
         from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYZStageHW
-        self.add_hardware(AttoCubeXYZStageHW(self))
+        self.add_hardware(AttoCubeXYZStageHW(self, ax_names='xyz'))
+        self.add_hardware(AttoCubeXYZStageHW(self, name='attocube_dev2', ax_names=['r', 'theta', 'phi']))
         
         #from ScopeFoundryHW.attocube_anc150.anc150_optimizer import ANC_Optimizer
         #self.add_measurement(ANC_Optimizer(self))

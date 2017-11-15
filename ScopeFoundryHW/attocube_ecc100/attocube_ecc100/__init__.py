@@ -7,11 +7,8 @@ import os
 import time
 import numpy as np
 
-ecc = cdll.LoadLibrary(
-        os.path.abspath(os.path.join(
-                         os.path.dirname(__file__),
-                         r"Win64\lib\ecc.dll")))
-
+#ecc = cdll.LoadLibrary( r"C:\Program Files (x86)\N-Hands\Daisy@ECC\userlib\lib\ecc.dll")
+ecc = cdll.LoadLibrary("G:\Team Drives\MF Imaging\Hardware\Attocube\Software\ECC100_v1.6.06\ECC100_Library\Win64\ecc.dll")
 
 # /** Return values of functions */
 #define NCB_Ok                   0              /**< No error                              */
@@ -45,6 +42,19 @@ def handle_err(retcode):
     return retcode
 
 
+def ECC_enumerate():
+    'check for number of connected devices'
+    num_devices = ecc.ECC_Check(0)
+    ecc_devices = []
+    for i in range(num_devices):        
+        ## Int32 NCB_API ECC_getDeviceInfo( Int32 deviceNo, Int32 * devId, Bln32 * locked );
+        dev_id = ctypes.c_int32()
+        locked = ctypes.c_int32()
+        ecc.ECC_getDeviceInfo( i, ctypes.byref(dev_id), ctypes.byref(locked) );
+        ecc_devices.append(( i, dev_id.value, locked.value))
+        ##print( i, dev_id.value, locked.value)
+    return ecc_devices
+
 
 class EccInfo(ctypes.Structure):
     _fields_ = [
@@ -60,7 +70,7 @@ class AttoCubeECC100(object):
         self.device_num = device_num
         
         if self.debug:
-            print("Initializing AttoCubeECC100", device_num)
+            print("Initializing AttoCubeECC100 device ", device_num)
         
         self.num_devices = ecc.ECC_Check()
         
@@ -320,30 +330,36 @@ class AttoCubeECC100(object):
 
 if __name__ == '__main__':
     
-    e = AttoCubeECC100(device_num=0, debug=True)
-
-    for ax in [0,1,2]:
-        print(ax, e.read_actor_info(ax))
-        print(ax, "electrical", e.is_electrically_connected(ax))
-        print(ax, "reference_status", e.read_reference_status(ax))
-        print(ax, "reference_pos", e.read_reference_position(ax))
-        print(ax, "step_voltage", e.read_step_voltage(ax))
-        ##print ax, "dc_voltage", e.read_openloop_voltage(ax)
-        #needs pro version
-        print(ax, "frequency", e.read_frequency(ax))
-        print(ax, "enable_axis", e.enable_axis(ax))
-        print(ax, "position", e.read_position_axis(ax))
-        for i in range(10):
-            e.single_step(ax, backward=False)
+    dev_list = ECC_enumerate()
+    for i in range(len(dev_list)):
+        print( 'ECC device ', dev_list[i][0], ' id ',dev_list[i][1], ' Locked ', bool(dev_list[i][2]))
+    print('\r')
+    
+    for i in range(len(dev_list)):
+        e = AttoCubeECC100(device_num=i, debug=True)
+    
+        for ax in [0,1,2]:
+            print(ax, e.read_actor_info(ax))
+            print(ax, "electrical", e.is_electrically_connected(ax))
+            print(ax, "reference_status", e.read_reference_status(ax))
+            print(ax, "reference_pos", e.read_reference_position(ax))
+            print(ax, "step_voltage", e.read_step_voltage(ax))
+            ##print ax, "dc_voltage", e.read_openloop_voltage(ax)
+            #needs pro version
+            print(ax, "frequency", e.read_frequency(ax))
+            print(ax, "enable_axis", e.enable_axis(ax))
             print(ax, "position", e.read_position_axis(ax))
-            time.sleep(0.05)
-
-        print(ax, "enable_closedloop_axis", e.enable_closedloop_axis(ax, enable=True))
-        print(ax, "moving", e.write_target_position_axis(ax, 3e6))
-        for i in range(10):
-            print(ax, "position", e.read_position_axis(ax))
-            time.sleep(0.05)
-        
-    e.close()
+            for i in range(10):
+                e.single_step(ax, backward=False)
+                print(ax, "position", e.read_position_axis(ax))
+                time.sleep(0.05)
+    
+    #         print(ax, "enable_closedloop_axis", e.enable_closedloop_axis(ax, enable=True))
+    #         print(ax, "moving", e.write_target_position_axis(ax, 3e6))
+    #         for i in range(10):
+    #             print(ax, "position", e.read_position_axis(ax))
+    #             time.sleep(0.05)
+            
+        e.close()
     
     print("done")
