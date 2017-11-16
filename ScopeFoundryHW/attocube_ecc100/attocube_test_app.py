@@ -22,7 +22,8 @@ class AttocubeTestApp(BaseMicroscopeApp):
         #from ScopeFoundryHW.attocube_anc150.anc_explore_measure import ANC_RemoteMeasure
         #self.add_measurement(ANC_RemoteMeasure(self))
         from ScopeFoundryHW.attocube_ecc100.attocube_stage_control import AttoCubeStageControlMeasure
-        self.add_measurement(AttoCubeStageControlMeasure(self))
+        self.add_measurement(AttoCubeStageControlMeasure(self, name='attocube_dev1'))
+        self.add_measurement(AttoCubeStageControlMeasure(self, name='attocube_dev2', hw_name='attocube_dev2'))
         
         from ScopeFoundryHW.attocube_ecc100.attocube_slowscan import AttoCube2DSlowScan
         self.add_measurement(AttoCube2DSlowScan(self))
