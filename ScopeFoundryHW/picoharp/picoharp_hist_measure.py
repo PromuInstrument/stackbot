@@ -40,6 +40,7 @@ class PicoHarpHistogramMeasure(Measurement):
         S.use_calc_hist_chans.connect_to_widget(self.ui.use_calc_hist_chans_checkBox)
         ph_hw.settings.Tacq.connect_to_widget(self.ui.picoharp_tacq_doubleSpinBox)
         ph_hw.settings.Binning.connect_to_widget(self.ui.Binning_comboBox)
+        ph_hw.settings.histogram_channels.connect_to_widget(self.ui.histogram_channels_doubleSpinBox)
         ph_hw.settings.count_rate0.connect_to_widget(self.ui.ch0_doubleSpinBox)
         ph_hw.settings.count_rate1.connect_to_widget(self.ui.ch1_doubleSpinBox)
         
