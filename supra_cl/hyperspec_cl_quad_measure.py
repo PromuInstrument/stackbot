@@ -4,6 +4,10 @@ from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file,\
 import pyqtgraph as pg
 import numpy as np
 import time
+from collections import OrderedDict, namedtuple
+
+
+AvailChan = namedtuple('AvailChan', ['type_', 'index', 'phys_chan', 'chan_name', 'term'])
 
 
 class HyperSpecCLQuadView(Measurement):
@@ -13,19 +17,13 @@ class HyperSpecCLQuadView(Measurement):
     def setup(self):
         
         self.scanDAQ   = self.app.hardware['sync_raster_daq']
-        #self.sync_scan = self.app.measurements['sync_raster_scan'] 
         self.sync_scan = self.hyperspec_scan = self.app.measurements['hyperspec_cl']
 
-        self.names = ['ai0', 'ctr0', 'ai1', 'ctr1']
-
-
-        
         self.ui_filename = sibling_path(__file__, 'hyperspec_cl_quad_measure.ui')
         self.ui = load_qt_ui_file(self.ui_filename)
         self.graph_layout=pg.GraphicsLayoutWidget()
         self.ui.plot_widget.layout().addWidget(self.graph_layout)
-        
-        
+          
         #### Control Widgets
         #self.settings.activation.connect_to_widget(self.ui.activation_checkBox)
         self.ui.start_pushButton.clicked.connect(
@@ -33,20 +31,38 @@ class HyperSpecCLQuadView(Measurement):
         self.ui.interrupt_pushButton.clicked.connect(
             self.interrupt)
         
-        # Auto level
-        for name in self.names:
-            lq_name = name+'_autolevel'
-            self.settings.New(lq_name, dtype=bool, initial=True)
-            self.settings.get_lq(lq_name).connect_to_widget(
-                getattr(self.ui, lq_name + "_checkBox"))
+        # Display channels and autolevel
+        for disp_letter in "ABCD":
+            lq_name = disp_letter+'_autolevel'
+            lq = self.settings.New(lq_name, dtype=bool, initial=True)
+            lq.connect_to_widget(
+                getattr(self.ui, disp_letter + "_autolevel_checkBox"))
+            
+            lq = self.settings.New(disp_letter + "_chan_display", dtype=str, initial='ai0', choices = ('ai0',))
+            
+            lq.connect_to_widget(
+                getattr(self.ui, disp_letter + "_chan_comboBox"))
+        
+        
+        
+        self.scanDAQ.channels_changed.connect(self.update_available_channels)
 
-        self.settings.New('show_crosshairs', dtype=bool, initial=True)
-        self.settings.show_crosshairs.connect_to_widget(self.ui.show_crosshairs_checkBox)
-        self.settings.show_crosshairs.add_listener(self.on_crosshair_change)
+        self.update_available_channels()
+        
+        
+        # Crosshairs
+        show_crosshairs = self.settings.New('show_crosshairs', dtype=bool, initial=True)
+        show_crosshairs.connect_to_widget(self.ui.show_crosshairs_checkBox)
+        show_crosshairs.add_listener(self.on_crosshair_change)
         
         # Collect
         # TODO
+        self.collection_chans = ['ai%i' % i for i in [0,1,2,3]] + ['ctr%i' % i for i in [0,1,2,3]] 
         
+        #for name in self.collection_chans:
+        #    checkbox = getattr(self.ui, name + "_collect_checkBox")
+        #    chan = self.available_chan_dict[name]
+        #    checkbox.setText( "|".join(chan[2:] ) )
         
         # Scan settings
         self.settings.New('n_pixels', dtype=int, vmin=1, initial=512)
@@ -58,6 +74,11 @@ class HyperSpecCLQuadView(Measurement):
         
         self.sync_scan.settings.adc_oversample.connect_to_widget(
             self.ui.adc_oversample_doubleSpinBox)
+        
+        self.ui.adc_rate_pgSpinBox = \
+            replace_spinbox_in_layout(self.ui.adc_rate_doubleSpinBox)
+        self.sync_scan.settings.adc_rate.connect_to_widget(
+            self.ui.adc_rate_pgSpinBox)
         
         self.ui.pixel_time_pgSpinBox = \
             replace_spinbox_in_layout(self.ui.pixel_time_doubleSpinBox)
@@ -99,6 +120,23 @@ class HyperSpecCLQuadView(Measurement):
         spec.settings.grating_id.connect_to_widget(
             self.ui.spec_grating_id_comboBox)
 
+    def update_available_channels(self):
+        self.available_chan_dict = OrderedDict()
+                
+        for i, phys_chan in enumerate(self.scanDAQ.settings['adc_channels']):
+            self.available_chan_dict[phys_chan] = AvailChan(
+                # type, index, physical_chan, channel_name, terminal
+                'ai', i, phys_chan, self.scanDAQ.settings['adc_chan_names'][i], phys_chan)
+        for i, phys_chan in enumerate(self.scanDAQ.settings['ctr_channels']):
+            self.available_chan_dict[phys_chan] = AvailChan(
+                # type, index, physical_chan, channel_name, terminal
+                'ctr', i, phys_chan, self.scanDAQ.settings['ctr_chan_names'][i], self.scanDAQ.settings['ctr_chan_terms'][i])
+        
+        for disp_letter in "ABCD":
+            print(disp_letter)
+            lq = self.settings.get_lq(disp_letter + "_chan_display")
+            lq.change_choice_list(tuple(self.available_chan_dict.keys()))
+
         
     def setup_figure(self):
         
@@ -109,7 +147,7 @@ class HyperSpecCLQuadView(Measurement):
         self.display_image_maps = dict()
         self.cross_hair_lines = dict()
         
-        for ii, name in enumerate(self.names):
+        for ii, name in enumerate("ABCD"):
             if (ii % 2)-1:
                 self.graph_layout.nextRow()
             plot = self.plot_items[name] = self.graph_layout.addPlot(title=name)
@@ -139,12 +177,20 @@ class HyperSpecCLQuadView(Measurement):
             title="Spectrum", colspan=2)
         self.spectrum_plot.addLegend()
         self.spectrum_plot.showButtons()
-        self.spectrum_plot.setLabel('bottom', text='wavelength', units='nm')
+        self.spectrum_plot.setLabel('bottom', text='wavelength', units='px')
         self.current_spec_plotline = self.spectrum_plot.plot()
         #self.roi_spec_plotline = self.spectrum_plot.plot()
+        
+        # linear region for band pass selection        
+        self.bp_region = pg.LinearRegionItem()
+        self.bp_region.setZValue(10)
+        self.spectrum_plot.addItem(self.bp_region, ignoreBounds=False)
+        self.bp_region.setRegion([0,1600])
 
-        self.bp_img_plot = self.graph_layout.addPlot(
-            title="Band Pass Image", colspan=2)
+        #self.bp_region.sigRegionChanged.connect(self.update_bp_region)
+
+        plot = self.bp_img_plot = self.graph_layout.addPlot(
+            title="Band Pass Image", colspan=1)
 
         self.bp_img_item = pg.ImageItem()
         self.bp_img_item.setOpts(axisOrder='row-major')
@@ -152,8 +198,13 @@ class HyperSpecCLQuadView(Measurement):
         plot.addItem(self.bp_img_item )
         plot.showGrid(x=True, y=True)
         plot.setAspectLocked(lock=True, ratio=1)
+        self.hist_lut_bp = pg.HistogramLUTItem()
+        self.hist_lut_bp .setImageItem(self.bp_img_item)
+        self.graph_layout.addItem(self.hist_lut_bp )
 
 
+    #def update_bp_region(self):
+    #    self.reg = self.bp_region.getRegion()
         
 
     def run(self):
@@ -163,7 +214,7 @@ class HyperSpecCLQuadView(Measurement):
             self.sync_scan.settings['activation'] =True
             time.sleep(0.3)
 
-        for name in self.names:
+        for name in "ABCD":
             self.img_items[name].setAutoDownsample(True)
             
             # move crosshairs to center of images
@@ -171,22 +222,19 @@ class HyperSpecCLQuadView(Measurement):
             vLine.setPos(self.sync_scan.settings['Nh']/2)
             hLine.setPos(self.sync_scan.settings['Nv']/2)
 
+                
+        self.display_maps = dict()
         
-        self.display_maps = dict(
-            ai0=self.sync_scan.adc_map[:,:,:,0], # numpy views of data
-            ctr0=self.sync_scan.ctr_map_Hz[:,:,:,0],
-            ctr1=self.sync_scan.ctr_map_Hz[:,:,:,1],
-            )
-        
-        if self.sync_scan.scanDAQ.adc_chan_count > 1:
-            self.display_maps['ai1']=self.sync_scan.adc_map[:,:,:,1]
-        else:
-            self.display_maps['ai1']=np.zeros((1,10,10))
-        
+        for key, chan in self.available_chan_dict.items():
+            if chan.type_ == 'ai':
+                self.display_maps[key] = self.sync_scan.adc_map[:,:,:,chan.index]
+            elif chan.type_ == 'ctr':
+                self.display_maps[key] = self.sync_scan.ctr_map_Hz[:,:,:,chan.index]
+                
+    
         while not self.interrupt_measurement_called:
             if not self.sync_scan.is_measuring():
                 self.interrupt_measurement_called = True
-
 
             time.sleep(self.display_update_period)
         #self.sync_scan.interrupt()
@@ -198,19 +246,38 @@ class HyperSpecCLQuadView(Measurement):
         t0 = time.time()
         
         # Update Quad Images
-        for name, px_map in self.display_maps.items():
+        for name in "ABCD":
+            
+            chan_id = self.settings[name + "_chan_display"]
+            chan = self.available_chan_dict[chan_id]
+            
+            px_map = self.display_maps[chan_id]
             #self.hist_luts[name].setImageItem(self.img_items[name])
             self.img_items[name].setImage(px_map[0,:,:], autoDownsample=True, autoRange=False, autoLevels=False)
             #self.hist_luts[name].imageChanged(autoLevel=self.settings[name + '_autolevel'])
             self.hist_luts[name].imageChanged(autoLevel=False)
             if self.settings[name + '_autolevel']:
-                self.hist_luts[name].setLevels(*np.percentile(px_map[0,:,:],(1,99)))
+                im = px_map[0,:,:]
+                non_zero_mask = im!=0
+                if np.any(non_zero_mask):
+                    self.hist_luts[name].setLevels(*np.percentile(im[non_zero_mask],(1,99)))
+            
+            plot = self.plot_items[name] 
+            plot.setTitle("{} {}".format( chan_id, chan.chan_name))
+
             
         # Update Spectrum
         # need wavelength
         M = self.hyperspec_scan
         self.current_spec_plotline.setData(
             M.spec_buffer[M.andor_ccd_pixel_i-1])
+        
+        
+        kk0, kk1 = self.bp_region.getRegion()
+        bp_img = M.spec_map[0,:,:, int(kk0):int(kk1)].sum(axis=2)
+        self.bp_img_item.setImage(bp_img, autoDownsample=True, autoRange=False, autoLevels=False)
+        self.hist_lut_bp.imageChanged(autoLevel=False)
+        self.hist_lut_bp.setLevels(*np.percentile(bp_img[bp_img!=0],(1,99)))
 
         #print('quad display {}'.format(time.time() -t0))
         
@@ -218,7 +285,9 @@ class HyperSpecCLQuadView(Measurement):
         vis = self.settings['show_crosshairs']
         
         if hasattr(self, 'cross_hair_lines'):
-            for name in self.names:
+            for name in 'ABCD':
                 hLine, vLine = self.cross_hair_lines[name]
                 hLine.setVisible(vis)
                 vLine.setVisible(vis)
+
+        

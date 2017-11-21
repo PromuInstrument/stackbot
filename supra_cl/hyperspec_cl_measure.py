@@ -9,7 +9,8 @@ class HyperSpecCLMeasure(SyncRasterScan):
     def setup(self):
         SyncRasterScan.setup(self)
         self.settings['adc_oversample'] = 2500
-        self.settings.adc_oversample.change_min_max(2500, 25e6)        
+        self.settings.adc_oversample.change_min_max(2500, 25e6)
+        self.settings.New('adc_rate', dtype=float,initial = 200e3)    
         # set reasonable limits for oversample rate (max pixel rate 275Hz) for mode
         # Tested up to 2.9+0.7ms per pixel on andor newton
         
@@ -28,10 +29,12 @@ class HyperSpecCLMeasure(SyncRasterScan):
         
         
         
+    def pre_run(self):
+        self.app.hardware['sync_raster_daq'].settings['adc_rate'] = self.settings['adc_rate']
         
     def pre_scan_setup(self):
         # hardware
-        
+               
         self.app.hardware['sem_remcon'].read_from_hardware()
         
         sync_raster_daq = self.app.hardware['sync_raster_daq']

@@ -40,102 +40,100 @@
      <property name="checkable">
       <bool>false</bool>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3" stretch="0,0,0,0,0,0,1">
-      <item>
+     <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="0">
        <widget class="QPushButton" name="start_pushButton">
         <property name="text">
          <string>Start</string>
         </property>
        </widget>
       </item>
-      <item>
+      <item row="1" column="0">
        <widget class="QPushButton" name="interrupt_pushButton">
         <property name="text">
          <string>Interrupt</string>
         </property>
        </widget>
       </item>
-      <item>
+      <item row="2" column="0">
        <widget class="QGroupBox" name="autolevel_groupBox">
         <property name="title">
          <string>AutoScale Images</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_2">
          <item row="0" column="1">
-          <widget class="QCheckBox" name="ctr0_autolevel_checkBox">
-           <property name="text">
-            <string>ctr0</string>
-           </property>
-          </widget>
-         </item>
-         <item row="0" column="0">
-          <widget class="QCheckBox" name="ai0_autolevel_checkBox">
-           <property name="text">
-            <string>ai0</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QCheckBox" name="ai1_autolevel_checkBox">
-           <property name="text">
-            <string>ai1</string>
-           </property>
-          </widget>
+          <widget class="QComboBox" name="A_chan_comboBox"/>
          </item>
          <item row="1" column="1">
-          <widget class="QCheckBox" name="ctr1_autolevel_checkBox">
+          <widget class="QComboBox" name="C_chan_comboBox"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="QCheckBox" name="D_autolevel_checkBox">
            <property name="text">
-            <string>ctr1</string>
+            <string>D</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
+         <item row="2" column="0" colspan="2">
           <widget class="QCheckBox" name="show_crosshairs_checkBox">
            <property name="text">
             <string>Show Cross Hairs</string>
            </property>
           </widget>
          </item>
+         <item row="0" column="2">
+          <widget class="QCheckBox" name="B_autolevel_checkBox">
+           <property name="text">
+            <string>B</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="A_autolevel_checkBox">
+           <property name="text">
+            <string>A</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="C_autolevel_checkBox">
+           <property name="text">
+            <string>C</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QComboBox" name="B_chan_comboBox"/>
+         </item>
+         <item row="1" column="3">
+          <widget class="QComboBox" name="D_chan_comboBox"/>
+         </item>
         </layout>
        </widget>
       </item>
-      <item>
+      <item row="3" column="0">
        <widget class="QGroupBox" name="groupBox_2">
         <property name="title">
          <string>Scan</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_5">
-         <item row="3" column="1">
-          <widget class="QDoubleSpinBox" name="line_time_doubleSpinBox"/>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="n_pixels_doubleSpinBox"/>
          </item>
-         <item row="2" column="1">
-          <widget class="QDoubleSpinBox" name="pixel_time_doubleSpinBox"/>
+         <item row="5" column="1">
+          <widget class="QDoubleSpinBox" name="frame_time_doubleSpinBox"/>
          </item>
-         <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="adc_oversample_doubleSpinBox"/>
-         </item>
-         <item row="4" column="0">
+         <item row="5" column="0">
           <widget class="QLabel" name="label_4">
            <property name="text">
             <string>frame time</string>
            </property>
           </widget>
          </item>
-         <item row="2" column="0">
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>Pixel time</string>
-           </property>
-          </widget>
+         <item row="3" column="1">
+          <widget class="QDoubleSpinBox" name="pixel_time_doubleSpinBox"/>
          </item>
-         <item row="1" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>Over Sample</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
+         <item row="4" column="0">
           <widget class="QLabel" name="label_2">
            <property name="text">
             <string>Line time</string>
@@ -143,10 +141,7 @@
           </widget>
          </item>
          <item row="4" column="1">
-          <widget class="QDoubleSpinBox" name="frame_time_doubleSpinBox"/>
-         </item>
-         <item row="0" column="1">
-          <widget class="QDoubleSpinBox" name="n_pixels_doubleSpinBox"/>
+          <widget class="QDoubleSpinBox" name="line_time_doubleSpinBox"/>
          </item>
          <item row="0" column="0">
           <widget class="QLabel" name="label_6">
@@ -155,10 +150,37 @@
            </property>
           </widget>
          </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Over Sample</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Pixel time</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QDoubleSpinBox" name="adc_oversample_doubleSpinBox"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="adc_rate_doubleSpinBox"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_11">
+           <property name="text">
+            <string>ADC Rate</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </widget>
       </item>
-      <item>
+      <item row="4" column="0">
        <widget class="QGroupBox" name="groupBox_3">
         <property name="title">
          <string>Data</string>
@@ -191,7 +213,7 @@
         </layout>
        </widget>
       </item>
-      <item>
+      <item row="5" column="0">
        <widget class="QGroupBox" name="groupBox">
         <property name="title">
          <string>Spectrometer and Camera</string>
@@ -240,7 +262,7 @@
         </layout>
        </widget>
       </item>
-      <item>
+      <item row="6" column="0">
        <widget class="QGroupBox" name="groupBox_5">
         <property name="title">
          <string>Description</string>
