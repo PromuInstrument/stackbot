@@ -40,27 +40,32 @@ class SupraCLApp(BaseMicroscopeApp):
         from ScopeFoundryHW.sync_raster_daq import SyncRasterScan
         self.add_measurement(SyncRasterScan(self))
         
-        from supra_cl.sync_raster_quad_measure import SyncRasterScanQuadView
-        self.add_measurement(SyncRasterScanQuadView(self))
+#         from supra_cl.sync_raster_quad_measure import SyncRasterScanQuadView
+#         self.add_measurement(SyncRasterScanQuadView(self))
         
         from ScopeFoundryHW import andor_camera
         self.add_hardware(andor_camera.AndorCCDHW(self))
         self.add_measurement(andor_camera.AndorCCDReadoutMeasure(self))
         self.add_measurement(andor_camera.AndorCCDKineticMeasure(self))
-        self.add_measurement(andor_camera.AndorSpecCalibMeasure(self))
+        #self.add_measurement(andor_camera.AndorSpecCalibMeasure(self))
 
         from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
         self.add_hardware(ActonSpectrometerHW(self))
         
         from supra_cl.hyperspec_cl_measure import HyperSpecCLMeasure
         self.add_measurement(HyperSpecCLMeasure(self))
+
+
+        self.settings_load_ini('supra_cl_defaults.ini')
         
         from supra_cl.hyperspec_cl_quad_measure import HyperSpecCLQuadView
         self.add_measurement(HyperSpecCLQuadView(self))
 
-
+        from supra_cl.cl_quad_measure import CLQuadView
+        self.add_measurement(CLQuadView(self))
 
         self.settings_load_ini('supra_cl_defaults.ini')
+
 
         self.ui.show()
 
