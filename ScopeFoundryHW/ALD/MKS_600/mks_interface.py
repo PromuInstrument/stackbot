@@ -20,13 +20,25 @@ class mks_controller_interface(object):
         self.port = port
         self.debug = debug
         
-        self.ser = serial.Serial(port=self.port, baudrate=9600, bytesize=serial.EIGHTBITS, timeout=0.1,
+        self.ser = serial.Serial(port=self.port, baudrate=9600, bytesize=serial.EIGHTBITS, timeout=1,
                                  parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
         self.ser.flush()
         
         time.sleep(1)
     
+        #Below variables store values temporarily in order to account for serial timing issues.
+    
+        self.units = None 
+        self.float = None
+        self.prtemp = None
+        self.valve_open = None
+        self.valve_thresholds = (0.08, 99.90)
+        self.sensor_range = None
+        self.error_count = 0
+        
     def ask_cmd(self, cmd):
+        if self.ser.in_waiting > 0:
+            self.ser.flush()
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
         message = cmd+'\r\n'
@@ -37,59 +49,86 @@ class mks_controller_interface(object):
         return resp
     
     def read_sensor_range(self):
-        if self.debug:
-            print("sensresp", self.ask_cmd("R33")[1:-2])
-        value = int(self.ask_cmd("R33")[1:-2])
-        if self.debug:
-            print("sensor range",value)
-        ranges = {0: 0.1, 1: 0.2, 2: 0.5, 3: 1,
-                  4: 2, 5: 5, 6: 10, 7: 50, 8: 100,
-                  9: 500, 10: 1000, 11: 5000, 12:10000,
-                  13: 1.33, 14: 2.66, 15: 13.33, 16: 133.3,
-                  17: 1333, 18: 6666, 19: 13332
-                }
-        resp = ranges[value]
-        return resp
-    
+        resp = self.ask_cmd("R33")[1:-2]
+        print("sensrange:", resp)
+        if resp != b'':
+            value = int(resp)
+            if self.debug:
+                print("sensor range",value)
+            ranges = {0: 0.1, 1: 0.2, 2: 0.5, 3: 1,
+                      4: 2, 5: 5, 6: 10, 7: 50, 8: 100,
+                      9: 500, 10: 1000, 11: 5000, 12:10000,
+                      13: 1.33, 14: 2.66, 15: 13.33, 16: 133.3,
+                      17: 1333, 18: 6666, 19: 13332
+                    }
+            resp = ranges[value]
+            ## Store successfully retrieved value
+            self.sensor_range = resp
+            return resp
+        else:            
+            self.error_count += 1
+            ## Read failed, return last stored value
+            return self.sensor_range
+        
+
     def read_pressure_units(self):
         resp = self.ask_cmd("R34")[1:-2]
-        if self.debug:
-            print("resp", resp)
-        value = int(resp)
-        if self.debug:
-            print("value:", value)
-        units = {0: "Torr",
-                1: "mTorr",
-                2: "mbar",
-                3: u"\u03bc"+"bar",
-                4: "kPa",
-                5: "Pa",
-                6: "cmH2O",
-                7: "inH2O"}
-        resp = units[value]
-        if self.debug:
-            print("units:", resp)
-        return resp
+        if resp != b'':
+            value = int(resp)
+            if self.debug:
+                print("value:", value)
+            units = {0: "Torr",
+                    1: "mTorr",
+                    2: "mbar",
+                    3: u"\u03bc"+"bar",
+                    4: "kPa",
+                    5: "Pa",
+                    6: "cmH2O",
+                    7: "inH2O"}
+            resp = units[value]
+            if self.debug:
+                print("units:", resp)
+            ## Store successfully retrieved value
+            self.units = resp
+            return resp
+        else: 
+            print("Pressure misread, using last stored temp value.")
+            self.error_count += 1
+            self.ser.flush()
+            ## Read failed, return last stored value
+            return self.units
     
     def read_pressure(self):
         resp = self.ask_cmd("R5")[1:-2]
-        if self.debug:
-            print(resp)
-        fl = float(resp)
-        if self.debug:
-            print("fl:", fl)
-        pct = fl/100
-        if self.debug:
-            print("resp:", resp, "fl:", fl, "pct:", pct)
-        fs = self.read_sensor_range()
-        if self.debug:
-            print("fs:", fs)
-        return pct*fs
+        print("rpressure:", resp)
+        if resp != b'':
+            fl = float(resp)
+            pct = fl/100
+            fs = self.read_sensor_range()
+            self.prtemp = pct*fs
+            return pct*fs
+        else:
+            print("Pressure misread, using last stored temp value.")
+            self.error_count += 1
+            self.ser.flush()
+            ## Read failed, return last stored value
+            return self.prtemp
+            
         
     def read_valve(self):
-        resp = float(self.ask_cmd("R6")[2:-2])
-        return resp
-    
+        resp = self.ask_cmd("R6")[2:-2]
+        if resp != b'':
+            fl = float(resp)
+            ## Store successfully retrieved value
+            self.float = fl
+            return fl
+        else:
+            print("Valve status misread, using last stored temp value.")
+            self.error_count += 1
+            self.ser.flush()
+            ## Read failed, return last stored value
+            return self.float
+        
     def open_valve(self):
         self.ask_cmd("O")
     
