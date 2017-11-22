@@ -25,8 +25,12 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.pfeiffer_vgc.vgc_hw import VGC_Hardware
         self.add_hardware(VGC_Hardware(self))
         
+        from ScopeFoundryHW.ALD.MKS_600.mks_measure import MKS_Measure
+        self.add_measurement(MKS_Measure(self))
+        
         from ScopeFoundryHW.ALD.pfeiffer_vgc.vgc_measure import VGC_Measure
         self.add_measurement(VGC_Measure(self))
+        
         
 if __name__ == '__main__':
     import sys
