@@ -26,6 +26,11 @@ class VGC_Measure(Measurement):
         self.vgc = self.app.hardware['vgc_hw']
     
     def run(self):
+        dt=0.1
         while not self.interrupt_measurement_called:
-            self.vgc.read_from_hardware()
+            self.vgc.settings.ch1_pressure.read_from_hardware()
+            time.sleep(dt)
+            self.vgc.settings.ch1_units.read_from_hardware()
+            time.sleep(dt)
+            self.vgc.settings.ch1_sensor_type.read_from_hardware()
             time.sleep(0.25)
