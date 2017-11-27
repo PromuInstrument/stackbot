@@ -5,6 +5,7 @@ Created on Jul 24, 2014
 '''
 from __future__ import absolute_import
 from ScopeFoundry import HardwareComponent
+import time
 try:
     from .attocube_ecc100 import AttoCubeECC100
 except Exception as err:
@@ -23,11 +24,12 @@ class AttoCubeXYZStageHW(HardwareComponent):
     def setup(self):
         # Created logged quantities
         
-        for axis in self.ax_names:          
+        for axis in self.ax_names:
             self.settings.New(axis + "_position", 
                                dtype=float,
                                ro=True,
                                unit='mm',
+                               spinbox_decimals=6,
                                si=False
                                )
             
@@ -39,6 +41,8 @@ class AttoCubeXYZStageHW(HardwareComponent):
                                 vmin=-20,
                                 vmax=20,
                                 unit='mm',
+                                spinbox_decimals=6,
+                                spinbox_step=0.01,
                                 si=False)
         
             self.settings.New(axis + "_enable_closedloop", dtype=bool,
@@ -48,6 +52,13 @@ class AttoCubeXYZStageHW(HardwareComponent):
                                                                ro=True)
             self.settings.New(axis + "_reference_found", dtype=bool,
                                                                ro=True)
+            self.settings.New(axis + "_reference_position", dtype=float,
+                                spinbox_decimals=6, si = False,
+                              unit='mm', ro=True)
+           
+            self.settings.New(axis + "_continuous_motion", 
+                              dtype=int, ro=True, 
+                              choices=[('+ Forward',+1), ('STOP',0), ('- Backward', -1)])
            
             if self.pro:
                 self.settings.New(axis + "_auto_reference_update", dtype=bool,
@@ -70,7 +81,7 @@ class AttoCubeXYZStageHW(HardwareComponent):
             
             
                 self.settings.New(axis + "_frequency", unit = 'Hz',
-                                        dtype=float, vmin = 1, vmax = 2000, si=False, ro=False)
+                                        dtype=float, vmin = 1, vmax = 10000, si=False, ro=False)
                 
             self.settings.New(axis + "_actor_type", dtype=str, ro=True)
             self.settings.New(axis + "_actor_name", dtype=str, ro=True)
@@ -86,9 +97,7 @@ class AttoCubeXYZStageHW(HardwareComponent):
         self.settings.New('connect_by', dtype=str, initial='device_num', choices=('device_num', 'device_id'))
         #self.settings.New('axis_map', dtype=str, initial='xyz')
         # need enable boolean lq's
-        
-        # connect GUI
-        # no custom gui yet
+                
         
     def connect(self):
         if self.settings['debug_mode']: print("connecting to attocube_xy_stage")
@@ -130,6 +139,9 @@ class AttoCubeXYZStageHW(HardwareComponent):
                 
                 self.settings.get_lq(axis_name + "_reference_found").connect_to_hardware(
                     lambda a=axis_num: self.ecc100.read_reference_status(a))
+
+                self.settings.get_lq(axis_name + "_reference_position").connect_to_hardware(
+                    lambda a=axis_num: self.ecc100.read_reference_position(a))
                 
                 self.settings.get_lq(axis_name + "_enable_output").connect_to_hardware(
                     read_func  = lambda a=axis_num: self.ecc100.read_enable_axis(a),
@@ -139,7 +151,12 @@ class AttoCubeXYZStageHW(HardwareComponent):
                     read_func = lambda a=axis_num: self.ecc100.read_enable_closedloop_axis(a),
                     write_func = lambda enable, a=axis_num: self.ecc100.enable_closedloop_axis(a, enable)
                     )
-                    
+                
+                self.settings.get_lq(axis_name + "_continuous_motion").connect_to_hardware(
+                    read_func = lambda a=axis_num: self.ecc100.read_continuous_motion(a),
+                    write_func = lambda dir, a=axis_num: self.ecc100.start_continuous_motion(a, dir)
+                    )
+                                    
                 # Target Status is NCB_FeatureNotAvailable
                 #self.settings.get_lq(axis_name + "_target_status").connect_to_hardware(
                 #    read_func = lambda a=axis_num: self.ecc100.read_target_status(a) 
@@ -204,5 +221,56 @@ class AttoCubeXYZStageHW(HardwareComponent):
             
             # clean up device object
             del self.ecc100
+    
+    
+    def reset_axis_by_name(self, ax_name):
+        assert ax_name in self.ax_names
         
+        for i, ax in enumerate(self.ax_names):
+            if ax_name == ax:
+                self.ecc100.reset_axis(i)
+                
+    def home_and_wait(self, axis_name, safe_travel_dir):
+        print("home_and_wait", self.name, axis_name, safe_travel_dir)
+        home_meas = self.app.measurements['attocube_home_axis']
+        home_meas.settings['hw_name'] = self.name
+        home_meas.settings['axis_name'] = axis_name
+        home_meas.settings['safe_travel_dir'] = safe_travel_dir
         
+        ## run home_meas, wait for completion
+        home_meas.start()
+        
+        while home_meas.is_measuring():
+            time.sleep(0.001)
+        #check to verify homing
+        return self.settings[axis_name + "_reference_found"]
+
+
+    def move_and_wait(self, axis_name, new_pos, target_range=50e-3, timeout=10):
+        print("move_and_wait", self.name, axis_name, new_pos)
+        
+        hw = self
+        hw.settings[axis_name + "_target_position"] = new_pos
+        
+        t0 = time.time()
+        
+        # Wait until stage has moved to target
+        while True:
+            pos = hw.settings.get_lq(axis_name + "_position").read_from_hardware()
+            distance_from_target = abs(pos - new_pos)
+            if distance_from_target < target_range:
+                #print("settle time {}".format(time.time() - t0))
+                break
+            if (time.time() - t0) > timeout:
+                raise IOError("AttoCube ECC100 took too long to reach position")
+            time.sleep(0.005)
+            
+            
+    def single_step(self, ax_name, direction):
+        """direction True (or >0): forward, False (or <=0): backward"""
+
+        assert ax_name in self.ax_names
+        
+        for i, ax in enumerate(self.ax_names):
+            if ax_name == ax:
+                self.ecc100.single_step(i, direction)

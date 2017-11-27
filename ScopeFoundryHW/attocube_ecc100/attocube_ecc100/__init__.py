@@ -12,8 +12,6 @@ ecc = cdll.LoadLibrary(
         os.path.abspath(os.path.join(
                          os.path.dirname(__file__),
                          r"ECC100_Library\Win64\ecc.dll")))
-#ecc = cdll.LoadLibrary( r"C:\Program Files (x86)\N-Hands\Daisy@ECC\userlib\lib\ecc.dll")
-#ecc = cdll.LoadLibrary("G:\Team Drives\MF Imaging\Hardware\Attocube\Software\ECC100_v1.6.06\ECC100_Library\Win64\ecc.dll")
 
 # /** Return values of functions */
 #define NCB_Ok                   0              /**< No error                              */
@@ -83,14 +81,19 @@ class AttoCubeECC100(object):
         
         # if device_id is defined, find the appropriate device_num
         if device_id is not None:
+            dev_id_found = False
             for dev in self.dev_list:
                 if dev.dev_id == device_id:
                     self.device_num = dev.dev_num
                     self.device_id = dev.dev_id
+                    dev_id_found = True
+            if not dev_id_found:
+                ## no device based on ID found
+                raise IOError("AttoCubeECC100 No Device found based on device_id={}".format(device_id))
         else:
             self.device_id = self.dev_list[self.device_num].dev_id
                     
-        assert 0 <= self.device_num < len(self.dev_list)
+        assert 0 <= self.device_num < len(self.dev_list), "Attocube device num out of range: {} of {}".format(self.device_num, len(self.dev_list))
 
         # check if device is locked
         assert not self.dev_list[self.device_num].dev_locked
@@ -167,15 +170,18 @@ class AttoCubeECC100(object):
                                  ))
 
 
-    def single_step(self, axis, backward=False):
+    def single_step(self, axis, direction=True):
+        """direction True (or >0): forward, False (or <=0): backward"""
+        backward= (direction <= 0)
+        #backward: Selects the desired direction. False triggers a forward step, true a backward step.  
         handle_err(ecc.ECC_setSingleStep(self.devhandle, # device handle
                                  axis,  # axis
                                  int(backward))) #backward (direction control)
 
     def single_step_forward(self, axis):
-        self.single_step(axis, False)
-    def single_step_backward(self, axis):
         self.single_step(axis, True)
+    def single_step_backward(self, axis):
+        self.single_step(axis, False)
 
 
     def read_position_axis(self, axis):
@@ -238,6 +244,7 @@ class AttoCubeECC100(object):
                             byref(tpos), # Int32* target
                             1, #Bln32 set
                             ))
+        time.sleep(0.000010)
         return tpos.value*1e-6
                    
     def read_target_position_axis(self, axis):
@@ -394,11 +401,60 @@ class AttoCubeECC100(object):
     def enable_ext_trigger(self, axis):
         raise NotImplementedError()
 
-    def enable_continous_motion(self, axis, direction, enable=True ):
-        raise NotImplementedError()
-    
+    def start_continuous_motion(self, axis, direction):
+        """
+        + 1 continuous motion start in Forward (+) direction
+        - 1 continuous motion start in Backward (-) direction
+        0   stop continuous motion
+        
+        Int32 NCB_API ECC_controlContinousFwd( Int32 deviceHandle,
+                                       Int32 axis,
+                                       Bln32* enable,
+                                       Bln32 set );
+        """
+        c_enable = c_int32(1) # true to start motion
+        if direction > 0:
+            handle_err(ecc.ECC_controlContinousFwd(self.devhandle, axis, byref(c_enable), 1))
+        elif direction < 0:
+            handle_err(ecc.ECC_controlContinousBkwd(self.devhandle, axis, byref(c_enable), 1))
+        else:
+            self.stop_continous_motion(axis)
+        
     def stop_continous_motion(self, axis):
-        raise NotImplementedError()
+        
+        """The parameter "false" stops all movement of the axis regardless its direction.
+        """
+        c_enable = c_int32(0) # stop motion
+        handle_err(ecc.ECC_controlContinousFwd(self.devhandle, axis, byref(c_enable), 1))
+
+
+    def read_continuous_motion(self, axis):
+        """ returns +1, 0, or -1
+         + 1 continuous motion happening in Forward  (+) direction
+         - 1 continuous motion happening in Backward (-) direction
+           0 continuous motion stopped
+        """
+
+        c_enable = c_int32()
+        handle_err(ecc.ECC_controlContinousFwd(self.devhandle,
+                                 axis, #axis
+                                 byref(c_enable), #Bln32 * enable,
+                                 0, # read
+                                 ))
+        if c_enable.value:
+            return +1
+        
+        c_enable = c_int32()
+        handle_err(ecc.ECC_controlContinousBkwd(self.devhandle,
+                                 axis, #axis
+                                 byref(c_enable), #Bln32 * enable,
+                                 0, # read
+                                 ))
+        if c_enable.value:
+            return -1
+        
+        return 0
+        
     
     def read_enable_auto_update_reference(self, axis):
         c_enable = c_int32()
