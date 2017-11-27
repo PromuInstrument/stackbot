@@ -12,8 +12,23 @@ class MirrorPositionMeasure(Measurement):
         self.ui = load_qt_ui_file(self.ui_filename)
 
 
+        red_green_checkbox_style_sheet = """
+                QCheckBox::indicator::unchecked {
+                    background-color: red;}
+                QCheckBox::indicator::checked {
+                    background-color: green;}"""
+        
+        self.ui.hw_groupBox.setStyleSheet(red_green_checkbox_style_sheet)
+        self.ui.position_groupBox.setStyleSheet(red_green_checkbox_style_sheet)
+
+
+        self.hw_cl_mirror = self.app.hardware['cl_mirror']
         self.hw_xyz   = self.app.hardware['attocube_cl_xyz']
         self.hw_angle = self.app.hardware['attocube_cl_angle']
+
+        self.hw_cl_mirror.settings.connected.connect_to_widget(self.ui.hw_cl_mirror_connect_checkBox)
+        self.hw_xyz.settings.connected.connect_to_widget(self.ui.hw_xyz_connect_checkBox)
+        self.hw_angle.settings.connected.connect_to_widget(self.ui.hw_angle_connect_checkBox)
 
         self.hw_xyz.settings.x_position.connect_to_widget(self.ui.x_position_doubleSpinBox)
         self.hw_xyz.settings.y_position.connect_to_widget(self.ui.y_position_doubleSpinBox)
@@ -27,7 +42,27 @@ class MirrorPositionMeasure(Measurement):
         self.hw_angle.settings.pitch_target_position.connect_to_widget(self.ui.pitch_target_position_doubleSpinBox)
         self.hw_angle.settings.yaw_target_position.connect_to_widget(self.ui.yaw_target_position_doubleSpinBox)
 
-        self.ui.read_current_position_pushButton.clicked.connect(self.read_current_position)
+        self.hw_xyz.settings.x_reference_found.connect_to_widget(self.ui.x_home_checkBox)
+        self.hw_xyz.settings.y_reference_found.connect_to_widget(self.ui.y_home_checkBox)
+        self.hw_xyz.settings.z_reference_found.connect_to_widget(self.ui.z_home_checkBox)
+        self.hw_angle.settings.pitch_reference_found.connect_to_widget(self.ui.pitch_home_checkBox)
+        self.hw_angle.settings.yaw_reference_found.connect_to_widget(self.ui.yaw_home_checkBox)
+
+
+        self.hw_xyz.settings.x_enable_closedloop.connect_to_widget(self.ui.x_closedloop_checkBox)
+        self.hw_xyz.settings.y_enable_closedloop.connect_to_widget(self.ui.y_closedloop_checkBox)
+        self.hw_xyz.settings.z_enable_closedloop.connect_to_widget(self.ui.z_closedloop_checkBox)
+        self.hw_angle.settings.pitch_enable_closedloop.connect_to_widget(self.ui.pitch_closedloop_checkBox)
+        self.hw_angle.settings.yaw_enable_closedloop.connect_to_widget(self.ui.yaw_closedloop_checkBox)
+
+
+
+        #self.ui.read_current_position_pushButton.clicked.connect(self.read_current_position)
+        self.ui.park_pushButton.clicked.connect(self.app.measurements['cl_mirror_park'].start)
+        self.ui.insert_pushButton.clicked.connect(self.app.measurements['cl_mirror_insert'].start)
+        self.ui.home_pushButton.clicked.connect(self.app.measurements['cl_mirror_home_axes'].start)
+        
+        self.ui.stop_pushButton.clicked.connect(self.app.hardware['cl_mirror'].stop_all_motion)
         
         self.settings.New("live", dtype=bool, initial=False)
         self.settings.live.connect_to_widget(self.ui.live_checkBox)
@@ -46,3 +81,9 @@ class MirrorPositionMeasure(Measurement):
         else:
             self.app.measurements['attocube_cl_xyz'].interrupt()
             self.app.measurements['attocube_cl_angle'].interrupt()
+
+
+
+            
+        
+        
