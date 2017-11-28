@@ -9,9 +9,9 @@ from ScopeFoundry import Measurement
 from PyQt5 import QtWidgets
 import time 
 
-class MKS_Measure(Measurement):
+class MKS_600_Measure(Measurement):
     
-    name = "mks_measure"
+    name = "mks_600_measure"
     
     def __init__(self, app):
         Measurement.__init__(self, app)
@@ -22,7 +22,7 @@ class MKS_Measure(Measurement):
         self.layout = QtWidgets.QVBoxLayout()
         self.ui.setLayout(self.layout)
     
-        self.mks = self.app.hardware.mks_hw
+        self.mks = self.app.hardware['mks_600_hw']
         
     def run(self):
         dt=0.1

@@ -9,9 +9,9 @@ from ScopeFoundry import Measurement
 from PyQt5 import QtWidgets
 import time 
 
-class VGC_Measure(Measurement):
+class Pfeiffer_VGC_Measure(Measurement):
     
-    name = "vgc_measure"
+    name = "pfeiffer_vgc_measure"
     
     def __init__(self, app):
         Measurement.__init__(self, app)
@@ -23,7 +23,7 @@ class VGC_Measure(Measurement):
         self.ui.setLayout(self.layout)
 #         self.ui.setWindowTitle("Vacuum System Control")
         
-        self.vgc = self.app.hardware['vgc_hw']
+        self.vgc = self.app.hardware['pfeiffer_vgc_hw']
     
     def run(self):
         dt=0.1

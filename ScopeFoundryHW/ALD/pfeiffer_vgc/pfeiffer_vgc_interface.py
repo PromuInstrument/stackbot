@@ -11,9 +11,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class vgc_interface(object):
+class Pfeiffer_VGC_Interface(object):
         
-    name = 'vgc_interface'
+    name = 'pfeiffer_vgc_interface'
     
     def __init__(self, port="COM3", debug=False):
         self.port = port

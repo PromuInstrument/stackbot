@@ -12,9 +12,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class mks_controller_interface(object):
+class MKS_600_Interface(object):
         
-    name = 'mks_pc_interface'
+    name = 'mks_600_interface'
     
     def __init__(self, port="COM9", debug=False):
         self.port = port

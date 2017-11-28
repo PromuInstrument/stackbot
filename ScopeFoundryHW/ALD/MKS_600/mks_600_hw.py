@@ -6,11 +6,11 @@ Created on Nov 20, 2017
 '''
 
 from ScopeFoundry import HardwareComponent
-from ScopeFoundryHW.ALD.MKS_600.mks_interface import mks_controller_interface
+from ScopeFoundryHW.ALD.MKS_600.mks_600_interface import MKS_600_Interface
 
-class MKS_Hardware(HardwareComponent):
+class MKS_600_Hardware(HardwareComponent):
     
-    name = "mks_hw"
+    name = "mks_600_hw"
     
     def setup(self):
         self.settings.New(name="port", initial="COM9", dtype=str, ro=False)
@@ -21,7 +21,7 @@ class MKS_Hardware(HardwareComponent):
         self.mks = None
     
     def connect(self):
-        self.mks = mks_controller_interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
+        self.mks = MKS_600_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
         
         self.settings.pressure.connect_to_hardware(read_func=self.read_pressure)
         self.settings.units.connect_to_hardware(read_func=self.read_units)

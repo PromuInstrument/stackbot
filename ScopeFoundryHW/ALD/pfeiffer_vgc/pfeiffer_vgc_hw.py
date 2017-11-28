@@ -6,11 +6,11 @@ Created on Nov 20, 2017
 '''
 
 from ScopeFoundry import HardwareComponent
-from ScopeFoundryHW.ALD.pfeiffer_vgc.vgc_interface import vgc_interface
+from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_interface import Pfeiffer_VGC_Interface
 
-class VGC_Hardware(HardwareComponent):
+class Pfeiffer_VGC_Hardware(HardwareComponent):
     
-    name = "vgc_hw"
+    name = "pfeiffer_vgc_hw"
     
     def setup(self):
         self.settings.New(name="port", initial="COM3", dtype=str, ro=False)
@@ -21,7 +21,7 @@ class VGC_Hardware(HardwareComponent):
         self.vgc = None
         
     def connect(self):
-        self.vgc = vgc_interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
+        self.vgc = Pfeiffer_VGC_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
 
         self.settings.ch1_pressure.connect_to_hardware(read_func=getattr(self,'read_ch1_pressure'))
         
