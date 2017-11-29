@@ -17,8 +17,8 @@ class XboxControlDevice(object):
         if pygame.joystick.get_init():
             logger.debug("Joystick module initialized!")
             logger.debug("%s joysticks detected." % pygame.joystick.get_count())
-        for i in range(pygame.joystick.get_count()):
-            self.joystick = pygame.joystick.Joystick(i)
+
+        self.joystick = pygame.joystick.Joystick(0)
         logger.debug("Joystick instance created.")
         
         """Initializes joystick hardware and scans for number of 
