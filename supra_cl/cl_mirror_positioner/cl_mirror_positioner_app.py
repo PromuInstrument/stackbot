@@ -1,6 +1,6 @@
 from ScopeFoundry.base_app import BaseMicroscopeApp
 import logging
-from supra_cl.mirror_stage.mirror_position_measure import MirrorPositionMeasure
+from supra_cl.cl_mirror_positioner.mirror_position_measure import MirrorPositionMeasure
 from ScopeFoundryHW.attocube_ecc100.attocube_home_axis_measurement import AttoCubeHomeAxisMeasurement
 
 logging.basicConfig(level=logging.DEBUG)
@@ -9,16 +9,16 @@ logging.getLogger('ipykernel').setLevel(logging.WARN)
 logging.getLogger('traitlets').setLevel(logging.WARN)
 logging.getLogger('LoggedQuantity').setLevel(logging.WARN)
 
-class MirrorStageApp(BaseMicroscopeApp):
+class CLMirrorPositionerApp(BaseMicroscopeApp):
     
-    name="mirror_stage_app"
+    name="cl_mirror_positioner_app"
     
     def setup(self):
         from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYZStageHW
         self.add_hardware(AttoCubeXYZStageHW(self, name='attocube_cl_xyz', ax_names='xyz'))
         self.add_hardware(AttoCubeXYZStageHW(self, name='attocube_cl_angle', ax_names=['o', 'pitch', 'yaw']))
         
-        from supra_cl.mirror_stage.cl_mirror_hw import CLMirrorHW
+        from supra_cl.cl_mirror_positioner.cl_mirror_hw import CLMirrorHW
         self.add_hardware(CLMirrorHW(self))
         
         
@@ -34,14 +34,14 @@ class MirrorStageApp(BaseMicroscopeApp):
         
         self.add_measurement(AttoCubeHomeAxisMeasurement(self))
         
-        from supra_cl.mirror_stage.mirror_motion_measure import CLMirrorHomeAxesMeasure, CLMirrorParkMeasure, CLMirrorInsertMeasure
+        from supra_cl.cl_mirror_positioner.mirror_motion_measure import CLMirrorHomeAxesMeasure, CLMirrorParkMeasure, CLMirrorInsertMeasure
         self.add_measurement(CLMirrorHomeAxesMeasure(self))
         self.add_measurement(CLMirrorParkMeasure(self))
         self.add_measurement(CLMirrorInsertMeasure(self))
         
         self.add_measurement(MirrorPositionMeasure(self))
 
-        from supra_cl.mirror_stage.cl_mirror_remote_control import CLMirrorRemoteControlMeasure
+        from supra_cl.cl_mirror_positioner.cl_mirror_remote_control import CLMirrorRemoteControlMeasure
         self.add_measurement(CLMirrorRemoteControlMeasure)
 
         #self.set_subwindow_mode()
@@ -49,6 +49,6 @@ class MirrorStageApp(BaseMicroscopeApp):
         
 if __name__ == '__main__':
     import sys
-    app = MirrorStageApp(sys.argv)
+    app = CLMirrorPositionerApp(sys.argv)
     sys.exit(app.exec_())    
         
