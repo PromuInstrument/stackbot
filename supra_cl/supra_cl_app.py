@@ -55,7 +55,6 @@ class SupraCLApp(BaseMicroscopeApp):
         from supra_cl.hyperspec_cl_measure import HyperSpecCLMeasure
         self.add_measurement(HyperSpecCLMeasure(self))
 
-
         self.settings_load_ini('supra_cl_defaults.ini')
         
         from supra_cl.hyperspec_cl_quad_measure import HyperSpecCLQuadView
@@ -65,9 +64,6 @@ class SupraCLApp(BaseMicroscopeApp):
         self.add_measurement(CLQuadView(self))
 
         self.settings_load_ini('supra_cl_defaults.ini')
-
-
-        self.ui.show()
 
         
 if __name__ == '__main__':

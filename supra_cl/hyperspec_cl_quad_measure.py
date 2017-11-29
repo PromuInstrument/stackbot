@@ -223,13 +223,6 @@ class HyperSpecCLQuadView(Measurement):
             hLine.setPos(self.sync_scan.settings['Nv']/2)
 
                 
-        self.display_maps = dict()
-        
-        for key, chan in self.available_chan_dict.items():
-            if chan.type_ == 'ai':
-                self.display_maps[key] = self.sync_scan.adc_map[:,:,:,chan.index]
-            elif chan.type_ == 'ctr':
-                self.display_maps[key] = self.sync_scan.ctr_map_Hz[:,:,:,chan.index]
                 
     
         while not self.interrupt_measurement_called:
@@ -244,6 +237,15 @@ class HyperSpecCLQuadView(Measurement):
     def update_display(self):
         
         t0 = time.time()
+        
+        self.display_maps = dict()
+        
+        for key, chan in self.available_chan_dict.items():
+            if chan.type_ == 'ai':
+                self.display_maps[key] = self.sync_scan.adc_map[:,:,:,chan.index]
+            elif chan.type_ == 'ctr':
+                self.display_maps[key] = self.sync_scan.ctr_map_Hz[:,:,:,chan.index]
+
         
         # Update Quad Images
         for name in "ABCD":
