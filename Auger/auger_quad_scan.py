@@ -11,6 +11,8 @@ from ScopeFoundry import Measurement, h5_io
 from ScopeFoundry.scanning import BaseRaster2DScan
 from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path
 from ScopeFoundry.scanning import BaseRaster2DFrameSlowScan
+from ScopeFoundryHW.ni_daq import NI_AdcTask
+
           
 class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
     
@@ -18,7 +20,7 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
     
     ''' FIX
     modified quad scan to do gun align scan, works but slow, 
-    also should detect inlens signal, not auger, which gives odd effects
+    also should detect inlens , not auger, which gives odd effects
     probably should duplicate measurement...
     
     Also could use mouse pointer to control stig etc, !
@@ -37,9 +39,12 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
         
         self.settings.New('quad_scan_mode', dtype=int, initial = 0, vmin = 0, vmax = 4, 
                           choices=(('quad 1',0),('quad 2',1),('x shift/angle',2),('y shift/angle',3),('SEM gun',4)))
+        self.settings.New('image_signal', dtype=int, initial = 0, vmin = 0, vmax = 2, 
+                          choices=(('Auger',0),('SEM_inlens',1),('SEM_SE2',2)))
         self.settings.New('smooth',dtype=bool, initial=True)
         
         #auger analyzer
+        self.settings.New('Control_KE', dtype=bool, initial=True)
         self.settings.New('ke_start', dtype=float, initial=30,unit = 'V',vmin=0,vmax = 2200)
         self.settings.New('ke_end',   dtype=float, initial=600,unit = 'V',vmin=1,vmax = 2200)
         self.settings.New('ke_steps', dtype=int, initial=10,vmin=1)
@@ -80,6 +85,15 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
         print("pre_scan_setup done auger_quad")
         
         S = self.settings
+        signal = S['image_signal']
+        if signal == 1:
+            self.sem_adc = NI_AdcTask('x-6368/ai1',name='sem')
+        elif signal == 2:
+            self.sem_adc = NI_AdcTask('x-6368/ai0',name='sem')
+        else:
+            self.sem_adc.close()
+            self.sem_adc = None    
+    
         self.ke_array = np.linspace(S['ke_start'], S['ke_end'], S['ke_steps'])
         S['n_frames'] = len(self.ke_array)
         
@@ -122,11 +136,12 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
         
     def on_new_frame(self, frame_i):
         print("New frame", frame_i)
-        # set ke
-        self.analyzer_hw.settings['KE'] = self.ke_array[frame_i]
-        print ("New frame", frame_i, self.analyzer_hw.settings['KE'], self.ke_array)
-        # wait
-        time.sleep(0.1)
+        if self.settings['Control_KE']:
+            # set ke
+            self.analyzer_hw.settings['KE'] = self.ke_array[frame_i]
+            print ("New frame", frame_i, self.analyzer_hw.settings['KE'], self.ke_array)
+            # wait
+            time.sleep(0.1)
         
     def on_end_frame(self, frame_i):
         #filter image before finding max
@@ -152,7 +167,16 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
 
     def collect_pixel(self, pixel_num, frame_i, k, j, i):
         # collect data
-        value = self.auger_fpga_hw.get_single_value(pixel_num==0)
+        if self.settings['image_signal'] == 0:
+            value = self.auger_fpga_hw.get_single_value(pixel_num==0)
+        else:
+                volts=0.0
+                i_ave = 0
+                while i_ave < 5:
+                    i_ave += 1
+                    volts += self.sem_adc.get()
+                value = volts/i_ave
+
         self.display_image_map[k,j,i] = value
         self.quad_count_map[k,j,i] = value
         if pixel_num == 0:
@@ -163,12 +187,17 @@ class AugerQuadSlowScan(BaseRaster2DFrameSlowScan):
         #print(self.name, "collect_pixel", pixel_num, k,j,i, value)
         
     def update_LUT(self):
-        self.hist_lut.imageChanged(autoLevel=False)
-        if hasattr(self, 'p_min'):
-            self.hist_lut.setLevels(self.p_min, self.p_max)
+        if False:
+            self.hist_lut.imageChanged(autoLevel=False)
+            if hasattr(self, 'p_min'):
+                self.hist_lut.setLevels(self.p_min, self.p_max)
+        else:
+            self.hist_lut.imageChanged(autoLevel=True)
+            
         
     def post_scan_cleanup(self):
         self.analyzer_hw.settings['multiplier'] = False
+        self.sem_adc.close()
         
 
    
