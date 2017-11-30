@@ -12,7 +12,7 @@ import collections
 #picam = PI.ctypes.cdll.LoadLibrary
 picam_dll_fname = os.environ['PICAM_DLL']
 PI = ctypes.cdll.LoadLibrary(picam_dll_fname)
-import picam_ctypes
+from . import picam_ctypes
 
 ROI_tuple = collections.namedtuple('ROI_tuple', "x width x_binning y height y_binning")
 
@@ -31,10 +31,10 @@ class PiCAM(object):
         #model_name_buf = ctypes.create_string_buffer(256)
         model_name_buf = ctypes.c_char_p()
         PI.Picam_GetEnumerationString(picam_ctypes.PicamEnumeratedTypeEnum.bysname['Model'], self.camera_id.model, byref(model_name_buf) )
-        if self.debug: print self.camera_handle, self.camera_id.model, str(model_name_buf.value), picam_ctypes.PicamModelEnum.bynums[self.camera_id.model]
+        if self.debug: print((self.camera_handle, self.camera_id.model, str(model_name_buf.value), picam_ctypes.PicamModelEnum.bynums[self.camera_id.model]))
         PI.Picam_DestroyString( model_name_buf )
         
-        if self.debug: print "SN:{} [{}]".format(self.camera_id.serial_number, self.camera_id.sensor_name)
+        if self.debug: print(( "SN:{} [{}]".format(self.camera_id.serial_number, self.camera_id.sensor_name)))
         
     def close(self):
         PI.Picam_CloseCamera( self.camera_handle )
@@ -42,7 +42,7 @@ class PiCAM(object):
 
         
     def read_param(self, pname):
-        if self.debug: print "read_param", pname
+        if self.debug: print(("read_param", pname))
         
         param = picam_ctypes.PicamParameter["PicamParameter_" + pname]
         
@@ -118,7 +118,7 @@ class PiCAM(object):
         access = ctypes.c_int(0)
         
         self._err(PI.Picam_GetParameterValueAccess(self.camera_handle, param.enum, byref(access)))
-        print "get_param_readwrite", pname, access, access.value
+        print(( "get_param_readwrite", pname, access, access.value))
         return picam_ctypes.PicamValueAccess[access.value].split('_')[-1]        
 
     def commit_parameters(self):
@@ -175,7 +175,7 @@ class PiCAM(object):
         #print "available.readout_count: ", available.readout_count
         #print "Initial readout type is", type(available.initial_readout)
 
-        data_p = ctypes.cast(available.initial_readout, ctypes.POINTER(picam_ctypes.pi16s*(self.read_param('ReadoutStride')/2)))
+        data_p = ctypes.cast(available.initial_readout, ctypes.POINTER(picam_ctypes.pi16s*(self.read_param('ReadoutStride')//2)))
         #data = np.fromiter(data_p, dtype=np.int16, count=readout_count.value*self.read_param('ReadoutStride'))
         data = np.frombuffer(data_p.contents, dtype=np.uint16)
         return data
@@ -210,8 +210,8 @@ class PiCAM(object):
         roi_datasets = []
         offset = 0
         for roi in roi_array:
-            Nx = roi.width/roi.x_binning
-            Ny = roi.height/roi.y_binning
+            Nx = roi.width//roi.x_binning
+            Ny = roi.height//roi.y_binning
             roi_size = Nx*Ny
             dset = dat[offset:offset+roi_size].reshape(Ny,Nx)
             roi_datasets.append(dset)
@@ -234,17 +234,17 @@ if __name__ == '__main__':
     for pname in pnames:
         try:
             val = cam.read_param(pname)
-            print pname,"\t\t", repr(val)
+            print(( pname,"\t\t", repr(val)))
         except ValueError as err:
-            print "skip", pname, err 
+            print(( "skip", pname, err)) 
     
     readoutstride = cam.read_param("ReadoutStride")
 
     cam.write_param('ExposureTime', 100)
-    print "exposuretime", cam.read_param('ExposureTime')
+    print("exposuretime", cam.read_param('ExposureTime'))
     
     
-    print "commit", cam.commit_parameters()
+    print("commit", cam.commit_parameters())
             
     cam.read_param('PixelHeight')
     cam.read_param('SensorTemperatureReading')
@@ -254,20 +254,20 @@ if __name__ == '__main__':
     
     #cam.write_rois([dict(x=0, width=100,x_binning=1, y=0, height=20, y_binning=1)])
     cam.write_rois([ROI_tuple(x=0, width=1340,x_binning=1, y=0, height=100, y_binning=1)])
-    print "rois|-->", cam.read_rois()
+    print("rois|-->", cam.read_rois())
     
-    print "roi0:", repr(cam.roi_array[0])
+    print("roi0:", repr(cam.roi_array[0]))
     
     cam.commit_parameters()
     
     for pname in ["ReadoutStride", "FrameStride"]:
-        print ":::", pname, cam.read_param(pname)
+        print(":::", pname, cam.read_param(pname))
     
     dat = cam.acquire(1)
-    print "dat.shape", dat.shape
+    print("dat.shape", dat.shape)
     
     roi_data = cam.reshape_frame_data(dat)
-    print "roi_data shapes", [d.shape for d in roi_data]
+    print("roi_data shapes", [d.shape for d in roi_data])
     
     import matplotlib.pylab as plt
     #plt.plot(roi_data[0].squeeze())
