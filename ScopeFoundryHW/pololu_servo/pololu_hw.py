@@ -34,11 +34,11 @@ class PololuHW(HardwareComponent):
     def setup(self):
         """Sets up logged quantities. Sets presets and constants."""
         
-        self.settings.New(name='port', initial='COM7', dtype=str, ro=False)
+        self.settings.New(name='port', initial='/dev/tty.usbmodem2333', dtype=str, ro=False)
+        
         
         ## Increase/decrease number of servo slots by modifying the below value.
-        self.servo_range = 2
-        
+        self.servo_range = 3
         
         for i in range(self.servo_range):
             self.settings.New(name="servo{}_type".format(i), dtype=str, initial='Linear', choices=self.servo_type_choices, ro=False)
@@ -50,6 +50,11 @@ class PololuHW(HardwareComponent):
         ## In my particular setup, I want to override the default value set by the above for loop in the case of servo_0    
         self.settings.get_lq('servo0_type').update_value('Rotary')
         self.update_min_max(0)
+        
+        # Flip Mirror
+        self.flip_mirror_chan = 5
+        self.settings.New(name='flip_mirror', dtype=bool, initial=True, ro=False)
+        
         
     def connect(self):
         """
@@ -70,9 +75,29 @@ class PololuHW(HardwareComponent):
                     lambda servo_number=i: self.toggle_servo(servo_number)
                     )
             
+        self.settings.get_lq('flip_mirror').connect_to_hardware(
+            write_func= self.write_position5,
+            read_func = self.read_position5)
+                    
         self.settings.get_lq('port').add_listener(self.update_new_port)
         
         self.read_from_hardware()
+        
+    def disconnect(self):
+        if self.debug_mode:
+            print('disconnecting Pololu')
+            
+        for lq in self.settings.as_list():
+            lq.hardware_read_func = None
+            lq.hardware_set_func = None
+            
+        #self.dev.close() #deletes serial connection object
+        
+    def update_flip_mirror(self, up):
+        if up:
+            self.dev.write_position(self.flip_mirror_chan, 1600)
+        else:
+            self.dev.write_position(self.flip_mirror_chan, 100)
      
     def update_new_port(self):
         """
