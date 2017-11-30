@@ -52,12 +52,14 @@ class PicoHarpHistogramMeasure(Measurement):
         self.graph_layout = pg.GraphicsLayoutWidget()    
         self.plot = self.graph_layout.addPlot()
         
+        
         self.infline = pg.InfiniteLine(movable=False, angle=90, label='stored_hist_chans', 
-                       labelOpts={'position':0.1, 'color': (200,200,100), 'fill': (200,200,200,50), 'movable': True}) 
+                       labelOpts={'position':0.8, 'color': (200,200,100), 'fill': (200,200,200,50), 'movable': True}) 
         self.plot.addItem(self.infline)
         
         self.plotdata = self.plot.plot(pen='r')
         self.plot.setLogMode(False, True)
+        self.plot.enableAutoRange('y',True)
         self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
                 
     def run(self):
@@ -107,8 +109,7 @@ class PicoHarpHistogramMeasure(Measurement):
     def update_display(self):
         ph = self.ph
         time_array = ph.time_array*1e-3
-        pos = [ time_array[self.ph_hw.settings['histogram_channels']],0 ]
-        self.infline.setPos(pos)
-        
-        self.infline.label.setPosition(0.8)
+        pos_x = time_array[self.ph_hw.settings['histogram_channels']]
+        self.plot.setRange(xRange=(0,1.2*pos_x))
+        self.infline.setPos([pos_x,0])        
         self.plotdata.setData(time_array, ph.histogram_data+1)
