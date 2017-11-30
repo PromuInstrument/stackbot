@@ -24,11 +24,12 @@ class PowermateMeasureSimple(Measurement):
 
     def setup(self):
         self.devices_num = 2        
-        self.data_handler_map = {'z_position': lambda data:self.raw_data_handler_position(data,axis='z'),
-                                 'y_position': lambda data:self.raw_data_handler_position(data,axis='y'),
-                                 'x_position': lambda data:self.raw_data_handler_position(data,axis='x'),
-                                 'shutter': self.raw_data_handler_toggle_shutter,
-                                 'LED': self.raw_data_handler_LED,
+        self.data_handler_map = {
+                                'z_position': lambda data:self.raw_data_handler_position(data,axis='z'),
+                                'y_position': lambda data:self.raw_data_handler_position(data,axis='y'),
+                                'x_position': lambda data:self.raw_data_handler_position(data,axis='x'),
+                                'shutter': self.raw_data_handler_toggle_shutter,
+                                'LED': self.raw_data_handler_LED,
                                  }
 
         self.dt = 0.05
@@ -47,7 +48,7 @@ class PowermateMeasureSimple(Measurement):
             self.settings.New(name='{}_position_scale_button_pressed'.format(ax), initial=1, dtype=float, ro=False)
         
         # start/interrupt when powermate hardware is connected/disconnected
-        self.powermate.settings.connected.add_listener(self.cycle)
+        #self.powermate.settings.connected.add_listener(self.cycle)
       
         
     def pm_assignment(self):
