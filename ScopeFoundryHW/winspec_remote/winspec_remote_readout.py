@@ -5,16 +5,23 @@ import pyqtgraph as pg
 import numpy as np
 from ScopeFoundry import h5_io
 
+
+
 class WinSpecRemoteReadoutMeasure(Measurement):
     
     name = "winspec_readout"
     
     def setup(self):
         self.SHOW_IMG_PLOT = False
+        self.settings.New('save_h5', dtype=bool, initial=True)   
+
+            
         
-        self.settings.New('save_h5', dtype=bool, initial=True)
-        
-    
+    def pre_run(self):
+        self.winspec_hc = self.app.hardware['winspec_remote_client']
+        time.sleep(0.05)
+        self.winspec_hc.winspec_client
+
     def setup_figure(self):
 
         if hasattr(self, 'graph_layout'):
@@ -52,12 +59,12 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         self.ui.start_pushButton.clicked.connect(self.start)
         self.ui.interrupt_pushButton.clicked.connect(self.interrupt)
         self.app.hardware['winspec_remote_client'].settings.acq_time.connect_bidir_to_widget(self.ui.acq_time_doubleSpinBox)
-    
-    def run(self):
-        
-        
-        winspec_hc = self.app.hardware['winspec_remote_client']
-        W = winspec_hc.winspec_client
+
+    def acquire_data(self, debug = False):
+        "helper function - called multiple times i spectral maps"
+        if debug:
+            print(self.name,'acquire_data()')
+        W = self.winspec_hc.winspec_client
         W.start_acq()
         
         while( W.get_status() ):
@@ -65,18 +72,32 @@ class WinSpecRemoteReadoutMeasure(Measurement):
                 break
             time.sleep(0.01)
         
-        hdr, data = W.get_data()
-        self.data = np.array(data).reshape(( hdr.frame_count, hdr.ydim, hdr.xdim) )
         
+        hdr, data = W.get_data()  
+        print("getting_data")
+        return hdr,np.array(data).reshape(( hdr.frame_count, hdr.ydim, hdr.xdim) )
+        
+        
+    def evaluate_wls(self,hdr,debug = False):
+        "helper function - called onced in spectral maps"
+        if debug:
+            print(self.name,'evaluate_wls()')
         #px = (np.arange(hdr.xdim) +1) # works with no binning
         px = np.linspace( 1 + 0.5*(hdr.bin_x-1), 1+ 0.5*((2*hdr.xdim-1)*(hdr.bin_x) + 1)-1, hdr.xdim)
         c = hdr.calib_coeffs
         for i in range(5):
             print('coeff', c[i])
-        print(px)
-        self.wls = c[0] + c[1]*(px) + c[2]*(px**2) # + c[3]*(px**3) + c[4]*(px**4)
+        #print(px)
+        wls = c[0] + c[1]*(px) + c[2]*(px**2) # + c[3]*(px**3) + c[4]*(px**4)
         #self.wls = np.polynomial.polynomial.polyval(px, hdr.calib_coeffs) # need to verify, seems wrong
-        print(self.wls)
+        #print(self.wls)       
+        return wls 
+    
+
+        
+    def run(self):
+        self.hdr,self.data = self.acquire_data()
+        self.wls = self.evaluate_wls(self.hdr)
 
         if self.settings['save_h5']:
             self.t0 = time.time()
@@ -89,7 +110,7 @@ class WinSpecRemoteReadoutMeasure(Measurement):
             H['spectrum'] = self.data
         
             self.h5_file.close()
-
+            
     def update_display(self):
         
         if self.SHOW_IMG_PLOT:
