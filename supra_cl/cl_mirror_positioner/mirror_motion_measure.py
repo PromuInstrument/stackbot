@@ -257,15 +257,15 @@ class CLMirrorInsertMeasure(CLMirrorMotionMeasure):
         # Move Z into place
         self.move_and_wait('attocube_cl_xyz', 'z',
                            cl_mirror_hw.settings['ref_z'],
-                           timeout=20)
+                           timeout=100)
 
         # Move XY into place
         self.move_and_wait('attocube_cl_xyz', 'x',
                            cl_mirror_hw.settings['ref_x'],
-                           timeout=20)
+                           timeout=100)
         self.move_and_wait('attocube_cl_xyz', 'y',
                            cl_mirror_hw.settings['ref_y'],
-                           timeout=20)
+                           timeout=100)
         
 
 

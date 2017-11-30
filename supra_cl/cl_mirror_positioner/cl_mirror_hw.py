@@ -1,5 +1,6 @@
 from ScopeFoundry.hardware import HardwareComponent
 from collections import OrderedDict
+import numpy as np
 
 class CLMirrorHW(HardwareComponent):
     
@@ -15,8 +16,12 @@ class CLMirrorHW(HardwareComponent):
              ('yaw', 'attocube_cl_angle'),
              ])
         
+        
+        
         for ax_name, hw_name in self.axes_hw.items():
             self.settings.Add(self.app.hardware[hw_name].settings.get_lq(ax_name + "_position"))
+            self.settings.Add(self.app.hardware[hw_name].settings.get_lq(ax_name + "_target_position"))
+            
 
         for ax_name, hw_name in self.axes_hw.items():
             self.settings.New("park_" + ax_name, dtype=float, spinbox_decimals=6, ro=True)
@@ -24,9 +29,56 @@ class CLMirrorHW(HardwareComponent):
         for ax_name, hw_name in self.axes_hw.items():
             self.settings.New("ref_" + ax_name, dtype=float, spinbox_decimals=6, ro=True)
 
+        S = self.settings
         for ax_name, hw_name in self.axes_hw.items():
-            self.settings.New("align_delta_" + ax_name, dtype=float, spinbox_decimals=6, ro=True)
+            lq = self.settings.New("delta_" + ax_name +"_position", dtype=float, spinbox_decimals=6, ro=True)
+            lq.connect_lq_math([S.get_lq('ref_'+ax_name), S.get_lq(ax_name + "_position")],
+                               lambda ref, pos: pos - ref)
+            lq = self.settings.New("delta_" + ax_name +"_target_position", dtype=float, spinbox_decimals=6, ro=True)
+            lq.connect_lq_math([S.get_lq('ref_'+ax_name), S.get_lq(ax_name + "_target_position")],
+                               lambda ref, pos: pos - ref)
 
+
+        parked = self.settings.New('parked', dtype=bool, initial=False, ro=True)
+        inserted = self.settings.New('inserted', dtype=bool, initial=False, ro=True)
+        homed = self.settings.New('homed', dtype=bool, initial=False, ro=True)
+        
+
+        
+        position_lqs = [ S.get_lq(ax_name + "_position") for ax_name in self.axes_hw.keys() ]
+        park_lqs   = [ S.get_lq("park_" + ax_name) for ax_name in self.axes_hw.keys() ]
+        ref_lqs   = [ S.get_lq("ref_" + ax_name) for ax_name in self.axes_hw.keys() ]
+
+        
+        def is_parked(x, y, z, pitch, yaw, park_x, park_y, park_z, park_pitch, park_yaw):
+            park_tolerance = 10e-3 # in mm = 100um
+            return (  (x - park_x)**2 
+                    + (y - park_y)**2
+                    + (z - park_z)**2
+                    + (pitch - park_pitch)**2
+                    + (yaw - park_yaw)**2 ) < park_tolerance**2
+
+        parked.connect_lq_math( position_lqs + park_lqs, func=is_parked)
+
+                    
+        def is_inserted(x, y, z, pitch, yaw, ref_x, ref_y, ref_z, ref_pitch, ref_yaw):
+            return (abs(x - ref_x) < 100e-3 and # mm
+                    abs(y - ref_y) < 100e-3 and
+                    abs(z - ref_z) < 100e-3 and
+                    abs(pitch - ref_pitch) <  0.01 and
+                    abs(yaw - ref_yaw) < 0.01 )
+
+        inserted.connect_lq_math( position_lqs + ref_lqs, func=is_inserted)
+
+        ax_homed_lqs = [self.app.hardware[hw_name].settings.get_lq(ax_name + "_reference_found")
+                         for ax_name, hw_name in self.axes_hw.items()]
+
+        def is_homed(*vals):
+            print("is_homed", vals, "-->", np.all(vals))
+            return np.all(vals)
+
+        homed.connect_lq_math(ax_homed_lqs, func=is_homed)
+        homed.read_from_lq_math()
 
         self.settings['park_x'] = - 4.5
         self.settings['park_y'] = -10.4
