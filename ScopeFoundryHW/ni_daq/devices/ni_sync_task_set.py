@@ -89,8 +89,8 @@ class NI_SyncTaskSet(object):
                                   clk_source='ao/SampleClock',finite=is_finite)
             
         
-    def write_output_data_to_buffer(self, data):
-        self.dac.load_buffer(data)
+    def write_output_data_to_buffer(self, data, timeout=0):
+        self.dac.load_buffer(data, timeout=timeout)
     
     def start(self):
         for i in range(self.num_ctrs):

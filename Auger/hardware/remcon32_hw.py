@@ -10,6 +10,11 @@ Revised by Alan Buckley
 
 from ScopeFoundry import HardwareComponent
 from Auger.hardware.remcon32 import Remcon32
+try:
+    import configparser
+except: # python 2
+    import ConfigParser as configparser
+
 
 
 class SEM_Remcon_HW(HardwareComponent):
@@ -26,40 +31,41 @@ class SEM_Remcon_HW(HardwareComponent):
         self.settings.New(
             'SEM_mode',dtype=str,initial='default',choices=('default',))
         self.settings.New(
+            'eht_on', dtype=bool, initial=False)         
+        self.settings.New(
             'external_scan', dtype=bool, initial=True )        
         self.settings.New(
             'beam_blanking', dtype=bool, initial=False )        
-        self.settings.New(
-            'dual_channel', dtype=bool, initial=True )        
-        self.settings.New(
-            'high_current', dtype=bool, initial=False ) #not for Auger       
-        self.settings.New(
-            'full_size', dtype=float, initial=100e-6, unit = 'm', si=True, vmin=1e-9, vmax=3e-3)
-        self.settings.New(
-            'magnification', dtype=float, vmin=5.0, vmax=1.0e6, si=True, unit='x')               
         self.settings.New(
             'kV', dtype=float, initial=3.0, unit='kV', vmin=0, vmax = 30.0)
         self.WD = self.settings.New(
             'WD', dtype=float, vmin=0.0, fmt='%4.3f',initial=9.3,unit='mm')        
         self.settings.New(
-            'contrast0', dtype=float, unit=r'%', fmt='%.1f' ,vmin=0, vmax=100, initial=30)
+            'full_size', dtype=float, initial=100e-6, unit = 'm', si=True, vmin=1e-9, vmax=3e-3)
         self.settings.New(
-            'contrast1', dtype=float, unit=r'%', vmin=0, fmt='%.1f', vmax=100,initial=30)
+            'magnification', dtype=float, vmin=5.0, vmax=1.0e6, si=True, unit='x')               
         self.settings.New(
             'scm_state', dtype=bool, description='Specimen Current Monitor On/Off')
         self.settings.New(
             'scm_current', dtype=float,ro=True, si=True, unit='A')        
         self.settings.New(
+            'dual_channel', dtype=bool, initial=True )        
+        self.settings.New(
+            'high_current', dtype=bool, initial=False ) #not for Auger       
+        self.settings.New(
+            'contrast0', dtype=float, unit=r'%', fmt='%.1f' ,vmin=0, vmax=100, initial=30)
+        self.settings.New(
+            'contrast1', dtype=float, unit=r'%', vmin=0, fmt='%.1f', vmax=100,initial=30)
+        self.settings.New(
             'detector0',dtype=str,initial='SE2',choices=('SE2','VPSE','InLens'))
         self.settings.New(
             'detector1', dtype=str, initial='SE2', choices=('SE2','VPSE','InLens'))       
         self.settings.New(
-            'eht_on', dtype=bool, initial=False)         
+            'stig_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')\
+            # THIS IS CRITICALY IMPORTANT, do NOT remove again. Frank Oct 10, 2017
+            # Since it can't be read, it's not very useful
         self.settings.New(
-            'stig_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
-# Since it can't be read, it's not very useful
-#         self.settings.New(
-#             'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+             'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
         self.settings.New(
             'aperture_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
         # Since beamshift can't be read, give option to control or not
@@ -239,12 +245,35 @@ class SEM_Remcon_HW(HardwareComponent):
         R.set_chan_bright(50,True)
         R.set_chan_bright(50,False)
         self.read_from_hardware()
+        
+        self.SEM_load_ini() #get stored settings list
             
     def disconnect(self):
         self.settings.disconnect_all_from_hardware()
         if hasattr(self, 'remcon'):
             self.remcon.close()
             del self.remcon
+            
+    def SEM_load_ini(self, fname='SEM_saved_settings.ini'):
+        self.log.info("ini settings loading from " + fname)
+        
+
+        config = configparser.ConfigParser()
+        config.optionxform = str
+        config.read(fname)
+        print( config.sections() )
+        
+
+#         if 'app' in config.sections():
+#             for lqname, new_val in config.items('app'):
+#                 #print(lqname)
+#                 lq = self.settings.as_dict().get(lqname)
+#                 if lq:
+#                     if lq.dtype == bool:
+#                         new_val = str2bool(new_val)
+#                     lq.update_value(new_val)
+
+  
             
 class Auger_Remcon_HW(SEM_Remcon_HW):
     '''subclass SEM_Remcon_HW to handle Auger-specific command set'''
