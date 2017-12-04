@@ -7,6 +7,7 @@ logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
 #logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
+logging.getLogger('PyQt5').setLevel(logging.WARNING)
 logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
 
 class TRPLMicroscopeApp(BaseMicroscopeApp):
