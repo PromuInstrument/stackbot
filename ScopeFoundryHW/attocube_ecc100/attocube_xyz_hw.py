@@ -6,6 +6,7 @@ Created on Jul 24, 2014
 from __future__ import absolute_import
 from ScopeFoundry import HardwareComponent
 import time
+from ScopeFoundry.helper_funcs import QLock
 try:
     from .attocube_ecc100 import AttoCubeECC100
 except Exception as err:
@@ -23,6 +24,8 @@ class AttoCubeXYZStageHW(HardwareComponent):
 
     def setup(self):
         # Created logged quantities
+        
+        self.lock = QLock(mode=0) # nonre-entrant
         
         for axis in self.ax_names:
             self.settings.New(axis + "_position", 
