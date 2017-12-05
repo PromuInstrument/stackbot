@@ -309,6 +309,33 @@
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>interrupt_pushButton</tabstop>
+  <tabstop>show_crosshairs_checkBox</tabstop>
+  <tabstop>start_pushButton</tabstop>
+  <tabstop>A_chan_comboBox</tabstop>
+  <tabstop>D_chan_comboBox</tabstop>
+  <tabstop>B_chan_comboBox</tabstop>
+  <tabstop>B_autolevel_checkBox</tabstop>
+  <tabstop>C_autolevel_checkBox</tabstop>
+  <tabstop>C_chan_comboBox</tabstop>
+  <tabstop>D_autolevel_checkBox</tabstop>
+  <tabstop>A_autolevel_checkBox</tabstop>
+  <tabstop>n_pixels_doubleSpinBox</tabstop>
+  <tabstop>frame_time_doubleSpinBox</tabstop>
+  <tabstop>pixel_time_doubleSpinBox</tabstop>
+  <tabstop>line_time_doubleSpinBox</tabstop>
+  <tabstop>adc_oversample_doubleSpinBox</tabstop>
+  <tabstop>adc_rate_doubleSpinBox</tabstop>
+  <tabstop>continuous_scan_checkBox</tabstop>
+  <tabstop>n_frames_doubleSpinBox</tabstop>
+  <tabstop>save_h5_checkBox</tabstop>
+  <tabstop>spec_center_wl_doubleSpinBox</tabstop>
+  <tabstop>spec_ent_slit_doubleSpinBox</tabstop>
+  <tabstop>spec_grating_id_comboBox</tabstop>
+  <tabstop>andor_emgain_doubleSpinBox</tabstop>
+  <tabstop>description_plaintTextEdit</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>
