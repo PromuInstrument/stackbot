@@ -62,9 +62,9 @@ class CLMirrorHW(HardwareComponent):
 
                     
         def is_inserted(x, y, z, pitch, yaw, ref_x, ref_y, ref_z, ref_pitch, ref_yaw):
-            return (abs(x - ref_x) < 100e-3 and # mm
-                    abs(y - ref_y) < 100e-3 and
-                    abs(z - ref_z) < 100e-3 and
+            return (abs(x - ref_x) < 500e-3 and # mm
+                    abs(y - ref_y) < 500e-3 and
+                    -50e-3 < (z - ref_z) < 500e-3 and
                     abs(pitch - ref_pitch) <  0.01 and
                     abs(yaw - ref_yaw) < 0.01 )
 
@@ -82,16 +82,16 @@ class CLMirrorHW(HardwareComponent):
 
         self.settings['park_x'] = - 4.5
         self.settings['park_y'] = -10.4
-        self.settings['park_z'] = - 9.0
+        self.settings['park_z'] = - 6.0
         self.settings['park_pitch'] = 0.0
         self.settings['park_yaw'] = 0.0
         
         
-        self.settings['ref_x'] = +6.465000
-        self.settings['ref_y'] = +6.895000
-        self.settings['ref_z'] = -2.0
-        self.settings['ref_pitch'] = 0.0
-        self.settings['ref_yaw'] = 0.0
+        self.settings['ref_x'] = +6.110600
+        self.settings['ref_y'] = +6.811600
+        self.settings['ref_z'] = -3.2978
+        self.settings['ref_pitch'] = 1.53
+        self.settings['ref_yaw'] = 5.03
                         
         
         self.add_operation('Stop All Motion', self.stop_all_motion)

@@ -233,6 +233,26 @@ class CLMirrorInsertMeasure(CLMirrorMotionMeasure):
 
     name = 'cl_mirror_insert'
 
+    def pre_run(self):
+        
+        self.stage_safe = False
+        
+        ### SEM Stage must be down, ask user
+        reply = QtWidgets.QMessageBox.question(None,"Sample Safe?", 
+                                               """{}<p>
+                                               <b>WARNING</b> Are you sure sample does not obstruct mirror movement?
+                                               For Safety move sample 500um down (or more)
+                                               <p>
+                                               Safe to move mirror?
+                                               """.format(self.name),
+                                               QtWidgets.QMessageBox.Yes, 
+                                               QtWidgets.QMessageBox.No)
+        if reply == QtWidgets.QMessageBox.Yes:
+            self.stage_safe = True
+        else:
+            self.stage_safe = False
+
+
     def run(self):
 
         cl_mirror_hw = self.app.hardware['cl_mirror']
@@ -251,7 +271,7 @@ class CLMirrorInsertMeasure(CLMirrorMotionMeasure):
                            cl_mirror_hw.settings['ref_pitch'],
                            timeout=5)
         self.move_and_wait('attocube_cl_angle', 'yaw',
-                           cl_mirror_hw.settings['ref_pitch'],
+                           cl_mirror_hw.settings['ref_yaw'],
                            timeout=5)
         
         # Move Z into place
@@ -260,12 +280,13 @@ class CLMirrorInsertMeasure(CLMirrorMotionMeasure):
                            timeout=100)
 
         # Move XY into place
-        self.move_and_wait('attocube_cl_xyz', 'x',
-                           cl_mirror_hw.settings['ref_x'],
-                           timeout=100)
         self.move_and_wait('attocube_cl_xyz', 'y',
                            cl_mirror_hw.settings['ref_y'],
                            timeout=100)
+        self.move_and_wait('attocube_cl_xyz', 'x',
+                           cl_mirror_hw.settings['ref_x'],
+                           timeout=100)
+
         
 
 
