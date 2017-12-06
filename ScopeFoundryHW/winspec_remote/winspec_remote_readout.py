@@ -13,9 +13,11 @@ class WinSpecRemoteReadoutMeasure(Measurement):
     
     def setup(self):
         self.SHOW_IMG_PLOT = False
-        self.settings.New('save_h5', dtype=bool, initial=True)   
+        self.settings.New('continuous', dtype=bool, initial=True, ro=False)
+        self.settings.New('save_h5', dtype=bool, initial=True)
+        self.settings.New('wl_calib', dtype=str, initial='winspec', choices=('pixels','raw_pixels','winspec', 'acton_spectrometer'))
 
-            
+        
         
     def pre_run(self):
         self.winspec_hc = self.app.hardware['winspec_remote_client']
@@ -54,8 +56,12 @@ class WinSpecRemoteReadoutMeasure(Measurement):
             self.hist_lut.setImageItem(self.img_item)
             self.graph_layout.addItem(self.hist_lut)
 
-        #self.show_ui()
-        
+
+        ### Widgets
+        self.settings.continuous.connect_to_widget(self.ui.continuous_checkBox)
+        self.settings.wl_calib.connect_to_widget(self.ui.wl_calib_comboBox)
+        self.settings.save_h5.connect_to_widget(self.ui.save_h5_checkBox)
+
         self.ui.start_pushButton.clicked.connect(self.start)
         self.ui.interrupt_pushButton.clicked.connect(self.interrupt)
         self.app.hardware['winspec_remote_client'].settings.acq_time.connect_bidir_to_widget(self.ui.acq_time_doubleSpinBox)
@@ -74,11 +80,11 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         
         
         hdr, data = W.get_data()  
-        print("getting_data")
+        #print("getting_data")
         return hdr,np.array(data).reshape(( hdr.frame_count, hdr.ydim, hdr.xdim) )
         
         
-    def evaluate_wls(self,hdr,debug = False):
+    def evaluate_wls_winspec(self,hdr,debug = False):
         "helper function - called onced in spectral maps"
         if debug:
             print(self.name,'evaluate_wls()')
@@ -96,20 +102,44 @@ class WinSpecRemoteReadoutMeasure(Measurement):
 
         
     def run(self):
-        self.hdr,self.data = self.acquire_data()
-        self.wls = self.evaluate_wls(self.hdr)
-
-        if self.settings['save_h5']:
-            self.t0 = time.time()
-            self.h5_file = h5_io.h5_base_file(self.app, measurement=self )
-            self.h5_file.attrs['time_id'] = self.t0
-            H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
         
-            #create h5 data arrays
-            H['wls'] = self.wls
-            H['spectrum'] = self.data
-        
-            self.h5_file.close()
+        while not self.interrupt_measurement_called:
+            print("test")
+            try:
+                print("start acq")
+                self.hdr,self.data = self.acquire_data()
+                print("end acq")
+                wl_calib = self.settings['wl_calib']
+                if wl_calib=='winspec':
+                    self.wls = self.evaluate_wls_winspec(self.hdr)
+                elif wl_calib=='acton_spectrometer':
+                    hbin = self.hdr.bin_x
+                    px_index = np.arange(self.data.shape[-1])
+                    spec_hw = self.app.hardware['acton_spectrometer']
+                    self.wls = spec_hw.get_wl_calibration(px_index, hbin)
+                elif wl_calib=='pixels':
+                    binning = self.hdr.bin_x
+                    px_index = np.arange(self.data.shape[-1])
+                    self.wls = binned_px = binning*px_index + 0.5*(binning-1)
+                elif wl_calib=='raw_pixels':
+                    self.wls = np.arange(self.data.shape[-1])
+                else:
+                    self.wls = np.arange(self.data.shape[-1])
+                    
+                if self.settings['save_h5']:
+                    self.t0 = time.time()
+                    self.h5_file = h5_io.h5_base_file(self.app, measurement=self )
+                    self.h5_file.attrs['time_id'] = self.t0
+                    H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
+                
+                    #create h5 data arrays
+                    H['wls'] = self.wls
+                    H['spectrum'] = self.data
+                
+                    self.h5_file.close()
+            finally:
+                if not self.settings['continuous']:
+                    break
             
     def update_display(self):
         
