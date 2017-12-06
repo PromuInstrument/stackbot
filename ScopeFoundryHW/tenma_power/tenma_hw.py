@@ -71,6 +71,18 @@ class TenmaHW(HardwareComponent):
         self.tenma.write_current(0)
         time.sleep(0.2)
         self.read_from_hardware()
+
+    def write_delta_voltage(self, delta):  
+        V_now = self.settings.actual_voltage.val
+        self.tenma.write_voltage(V_now + delta)
+        time.sleep(0.25)
+        self.read_from_hardware()
+        
+    def write_delta_current(self, delta):  
+        I_now = self.settings.actual_current.val
+        self.tenma.write_current(I_now + delta)
+        time.sleep(0.25)
+        self.read_from_hardware()
         
     def zero_voltage(self):
         self.tenma.write_voltage(0)
@@ -83,7 +95,7 @@ class TenmaHW(HardwareComponent):
         time.sleep(0.25)
         self.read_from_hardware()
         
-    def write_both(self, V=3, I=0.1, impose_connection=False):        
+    def write_both(self, V=3, I=0.2, impose_connection=False):        
         if (not self.settings['connected']) and impose_connection:
             self.connect()
             time.sleep(1)
