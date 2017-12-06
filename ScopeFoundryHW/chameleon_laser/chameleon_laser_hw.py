@@ -1,9 +1,9 @@
 from ScopeFoundry import HardwareComponent
-from equipment.chameleon_ultra_ii_laser import ChameleonUltraIILaser
+from .chameleon_laser_dev import ChameleonUltraIILaser
 
-class ChameleonUltraIILaserHC(HardwareComponent):
+class ChameleonUltraIILaserHW(HardwareComponent):
     
-    name = 'ChameleonUltraIILaser'
+    name = 'chameleon_laser'
     
     def setup(self):
         
@@ -26,16 +26,15 @@ class ChameleonUltraIILaserHC(HardwareComponent):
 
     def disconnect(self):
         self.port.change_readonly(False)
-
-        #disconnect hardware
-        self.laser.close()
         
         #disconnect logged quantities from hardware
-        for lq in self.logged_quantities.values():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
-        
-        # clean up hardware object
-        del self.laser
+        self.settings.disconnect_all_from_hardware()
+
+        #disconnect hardware
+        if hasattr(self, 'laser'):
+            self.laser.close()
+    
+            # clean up hardware object
+            del self.laser
 
         
