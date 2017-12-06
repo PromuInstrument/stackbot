@@ -54,9 +54,12 @@ class PololuDev(object):
         ==============  ==========  ==============  =======================================================
         **Arguments:**  **Type:**   **Range:**      **Description:**
         chan            int         (1,6)           Servo channel/address                                    
-        target          int         (544,2544)      Rotary servo position in units of microseconds or...
+        servo* target   int         (544,2544)      Rotary servo position in units of microseconds or...
                                     (1008,2000)     Linear servo position in units of microseconds.
+        output* target  int         >1500           outputs +5V high if channel is configured to Output 
+                                    <1500           outputs 0V  low If channel is configured to Output
         ==============  ==========  ==============  =======================================================
+        *each channel can be configured to be of type "servo", "input" or "output" (Pololu Mastro Control)
         :returns: None
         """
         base_qty = target * 4 
