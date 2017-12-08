@@ -83,8 +83,8 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(AugerSyncRasterScan(self))
         self.add_measurement(MultiSpecAugerScan(self))
         
-        from Auger.measurement.auger_pressure_history import AugerPressureHistory
-        self.add_measurement_component(AugerPressureHistory(self))
+#         from Auger.measurement.auger_pressure_history import AugerPressureHistory
+#         self.add_measurement_component(AugerPressureHistory(self))
 
         from Auger.analyzer_quad_optimizer import AugerQuadOptimizer
         self.add_measurement(AugerQuadOptimizer(self))

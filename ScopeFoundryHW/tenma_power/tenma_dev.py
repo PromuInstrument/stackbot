@@ -2,6 +2,8 @@
 Created on Jul 6, 2017
 
 @author: Alan Buckley <alanbuckley@lbl.gov>
+
+Tested with TENMA 72-2705 V2.5 programmable power supply
 '''
 import serial
 import time
@@ -10,14 +12,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class TenmaDev(object):
-    
-    name = 'tenma_dev'
-    
+        
     def __init__(self, port="COM5", debug = False):
         self.port = port
         self.debug = debug
         if self.debug:
-            logger.debug("ButtonBoardInterface.__init__, port={}".format(self.port))
+            logger.debug("Tenma Power Supply.__init__, port={}".format(self.port))
             
         self.ser = serial.Serial(port=self.port, baudrate=9600, 
                                     bytesize=serial.EIGHTBITS, 

@@ -7,6 +7,7 @@ logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
 #logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
+logging.getLogger('PyQt5').setLevel(logging.WARNING)
 logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
 
 class TRPLMicroscopeApp(BaseMicroscopeApp):
@@ -21,9 +22,13 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.picoharp import PicoHarpHW
         self.add_hardware(PicoHarpHW(self))
         
-        from ScopeFoundryHW.apd_counter import APDCounterHW, APDOptimizerMeasure
-        self.add_hardware(APDCounterHW(self))
-        self.add_measurement(APDOptimizerMeasure(self))
+        #from ScopeFoundryHW.apd_counter import APDCounterHW, APDOptimizerMeasure
+        #self.add_hardware(APDCounterHW(self))
+        #self.add_measurement(APDOptimizerMeasure(self))
+        from ScopeFoundryHW.ni_daq.hw.ni_freq_counter_callback import NI_FreqCounterCallBackHW
+        self.add_hardware(NI_FreqCounterCallBackHW(self, name='apd_counter'))
+        from confocal_measure.apd_optimizer_cb import APDOptimizerCBMeasurement
+        self.add_measurement_component(APDOptimizerCBMeasurement(self))
 
         from ScopeFoundryHW.andor_camera import AndorCCDHW, AndorCCDReadoutMeasure
         self.add_hardware(AndorCCDHW(self))
@@ -66,6 +71,8 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.dli_powerswitch import DLIPowerSwitchHW
         self.add_hardware(DLIPowerSwitchHW(self))
 
+        from ScopeFoundryHW.quantum_composer import QuantumComposerHW
+        self.add_hardware(QuantumComposerHW(self))
 
     
         ########################## MEASUREMENTS
@@ -121,7 +128,7 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         #connect events
         apd = self.hardware['apd_counter']
         apd.settings.int_time.connect_to_widget(Q.apd_counter_int_doubleSpinBox)
-        apd.settings.apd_count_rate.updated_text_value.connect(
+        apd.settings.count_rate.updated_text_value.connect(
                                            Q.apd_counter_output_lineEdit.setText)
         
 

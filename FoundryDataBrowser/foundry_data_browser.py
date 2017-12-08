@@ -2,17 +2,13 @@ from __future__ import absolute_import, print_function
 from ScopeFoundry.data_browser import DataBrowser
 import logging
 
-logging.basicConfig(level=logging.WARN)#, filename='example.log', stream=sys.stdout)
-logging.getLogger('traitlets').setLevel(logging.WARN)
-logging.getLogger('ipykernel.inprocess').setLevel(logging.WARN)
-logging.getLogger('LoggedQuantity').setLevel(logging.WARN)
-logging.getLogger('PyQt5').setLevel(logging.WARN)
-logger = logging.getLogger('FoundryDataBrowser')
+
 
 import sys
 
 app = DataBrowser(sys.argv)
 
+#app.logging_widget.show()
 
 # views are loaded in order of more generic to more specific.
 ## ie the last loaded views are checked first for compatibility
@@ -31,7 +27,7 @@ try:
     from viewers.images import ScipyImreadView
     app.load_view(ScipyImreadView(app))
 except ImportError:
-    logger.warning("missing scipy")
+    logging.warning("missing scipy")
     
 from viewers.apd_confocal_npz import ApdConfocalNPZView, ApdConfocal3dNPZView
 app.load_view(ApdConfocalNPZView(app))
@@ -40,7 +36,9 @@ app.load_view(ApdConfocal3dNPZView(app))
 from viewers.picoharp_npz import PicoHarpNPZView
 app.load_view(PicoHarpNPZView(app))
 
-from viewers.hyperspec_npz import HyperSpecNPZView
+from FoundryDataBrowser.viewers.picoharp_histogram_h5 import PicoHarpHistogramH5View
+app.load_view(PicoHarpHistogramH5View(app))
+
 app.load_view(HyperSpecNPZView(app))
 
 from viewers.hyperspec_npz import HyperSpecSpecMedianNPZView
@@ -93,8 +91,10 @@ app.load_view(AndorCCDReadoutNPZ(app))
 from viewers.hyperspec_cl_h5 import HyperSpecCLH5View
 app.load_view(HyperSpecCLH5View(app))
 
-from viewers.hyperspec_h5 import HyperSpecH5View
+from FoundryDataBrowser.viewers.hyperspec_h5 import HyperSpecH5View
 app.load_view(HyperSpecH5View(app))
 
+from FoundryDataBrowser.viewers.trpl_h5 import TRPLH5View
+app.load_view(TRPLH5View(app))
 
 sys.exit(app.exec_())
