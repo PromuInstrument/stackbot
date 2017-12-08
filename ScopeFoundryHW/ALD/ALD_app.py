@@ -19,17 +19,25 @@ class ALD_App(BaseMicroscopeApp):
     name="ald_app"
     
     def setup(self):
+        
+        from ScopeFoundryHW.ALD.MKS_146.mks_146_hw import MKS_146_Hardware
+        self.add_hardware(MKS_146_Hardware(self))
+        
         from ScopeFoundryHW.ALD.MKS_600.mks_600_hw import MKS_600_Hardware
         self.add_hardware(MKS_600_Hardware(self))
         
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_hw import Pfeiffer_VGC_Hardware
         self.add_hardware(Pfeiffer_VGC_Hardware(self))
         
+        from ScopeFoundryHW.ALD.MKS_146.mks_146_measure import MKS_146_Measure
+        self.add_measurement(MKS_146_Measure(self))
+        
         from ScopeFoundryHW.ALD.MKS_600.mks_600_measure import MKS_600_Measure
         self.add_measurement(MKS_600_Measure(self))
         
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_measure import Pfeiffer_VGC_Measure
         self.add_measurement(Pfeiffer_VGC_Measure(self))
+        
         
         
 if __name__ == '__main__':
