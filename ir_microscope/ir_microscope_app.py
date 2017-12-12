@@ -31,7 +31,10 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         self.add_hardware(ph.PicoHarpHW(self))
 
         from ScopeFoundryHW.winspec_remote import WinSpecRemoteClientHW
-        self.add_hardware_component(WinSpecRemoteClientHW(self))  
+        self.add_hardware_component(WinSpecRemoteClientHW(self))
+        
+        from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
+        self.add_hardware(ActonSpectrometerHW(self))
                 
         from ScopeFoundryHW.tenma_power.tenma_hw import TenmaHW
         self.add_hardware(TenmaHW(self))
@@ -100,16 +103,20 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         pm_measure.settings.pm_1_data_handler_selector.connect_to_widget(Q.powermate_1_comboBox)
 
         # LED
-        tenma = self.hardware['tenma_powersupply']
-        Q.tenma_power_on_pushButton.clicked.connect(lambda: tenma.write_both(V=3.0,I=0.1,impose_connection=True))
-        Q.tenma_power_off_pushButton.clicked.connect(tenma.zero_both)
+        tenmaHW = self.hardware['tenma_powersupply']
+        Q.tenma_power_on_pushButton.clicked.connect(lambda: tenmaHW.write_both(V=3.0,I=0.1,impose_connection=True))
+        Q.tenma_power_off_pushButton.clicked.connect(tenmaHW.zero_both)
         
-        tenma.settings.actual_current.connect_to_widget(Q.tenma_power_current_doubleSpinBox)
-        Q.tenma_power_current_lineEdit.returnPressed.connect(tenma.settings.set_current.update_value)
+        tenmaHW.settings.actual_current.connect_to_widget(Q.tenma_power_current_doubleSpinBox)
+        Q.tenma_power_current_plus_pushButton.clicked.connect(lambda: tenmaHW.write_delta_current(delta = 0.05))
+        Q.tenma_power_current_minus_pushButton.clicked.connect(lambda: tenmaHW.write_delta_current(delta = -0.05))
+        Q.tenma_power_current_lineEdit.returnPressed.connect(tenmaHW.settings.set_current.update_value)
         Q.tenma_power_current_lineEdit.returnPressed.connect(lambda: Q.tenma_power_current_lineEdit.setText(""))
 
-        tenma.settings.actual_voltage.connect_to_widget(Q.tenma_power_voltage_doubleSpinBox)
-        Q.tenma_power_voltage_lineEdit.returnPressed.connect(tenma.settings.set_voltage.update_value)
+        tenmaHW.settings.actual_voltage.connect_to_widget(Q.tenma_power_voltage_doubleSpinBox)
+        Q.tenma_power_voltage_plus_pushButton.clicked.connect(lambda: tenmaHW.write_delta_voltage(delta = 0.2))
+        Q.tenma_power_voltage_minus_pushButton.clicked.connect(lambda: tenmaHW.write_delta_voltage(delta = -0.2))
+        Q.tenma_power_voltage_lineEdit.returnPressed.connect(tenmaHW.settings.set_voltage.update_value)
         Q.tenma_power_voltage_lineEdit.returnPressed.connect(lambda: Q.tenma_power_voltage_lineEdit.setText(""))
         
         # Atto Cube
@@ -129,6 +136,11 @@ class IRMicroscopeApp(BaseMicroscopeApp):
 
         self.measurements['AttoCubeStageControlMeasure'].settings.activation.connect_to_widget(Q.stage_live_update_checkBox)
         #stage.settings.move_speed.connect_to_widget(Q.nanodrive_move_slow_doubleSpinBox)   
+        
+        #acton spectrometer
+        acton_spec = self.hardware['acton_spectrometer']
+        acton_spec.settings.center_wl.connect_to_widget(Q.center_wl_doubleSpinBox)
+        acton_spec.settings.grating_id.connect_to_widget(Q.grating_id_comboBox)
         
         #connect events
         #apd = self.hardware['apd_counter']
