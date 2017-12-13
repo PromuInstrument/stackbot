@@ -89,9 +89,9 @@ class PowermateMeasureSimple(Measurement):
             buttom = bool(data[1])
             wheel = data[2]         
             if not buttom:
-                scale = self.settings['{}_position_scale_button_pressed'.format(axis)]
-            else:
                 scale = self.settings['{}_position_scale'.format(axis)]
+            else:
+                scale = self.settings['{}_position_scale_button_pressed'.format(axis)]
     
             if wheel > 1:
                 stageHW.settings['{}_target_position'.format(axis)] -= 1*scale
@@ -102,9 +102,10 @@ class PowermateMeasureSimple(Measurement):
             print('Warning:', stageHW.settings.name.val, 'is not connected')
             
 
-    def raw_data_handler_toggle_shutter(self,data):
+    def raw_data_handler_toggle_shutter(self, data):
         buttom = bool(data[1])
         #wheel = data[2] 
+        
         if buttom is True:
             lq = self.app.hardware['pololu_servo_hw'].settings.servo2_toggle
             if lq.val:
@@ -116,18 +117,28 @@ class PowermateMeasureSimple(Measurement):
                 
                 
     def raw_data_handler_LED(self,data):
+        print(data)
         buttom = bool(data[1])
-        #wheel = data[2] 
+        wheel = data[2] 
+        HW = self.app.hardware['tenma_powersupply']
+                
         if buttom is True:
-            HW = self.app.hardware['tenma_powersupply']
             V = HW.settings['actual_voltage']
-            I = HW.settings['actual_current']
-            if (V*I)<0.001:
+            #I = HW.settings['actual_current']
+            if V<1:
                 HW.write_both()
                 time.sleep(0.1)
             else:
                 HW.zero_both()
                 time.sleep(0.1)
+                
+        delta = 0.01
+        if wheel > 1:
+            HW.write_delta_current(delta)
+            print(data)
+        else:
+            HW.write_delta_current(-delta)
+            
 
 
 

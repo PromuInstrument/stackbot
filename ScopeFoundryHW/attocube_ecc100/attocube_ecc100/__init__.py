@@ -7,7 +7,7 @@ import os
 import time
 import numpy as np
 from collections import namedtuple
-
+from threading import Lock
 ecc = cdll.LoadLibrary(
         os.path.abspath(os.path.join(
                          os.path.dirname(__file__),
@@ -31,7 +31,8 @@ NCB_ERROR_CODES = {
                    3: "NCB_DriverError",
                    7: "NCB_DeviceLocked",
                    9: "NCB_InvalidParam",
-                   10:"NCB_FeatureNotAvailable"
+                   11: "NCB_InvalidParam",
+                   12:"NCB_FeatureNotAvailable"
                    }
 
 ECC_ACTOR_TYPES = [
@@ -72,6 +73,7 @@ class AttoCubeECC100(object):
     def __init__(self, device_num=0, device_id = None, debug=False):
         self.debug = debug
         self.device_num = device_num
+        self.lock = Lock()
         
         if self.debug:
             print("Initializing AttoCubeECC100 device ", device_num)
@@ -100,83 +102,101 @@ class AttoCubeECC100(object):
         
         # Connect to Device
         self.devhandle = c_uint32()
-        handle_err(ecc.ECC_Connect(self.device_num,byref(self.devhandle)))
+        with self.lock:
+            handle_err(ecc.ECC_Connect(self.device_num,byref(self.devhandle)))
 
         self.device_id = self.read_device_id()
+        
+        self.pro = self.pro_version_check()
         
         
     def close(self):
         handle_err(ecc.ECC_Close(self.devhandle))
 
+    def pro_version_check(self):
+        try:
+            self.read_enable_auto_update_reference(0)
+            return True
+        except IOError as err:
+            #probably should check if error is due to something else other than missing pro mode
+            return False
 
     def read_actor_info(self, axis):
         return self.read_actor_name(axis), self.read_actor_type(axis)
     
     def read_actor_name(self,axis):
         actor_name = ctypes.create_string_buffer(20)
-        handle_err(ecc.ECC_getActorName(
-                            self.devhandle,
-                            axis, # Int32 axis
-                            byref(actor_name), # char * name
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_getActorName(
+                                self.devhandle,
+                                axis, # Int32 axis
+                                byref(actor_name), # char * name
+                                ))
         return actor_name.value.decode('ascii').strip()
     
     def read_actor_type(self,axis):
         actor_type_id = c_int32()
-        handle_err(ecc.ECC_getActorType(
-                            self.devhandle,
-                            axis, # Int32 axis
-                            byref(actor_type_id) #ECC_actorType * type (enum)
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_getActorType(
+                                self.devhandle,
+                                axis, # Int32 axis
+                                byref(actor_type_id) #ECC_actorType * type (enum)
+                                ))
         return ECC_ACTOR_TYPES[actor_type_id.value]
 
     def read_device_id(self):
         dev_id = ctypes.c_int32()
-        handle_err(ecc.ECC_controlDeviceId(self.devhandle, byref(dev_id), False))
+        with self.lock:
+            handle_err(ecc.ECC_controlDeviceId(self.devhandle, byref(dev_id), False))
         return dev_id.value
 
     def read_enable_axis(self, axis):
         cenable = c_int32()
-        handle_err(ecc.ECC_controlOutput(self.devhandle,
-                                 axis, #axis
-                                 byref(cenable), #Bln32 * enable,
-                                 0, # read
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlOutput(self.devhandle,
+                                     axis, #axis
+                                     byref(cenable), #Bln32 * enable,
+                                     0, # read
+                                     ))
         return cenable.value
         
     def enable_axis(self, axis, enable=True):
         cenable = c_int32(int(enable))
-        handle_err(ecc.ECC_controlOutput(self.devhandle,
-                                 axis, #axis
-                                 byref(cenable), #Bln32 * enable,
-                                 1, # set
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlOutput(self.devhandle,
+                                     axis, #axis
+                                     byref(cenable), #Bln32 * enable,
+                                     1, # set
+                                     ))
         
     def read_enable_closedloop_axis(self, axis):
         cenable = c_int32()
-        handle_err(ecc.ECC_controlMove(self.devhandle,
-                                 axis, #axis
-                                 byref(cenable), #Bln32 * enable,
-                                 0, # read
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlMove(self.devhandle,
+                                     axis, #axis
+                                     byref(cenable), #Bln32 * enable,
+                                     0, # read
+                                     ))
         return cenable.value
         
     def enable_closedloop_axis(self, axis, enable=True):
         cenable = c_int32(int(enable))
-        handle_err(ecc.ECC_controlMove(self.devhandle,
-                                 axis, #axis
-                                 byref(cenable), #Bln32 * enable,
-                                 1, # set
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlMove(self.devhandle,
+                                     axis, #axis
+                                     byref(cenable), #Bln32 * enable,
+                                     1, # set
+                                     ))
 
 
     def single_step(self, axis, direction=True):
         """direction True (or >0): forward, False (or <=0): backward"""
         backward= (direction <= 0)
-        #backward: Selects the desired direction. False triggers a forward step, true a backward step.  
-        handle_err(ecc.ECC_setSingleStep(self.devhandle, # device handle
-                                 axis,  # axis
-                                 int(backward))) #backward (direction control)
+        #backward: Selects the desired direction. False triggers a forward step, true a backward step.
+        with self.lock:  
+            handle_err(ecc.ECC_setSingleStep(self.devhandle, # device handle
+                                     axis,  # axis
+                                     int(backward))) #backward (direction control)
 
     def single_step_forward(self, axis):
         self.single_step(axis, True)
@@ -188,11 +208,12 @@ class AttoCubeECC100(object):
         """returns position in mm, device speaks nm
         """
         pos = c_int32()
-        handle_err(ecc.ECC_getPosition( 
-                                self.devhandle, #Int32 deviceHandle,
-                                axis, #Int32 axis,
-                                byref(pos))) #Int32* position );
-        return pos.value*1e-6
+        with self.lock:
+            handle_err(ecc.ECC_getPosition( 
+                                    self.devhandle, #Int32 deviceHandle,
+                                    axis, #Int32 axis,
+                                    byref(pos))) #Int32* position );
+            return pos.value*1e-6
 
 
     def is_electrically_connected(self, axis):
@@ -201,22 +222,24 @@ class AttoCubeECC100(object):
         Retrieves the connected status. Indicates whether an actor is eletrically connected to the controller.
         """
         connected = c_int32()
-        handle_err(ecc.ECC_getStatusConnected(
-                                self.devhandle,
-                                axis,
-                                byref(connected)))
-        return bool(connected.value)
+        with self.lock:
+            handle_err(ecc.ECC_getStatusConnected(
+                                    self.devhandle,
+                                    axis,
+                                    byref(connected)))
+            return bool(connected.value)
 
     def read_reference_position(self, axis):
         """returns position in mm, device speaks nm
         """
         refpos = c_int32()
-        handle_err(ecc.ECC_getReferencePosition(
-                                self.devhandle,
-                                axis, #Int32 axis
-                                byref(refpos), #Int32* reference
-                                ))
-        return refpos.value*1e-6
+        with self.lock:
+            handle_err(ecc.ECC_getReferencePosition(
+                                    self.devhandle,
+                                    axis, #Int32 axis
+                                    byref(refpos), #Int32* reference
+                                    ))
+            return refpos.value*1e-6
 
     def read_reference_status(self, axis):
         """
@@ -225,11 +248,12 @@ class AttoCubeECC100(object):
         Retrieves the status of the reference position. It may be valid or invalid.
         """
         valid = c_int32()
-        handle_err(ecc.ECC_getStatusReference(
-                                  self.devhandle,
-                                  axis,
-                                  byref(valid)))
-        return bool(valid.value)
+        with self.lock:
+            handle_err(ecc.ECC_getStatusReference(
+                                      self.devhandle,
+                                      axis,
+                                      byref(valid)))
+            return bool(valid.value)
     
     def read_target_range_axis(self, axis):
         raise NotImplementedError()
@@ -238,23 +262,25 @@ class AttoCubeECC100(object):
         """ position in mm, device speaks nm
         """
         tpos = c_int32(int(target_pos*1e6))
-        handle_err(ecc.ECC_controlTargetPosition(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(tpos), # Int32* target
-                            1, #Bln32 set
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlTargetPosition(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(tpos), # Int32* target
+                                1, #Bln32 set
+                                ))
         time.sleep(0.000010)
         return tpos.value*1e-6
                    
     def read_target_position_axis(self, axis):
         tpos = c_int32()
-        handle_err(ecc.ECC_controlTargetPosition(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(tpos), # Int32* target
-                            0, #Bln32 set
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlTargetPosition(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(tpos), # Int32* target
+                                0, #Bln32 set
+                                ))
         if self.debug: print('ecc100 read_target_position_axis', axis, tpos.value)
 
         return tpos.value*1e-6
@@ -267,11 +293,12 @@ class AttoCubeECC100(object):
         position is within the target range.
         """
         target_status = c_uint32()
-        handle_err(ecc.ECC_getStatusTargetRange(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(target_status), # Bln32* target                            
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_getStatusTargetRange(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(target_status), # Bln32* target                            
+                                ))
         return bool(target_status.value)
 
     def read_eot_back_status(self, axis):
@@ -281,11 +308,12 @@ class AttoCubeECC100(object):
         Retrieves eot end of travel status (pro).
         """
         eot_status = c_uint32()
-        handle_err(ecc.ECC_getStatusEotBkwd(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(eot_status), # Bln32* target                            
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_getStatusEotBkwd(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(eot_status), # Bln32* target                            
+                                ))
         return bool(eot_status.value)
 
     def read_eot_forward_status(self, axis):
@@ -295,11 +323,12 @@ class AttoCubeECC100(object):
         Retrieves eot end of travel status (pro).
         """
         eot_status = c_uint32()
-        handle_err(ecc.ECC_getStatusEotFwd(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(eot_status), # Bln32* target                            
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_getStatusEotFwd(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(eot_status), # Bln32* target                            
+                                ))
         return bool(eot_status.value)
 
     def read_eot_stop_status(self, axis):
@@ -309,12 +338,13 @@ class AttoCubeECC100(object):
         Retrieves eot end of travel status (pro).
         """
         eot_status = c_uint32()
-        handle_err(ecc.ECC_controlEotOutputDeactive(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(eot_status), # Bln32* target  
-                            0, #set                          
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlEotOutputDeactive(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(eot_status), # Bln32* target  
+                                0, #set                          
+                                ))
         return bool(eot_status.value)
     
     def enable_eot_stop(self, axis, enable):
@@ -324,12 +354,13 @@ class AttoCubeECC100(object):
         Retrieves eot end of travel status (pro).
         """
         eot_status = c_uint32(enable)
-        handle_err(ecc.ECC_controlEotOutputDeactive(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(eot_status), # Bln32* target  
-                            1, #set                          
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlEotOutputDeactive(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(eot_status), # Bln32* target  
+                                1, #set                          
+                                ))
         return bool(eot_status.value)
 
     def read_enable_eot_stop(self, axis ):
@@ -339,34 +370,37 @@ class AttoCubeECC100(object):
         Retrieves eot end of travel status (pro).
         """
         eot_status = c_uint32()
-        handle_err(ecc.ECC_controlEotOutputDeactive(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(eot_status), # Bln32* target  
-                            0, #set                          
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlEotOutputDeactive(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(eot_status), # Bln32* target  
+                                0, #set                          
+                                ))
         return bool(eot_status.value)
 
     def read_frequency(self, axis):
         """returns Frequency in Hz, device speaks mHz"""
         freq = c_int32()
-        handle_err(ecc.ECC_controlFrequency(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(freq), #Int32* frequency
-                            0, # Bln32 set
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlFrequency(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(freq), #Int32* frequency
+                                0, # Bln32 set
+                                ))
         return freq.value*1e-3
     
     def write_frequency(self,axis, frequency):
         """freq: Frequency in mHz"""
         freq = c_int32(int(frequency*1e3))
-        handle_err(ecc.ECC_controlFrequency(
-                            self.devhandle,
-                            axis, #Int32 axis
-                            byref(freq), #Int32* frequency
-                            1, # Bln32 set
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlFrequency(
+                                self.devhandle,
+                                axis, #Int32 axis
+                                byref(freq), #Int32* frequency
+                                1, # Bln32 set
+                                ))
         return freq.value*1e-3
         
     def read_openloop_voltage(self, axis):
@@ -377,12 +411,13 @@ class AttoCubeECC100(object):
         requires Pro version
         """
         ol_volt = c_int32()
-        handle_err(ecc.ECC_controlFixOutputVoltage(
-                            self.devhandle,
-                            axis,
-                            byref(ol_volt),# Int32 * voltage
-                            0, #set
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlFixOutputVoltage(
+                                self.devhandle,
+                                axis,
+                                byref(ol_volt),# Int32 * voltage
+                                0, #set
+                                ))
         return ol_volt.value*1e-6
     
     def write_openloop_voltage(self, axis, voltage):
@@ -390,12 +425,13 @@ class AttoCubeECC100(object):
             voltage in V, unit speaks uV
         """
         ol_volt = c_int32(voltage*1e6)
-        handle_err(ecc.ECC_controlFixOutputVoltage(
-                            self.devhandle,
-                            axis,
-                            byref(ol_volt),# Int32 * voltage
-                            1, #set
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlFixOutputVoltage(
+                                self.devhandle,
+                                axis,
+                                byref(ol_volt),# Int32 * voltage
+                                1, #set
+                                ))
         return ol_volt.value*1e-6
 
     def enable_ext_trigger(self, axis):
@@ -414,9 +450,11 @@ class AttoCubeECC100(object):
         """
         c_enable = c_int32(1) # true to start motion
         if direction > 0:
-            handle_err(ecc.ECC_controlContinousFwd(self.devhandle, axis, byref(c_enable), 1))
+            if self.lock:
+                handle_err(ecc.ECC_controlContinousFwd(self.devhandle, axis, byref(c_enable), 1))
         elif direction < 0:
-            handle_err(ecc.ECC_controlContinousBkwd(self.devhandle, axis, byref(c_enable), 1))
+            if self.lock:
+                handle_err(ecc.ECC_controlContinousBkwd(self.devhandle, axis, byref(c_enable), 1))
         else:
             self.stop_continous_motion(axis)
         
@@ -425,7 +463,8 @@ class AttoCubeECC100(object):
         """The parameter "false" stops all movement of the axis regardless its direction.
         """
         c_enable = c_int32(0) # stop motion
-        handle_err(ecc.ECC_controlContinousFwd(self.devhandle, axis, byref(c_enable), 1))
+        with self.lock:
+            handle_err(ecc.ECC_controlContinousFwd(self.devhandle, axis, byref(c_enable), 1))
 
 
     def read_continuous_motion(self, axis):
@@ -436,20 +475,22 @@ class AttoCubeECC100(object):
         """
 
         c_enable = c_int32()
-        handle_err(ecc.ECC_controlContinousFwd(self.devhandle,
-                                 axis, #axis
-                                 byref(c_enable), #Bln32 * enable,
-                                 0, # read
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlContinousFwd(self.devhandle,
+                                     axis, #axis
+                                     byref(c_enable), #Bln32 * enable,
+                                     0, # read
+                                     ))
         if c_enable.value:
             return +1
         
         c_enable = c_int32()
-        handle_err(ecc.ECC_controlContinousBkwd(self.devhandle,
-                                 axis, #axis
-                                 byref(c_enable), #Bln32 * enable,
-                                 0, # read
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlContinousBkwd(self.devhandle,
+                                     axis, #axis
+                                     byref(c_enable), #Bln32 * enable,
+                                     0, # read
+                                     ))
         if c_enable.value:
             return -1
         
@@ -458,38 +499,42 @@ class AttoCubeECC100(object):
     
     def read_enable_auto_update_reference(self, axis):
         c_enable = c_int32()
-        handle_err(ecc.ECC_controlReferenceAutoUpdate(self.devhandle,
-                                 axis, #axis
-                                 byref(c_enable), #Bln32 * enable,
-                                 0, # read
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlReferenceAutoUpdate(self.devhandle,
+                                     axis, #axis
+                                     byref(c_enable), #Bln32 * enable,
+                                     0, # read
+                                     ))
         return c_enable.value
         
     def enable_auto_update_reference(self, axis, enable=True):
         c_enable = c_int32(enable)
-        handle_err(ecc.ECC_controlReferenceAutoUpdate(self.devhandle,
-                                 axis, #axis
-                                 byref(c_enable), #Bln32 * enable,
-                                 1, # set
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlReferenceAutoUpdate(self.devhandle,
+                                     axis, #axis
+                                     byref(c_enable), #Bln32 * enable,
+                                     1, # set
+                                     ))
         return c_enable.value
         
     def read_enable_auto_reset_reference(self, axis):
         c_enable = c_int32()
-        handle_err(ecc.ECC_controlAutoReset(self.devhandle,
-                                 axis, #axis
-                                 byref(c_enable), #Bln32 * enable,
-                                 0, # read
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlAutoReset(self.devhandle,
+                                     axis, #axis
+                                     byref(c_enable), #Bln32 * enable,
+                                     0, # read
+                                     ))
         return c_enable.value
         
     def enable_auto_reset_reference(self, axis, enable=True):
         c_enable = c_int32(enable)
-        handle_err(ecc.ECC_controlAutoReset(self.devhandle,
-                                 axis, #axis
-                                 byref(c_enable), #Bln32 * enable,
-                                 1, # set
-                                 ))
+        with self.lock:
+            handle_err(ecc.ECC_controlAutoReset(self.devhandle,
+                                     axis, #axis
+                                     byref(c_enable), #Bln32 * enable,
+                                     1, # set
+                                     ))
         return c_enable.value
         
     def read_step_voltage(self, axis):
@@ -500,12 +545,13 @@ class AttoCubeECC100(object):
 
         """
         ampl = c_int32()
-        handle_err(ecc.ECC_controlAmplitude(
-                            self.devhandle,
-                            axis, # Int32 axis
-                            byref(ampl), #Int32* amplitude
-                            0, #set
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlAmplitude(
+                                self.devhandle,
+                                axis, # Int32 axis
+                                byref(ampl), #Int32* amplitude
+                                0, #set
+                                ))
         return ampl.value*1e-3
         
     def write_step_voltage(self, axis, volts=30):
@@ -516,12 +562,13 @@ class AttoCubeECC100(object):
 
         """
         ampl = c_int32(int(volts*1e3))
-        handle_err(ecc.ECC_controlAmplitude(
-                            self.devhandle,
-                            axis, # Int32 axis
-                            byref(ampl), #Int32* amplitude
-                            1, #set
-                            ))
+        with self.lock:
+            handle_err(ecc.ECC_controlAmplitude(
+                                self.devhandle,
+                                axis, # Int32 axis
+                                byref(ampl), #Int32* amplitude
+                                1, #set
+                                ))
         return ampl.value*1e-3
         
     
@@ -532,7 +579,8 @@ class AttoCubeECC100(object):
         Resets the actual position to zero and marks the reference position as invalid.
         
         """
-        handle_err(ecc.ECC_setReset(self.devhandle, axis))
+        with self.lock:
+            handle_err(ecc.ECC_setReset(self.devhandle, axis))
     
     
 #ecc_infos = np.ones(10, dtype=c_uint32)
