@@ -20,6 +20,7 @@ class MirrorPositionMeasure(Measurement):
         
         self.ui.hw_groupBox.setStyleSheet(red_green_checkbox_style_sheet)
         self.ui.position_groupBox.setStyleSheet(red_green_checkbox_style_sheet)
+        self.ui.motion_groupBox.setStyleSheet(red_green_checkbox_style_sheet)
 
 
         self.hw_cl_mirror = self.app.hardware['cl_mirror']
@@ -41,6 +42,17 @@ class MirrorPositionMeasure(Measurement):
         self.hw_xyz.settings.z_target_position.connect_to_widget(self.ui.z_target_position_doubleSpinBox)
         self.hw_angle.settings.pitch_target_position.connect_to_widget(self.ui.pitch_target_position_doubleSpinBox)
         self.hw_angle.settings.yaw_target_position.connect_to_widget(self.ui.yaw_target_position_doubleSpinBox)
+
+        for ax_name, hw_name in self.hw_cl_mirror.axes_hw.items():
+            lq = self.hw_cl_mirror.settings.get_lq("delta_{}_position".format(ax_name))
+            widget = getattr(self.ui, "delta_{}_position_doubleSpinBox".format(ax_name))
+            lq.connect_to_widget(widget)
+
+        for ax_name, hw_name in self.hw_cl_mirror.axes_hw.items():
+            lq = self.hw_cl_mirror.settings.get_lq("delta_{}_target_position".format(ax_name))
+            widget = getattr(self.ui, "delta_{}_target_position_doubleSpinBox".format(ax_name))
+            lq.connect_to_widget(widget)
+
 
         self.hw_xyz.settings.x_reference_found.connect_to_widget(self.ui.x_home_checkBox)
         self.hw_xyz.settings.y_reference_found.connect_to_widget(self.ui.y_home_checkBox)
@@ -67,6 +79,11 @@ class MirrorPositionMeasure(Measurement):
         self.settings.New("live", dtype=bool, initial=False)
         self.settings.live.connect_to_widget(self.ui.live_checkBox)
         self.settings.live.add_listener(self.set_livemode, argtype=(bool,))
+        
+        
+        self.hw_cl_mirror.settings.parked.connect_to_widget(self.ui.parked_checkBox)
+        self.hw_cl_mirror.settings.inserted.connect_to_widget(self.ui.inserted_checkBox)
+        self.hw_cl_mirror.settings.homed.connect_to_widget(self.ui.homed_checkBox)
         
         
     def read_current_position(self):
