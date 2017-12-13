@@ -19,13 +19,13 @@ class AndorCCDHW(HardwareComponent):
         self.background = None
         
         # Create logged quantities
-        self.status = self.add_logged_quantity(name='ccd_status', dtype=str, fmt="%s",ro=True)
+        self.status = self.add_logged_quantity(name='ccd_status', dtype=str, initial="?", fmt="%s",ro=True)
         
         self.temperature = self.add_logged_quantity(name="temperature", dtype=int,
                                                     ro=True, unit = "C", vmin = -300, vmax = 300, si=False)
         
         self.settings.New('temp_setpoint', dtype=int, unit="C", vmin = -300, vmax = 300, si=False)
-        self.settings.New('temp_status', dtype=str, ro=True)
+        self.settings.New('temp_status', dtype=str, ro=True, initial="?",)
         
         self.cooler_on = self.add_logged_quantity(name="cooler_on", dtype=bool, ro=False, initial=True)
 
@@ -382,7 +382,7 @@ class AndorCCDHW(HardwareComponent):
         width, height = self.ccd_dev.get_detector_shape()        
         
         # Readout and ROI parameters
-        self.readout_mode.update_value(AndorReadMode.Image.value)  #Full image readout mode
+        self.readout_mode.update_value('Image')  #Full image readout mode
         self.roi_img_hstart.update_value(1)
         self.roi_img_hend.update_value(width)
         self.roi_img_hbin.update_value(1)
