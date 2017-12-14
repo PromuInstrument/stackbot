@@ -131,19 +131,19 @@ class CLMirrorHomeAxesMeasure(CLMirrorMotionMeasure):
             return
         
         # Home X ( + or - safe)
-        self.home_and_wait('attocube_cl_xyz', 'x', +1)
+        success = self.home_and_wait('attocube_cl_xyz', 'x', +1)
         if not success:
             print("Failed to Home X")
             return
 
         # Home Pitch ( + or - safe)
-        self.home_and_wait('attocube_cl_angle', 'pitch', +1)
+        success = self.home_and_wait('attocube_cl_angle', 'pitch', +1)
         if not success:
             print("Failed to Home Pitch")
             return
 
         # Home Yaw ( + or - safe)
-        self.home_and_wait('attocube_cl_angle', 'yaw', +1)
+        success = self.home_and_wait('attocube_cl_angle', 'yaw', +1)
         if not success:
             print("Failed to Home Yaw")
             return
@@ -153,7 +153,7 @@ class CLMirrorHomeAxesMeasure(CLMirrorMotionMeasure):
         self.move_and_wait('attocube_cl_xyz', 'y', self.app.hardware['cl_mirror'].settings['park_y'], timeout=20)
 
         # Home Z (+ safe)
-        self.home_and_wait('attocube_cl_xyz', 'z', +1)
+        success = self.home_and_wait('attocube_cl_xyz', 'z', +1)
         if not success:
             print("Failed to Home Z")
             return
@@ -180,6 +180,8 @@ class CLMirrorHomeAxesMeasure(CLMirrorMotionMeasure):
                 home_meas.interrupt()
                 return False
             
+        time.sleep(0.1)
+            
         #check to verify homing
         return self.app.hardware[hw_name].settings[axis_name + "_reference_found"]
 
@@ -194,12 +196,13 @@ class CLMirrorParkMeasure(CLMirrorMotionMeasure):
         cl_mirror_hw = self.app.hardware['cl_mirror']
         
         if not self.stage_safe:
+            self.log.error("Can't park, stage not safe")
             return
                 
         ### Must be homed
         for ax_name, hw_name in cl_mirror_hw.axes_hw.items():
             if not self.app.hardware[hw_name].settings[ax_name + "_reference_found"]:
-                print("Failed to Park, need to home axis", hw_name, ax_name)
+                self.log.error("Failed to Park, need to home axis {} {}".format(hw_name, ax_name))
                 return
 
         # record 5 axes positions        
@@ -223,7 +226,7 @@ class CLMirrorParkMeasure(CLMirrorMotionMeasure):
                            cl_mirror_hw.settings['park_yaw'],
                            timeout=100)
         
-        # Z to -11.0
+        # Z to park z 
         self.move_and_wait('attocube_cl_xyz', 'z',
                            cl_mirror_hw.settings['park_z'],
                            timeout=100)

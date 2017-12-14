@@ -6,6 +6,17 @@ class CLMirrorHW(HardwareComponent):
     
     name = 'cl_mirror'
     
+    """
+    Hardware Limits:
+    
+    PITCH: ECGt5050-Q1-932 Range -6.055 to +6.123 deg
+    YAW: ECGp5050-R1-920 Range -5.913 +5.935 deg
+    X: ECSx3030 Range -10.505 to +9.955 mm 
+    Y: ECSx3030 Range -10.505 to +9.888 mm
+    Z: ECSx3030 Range -13.351 to +7.057 mm
+    """
+    
+    
     def setup(self):
         
         self.axes_hw = OrderedDict(
@@ -31,12 +42,15 @@ class CLMirrorHW(HardwareComponent):
 
         S = self.settings
         for ax_name, hw_name in self.axes_hw.items():
-            lq = self.settings.New("delta_" + ax_name +"_position", dtype=float, spinbox_decimals=6, ro=True)
+            if hw_name == 'attocube_cl_xyz': unit='um'
+            if hw_name == 'attocube_cl_angle': unit='mdeg'
+
+            lq = self.settings.New("delta_" + ax_name +"_position", dtype=float, spinbox_decimals=4, ro=True, unit=unit)
             lq.connect_lq_math([S.get_lq('ref_'+ax_name), S.get_lq(ax_name + "_position")],
-                               lambda ref, pos: pos - ref)
-            lq = self.settings.New("delta_" + ax_name +"_target_position", dtype=float, spinbox_decimals=6, ro=True)
+                               lambda ref, pos: 1000*(pos - ref))
+            lq = self.settings.New("delta_" + ax_name +"_target_position", dtype=float, spinbox_decimals=4, ro=True, unit=unit)
             lq.connect_lq_math([S.get_lq('ref_'+ax_name), S.get_lq(ax_name + "_target_position")],
-                               lambda ref, pos: pos - ref)
+                               lambda ref, pos: 1000*(pos - ref))
 
 
         parked = self.settings.New('parked', dtype=bool, initial=False, ro=True)
@@ -65,8 +79,8 @@ class CLMirrorHW(HardwareComponent):
             return (abs(x - ref_x) < 500e-3 and # mm
                     abs(y - ref_y) < 500e-3 and
                     -50e-3 < (z - ref_z) < 500e-3 and
-                    abs(pitch - ref_pitch) <  0.01 and
-                    abs(yaw - ref_yaw) < 0.01 )
+                    abs(pitch - ref_pitch) <  0.2 and
+                    abs(yaw - ref_yaw) < 0.2 )
 
         inserted.connect_lq_math( position_lqs + ref_lqs, func=is_inserted)
 
@@ -80,18 +94,18 @@ class CLMirrorHW(HardwareComponent):
         homed.connect_lq_math(ax_homed_lqs, func=is_homed)
         homed.read_from_lq_math()
 
-        self.settings['park_x'] = - 4.5
+        self.settings['park_x'] = - 3.6
         self.settings['park_y'] = -10.4
         self.settings['park_z'] = - 6.0
         self.settings['park_pitch'] = 0.0
         self.settings['park_yaw'] = 0.0
         
         
-        self.settings['ref_x'] = +6.110600
-        self.settings['ref_y'] = +6.811600
+        self.settings['ref_x'] = +5.9995
+        self.settings['ref_y'] = +6.8906
         self.settings['ref_z'] = -3.2978
-        self.settings['ref_pitch'] = 1.53
-        self.settings['ref_yaw'] = 5.03
+        self.settings['ref_pitch'] = -0.5700
+        self.settings['ref_yaw'] = +0.523
                         
         
         self.add_operation('Stop All Motion', self.stop_all_motion)
