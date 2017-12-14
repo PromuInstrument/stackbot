@@ -1,0 +1,19 @@
+Bugs:
+
+change length of array LQ causes problems:
+
+C:\SupraCL\foundry_scope\ScopeFoundry\logged_quantity.py in send_display_updates(self, force)
+    728             self.log.debug(self.name + ' send_display_updates')
+    729             #print "send_display_updates: {} force={}".format(self.name, force)
+--> 730             if force or np.any(self.oldval != self.val):
+    731 
+    732                 #print "send display updates", self.name, self.val, self.oldval
+ValueError: shape mismatch: objects cannot be broadcast to a single shape
+
+
+when change_choice_list, resets logged quantity to 0
+
+
+acton_spectrometer : entrance_slit not loading from INI
+
+hyperspec CL is unhappy
