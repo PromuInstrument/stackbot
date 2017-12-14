@@ -35,15 +35,15 @@ class HyperSpecCLMeasure(SyncRasterScan):
         self.andor_ccd = ccd = self.app.hardware['andor_ccd']
         ccd.settings['acq_mode'] = 'run_till_abort'
         ccd.settings['trigger_mode'] = 'external'
-        ccd.settings['readout_mode'] = 0 # FVB
+        ccd.settings['readout_mode'] = 'FullVerticalBinning' # FVB
         ccd.settings['num_kin'] = self.Npixels
         ccd.settings['exposure_time'] = (1.0 / sync_raster_daq.settings['dac_rate']) - 3.0e-3
         ccd.settings['kin_time'] = (1.0 / sync_raster_daq.settings['dac_rate'])
         # Other useful defaults
-        ccd.settings['output_amp'] = 0
-        ccd.settings['ad_chan'] = 1
+        #ccd.settings['output_amp'] = 0
+        #ccd.settings['ad_chan'] = 1
         #ccd.settings['hs_speed_em'] = 0
-        ccd.settings['vertical_shift_speed'] = 0
+        #ccd.settings['vertical_shift_speed'] = 0
         
         ccd.set_readout()
         
