@@ -22,8 +22,8 @@ class CLMirrorPositionerApp(BaseMicroscopeApp):
         self.add_hardware(CLMirrorHW(self))
         
         
-        self.hardware['attocube_cl_xyz'].settings['device_id'] = 94
-        self.hardware['attocube_cl_angle'].settings['device_id'] = 199
+        self.hardware['attocube_cl_xyz'].settings['device_id'] = 199
+        self.hardware['attocube_cl_angle'].settings['device_id'] = 94
         self.hardware['attocube_cl_xyz'].settings['connect_by'] = 'device_id'
         self.hardware['attocube_cl_angle'].settings['connect_by'] = 'device_id'
         
