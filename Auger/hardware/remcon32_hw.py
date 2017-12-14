@@ -21,6 +21,7 @@ class SEM_Remcon_HW(HardwareComponent):
     ''' Auger system uses a different subset of commands from standard Zeiss Gemini'''
     
     name = 'sem_remcon'
+    
      
     def setup(self):
         self.name='sem_remcon'
@@ -29,7 +30,7 @@ class SEM_Remcon_HW(HardwareComponent):
             #create logged quantities
         #+- 10 V dac output moves within "full_size" box determined by mag, calculate mag with pixel size
         self.settings.New(
-            'SEM_mode',dtype=str,initial='default',choices=('default',))
+            'SEM_mode',dtype=str,initial='default',ro=True)
         self.settings.New(
             'eht_on', dtype=bool, initial=False)         
         self.settings.New(
@@ -90,31 +91,10 @@ class SEM_Remcon_HW(HardwareComponent):
         self.settings.magnification.add_listener(self.on_new_mag)
         self.settings.full_size.add_listener(self.on_new_full_size)
 
+        # stage position: [x y z tilt rot M status]
+        self.settings.New('stage_position',
+                          dtype=float, array=True, ro = True, fmt='%1.3f', initial=[0,0,0,0,0,0,0] )
         
-#         self.stage_x=self.settings.New(name='stage_x',
-#                                                dtype=float,
-#                                                ro=False,
-#                                                vmin=5.0,
-#                                                vmax=95.0,
-#                                                initial=50,
-#                                                unit='mm')
-#          
-#         self.stage_y=self.settings.New(name='stage_y',
-#                                                dtype=float,
-#                                                ro=False,
-#                                                vmin=5.0,
-#                                                vmax=95.0,
-#                                                initial=50,
-#                                                unit='mm')
-#          
-#         self.stage_z=self.settings.New(name='stage_z',
-#                                                dtype=float,
-#                                                ro=False,
-#                                                vmin=0.0,
-#                                                vmax=25.0,
-#                                                initial=1.0,
-#                                                unit='mm')
-#         
         self.running_on_new_full_size = False
     
     def on_change_control_beamshift(self):
@@ -170,16 +150,16 @@ class SEM_Remcon_HW(HardwareComponent):
             read_func=R.get_stig,
             write_func=lambda XY: R.set_stig(*XY),
             )        
-#         S.gun_xy.connect_to_hardware(
-#             write_func=lambda XY: R.set_gun_align(*XY),
-#             )        
+        S.gun_xy.connect_to_hardware(
+            write_func=lambda XY: R.set_gun_align(*XY),
+            )        
         S.aperture_xy.connect_to_hardware(
             read_func=R.get_ap_xy,
             write_func=lambda XY: R.set_ap_xy(*XY),
             )        
-#         S.beamshift_xy.connect_to_hardware(
-#             write_func=lambda XY: R.set_beam_shift(*XY)
-#             )        
+        S.beamshift_xy.connect_to_hardware(
+             write_func=lambda XY: R.set_beam_shift(*XY)
+             )        
         S.WD.connect_to_hardware(
                 read_func = R.get_wd,
                 write_func = R.set_wd
@@ -195,21 +175,10 @@ class SEM_Remcon_HW(HardwareComponent):
         S.eht_on.connect_to_hardware(
                 read_func = R.get_eht_state,
                 write_func = R.set_eht_state
+                )
+        S.stage_position.connect_to_hardware(
+                read_func = R.get_stage_position,
                 )        
-#         S.stage_x.hardware_read_func=\
-#             self.remcon.read_stage_x
-#         S.stage_x.hardware_set_func=\
-#             self.remcon.write_stage_x    
-#              
-#         S.stage_y.hardware_read_func=\
-#             self.remcon.read_stage_y
-#         
-#         S.stage_y.hardware_set_func=\
-#             self.remcon.write_stage_y
-#              
-#         S.stage_z.hardware_read_func=\
-#             self.remcon.read_stage_z   
-## Array implementation needed.
          
         S.detector0.connect_to_hardware(
                 read_func = lambda: R.get_chan_detector(True),
@@ -284,6 +253,8 @@ class Auger_Remcon_HW(SEM_Remcon_HW):
         self.settings.New('probe_current', dtype=str, 
                           initial='Max',
                           choices=('Max','3.0 nA','1.0 nA','400 pA'))
+        
+        self.settings['SEM_mode'] = 'Auger'
        
     def connect(self):
         SEM_Remcon_HW.connect(self, write_to_hardware=False)
@@ -291,6 +262,7 @@ class Auger_Remcon_HW(SEM_Remcon_HW):
         
         S.select_aperture.disconnect_from_hardware(dis_read=False)
         S.high_current.disconnect_from_hardware()
+        S.stage_position.disconnect_from_hardware()
         S.select_aperture.change_readonly(True)
         S.high_current.change_readonly(True)
                 

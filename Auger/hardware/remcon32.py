@@ -297,9 +297,9 @@ class Remcon32(object):
         REMCON1 sets dual monitor mode ON
         REMCON2 display focus primary
         REMCON3 display focus secondary
-        REMCON4 - Auger, set probe currrent Max
-        REMCON5 - Auger, set probe currrent 3.0 nA
-        REMCON6 - Auger, set probe currrent 1.0 nA
+        REMCON4 - Auger, set probe current Max
+        REMCON5 - Auger, set probe current 3.0 nA
+        REMCON6 - Auger, set probe current 1.0 nA
         REMCON7 - Auger, set probe current 400 pA
         REMCON8 - Except Auger, high current ON
         REMCON9 - Except Auger, high current OFF
@@ -352,11 +352,12 @@ class Remcon32(object):
     '''
        
     def get_stage_position(self):
+        'returns x y z tilt rot M status'
         'for 5/6 axis stage, last param is 1.0 in motion, 0.0 done'
         resp = self.cmd_response('c95?')
         return np.fromstring(resp,sep=' ') #array of 7 floats
 
-    def set_stage_position(self, x, y, z, rot, tilt=0):
+    def set_stage_position(self, x, y, z, tilt, rot ):
         'error if out of physical limits, can be dangerous'
         state = self.get_scm()
         self.scm_state(False)   #turn off scm so touch alarm works!
