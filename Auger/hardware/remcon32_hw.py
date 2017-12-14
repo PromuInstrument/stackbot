@@ -94,6 +94,30 @@ class SEM_Remcon_HW(HardwareComponent):
         # stage position: [x y z tilt rot M status]
         self.settings.New('stage_position',
                           dtype=float, array=True, ro = True, fmt='%1.3f', initial=[0,0,0,0,0,0,0] )
+
+        
+        self.settings.New('stage_x', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[0])
+
+        self.settings.New('stage_y', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[1])
+        
+        self.settings.New('stage_z', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[2])
+
+        self.settings.New('stage_tilt', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[3])
+
+        self.settings.New('stage_rot', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[4])
+
+        self.settings.New('stage_M', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[5])
+
+        self.settings.New('stage_is_moving', dtype=bool, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: bool(pos[6]))
+
+        self.settings.New('stage_initialized', dtype=bool, ro=True)
         
         self.running_on_new_full_size = False
     
@@ -178,7 +202,10 @@ class SEM_Remcon_HW(HardwareComponent):
                 )
         S.stage_position.connect_to_hardware(
                 read_func = R.get_stage_position,
-                )        
+                )
+        S.stage_initialized.connect_to_hardware(
+                read_func = R.get_stage_initialized_state,
+                ) 
          
         S.detector0.connect_to_hardware(
                 read_func = lambda: R.get_chan_detector(True),
