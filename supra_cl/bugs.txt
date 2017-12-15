@@ -17,3 +17,26 @@ when change_choice_list, resets logged quantity to 0
 acton_spectrometer : entrance_slit not loading from INI
 
 hyperspec CL is unhappy
+
+description fields text fields cursor resets on typing in the middle of the block
+
+Thursday recipe stuff:
+	add scan rotate to remcon
+	add 1 um precision to WD
+	
+	beam control
+		check kV, never write kV to SEM if current value is zero (due to EHT off)
+		read kV, do not update LQ if zero
+		
+	primary/secondary contrast controls
+
+	
+	don't delete SYSTEM recipes
+	
+Force SEM on connect:
+	brightness 50 both detectors
+	dual dectector mode
+	for CL main SE2 secondary inlens
+	beam shift to zero
+	scan rotate to 90 degres
+	
