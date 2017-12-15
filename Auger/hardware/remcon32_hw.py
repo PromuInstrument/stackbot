@@ -10,10 +10,7 @@ Revised by Alan Buckley
 
 from ScopeFoundry import HardwareComponent
 from Auger.hardware.remcon32 import Remcon32
-try:
-    import configparser
-except: # python 2
-    import ConfigParser as configparser
+import configparser
 
 
 
@@ -24,11 +21,12 @@ class SEM_Remcon_HW(HardwareComponent):
     
      
     def setup(self):
-        self.name='sem_remcon'
-        self.debug='false'
-        
-            #create logged quantities
+        self.debug=False
+
+        #create logged quantities
         #+- 10 V dac output moves within "full_size" box determined by mag, calculate mag with pixel size
+        self.settings.New('port', dtype=str, initial='COM4')
+        
         self.settings.New(
             'SEM_mode',dtype=str,initial='default',ro=True)
         self.settings.New(
@@ -62,13 +60,32 @@ class SEM_Remcon_HW(HardwareComponent):
         self.settings.New(
             'detector1', dtype=str, initial='SE2', choices=('SE2','VPSE','InLens'))       
         self.settings.New(
-            'stig_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')\
-            # THIS IS CRITICALY IMPORTANT, do NOT remove again. Frank Oct 10, 2017
-            # Since it can't be read, it's not very useful
+            'stig_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
         self.settings.New(
-             'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+            'stig_x', dtype=float, unit=r'%')
+        self.settings.New(
+            'stig_y', dtype=float, unit=r'%')        
+        self.settings.stig_xy.connect_element_follower_lq(self.settings.stig_x, 0)
+        self.settings.stig_xy.connect_element_follower_lq(self.settings.stig_y, 1)
+        # THIS IS CRITICALY IMPORTANT, do NOT remove again. Frank Oct 10, 2017
+        # Since it can't be read, it's not very useful
+        self.settings.New(
+            'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+        self.settings.New(
+            'gun_x', dtype=float, unit=r'%')
+        self.settings.New(
+            'gun_y', dtype=float, unit=r'%')
+        self.settings.gun_xy.connect_element_follower_lq(self.settings.gun_x, 0)
+        self.settings.gun_xy.connect_element_follower_lq(self.settings.gun_y, 1)
         self.settings.New(
             'aperture_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+        self.settings.New(
+            'aperture_x', dtype=float, unit=r'%')
+        self.settings.New(
+            'aperture_y', dtype=float, unit=r'%')
+        self.settings.aperture_xy.connect_element_follower_lq(self.settings.aperture_x, 0)
+        self.settings.aperture_xy.connect_element_follower_lq(self.settings.aperture_y, 1)
+        
         # Since beamshift can't be read, give option to control or not
         self.settings.New(
             'control_beamshift', dtype=bool, initial=False)        
@@ -84,7 +101,6 @@ class SEM_Remcon_HW(HardwareComponent):
            
         self.select_aperture = self.settings.New( #not for Auger
             'select_aperture', dtype=int,ro=False, vmin=1, vmax=6, choices=aperture_choices)
-        self.settings.New('port', dtype=str, initial='COM4')
         
 
         self.settings.control_beamshift.add_listener(self.on_change_control_beamshift)
@@ -98,7 +114,7 @@ class SEM_Remcon_HW(HardwareComponent):
         
         self.settings.New('stage_x', dtype=float, ro=True)
         self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[0])
-
+        
         self.settings.New('stage_y', dtype=float, ro=True)
         self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[1])
         
