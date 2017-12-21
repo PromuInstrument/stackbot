@@ -15,7 +15,7 @@ class Pfeiffer_VGC_Interface(object):
         
     name = 'pfeiffer_vgc_interface'
     
-    def __init__(self, port="COM3", debug=False):
+    def __init__(self, port="COM9", debug=False):
         self.port = port
         self.debug = debug
         if self.debug:
@@ -33,15 +33,17 @@ class Pfeiffer_VGC_Interface(object):
         message = cmd+b'\r\n'
         self.ser.write(message)
         resp = self.ser.readline()
+        
         if self.debug:
             logger.debug("readout: {}".format(cmd))
-        self.ser.flush()
+            print("ask_cmd resp:", resp)
         if resp == b"\x06\r\n":
             self.ser.write(b"\x05"+b"\r\n")
             resp = self.ser.readline()
+            return resp
         else: 
             print("Acknowledgement not received:{}".format(resp))
-        return resp
+        
     
     def read_sensor(self, sensor):
         status = {0: "Measurement data okay.",
@@ -53,7 +55,10 @@ class Pfeiffer_VGC_Interface(object):
                   6: "Identification error."}
         selection = "{}".format(sensor).encode()
         byte_array = self.ask_cmd(b"PR"+selection)
-        resp = byte_array[:-2].decode().split(",")
+        if byte_array is not None:
+            resp = byte_array[:-2].decode().split(",")
+        else:
+            print(type(byte_array))
         op_status = status[int(resp[0])]
         value = float(resp[1])
         if self.debug:
