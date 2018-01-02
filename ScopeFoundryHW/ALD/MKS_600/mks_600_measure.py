@@ -27,10 +27,5 @@ class MKS_600_Measure(Measurement):
     def run(self):
         dt=0.1
         while not self.interrupt_measurement_called:
-            self.mks.settings.valve_position.read_from_hardware()
             time.sleep(dt)
-            self.mks.settings.pressure.read_from_hardware()
-            time.sleep(dt)
-            self.mks.settings.units.read_from_hardware()
-            time.sleep(0.25)
-    
+            self.mks.read_from_hardware()
