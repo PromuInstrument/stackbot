@@ -96,13 +96,13 @@ class DLIPowerSwitchHW(HardwareComponent):
 
     def disconnect(self):
         """
-        Disconnects logged quantities from hardware objects.
+        Disconnects logged quantities from hardware.
+        and deletes low-level device object
         :returns: None
         """
-        for lq in self.logged_quantities.values():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
+        self.settings.disconnect_all_from_hardware()
         
         # clean up hardware object
-        del self.switch
+        if hasattr(self, 'switch'):
+            del self.switch
         
