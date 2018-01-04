@@ -36,9 +36,9 @@ class HyperSpecCLMeasure(SyncRasterScan):
         ccd.settings['acq_mode'] = 'run_till_abort'
         ccd.settings['trigger_mode'] = 'external'
         ccd.settings['readout_mode'] = 'FullVerticalBinning' # FVB
-        ccd.settings['num_kin'] = self.Npixels
-        ccd.settings['exposure_time'] = (1.0 / sync_raster_daq.settings['dac_rate']) - 3.0e-3
-        ccd.settings['kin_time'] = (1.0 / sync_raster_daq.settings['dac_rate'])
+        #ccd.settings['num_kin'] = self.Npixels
+        ccd.settings['exposure_time'] = (1.0 / sync_raster_daq.settings['dac_rate']) - 6.0e-3
+        #ccd.settings['kin_time'] = (1.0 / sync_raster_daq.settings['dac_rate'])
         # Other useful defaults
         #ccd.settings['output_amp'] = 0
         #ccd.settings['ad_chan'] = 1
@@ -46,6 +46,8 @@ class HyperSpecCLMeasure(SyncRasterScan):
         #ccd.settings['vertical_shift_speed'] = 0
         
         ccd.set_readout()
+        
+        print("get_acquisition_timings: exp {:e} acc {:e} kin {:e}".format( *ccd.ccd_dev.get_acquisition_timings()))
         
         ccd_Ny, ccd_Nx = ccd.settings['readout_shape']
     
