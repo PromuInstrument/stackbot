@@ -6,7 +6,7 @@ import time
 import logging
 
 logger = logging.getLogger(__name__)
-class XboxControlDevice(object):
+class XboxControllerDevice(object):
         
     def __init__(self):
         """Creates and initializes pygame.joystick object and creates 
