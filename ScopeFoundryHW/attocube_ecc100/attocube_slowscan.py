@@ -11,13 +11,13 @@ class AttoCube2DSlowScan(BaseRaster2DSlowScan):
     name = "AttoCube2DSlowScan"
     
     def __init__(self, app):
-        BaseRaster2DSlowScan.__init__(self, app, h_limits=(-12.5e3,12.5e3), v_limits=(-12.5e3,12.5e3), h_unit="um", v_unit="um")        
+        BaseRaster2DSlowScan.__init__(self, app, h_limits=(-12.5,12.5), v_limits=(-12.5,12.5), h_unit="mm", v_unit="mm")        
     
     def setup(self):
         BaseRaster2DSlowScan.setup(self)
         #Hardware
         self.stage = self.app.hardware['attocube_xyz_stage']
-        self.target_range = 0.050 # um
+        self.target_range = 0.050e-3 # um
         self.slow_move_timeout = 10. # sec
 
         self.settings.New("h_axis", initial="x", dtype=str, choices=("x", "y", "z"))

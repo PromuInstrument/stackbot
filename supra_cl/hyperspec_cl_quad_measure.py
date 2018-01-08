@@ -7,9 +7,6 @@ import time
 from collections import OrderedDict, namedtuple
 
 
-AvailChan = namedtuple('AvailChan', ['type_', 'index', 'phys_chan', 'chan_name', 'term'])
-
-
 class HyperSpecCLQuadView(Measurement):
     
     name = 'hyperspec_cl_quad_view'
@@ -121,22 +118,12 @@ class HyperSpecCLQuadView(Measurement):
             self.ui.spec_grating_id_comboBox)
 
     def update_available_channels(self):
-        self.available_chan_dict = OrderedDict()
-                
-        for i, phys_chan in enumerate(self.scanDAQ.settings['adc_channels']):
-            self.available_chan_dict[phys_chan] = AvailChan(
-                # type, index, physical_chan, channel_name, terminal
-                'ai', i, phys_chan, self.scanDAQ.settings['adc_chan_names'][i], phys_chan)
-        for i, phys_chan in enumerate(self.scanDAQ.settings['ctr_channels']):
-            self.available_chan_dict[phys_chan] = AvailChan(
-                # type, index, physical_chan, channel_name, terminal
-                'ctr', i, phys_chan, self.scanDAQ.settings['ctr_chan_names'][i], self.scanDAQ.settings['ctr_chan_terms'][i])
+        self.sync_scan.update_available_channels()
         
         for disp_letter in "ABCD":
             print(disp_letter)
             lq = self.settings.get_lq(disp_letter + "_chan_display")
-            lq.change_choice_list(tuple(self.available_chan_dict.keys()))
-
+            lq.change_choice_list(tuple(self.sync_scan.available_chan_dict.keys()))
         
     def setup_figure(self):
         
@@ -240,7 +227,7 @@ class HyperSpecCLQuadView(Measurement):
         
         self.display_maps = dict()
         
-        for key, chan in self.available_chan_dict.items():
+        for key, chan in self.sync_scan.available_chan_dict.items():
             if chan.type_ == 'ai':
                 self.display_maps[key] = self.sync_scan.adc_map[:,:,:,chan.index]
             elif chan.type_ == 'ctr':
@@ -251,7 +238,7 @@ class HyperSpecCLQuadView(Measurement):
         for name in "ABCD":
             
             chan_id = self.settings[name + "_chan_display"]
-            chan = self.available_chan_dict[chan_id]
+            chan = self.sync_scan.available_chan_dict[chan_id]
             
             px_map = self.display_maps[chan_id]
             #self.hist_luts[name].setImageItem(self.img_items[name])
@@ -275,12 +262,14 @@ class HyperSpecCLQuadView(Measurement):
             M.spec_buffer[M.andor_ccd_pixel_i-1])
         
         
-        kk0, kk1 = self.bp_region.getRegion()
-        bp_img = M.spec_map[0,:,:, int(kk0):int(kk1)].sum(axis=2)
-        self.bp_img_item.setImage(bp_img, autoDownsample=True, autoRange=False, autoLevels=False)
-        self.hist_lut_bp.imageChanged(autoLevel=False)
-        self.hist_lut_bp.setLevels(*np.percentile(bp_img[bp_img!=0],(1,99)))
-
+        try:
+            kk0, kk1 = self.bp_region.getRegion()
+            bp_img = M.spec_map[0,:,:, int(kk0):int(kk1)].sum(axis=2)
+            self.bp_img_item.setImage(bp_img, autoDownsample=True, autoRange=False, autoLevels=False)
+            self.hist_lut_bp.imageChanged(autoLevel=False)
+            self.hist_lut_bp.setLevels(*np.percentile(bp_img[bp_img!=0],(1,99)))
+        except:
+            pass
         #print('quad display {}'.format(time.time() -t0))
         
     def on_crosshair_change(self):

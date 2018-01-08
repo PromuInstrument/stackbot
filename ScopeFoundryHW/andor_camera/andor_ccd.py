@@ -19,13 +19,13 @@ class AndorCCDHW(HardwareComponent):
         self.background = None
         
         # Create logged quantities
-        self.status = self.add_logged_quantity(name='ccd_status', dtype=str, fmt="%s",ro=True)
+        self.status = self.add_logged_quantity(name='ccd_status', dtype=str, initial="?", fmt="%s",ro=True)
         
         self.temperature = self.add_logged_quantity(name="temperature", dtype=int,
                                                     ro=True, unit = "C", vmin = -300, vmax = 300, si=False)
         
         self.settings.New('temp_setpoint', dtype=int, unit="C", vmin = -300, vmax = 300, si=False)
-        self.settings.New('temp_status', dtype=str, ro=True)
+        self.settings.New('temp_status', dtype=str, ro=True, initial="?",)
         
         self.cooler_on = self.add_logged_quantity(name="cooler_on", dtype=bool, ro=False, initial=True)
 
@@ -54,8 +54,8 @@ class AndorCCDHW(HardwareComponent):
         # Output amplifier ( EMCCD or conventional)
         self.output_amp = self.add_logged_quantity("output_amp", dtype=int, ro=False,
                                                    choices = [
-                                                              ("EMCCD", 0), 
-                                                              ("Conventional", 1)]
+                                                              ("0: EMCCD / Default", 0), 
+                                                              ("1: Conventional", 1)]
                                                    )
         
         #AD Channel and horizontal shift speeds for EM and Conventional modes.
@@ -144,12 +144,16 @@ class AndorCCDHW(HardwareComponent):
         
         self.exposure_time.hardware_set_func = self.ccd_dev.set_exposure_time
         self.exposure_time.hardware_read_func = self.ccd_dev.get_exposure_time
+        self.exposure_time.write_to_hardware()
         
+        self.settings['has_em_ccd'] = self.ccd_dev.has_em_ccd()
         if self.settings['has_em_ccd']:
             self.em_gain.hardware_read_func = self.ccd_dev.get_EMCCD_gain
             self.em_gain.hardware_set_func = self.ccd_dev.set_EMCCD_gain
+            self.em_gain.write_to_hardware()
         else:
             self.em_gain.change_readonly(True)
+        
         
         self.output_amp.hardware_set_func = self.ccd_dev.set_output_amp
         self.output_amp.write_to_hardware()
@@ -189,11 +193,18 @@ class AndorCCDHW(HardwareComponent):
         self.num_kin.connect_to_hardware(
             #read_func=self.ccd_dev.get_num_kinetics,
             write_func=self.ccd_dev.set_num_kinetics)
-        self.num_kin.write_to_hardware()
-        
+        try:
+            self.num_kin.write_to_hardware()
+        except Exception as err:
+            self.log.error("set_num_kinetics failed {}".format(err))
+            
         self.acc_time.connect_to_hardware(
             write_func=self.ccd_dev.set_accumulation_cycle_time)
-        self.acc_time.write_to_hardware()
+        try:
+            self.acc_time.write_to_hardware()
+        except Exception as err:
+            self.log.error("set_accumulation_cycle_time failed {}".format(err))
+            
         self.kin_time.connect_to_hardware(
             write_func=self.ccd_dev.set_kinetic_cycle_time)
         self.kin_time.write_to_hardware()
@@ -227,7 +238,7 @@ class AndorCCDHW(HardwareComponent):
             shift_speed_names = OrderedDict()
             for chan_i in range(self.ccd_dev.numADChan):
                 for speed_i, speed in enumerate(self.ccd_dev.HSSpeeds_EM[chan_i]):
-                    shift_speed_names[speed_i] = shift_speed_names.get(speed_i, "") + " Chan{}-{:.2f}MHz".format(chan_i, speed)
+                    shift_speed_names[speed_i] = shift_speed_names.get(speed_i, "") + " AD{}-{:.2f}MHz".format(chan_i, speed)
             choices = [ (name, num) for num, name in shift_speed_names.items() ]         
             self.hs_speed_em.change_choice_list(choices)
         
@@ -242,7 +253,7 @@ class AndorCCDHW(HardwareComponent):
         shift_speed_names = OrderedDict()
         for chan_i in range(self.ccd_dev.numADChan):
                 for speed_i, speed in enumerate(self.ccd_dev.HSSpeeds_Conventional[chan_i]):
-                    shift_speed_names[speed_i] = shift_speed_names.get(speed_i, "") + " Chan{}-{:.2f}MHz".format(chan_i, speed)
+                    shift_speed_names[speed_i] = shift_speed_names.get(speed_i, "") + " AD{}-{:.2f}MHz".format(chan_i, speed)
         choices = [ (name, num) for num, name in shift_speed_names.items() ]         
         self.hs_speed_conventional.change_choice_list(choices)
         
@@ -257,14 +268,19 @@ class AndorCCDHW(HardwareComponent):
         
         # Choices for the AD channels
         choices = []
+        #chan = self.ad_chan.value
+        #print("ad_chan a", chan)
         for chan_i in range(self.ccd_dev.numADChan):
-            choices.append((str.format("Channel {}", chan_i), chan_i))
+            choices.append((str.format("AD{}", chan_i), chan_i))
         self.ad_chan.change_choice_list(choices)
+#         print("ad_chan b", self.ad_chan.value)
+#         self.ad_chan.update_value(chan)
+#         print("ad_chan c", self.ad_chan.value)
+#         self.ad_chan.send_display_updates(force=True)
         
         # For all of the logged quantities, call read from hardware to make sync
         # everything.
-        for lq in self.settings.as_list():
-            lq.read_from_hardware()        
+        self.read_from_hardware()        
         
         
         
@@ -382,7 +398,7 @@ class AndorCCDHW(HardwareComponent):
         width, height = self.ccd_dev.get_detector_shape()        
         
         # Readout and ROI parameters
-        self.readout_mode.update_value(AndorReadMode.Image.value)  #Full image readout mode
+        self.readout_mode.update_value('Image')  #Full image readout mode
         self.roi_img_hstart.update_value(1)
         self.roi_img_hend.update_value(width)
         self.roi_img_hbin.update_value(1)
@@ -395,3 +411,16 @@ class AndorCCDHW(HardwareComponent):
         self.roi_fvb_hbin.update_value(1)        
 
         self.set_readout()
+        
+        
+    def get_acquired_data(self):
+        
+        buffer_ = self.ccd_dev.get_acquired_data()
+                    
+        # If using second output amplifier
+        #image will be flipped horizontally
+        # so we correct this here
+        if self.settings['output_amp'] == 1:
+            buffer_ = buffer_[:,::-1]
+            
+        return buffer_

@@ -8,6 +8,7 @@ Thicker wrapper, some commands left out on purpose (gun off for example)
 import serial
 import numpy as np
 import time
+from _collections import OrderedDict
 
 
 class Remcon32(object):
@@ -297,9 +298,9 @@ class Remcon32(object):
         REMCON1 sets dual monitor mode ON
         REMCON2 display focus primary
         REMCON3 display focus secondary
-        REMCON4 - Auger, set probe currrent Max
-        REMCON5 - Auger, set probe currrent 3.0 nA
-        REMCON6 - Auger, set probe currrent 1.0 nA
+        REMCON4 - Auger, set probe current Max
+        REMCON5 - Auger, set probe current 3.0 nA
+        REMCON6 - Auger, set probe current 1.0 nA
         REMCON7 - Auger, set probe current 400 pA
         REMCON8 - Except Auger, high current ON
         REMCON9 - Except Auger, high current OFF
@@ -352,11 +353,26 @@ class Remcon32(object):
     '''
        
     def get_stage_position(self):
+        'returns x y z tilt rot M status'
         'for 5/6 axis stage, last param is 1.0 in motion, 0.0 done'
         resp = self.cmd_response('c95?')
-        return np.fromstring(resp,sep=' ') #array of 7 floats
+        return np.fromstring(resp,sep=' ', dtype=float) #array of 7 floats
+    
+    def get_stage_initialized_state(self):
+        'returns stage type (int) and is_initialized (int, 0 = initialized, 1 = NOT)'
+        resp = self.cmd_response('ist?')
+        status = np.fromstring(resp,sep=' ', dtype=int)
+        if status[1]:
+            return False
+        else:
+            return True
+        
+    def get_stage_position_dict(self):
+        pos_array = self.get_stage_position()
+        names = ['x', 'y', 'z', 'tilt', 'rot', 'M', 'status']
+        return OrderedDict(zip(names, pos_array))
 
-    def set_stage_position(self, x, y, z, rot, tilt=0):
+    def set_stage_position(self, x, y, z, tilt, rot ):
         'error if out of physical limits, can be dangerous'
         state = self.get_scm()
         self.scm_state(False)   #turn off scm so touch alarm works!

@@ -20,11 +20,40 @@
       <string>Powermate assignment</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_6">
+      <item row="1" column="0">
+       <widget class="QComboBox" name="powermate_1_comboBox"/>
+      </item>
       <item row="0" column="0">
        <widget class="QComboBox" name="powermate_0_comboBox"/>
       </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="acton_spectrometer_groupBox">
+     <property name="title">
+      <string>Acton Spectrometer</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_17">
+        <property name="text">
+         <string>Center wavelength: </string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="grating_id_comboBox"/>
+      </item>
       <item row="0" column="1">
-       <widget class="QComboBox" name="powermate_1_comboBox"/>
+       <widget class="QDoubleSpinBox" name="center_wl_doubleSpinBox"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_18">
+        <property name="text">
+         <string>Grating:</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -35,23 +64,37 @@
       <string>LED</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
-      <item row="4" column="4">
-       <widget class="QLabel" name="label">
+      <item row="4" column="5">
+       <widget class="QPushButton" name="tenma_power_current_plus_pushButton">
         <property name="text">
-         <string/>
+         <string>+</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="1">
+       <widget class="QDoubleSpinBox" name="tenma_power_current_doubleSpinBox">
+        <property name="suffix">
+         <string> Amps</string>
         </property>
        </widget>
       </item>
       <item row="5" column="2">
        <widget class="QLineEdit" name="tenma_power_voltage_lineEdit"/>
       </item>
+      <item row="4" column="8">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
       <item row="4" column="2">
        <widget class="QLineEdit" name="tenma_power_current_lineEdit"/>
       </item>
-      <item row="4" column="1">
-       <widget class="QDoubleSpinBox" name="tenma_power_current_doubleSpinBox">
-        <property name="suffix">
-         <string> Amps</string>
+      <item row="5" column="5">
+       <widget class="QPushButton" name="tenma_power_voltage_plus_pushButton">
+        <property name="text">
+         <string>+</string>
         </property>
        </widget>
       </item>
@@ -62,10 +105,10 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="3">
-       <widget class="QLabel" name="label_3">
+      <item row="5" column="4">
+       <widget class="QPushButton" name="tenma_power_voltage_minus_pushButton">
         <property name="text">
-         <string>A</string>
+         <string>-</string>
         </property>
        </widget>
       </item>
@@ -76,7 +119,21 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="1" colspan="3">
+      <item row="4" column="4">
+       <widget class="QPushButton" name="tenma_power_current_minus_pushButton">
+        <property name="text">
+         <string>-</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>A</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1" colspan="6">
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
          <widget class="QPushButton" name="tenma_power_off_pushButton">
@@ -100,16 +157,30 @@
    <item>
     <widget class="QGroupBox" name="groupBox_3">
      <property name="title">
-      <string>Other</string>
+      <string>Beam path</string>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
+     <layout class="QGridLayout" name="gridLayout_7">
+      <item row="1" column="1">
        <widget class="QComboBox" name="thorlabs_MFF_comboBox"/>
       </item>
-      <item>
+      <item row="1" column="2">
        <widget class="QCheckBox" name="shutter_open_checkBox">
         <property name="text">
-         <string>Shutter close</string>
+         <string>OPEN</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Detector</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>Shutter</string>
         </property>
        </widget>
       </item>
@@ -248,99 +319,13 @@
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
       <item row="1" column="0">
-       <widget class="QLabel" name="label_12">
-        <property name="text">
-         <string>Y:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLineEdit" name="x_set_lineEdit">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="label_11">
-        <property name="text">
-         <string>µm</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="cx_doubleSpinBox">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::NoButtons</enum>
-        </property>
-        <property name="keyboardTracking">
-         <bool>false</bool>
-        </property>
-        <property name="decimals">
-         <number>5</number>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
-       <widget class="QLabel" name="label_13">
-        <property name="text">
-         <string>µm</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_14">
-        <property name="text">
-         <string>Z:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
        <widget class="QLabel" name="label_10">
         <property name="text">
          <string>X:</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="cy_doubleSpinBox">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::NoButtons</enum>
-        </property>
-        <property name="keyboardTracking">
-         <bool>false</bool>
-        </property>
-        <property name="decimals">
-         <number>5</number>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QLineEdit" name="z_set_lineEdit">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
+      <item row="4" column="1">
        <widget class="QDoubleSpinBox" name="cz_doubleSpinBox">
         <property name="focusPolicy">
          <enum>Qt::NoFocus</enum>
@@ -359,14 +344,86 @@
         </property>
        </widget>
       </item>
-      <item row="2" column="3">
-       <widget class="QLabel" name="label_15">
+      <item row="1" column="3">
+       <widget class="QLabel" name="label_11">
         <property name="text">
          <string>µm</string>
         </property>
        </widget>
       </item>
+      <item row="3" column="1">
+       <widget class="QDoubleSpinBox" name="cy_doubleSpinBox">
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::NoButtons</enum>
+        </property>
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
+        <property name="decimals">
+         <number>5</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="3">
+       <widget class="QLabel" name="label_13">
+        <property name="text">
+         <string>µm</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="2">
+       <widget class="QLineEdit" name="z_set_lineEdit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="2">
+       <widget class="QLineEdit" name="x_set_lineEdit">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>Y:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="cx_doubleSpinBox">
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+        <property name="buttonSymbols">
+         <enum>QAbstractSpinBox::NoButtons</enum>
+        </property>
+        <property name="keyboardTracking">
+         <bool>false</bool>
+        </property>
+        <property name="decimals">
+         <number>5</number>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="2">
        <widget class="QLineEdit" name="y_set_lineEdit">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
@@ -376,10 +433,38 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_14">
+        <property name="text">
+         <string>Z:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QLabel" name="label_15">
+        <property name="text">
+         <string>µm</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0">
        <widget class="QCheckBox" name="stage_live_update_checkBox">
         <property name="text">
          <string>Live Update</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QPushButton" name="pushButton_2">
+        <property name="text">
+         <string>H</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QPushButton" name="load_position_pushButton">
+        <property name="text">
+         <string>L</string>
         </property>
        </widget>
       </item>
@@ -997,6 +1082,41 @@ Continuously</string>
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>center_wl_doubleSpinBox</tabstop>
+  <tabstop>grating_id_comboBox</tabstop>
+  <tabstop>tenma_power_off_pushButton</tabstop>
+  <tabstop>tenma_power_on_pushButton</tabstop>
+  <tabstop>tenma_power_current_doubleSpinBox</tabstop>
+  <tabstop>tenma_power_voltage_doubleSpinBox</tabstop>
+  <tabstop>tenma_power_current_lineEdit</tabstop>
+  <tabstop>tenma_power_voltage_lineEdit</tabstop>
+  <tabstop>tenma_power_current_minus_pushButton</tabstop>
+  <tabstop>tenma_power_current_plus_pushButton</tabstop>
+  <tabstop>tenma_power_voltage_minus_pushButton</tabstop>
+  <tabstop>tenma_power_voltage_plus_pushButton</tabstop>
+  <tabstop>thorlabs_MFF_comboBox</tabstop>
+  <tabstop>shutter_open_checkBox</tabstop>
+  <tabstop>h0_doubleSpinBox</tabstop>
+  <tabstop>h1_doubleSpinBox</tabstop>
+  <tabstop>v0_doubleSpinBox</tabstop>
+  <tabstop>v1_doubleSpinBox</tabstop>
+  <tabstop>dh_doubleSpinBox</tabstop>
+  <tabstop>dv_doubleSpinBox</tabstop>
+  <tabstop>h_axis_comboBox</tabstop>
+  <tabstop>v_axis_comboBox</tabstop>
+  <tabstop>x_set_lineEdit</tabstop>
+  <tabstop>y_set_lineEdit</tabstop>
+  <tabstop>z_set_lineEdit</tabstop>
+  <tabstop>power_wheel_encoder_pos_doubleSpinBox</tabstop>
+  <tabstop>powerwheel_move_steps_doubleSpinBox</tabstop>
+  <tabstop>powerwheel_move_fwd_pushButton</tabstop>
+  <tabstop>powerwheel_move_bkwd_pushButton</tabstop>
+  <tabstop>power_meter_wl_doubleSpinBox</tabstop>
+  <tabstop>power_meter_acquire_cont_checkBox</tabstop>
+  <tabstop>apd_optimize_startstop_checkBox</tabstop>
+  <tabstop>apd_counter_int_doubleSpinBox</tabstop>
+ </tabstops>
  <resources/>
  <connections/>
 </ui>

@@ -6,6 +6,7 @@ Created on Jul 24, 2014
 from __future__ import absolute_import
 from ScopeFoundry import HardwareComponent
 import time
+from ScopeFoundry.helper_funcs import QLock
 try:
     from .attocube_ecc100 import AttoCubeECC100
 except Exception as err:
@@ -18,11 +19,15 @@ class AttoCubeXYZStageHW(HardwareComponent):
 
     def __init__(self, app, debug=False, name=None, ax_names='xyz'):
         self.ax_names = ax_names
-        self.pro = True        
+        #self.pro = True        
         HardwareComponent.__init__(self, app, debug=debug, name=name)
 
     def setup(self):
         # Created logged quantities
+        
+        self.settings.New('pro_mode', dtype=bool, ro=True)
+
+        self.lock = QLock(mode=0) # nonre-entrant
         
         for axis in self.ax_names:
             self.settings.New(axis + "_position", 
@@ -60,32 +65,32 @@ class AttoCubeXYZStageHW(HardwareComponent):
                               dtype=int, ro=True, 
                               choices=[('+ Forward',+1), ('STOP',0), ('- Backward', -1)])
            
-            if self.pro:
-                self.settings.New(axis + "_auto_reference_update", dtype=bool,
-                                                               ro=False)
-                self.settings.New(axis + "_auto_reference_reset", dtype=bool,
-                                                               ro=False)
-                self.settings.New(axis + "_eot_stop", dtype=bool,
-                                                               ro=False)
-                self.settings.New(axis + "_eot_forward", dtype=bool,
-                                                               ro=True)
-                self.settings.New(axis + "_eot_back", dtype=bool,
-                                                               ro=True)
+            #if self.pro:
+            self.settings.New(axis + "_auto_reference_update", dtype=bool,
+                                                           ro=False)
+            self.settings.New(axis + "_auto_reference_reset", dtype=bool,
+                                                           ro=False)
+            self.settings.New(axis + "_eot_stop", dtype=bool,
+                                                           ro=False)
+            self.settings.New(axis + "_eot_forward", dtype=bool,
+                                                           ro=True)
+            self.settings.New(axis + "_eot_back", dtype=bool, ro=True)
+            # done pro
        
             self.settings.New(axis + "_step_voltage",
                                 dtype=float, vmin=0, vmax = 45, unit='V',
                                 ro=False)
-            if self.pro:
-                self.settings.New(axis + "_openloop_voltage", unit = 'V',
-                                        dtype=float, si=False, ro=False)
-            
-            
-                self.settings.New(axis + "_frequency", unit = 'Hz',
-                                        dtype=float, vmin = 1, vmax = 10000, si=False, ro=False)
+            #if self.pro:
+            self.settings.New(axis + "_openloop_voltage", unit = 'V',
+                                    dtype=float, si=False, ro=False)
+        
+        
+            self.settings.New(axis + "_frequency", unit = 'Hz',
+                                    dtype=float, vmin = 1, vmax = 10000, si=False, ro=False)
+            # done pro
                 
             self.settings.New(axis + "_actor_type", dtype=str, ro=True)
             self.settings.New(axis + "_actor_name", dtype=str, ro=True)
-        
         
             
             # Target Status is NCB_FeatureNotAvailable
@@ -114,6 +119,8 @@ class AttoCubeXYZStageHW(HardwareComponent):
         if self.settings['connect_by'] == 'device_id':
             self.ecc100 = AttoCubeECC100(device_id=self.settings['device_id'], debug=self.settings['debug_mode'])
             self.settings['device_num'] = self.ecc100.device_num
+        
+        self.settings['pro_mode'] = self.ecc100.pro_version_check()
         
         for axis_num, axis_name in enumerate(self.ax_names):
             print(axis_num, axis_name)
@@ -162,7 +169,7 @@ class AttoCubeXYZStageHW(HardwareComponent):
                 #    read_func = lambda a=axis_num: self.ecc100.read_target_status(a) 
                 #    )
 
-                if self.pro:
+                if self.settings['pro_mode']:
 #                     self.x_openloop_voltage.hardware_read_func = lambda: self.ecc100.read_openloop_voltage(X_AXIS)
 #                     self.x_openloop_voltage.hardware_set_func = lambda x: self.ecc100.write_openloop_voltage(X_AXIS, x)
                                     
@@ -246,7 +253,7 @@ class AttoCubeXYZStageHW(HardwareComponent):
         return self.settings[axis_name + "_reference_found"]
 
 
-    def move_and_wait(self, axis_name, new_pos, target_range=50e-3, timeout=10):
+    def move_and_wait(self, axis_name, new_pos, target_range=50e-3, timeout=15):
         print("move_and_wait", self.name, axis_name, new_pos)
         
         hw = self

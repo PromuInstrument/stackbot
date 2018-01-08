@@ -72,7 +72,12 @@ class CLQuadView(Measurement):
         
         self.sync_scan.settings.adc_oversample.connect_to_widget(
             self.ui.adc_oversample_doubleSpinBox)
-        
+
+        self.ui.adc_rate_pgSpinBox = \
+            replace_spinbox_in_layout(self.ui.adc_rate_doubleSpinBox)
+        self.sync_scan.settings.adc_rate.connect_to_widget(
+            self.ui.adc_rate_pgSpinBox)
+
         self.ui.pixel_time_pgSpinBox = \
             replace_spinbox_in_layout(self.ui.pixel_time_doubleSpinBox)
         self.sync_scan.settings.pixel_time.connect_to_widget(

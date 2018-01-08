@@ -41,6 +41,10 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         self.spec_plot = self.graph_layout.addPlot()
         self.spec_plot_line = self.spec_plot.plot([1,3,2,4,3,5])
         self.spec_plot.enableAutoRange()
+        
+        self.infline = pg.InfiniteLine(movable=True, angle=90, label='x={value:0.2f}', 
+                       labelOpts={'position':0.8, 'color': (200,200,100), 'fill': (200,200,200,50), 'movable': True})         
+        self.spec_plot.addItem(self.infline)
                 
         self.graph_layout.nextRow()
 
@@ -125,6 +129,8 @@ class WinSpecRemoteReadoutMeasure(Measurement):
                     self.wls = np.arange(self.data.shape[-1])
                 else:
                     self.wls = np.arange(self.data.shape[-1])
+                
+                self.wls_mean = self.wls.mean()
                     
                 if self.settings['save_h5']:
                     self.t0 = time.time()
@@ -150,3 +156,4 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         if not hasattr(self, 'data'):
             return
         self.spec_plot_line.setData(self.wls, np.average(self.data[0,:,:], axis=0))
+        self.infline.setValue([self.wls_mean,0])
