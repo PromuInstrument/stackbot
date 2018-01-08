@@ -10,11 +10,11 @@ class PowermateApp(BaseMicroscopeApp):
     
     def setup(self):
 
-        from ScopeFoundryHW.powermate.powermate_hw import PowermateHWSimple
-        self.add_hardware(PowermateHWSimple(self))
+        from ScopeFoundryHW.powermate.powermate_dev import PowermateHW
+        self.add_hardware(PowermateHW(self))
 
-        from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasureSimple
-        self.add_measurement(PowermateMeasureSimple(self))
+        from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasure
+        self.add_measurement(PowermateMeasure(self))
         self.ui.show()
         self.ui.activateWindow()
 
