@@ -1,4 +1,5 @@
 import serial
+from threading import Lock
 
 class ESP300(object):
     
@@ -12,19 +13,23 @@ class ESP300(object):
                                  parity='N',
                                  stopbits=1,
                                  rtscts=True, timeout=1.0)
-        
+        self.lock = Lock()
     
     def write_cmd(self, axis, cmd):
         full_cmd = '{}{}\r'.format(axis, cmd).encode('ascii')
         if self.debug:
             print('ESP300 write_cmd', repr(full_cmd))
-        self.ser.write(full_cmd)
+        with self.lock:
+            self.ser.write(full_cmd)
     
     def ask_cmd(self,axis,cmd):
-        self.write_cmd(axis, cmd)
-        resp = self.ser.readline().decode()[:-2]
+        full_cmd = '{}{}\r'.format(axis, cmd).encode('ascii')
+        with self.lock:
+            self.ser.write(full_cmd)
+            resp = self.ser.readline().decode()[:-2]
         if self.debug:
-            print('ESP300 ask_cmd', repr(resp))
+            print('ESP300 ask_cmd -->', repr(full_cmd))
+            print('ESP300 ask_cmd <--', repr(resp))
         return resp
     
     def ask_cmd_int(self,axis,cmd):
@@ -35,7 +40,8 @@ class ESP300(object):
         for ax, cmd in cmds:
             cmd.append("{}{}".format(ax,cmd))
         cmd = ";".join(cmd)
-        self.ser.write(cmd.encode('ascii'))
+        with self.lock:
+            self.ser.write(cmd.encode('ascii'))
         
     def read_id(self, axis):
         return self.ask_cmd(axis,'ID')
@@ -86,7 +92,8 @@ class ESP300(object):
         self.write_cmd(axis, "ST")
         
     def close(self):
-        self.ser.close()
+        with self.lock:
+            self.ser.close()
 
 
 if __name__ == '__main__':

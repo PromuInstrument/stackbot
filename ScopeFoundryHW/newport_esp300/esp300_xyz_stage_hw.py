@@ -5,7 +5,15 @@ class ESP300XYZStageHW(HardwareComponent):
     
     name = 'esp300_xyz_stage'
     
+    
     def __init__(self, app, debug=False, name=None, ax_names='xyz'):
+        """
+        ax_names defines the names of the three axes connected to the stage.
+        if an "_" underscore is found, that axis will be skipped.
+        May be any iterable. examples include 'xyz' or ['r', 'theta', 'phi']
+        
+        """
+        
         self.ax_names = ax_names
         HardwareComponent.__init__(self, app, debug=debug, name=name)
     
@@ -41,16 +49,18 @@ class ESP300XYZStageHW(HardwareComponent):
             self.settings.New(axis + '_enabled', bool, initial=True)
             self.settings.New(axis + '_is_moving', bool, ro=True)
             
+            self.settings.New(axis + "_step_delta", dtype=float, unit='m', si=True, initial=100e-6, vmin=0 )
+            
         
     def connect(self):
         S = self.settings
         
-        from esp300_dev import ESP300
+        from .esp300_dev import ESP300
         E = self.esp300 = ESP300(port=S['port'], debug=S['debug_mode'])
         
         for axis_index, axis_name in enumerate(self.ax_names):
             axis_num = axis_index + 1
-            # skip axes that are not excluded from ax_names
+            # skip axes that are excluded from ax_names
             if axis_name == '_' or axis_name == None:
                 continue
             
@@ -70,7 +80,7 @@ class ESP300XYZStageHW(HardwareComponent):
 
             self.settings.get_lq(axis_name + "_is_moving").connect_to_hardware(
                 read_func = lambda a=axis_num: E.read_is_moving(a))
-
+            
 
     def disconnect(self):
         self.settings.disconnect_all_from_hardware()
@@ -78,4 +88,9 @@ class ESP300XYZStageHW(HardwareComponent):
         if hasattr(self, 'esp300'):
             self.esp300.close()
             del self.esp300
-            
+    
+    def move_step_delta(self, axname, dir=+1):
+        "dir should be +/- 1"
+        dir = dir * 1.0/ abs(dir)
+        self.settings[axname + "_target_position"] += dir * self.settings[axname + '_step_delta']
+        

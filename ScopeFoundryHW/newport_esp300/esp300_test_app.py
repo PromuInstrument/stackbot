@@ -1,4 +1,5 @@
 from ScopeFoundry.base_app import BaseMicroscopeApp
+from ScopeFoundryHW.newport_esp300.esp300_xyz_control_measure import ESP300XYZStageControlMeasure
 
 class ESP300TestApp(BaseMicroscopeApp):
     
@@ -10,6 +11,8 @@ class ESP300TestApp(BaseMicroscopeApp):
         
         hw.settings['debug_mode'] = True
         hw.settings['port'] = 'COM4'
+        
+        self.add_measurement(ESP300XYZStageControlMeasure)
 
 if __name__ == '__main__':
     import sys
