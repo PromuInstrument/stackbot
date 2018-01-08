@@ -62,11 +62,15 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.attocube_ecc100.attocube_xyz_hw import AttoCubeXYZStageHW
         self.add_hardware(AttoCubeXYZStageHW(self))                        
               
-        from ScopeFoundryHW.powermate.powermate_hw import PowermateHWSimple
-        self.add_hardware(PowermateHWSimple)
+        from ScopeFoundryHW.powermate.powermate_hw import PowermateHW
+        self.add_hardware(PowermateHW(self))
         
         from ScopeFoundryHW.thorlabs_motorized_filter_flipper.thorlabsMFF_hardware import ThorlabsMFFHW
         self.add_hardware_component(ThorlabsMFFHW(self))        
+        
+        from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
+        self.add_hardware(XboxControllerHW(self))
+        
         
                         
         print("Adding Measurement Components")
@@ -90,8 +94,20 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.attocube_ecc100.attocube_stage_control import AttoCubeStageControlMeasure
         self.add_measurement(AttoCubeStageControlMeasure(self))
 
-        from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasureSimple
-        self.add_measurement(PowermateMeasureSimple)
+        from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasure
+        self.add_measurement(PowermateMeasure(self))
+        
+        from ScopeFoundryHW.attocube_ecc100.attocube_home_axis_measurement import AttoCubeHomeAxisMeasurement
+        self.add_measurement(AttoCubeHomeAxisMeasurement(self))
+        from measurements.stage_motion_measure import StageHomeAxesMeasure
+        self.add_measurement(StageHomeAxesMeasure(self))
+        
+        
+        from measurements.xbox_controller_measure import XboxControllerMeasure
+        self.add_measurement(XboxControllerMeasure(self))
+        
+        
+        #from ScopeFoundryHW.xbox_controller.xbox_controller_test_measure import 
         
         ####### Quickbar connections #################################
         
@@ -99,8 +115,8 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         # Powermate
         pm_measure = self.measurements['powermate_measure'] 
-        pm_measure.settings.pm_0_data_handler_selector.connect_to_widget(Q.powermate_0_comboBox)
-        pm_measure.settings.pm_1_data_handler_selector.connect_to_widget(Q.powermate_1_comboBox)
+        pm_measure.settings.dev_0_lq_path_moved.connect_to_widget(Q.powermate_0_comboBox)
+        pm_measure.settings.dev_1_lq_path_moved.connect_to_widget(Q.powermate_1_comboBox)
 
         # LED
         tenmaHW = self.hardware['tenma_powersupply']
