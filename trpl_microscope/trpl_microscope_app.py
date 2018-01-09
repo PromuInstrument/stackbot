@@ -61,7 +61,8 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
         self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
         
-        #self.oceanoptics_spec_hc = self.add_hardware_component(OceanOpticsSpectrometerHC(self))
+        from ScopeFoundryHW.oceanoptics_spec.oceanoptics_spec import OceanOpticsSpectrometerHW
+        self.add_hardware_component(OceanOpticsSpectrometerHW(self))
         
         #self.crystaltech_aotf_hc = self.add_hardware_component(CrystalTechAOTF(self))
         
@@ -83,6 +84,10 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         
         from ScopeFoundryHW.picoharp.picoharp_hist_measure import PicoHarpHistogramMeasure
         self.add_measurement(PicoHarpHistogramMeasure(self))
+
+        from ScopeFoundryHW.oceanoptics_spec.oo_spec_measure import  OOSpecLive
+        self.add_measurement(OOSpecLive(self))
+
 
         # Combined Measurements
         from confocal_measure.power_scan import PowerScanMeasure
