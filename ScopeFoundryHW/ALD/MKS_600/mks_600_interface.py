@@ -17,7 +17,7 @@ class MKS_600_Interface(object):
         
     name = 'mks_600_interface'
     
-    def __init__(self, port="COM9", debug=False):
+    def __init__(self, port="COM5", debug=False):
         self.port = port
         self.debug = debug
         
@@ -49,7 +49,6 @@ class MKS_600_Interface(object):
     def read_sensor_range(self):
         resp = self.ask_cmd("R33")[1:-2]
         if resp != b'':
-            print("range, orig resp", resp)
             value = int(resp)
             ranges = {0: 0.1, 1: 0.2, 2: 0.5, 3: 1,
                       4: 2, 5: 5, 6: 10, 7: 50, 8: 100,
@@ -60,7 +59,6 @@ class MKS_600_Interface(object):
             resp = ranges[value]
             ## Store successfully retrieved value
             self.sensor_range = resp
-            print("returned range", resp)
             return resp
         else:            
             self.error_count += 1
@@ -71,7 +69,6 @@ class MKS_600_Interface(object):
     def read_pressure_units(self):
         resp = self.ask_cmd("R34")[1:-2]
         if resp != b'':
-            print("units", resp)
             value = int(resp)
             units = {0: "Torr",
                     1: "mTorr",
@@ -95,7 +92,6 @@ class MKS_600_Interface(object):
     def read_pressure(self):
         resp = self.ask_cmd("R5")[1:-2]
         if resp != b'':
-            print("pressure", resp)
             fl = float(resp)
             pct = fl/100
             fs = self.read_sensor_range()
