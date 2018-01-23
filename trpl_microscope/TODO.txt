@@ -1,0 +1,59 @@
+
+HARDWARE:
+	picoharp
+	apd_counter DONE
+	andor_ccd# check hflip
+	acton_spec DONE
+	flip mirror DONE ?WRONG COMPORT?
+	thorlabs_powermeter WORKS, but optimizer crashes
+	thorlabs_powermeter_analog SKIP
+	mcl_xyz_stage DONE
+	keithley_sourcemeter LATER
+	srs_lockin LATER
+	thorlabs_optical_chopper LATER
+	power_wheel_arduino DONE
+	ocean_optics_spec DONE
+	crystaltech_aotf
+	Chameleon ultra II laser
+	linkam controller
+	powerwheel arduino
+
+MEASUREMENTS:
+	apd_optimizer DONE
+	apd_confocal 2D DONE
+	apd_confocal 3D
+	PLE point
+	PLE 2D
+	picoharp live
+	picoharp tttr
+	trpl_scan
+	trpl 3d
+	andor ccd readout FIX: update wavelength axis every frame
+	andor ccd step and glue
+	hyperspec scan 2D
+	hyperspec scan 3D
+	power scan motorized DONE (tested for APD)
+	power scan map
+	photocurrent 2D
+	photocurrent 3D
+	photocurrent IV
+	powermeter optimizer FIX: doesn't update power setting during measurement
+	oo_spec live DONE
+	kinetic spectra
+	laser power feedback control
+	single particle blink
+	single particle blink set
+	monochromator sweep (apd, lifetime)
+	laser_line_writer
+	chameleonPLE
+	continuous stage scan
+
+
+	
+OTHER
+
+	Powermeter optimizer: CRASH!
+
+	— hyperspec
+	— trpl map, 2D, 3D
+	— eps300 rough positioner
