@@ -191,7 +191,7 @@ class PowerScanMeasure(Measurement):
             # read detectors
             if self.settings['collect_apd']:
                 self.apd_count_rates[ii] = \
-                    self.apd_counter_hc.apd_count_rate.read_from_hardware()
+                    self.apd_counter_hw.settings.count_rate.read_from_hardware()
             if self.settings['collect_lifetime']:
                 ph = self.ph_hw.picoharp
                 ph.start_histogram()
@@ -258,9 +258,9 @@ class PowerScanMeasure(Measurement):
             H['power_wheel_position'] = self.power_wheel_position
             H['direction'] = self.direction
         finally:
+            self.log.info("data saved "+self.h5_file.filename)
             self.h5_file.close()
         
-        print(self.name, 'data saved', self.fname)
 
 
     def move_to_min_pos(self):

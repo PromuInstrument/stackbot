@@ -1,5 +1,5 @@
 from ScopeFoundry.hardware import HardwareComponent
-from ScopeFoundryHW.newport_esp300.esp300_dev import ESP300
+from .esp300_dev import ESP300
 
 class ESP300AxisHW(HardwareComponent):
     
