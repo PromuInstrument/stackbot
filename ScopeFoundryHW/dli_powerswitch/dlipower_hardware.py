@@ -58,9 +58,9 @@ class DLIPowerSwitchHW(HardwareComponent):
         ==============  =========  =====================================================================
         :returns: requests.get(*args).content    **Type:** bytes
         """
-        SERVER = "http://192.168.0.100/"
-        full_url = "{}{}".format(SERVER, url)
-        request = requests.get(full_url, auth=(self.userid.val, self.key.val,))
+        full_url = "http://{}/{}".format(self.settings['host'], url)
+        print("geturl: ", full_url)
+        request = requests.get(full_url, auth=(self.userid.val, self.key.val))
         return request.content
     
     def read_outlets(self):
@@ -99,10 +99,5 @@ class DLIPowerSwitchHW(HardwareComponent):
         Disconnects logged quantities from hardware objects.
         :returns: None
         """
-        for lq in self.logged_quantities.values():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
-        
-        # clean up hardware object
-        del self.switch
+        self.settings.disconnect_all_from_hardware()
         
