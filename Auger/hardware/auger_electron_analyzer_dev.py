@@ -10,7 +10,7 @@ class AugerElectronAnalyzer(object):
     #analyzer physical property
     quad_cmds = dict(X1=0x81, Y1=0x82, X2=0x83, Y2=0x84)
     dispersion = 0.02 
-    chan_shift = np.array([0.0,-1.0, +1.0, -2.0, +2.0, -3.0, +3.0])
+    chan_shift = np.array([0.0,-1.0+0.025, +1.0+0.025, -2.0+0.100, +2.0+0.050, -3.0+0.150, +3.0+0.150])
     dead_time = 70.0e-9 #estimate
    
     # State Variables

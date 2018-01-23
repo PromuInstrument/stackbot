@@ -5,16 +5,25 @@ import pyqtgraph as pg
 import numpy as np
 from ScopeFoundry import h5_io
 
+
+
 class WinSpecRemoteReadoutMeasure(Measurement):
     
     name = "winspec_readout"
     
     def setup(self):
         self.SHOW_IMG_PLOT = False
-        
+        self.settings.New('continuous', dtype=bool, initial=True, ro=False)
         self.settings.New('save_h5', dtype=bool, initial=True)
+        self.settings.New('wl_calib', dtype=str, initial='winspec', choices=('pixels','raw_pixels','winspec', 'acton_spectrometer'))
+
         
-    
+        
+    def pre_run(self):
+        self.winspec_hc = self.app.hardware['winspec_remote_client']
+        time.sleep(0.05)
+        self.winspec_hc.winspec_client
+
     def setup_figure(self):
 
         if hasattr(self, 'graph_layout'):
@@ -32,6 +41,10 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         self.spec_plot = self.graph_layout.addPlot()
         self.spec_plot_line = self.spec_plot.plot([1,3,2,4,3,5])
         self.spec_plot.enableAutoRange()
+        
+        self.infline = pg.InfiniteLine(movable=True, angle=90, label='x={value:0.2f}', 
+                       labelOpts={'position':0.8, 'color': (200,200,100), 'fill': (200,200,200,50), 'movable': True})         
+        self.spec_plot.addItem(self.infline)
                 
         self.graph_layout.nextRow()
 
@@ -47,17 +60,21 @@ class WinSpecRemoteReadoutMeasure(Measurement):
             self.hist_lut.setImageItem(self.img_item)
             self.graph_layout.addItem(self.hist_lut)
 
-        #self.show_ui()
-        
+
+        ### Widgets
+        self.settings.continuous.connect_to_widget(self.ui.continuous_checkBox)
+        self.settings.wl_calib.connect_to_widget(self.ui.wl_calib_comboBox)
+        self.settings.save_h5.connect_to_widget(self.ui.save_h5_checkBox)
+
         self.ui.start_pushButton.clicked.connect(self.start)
         self.ui.interrupt_pushButton.clicked.connect(self.interrupt)
         self.app.hardware['winspec_remote_client'].settings.acq_time.connect_bidir_to_widget(self.ui.acq_time_doubleSpinBox)
-    
-    def run(self):
-        
-        
-        winspec_hc = self.app.hardware['winspec_remote_client']
-        W = winspec_hc.winspec_client
+
+    def acquire_data(self, debug = False):
+        "helper function - called multiple times i spectral maps"
+        if debug:
+            print(self.name,'acquire_data()')
+        W = self.winspec_hc.winspec_client
         W.start_acq()
         
         while( W.get_status() ):
@@ -65,31 +82,71 @@ class WinSpecRemoteReadoutMeasure(Measurement):
                 break
             time.sleep(0.01)
         
-        hdr, data = W.get_data()
-        self.data = np.array(data).reshape(( hdr.frame_count, hdr.ydim, hdr.xdim) )
         
+        hdr, data = W.get_data()  
+        #print("getting_data")
+        return hdr,np.array(data).reshape(( hdr.frame_count, hdr.ydim, hdr.xdim) )
+        
+        
+    def evaluate_wls_winspec(self,hdr,debug = False):
+        "helper function - called onced in spectral maps"
+        if debug:
+            print(self.name,'evaluate_wls()')
         #px = (np.arange(hdr.xdim) +1) # works with no binning
         px = np.linspace( 1 + 0.5*(hdr.bin_x-1), 1+ 0.5*((2*hdr.xdim-1)*(hdr.bin_x) + 1)-1, hdr.xdim)
         c = hdr.calib_coeffs
         for i in range(5):
             print('coeff', c[i])
-        print(px)
-        self.wls = c[0] + c[1]*(px) + c[2]*(px**2) # + c[3]*(px**3) + c[4]*(px**4)
+        #print(px)
+        wls = c[0] + c[1]*(px) + c[2]*(px**2) # + c[3]*(px**3) + c[4]*(px**4)
         #self.wls = np.polynomial.polynomial.polyval(px, hdr.calib_coeffs) # need to verify, seems wrong
-        print(self.wls)
+        #print(self.wls)       
+        return wls 
+    
 
-        if self.settings['save_h5']:
-            self.t0 = time.time()
-            self.h5_file = h5_io.h5_base_file(self.app, measurement=self )
-            self.h5_file.attrs['time_id'] = self.t0
-            H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
         
-            #create h5 data arrays
-            H['wls'] = self.wls
-            H['spectrum'] = self.data
+    def run(self):
         
-            self.h5_file.close()
-
+        while not self.interrupt_measurement_called:
+            print("test")
+            try:
+                print("start acq")
+                self.hdr,self.data = self.acquire_data()
+                print("end acq")
+                wl_calib = self.settings['wl_calib']
+                if wl_calib=='winspec':
+                    self.wls = self.evaluate_wls_winspec(self.hdr)
+                elif wl_calib=='acton_spectrometer':
+                    hbin = self.hdr.bin_x
+                    px_index = np.arange(self.data.shape[-1])
+                    spec_hw = self.app.hardware['acton_spectrometer']
+                    self.wls = spec_hw.get_wl_calibration(px_index, hbin)
+                elif wl_calib=='pixels':
+                    binning = self.hdr.bin_x
+                    px_index = np.arange(self.data.shape[-1])
+                    self.wls = binned_px = binning*px_index + 0.5*(binning-1)
+                elif wl_calib=='raw_pixels':
+                    self.wls = np.arange(self.data.shape[-1])
+                else:
+                    self.wls = np.arange(self.data.shape[-1])
+                
+                self.wls_mean = self.wls.mean()
+                    
+                if self.settings['save_h5']:
+                    self.t0 = time.time()
+                    self.h5_file = h5_io.h5_base_file(self.app, measurement=self )
+                    self.h5_file.attrs['time_id'] = self.t0
+                    H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
+                
+                    #create h5 data arrays
+                    H['wls'] = self.wls
+                    H['spectrum'] = self.data
+                
+                    self.h5_file.close()
+            finally:
+                if not self.settings['continuous']:
+                    break
+            
     def update_display(self):
         
         if self.SHOW_IMG_PLOT:
@@ -99,3 +156,4 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         if not hasattr(self, 'data'):
             return
         self.spec_plot_line.setData(self.wls, np.average(self.data[0,:,:], axis=0))
+        self.infline.setValue([self.wls_mean,0])
