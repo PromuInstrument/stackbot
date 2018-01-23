@@ -87,7 +87,7 @@ class NI_FreqCounterCallBackHW(HardwareComponent):
         self.prev_count = self.current_count
         
         ## averaged over int_time
-        if self.mean_count*S['cb_interval'] >= S['int_time']:
+        if self.mean_count*S['cb_interval'] >= S['int_time'] and (self.mean_count > 0) :
             mean_cr = self.current_mean / self.mean_count
             self.mean_buffer[self.mean_buffer_i] = mean_cr
             if S['live_update']:
