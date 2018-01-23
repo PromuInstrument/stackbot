@@ -16,7 +16,7 @@ class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
         self.ph_hw = self.app.hardware['picoharp']
         
         dui_filename = sibling_path(__file__,"picoharp_hist_measure_details.ui")
-        self.dui = self.set_details_widget(dui_filename)
+        self.dui = self.set_details_widget(ui_filename=dui_filename)
         
         ph_hw = self.ph_hw
 
