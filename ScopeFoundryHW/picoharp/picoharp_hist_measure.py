@@ -3,7 +3,6 @@ from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 import numpy as np
 import time
 import pyqtgraph as pg
-from winioctlcon import IOCTL_DISK_HISTOGRAM_DATA
 from ScopeFoundry import h5_io
 
 class PicoHarpHistogramMeasure(Measurement):    

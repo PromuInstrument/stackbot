@@ -18,3 +18,5 @@ dist
 *.mat
 ScopeFoundry/ScopeFoundry.egg-info
 ScopeFoundry/__pycache__/
+trpl_microscope/log/
+plimg_microscope/log/

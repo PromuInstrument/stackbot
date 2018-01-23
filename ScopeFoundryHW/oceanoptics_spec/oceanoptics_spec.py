@@ -10,19 +10,20 @@
 
 from ScopeFoundry import HardwareComponent
 try:
-    from equipment.ocean_optics_seabreeze import OceanOpticsSpectrometer
+    from .ocean_optics_seabreeze import OceanOpticsSpectrometer
 except Exception as err:
-    print "Cannot load required modules for OceanOptics Spectrometer:", err
+    print("Cannot load required modules for OceanOptics Spectrometer:", err)
 
-class OceanOpticsSpectrometerHC(HardwareComponent):
+class OceanOpticsSpectrometerHW(HardwareComponent):
     
+    name = 'ocean_optics_spec'
+
     def setup(self):
-        self.name = 'ocean_optics_spectrometer'
         self.debug = True
         
         # Create logged quantities
         self.oo_spec_int_time = self.add_logged_quantity(
-                                            name="oo_spec_int_time", 
+                                            name="int_time", 
                                             dtype=float,
                                             ro = False,
                                             vmin = 0.0001,
@@ -49,13 +50,12 @@ class OceanOpticsSpectrometerHC(HardwareComponent):
 
     def disconnect(self):
         #disconnect logged quantities from hardware
-        for lq in self.logged_quantities.values():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
+        self.settings.disconnect_all_from_hardware()
         
-        #disconnect hardware
-        self.oo_spectrometer.close()
-        
-        # clean up hardware object
-        del self.oo_spectrometer
-        
+        if hasattr(self, 'oo_spectrometer'):
+            #disconnect hardware
+            self.oo_spectrometer.close()
+            
+            # clean up hardware object
+            del self.oo_spectrometer
+            

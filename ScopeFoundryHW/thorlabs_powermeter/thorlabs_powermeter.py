@@ -7,8 +7,9 @@ except Exception as err:
 
 class ThorlabsPowerMeterHW(HardwareComponent):
     
+    name = 'thorlabs_powermeter'
+    
     def setup(self):
-        self.name = 'thorlabs_powermeter'
         
         # Created logged quantities
         self.wavelength = self.add_logged_quantity(
@@ -34,20 +35,17 @@ class ThorlabsPowerMeterHW(HardwareComponent):
         self.current_range = self.add_logged_quantity(name = "current_range", dtype=float, unit="A", si=True)
         
         self.port = self.add_logged_quantity('port', dtype=str, initial='USB0::0x1313::0x8078::P0005750::INSTR')
-        
-        # connect GUI
-        if hasattr(self.gui.ui, 'power_meter_wl_doubleSpinBox'):
-            self.wavelength.connect_bidir_to_widget(self.gui.ui.power_meter_wl_doubleSpinBox)
-            self.power.connect_bidir_to_widget(self.gui.ui.power_meter_power_label)
-        
+               
         #operations
         self.add_operation("run_zero", self.run_zero)
+        
+        self.auto_thread_lock = False
         
     def connect(self):
         if self.debug_mode.val: self.log.debug( "connecting to" +  self.name)
         
         # Open connection to hardware                        
-        self.power_meter = ThorlabsPM100D(debug=self.debug_mode.val, port=self.port.val)
+        self.power_meter = ThorlabsPM100D(debug=self.settings['debug_mode'], port=self.settings['port'])
         
         #Connect lq
         self.wavelength.hardware_read_func = self.power_meter.get_wavelength
@@ -74,9 +72,7 @@ class ThorlabsPowerMeterHW(HardwareComponent):
 
     def disconnect(self):
         #disconnect logged quantities from hardware
-        for lq in self.settings.as_list():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
+        self.settings.disconnect_all_from_hardware()
         
         if hasattr(self, 'power_meter'):
             #disconnect hardware
