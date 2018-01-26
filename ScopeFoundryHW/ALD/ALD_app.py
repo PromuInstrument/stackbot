@@ -29,6 +29,9 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_hw import Pfeiffer_VGC_Hardware
         self.add_hardware(Pfeiffer_VGC_Hardware(self))
           
+        from ScopeFoundryHW.ALD.Seren.seren_hw import Seren_HW
+        self.add_hardware(Seren_HW(self))
+          
         from ScopeFoundryHW.ALD.MKS_146.mks_146_measure import MKS_146_Measure
         self.add_measurement(MKS_146_Measure(self))
           
@@ -38,6 +41,8 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_measure import Pfeiffer_VGC_Measure
         self.add_measurement(Pfeiffer_VGC_Measure(self))
         
+        from ScopeFoundryHW.ALD.Seren.seren_measure import Seren_Measure
+        self.add_measurement(Seren_Measure(self))
         
         
 if __name__ == '__main__':

@@ -110,9 +110,15 @@ class MKS_600_Interface(object):
         return float(resp)
         
     def open_valve(self):
+        """Command valve to move to full open"""
         self.ask_cmd("O")
     
+    def halt_valve(self):
+        """Halt valve at current position"""
+        self.ask_cmd("H")
+    
     def close_valve(self):
+        """Command valve to move to full close"""
         self.ask_cmd("C")
         
     
