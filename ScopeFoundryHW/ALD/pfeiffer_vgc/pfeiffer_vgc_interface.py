@@ -15,7 +15,7 @@ class Pfeiffer_VGC_Interface(object):
         
     name = 'pfeiffer_vgc_interface'
     
-    def __init__(self, port="COM9", debug=False):
+    def __init__(self, port="COM3", debug=False):
         self.port = port
         self.debug = debug
         if self.debug:

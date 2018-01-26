@@ -13,18 +13,18 @@ class MKS_600_Hardware(HardwareComponent):
     name = "mks_600_hw"
     
     def setup(self):
-        self.settings.New(name="port", initial="COM9", dtype=str, ro=False)
-        self.settings.New(name="pressure", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
-        self.settings.New(name="units", initial="mbar", dtype=str, ro=True)
-        self.settings.New(name="valve_position", initial=0.0, dtype=float, ro=True)
+        self.settings.New(name="port", initial="COM5", dtype=str, ro=False)
+#         self.settings.New(name="pressure", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
+#         self.settings.New(name="units", initial="mbar", dtype=str, ro=True)
+        self.settings.New(name="valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
         self.settings.New(name="valve_open", initial=False, dtype=bool, ro=False)
         self.mks = None
     
     def connect(self):
         self.mks = MKS_600_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
         
-        self.settings.pressure.connect_to_hardware(read_func=self.read_pressure)
-        self.settings.units.connect_to_hardware(read_func=self.read_units)
+#         self.settings.pressure.connect_to_hardware(read_func=self.read_pressure)
+#         self.settings.units.connect_to_hardware(read_func=self.read_units)
         self.settings.valve_position.connect_to_hardware(read_func=self.read_valve)
         self.settings.valve_open.connect_to_hardware(write_func=lambda x: self.set_valve(x))
         

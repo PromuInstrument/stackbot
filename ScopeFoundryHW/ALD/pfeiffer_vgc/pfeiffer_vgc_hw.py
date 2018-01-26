@@ -13,19 +13,27 @@ class Pfeiffer_VGC_Hardware(HardwareComponent):
     name = "pfeiffer_vgc_hw"
     
     def setup(self):
-        self.settings.New(name="port", initial="COM9", dtype=str, ro=False)
-        self.settings.New(name="ch1_pressure", initial=0.0, dtype=float, ro=True)
-        self.settings.New(name="ch1_units", initial="mbar", dtype=str, ro=True)
+        self.settings.New(name="port", initial="COM3", dtype=str, ro=False)
+        self.settings.New(name="ch1_pressure", initial=0.0, fmt='%e', spinbox_decimals=6, dtype=float, ro=True)
+        self.settings.New(name="ch2_pressure", initial=0.0, fmt='%e', dtype=float, spinbox_decimals=6, ro=True)
+        self.settings.New(name="ch3_pressure", initial=0.0, fmt='%e', dtype=float, spinbox_decimals=6, ro=True)
+        
+        self.settings.New(name="ch1_units", initial="torr", dtype=str, ro=True, choices=(('mbar'), ('torr')))
+        self.settings.New(name="ch2_units", initial="torr", dtype=str, ro=True, choices=(('mbar'), ('torr')))
+        self.settings.New(name="ch3_units", initial="torr", dtype=str, ro=True, choices=(('mbar'), ('torr')))
+        
         self.settings.New(name="ch1_sensor_type", initial="None", dtype=str,  ro=True)
-        self.settings.New(name="ch2_pressure", initial=0.0, dtype=float, ro=True)
-        self.settings.New(name="ch2_units", initial="mbar", dtype=str, ro=True)
         self.settings.New(name="ch2_sensor_type", initial="None", dtype=str,  ro=True)
+        self.settings.New(name="ch3_sensor_type", initial="None", dtype=str,  ro=True)
+
+        
         
         self.vgc = None
         
         # Constants
         self.ch1_index = 0
         self.ch2_index = 1
+        self.ch3_index = 2
         
     def connect(self):
         self.vgc = Pfeiffer_VGC_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
@@ -38,21 +46,47 @@ class Pfeiffer_VGC_Hardware(HardwareComponent):
         
         self.settings.ch2_sensor_type.connect_to_hardware(read_func=getattr(self, 'read_ch2_sensor_type'))
         
+        self.settings.ch3_pressure.connect_to_hardware(read_func=getattr(self, 'read_ch3_pressure'))
+        
+        self.settings.ch3_sensor_type.connect_to_hardware(read_func=getattr(self, 'read_ch3_sensor_type'))
         
     def read_ch1_pressure(self):
+        choice = self.settings['ch1_units']
         sensor = self.ch1_index + 1
-        return self.vgc.read_sensor(sensor)
+        if choice == 'mbar':
+            return self.vgc.read_sensor(sensor)
+        elif choice == 'torr':
+            measure = self.vgc.read_sensor(sensor)
+            return measure/(101325/76000)
     
     def read_ch1_sensor_type(self):
         channel = self.ch1_index
         return self.vgc.sensor_type()[channel]
     
     def read_ch2_pressure(self):
+        choice = self.settings['ch2_units']
         sensor = self.ch2_index + 1
-        return self.vgc.read_sensor(sensor)
+        if choice == 'mbar':
+            return self.vgc.read_sensor(sensor)
+        elif choice == 'torr':
+            measure = self.vgc.read_sensor(sensor)
+            return measure/(101325/76000)
     
     def read_ch2_sensor_type(self):
         channel = self.ch2_index
+        return self.vgc.sensor_type()[channel]
+    
+    def read_ch3_pressure(self):
+        choice = self.settings['ch3_units']
+        sensor = self.ch3_index + 1
+        if choice == 'mbar':
+            return self.vgc.read_sensor(sensor)
+        elif choice == 'torr':
+            measure = self.vgc.read_sensor(sensor)
+            return measure/(101325/76000)
+
+    def read_ch3_sensor_type(self):
+        channel = self.ch3_index
         return self.vgc.sensor_type()[channel]
     
     def disconnect(self):
