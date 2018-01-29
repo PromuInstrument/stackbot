@@ -27,8 +27,8 @@ class PowermateMeasure(Measurement):
             self.settings.New(name='dev_{}_lq_path_moved'.format(channel), dtype=str, 
                               initial=choices[channel], choices = choices)
             self.settings.New(name='dev_{}_lq_path_toggle'.format(channel), dtype=str, initial='')
-            self.settings.New(name='dev_{}_moved_released'.format(channel),initial=0.001, dtype=float, ro=False)
-            self.settings.New(name='dev_{}_moved_pressed'.format(channel), initial=0.1, dtype=float, ro=False)
+            self.settings.New(name='dev_{}_moved_released'.format(channel),initial=0.001, dtype=float, ro=False, spinbox_decimals=6)
+            self.settings.New(name='dev_{}_moved_pressed'.format(channel), initial=0.1, dtype=float, ro=False, spinbox_decimals=6)
         
         self.connect_pm_signals_to_lqs()
         
