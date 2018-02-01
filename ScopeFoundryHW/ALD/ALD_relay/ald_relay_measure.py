@@ -22,7 +22,7 @@ class ALDRelayMeasure(Measurement):
         self.dt = 0.1
     
     def setup(self):
-#         self.app
+
         self.hw = self.app.hardware['ald_relay_hw']
         
         self.hw.settings.relay1.connect_to_widget(self.ui.relay1_cbox)

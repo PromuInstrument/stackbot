@@ -23,15 +23,15 @@ class ALDRelayHW(HardwareComponent):
     
     def connect(self):
         self.relay = ALDRelayInterface(port=self.settings.port.val, debug=self.settings['debug_mode'])
-        self.populate()
+
         self.settings.get_lq('relay1').connect_to_hardware(
-                                    write_func=lambda value: self.write_relay1(value))
+                                    write_func=self.write_relay1)
         self.settings.get_lq('relay2').connect_to_hardware(
-                                    write_func=lambda value: self.write_relay2(value))
+                                    write_func=self.write_relay2)
         self.settings.get_lq('relay3').connect_to_hardware(
-                                    write_func=lambda value: self.write_relay3(value))
+                                    write_func=self.write_relay3)
         self.settings.get_lq('relay4').connect_to_hardware(
-                                    write_func=lambda value: self.write_relay4(value))
+                                    write_func=self.write_relay4) 
 
         self.settings.get_lq('pulse1').connect_to_hardware(
                                     write_func=self.write_pulse1)
@@ -45,43 +45,41 @@ class ALDRelayHW(HardwareComponent):
     def populate(self):
         "Populate logged quantities to reflect changes in self.relay.relay_array"
         for i in range(1,5,1):
-            self.settings['relay{}'.format(i)] = self.relay.relay_array[:,self.relay.state][i-1]
             self.settings['pulse{}'.format(i)] = self.relay.relay_array[:,self.relay.pulse_running][i-1]
-#             self.settings['pulse_width{}'.format(i)] = self.relay.relay_array[:,self.relay.pulse_width][i-1]
 
     
     
     def write_relay1(self, value):
-        self.relay.write_state(1, value)
+        self.relay.write_state(0, value)
         
     def write_relay2(self, value):
-        self.relay.write_state(2, value)
+        self.relay.write_state(1, value)
     
     def write_relay3(self, value):
-        self.relay.write_state(3, value)
+        self.relay.write_state(2, value)
         
     def write_relay4(self, value):
-        self.relay.write_state(4, value)                       
+        self.relay.write_state(3, value)                       
 
     def write_pulse1(self, value):
         if value:
             duration = self.settings['pulse_width1']
-            self.relay.send_pulse(1, duration)
+            self.relay.send_pulse(0, duration)
 
     def write_pulse2(self, value):
         if value:
             duration = self.settings['pulse_width2']
-            self.relay.send_pulse(2, duration)
+            self.relay.send_pulse(1, duration)
 
     def write_pulse3(self, value):
         if value:
             duration = self.settings['pulse_width3']
-            self.relay.send_pulse(3, duration)
+            self.relay.send_pulse(2, duration)
 
     def write_pulse4(self, value):
         if value:
             duration = self.settings['pulse_width4']
-            self.relay.send_pulse(4, duration)
+            self.relay.send_pulse(3, duration)
     
 
     def disconnect(self):
