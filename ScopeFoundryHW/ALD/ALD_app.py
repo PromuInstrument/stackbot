@@ -20,6 +20,9 @@ class ALD_App(BaseMicroscopeApp):
     
     def setup(self):
         
+        from ScopeFoundryHW.ALD.ALD_relay.ald_relay_hardware import ALDRelayHW
+        self.add_hardware(ALDRelayHW(self))
+        
         from ScopeFoundryHW.ALD.MKS_146.mks_146_hw import MKS_146_Hardware
         self.add_hardware(MKS_146_Hardware(self))
          
@@ -31,6 +34,9 @@ class ALD_App(BaseMicroscopeApp):
           
         from ScopeFoundryHW.ALD.Seren.seren_hw import Seren_HW
         self.add_hardware(Seren_HW(self))
+        
+        from ScopeFoundryHW.ALD.ALD_relay.ald_relay_measure import ALDRelayMeasure
+        self.add_measurement(ALDRelayMeasure(self))
           
         from ScopeFoundryHW.ALD.MKS_146.mks_146_measure import MKS_146_Measure
         self.add_measurement(MKS_146_Measure(self))
