@@ -16,14 +16,13 @@ class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
         self.ph_hw = self.app.hardware['picoharp']
         
         dui_filename = sibling_path(__file__,"picoharp_hist_measure_details.ui")
-        self.dui = self.set_details_widget(dui_filename)
+        self.dui = self.set_details_widget(ui_filename=dui_filename)
         
         ph_hw = self.ph_hw
 
         S = self.settings
         S.New('use_calc_hist_chans', dtype=bool, initial=True)
         
-
         S.use_calc_hist_chans.connect_to_widget(self.dui.use_calc_hist_chans_checkBox)        
         ph_hw.settings.Tacq.connect_to_widget(self.dui.picoharp_tacq_doubleSpinBox)
         ph_hw.settings.Binning.connect_to_widget(self.dui.Binning_comboBox)
@@ -42,14 +41,15 @@ class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
                     
         self.num_hist_chans=self.ph_hw.settings['histogram_channels']
         self.data_slice = slice(0,self.num_hist_chans)
+        
 
-        time_trace_map_shape = self.scan_shape + (self.num_hist_chans,)
-
-        self.time_trace_map_h5 = self.h5_meas_group.create_dataset('time_trace_map', 
-                                                                   shape=time_trace_map_shape,
+        self.integrated_count_map_h5 = self.h5_meas_group.create_dataset('integrated_count_map', 
+                                                                   shape=self.scan_shape,
                                                                    dtype=float, 
                                                                    compression='gzip')
-        
+
+        time_trace_map_shape = self.scan_shape + (self.num_hist_chans,)
+       
         
         self.time_array = self.ph.time_array*1e-3
         self.h5_meas_group['time_array'] = self.time_array[self.data_slice]
@@ -62,8 +62,6 @@ class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
         self.initial_scan_setup_plotting = True
 
     def post_scan_cleanup(self):
-        # close shutter 
-        #self.gui.shutter_servo_hc.shutter_open.update_value(False)
         pass
     
     def collect_pixel(self, pixel_num, k, j, i):
@@ -93,7 +91,8 @@ class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
         
         self.elapsed_time_h5[k,j,i] = elapsed_time
 
-        # display count-rate
+        # display count-AC_FRAMERATE
+        self.integrated_count_map_h5[k,j,i] = hist_data.sum() * 1.0/elapsed_time
         self.display_image_map[k,j,i] = hist_data.sum() * 1.0/elapsed_time
         
         import datetime

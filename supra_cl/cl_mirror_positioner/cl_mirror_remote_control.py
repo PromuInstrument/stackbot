@@ -13,7 +13,7 @@ class CLMirrorRemoteControlMeasure(Measurement):
         self.settings.New("xy_step", dtype=str, initial='10um', choices=('1um', '10um', '100um', 'Step'))
         self.settings.New("z_step",  dtype=str, initial='10um', choices=('1um', '10um', '100um', 'Step'))
         
-        self.settings.New("angle_step",  dtype=str, initial='0.10deg', choices=('0.01deg', '0.10deg', '1.00deg', 'Step'))
+        self.settings.New("angle_step",  dtype=str, initial='0.02_deg', choices=('0.002_deg', '0.02_deg', '0.2_deg', 'Step'))
 
         
         hw_cl_mirror = self.app.hardware['cl_mirror']
@@ -92,6 +92,6 @@ class CLMirrorRemoteControlMeasure(Measurement):
             self.hw_angle.single_step(ax, int_dir)
         else:
             assert self.hw_angle.settings[ax + "_enable_closedloop"]
-            deg_step = {'0.01deg':0.01 , '0.10deg': 0.1, '1.00deg': 1.0}[step]
+            deg_step = {'0.002_deg':0.002 , '0.02_deg': 0.02, '0.20_deg': 0.2}[step]
             self.hw_angle.settings[ax + "_target_position"] += int_dir*deg_step
         

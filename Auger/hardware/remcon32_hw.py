@@ -10,10 +10,7 @@ Revised by Alan Buckley
 
 from ScopeFoundry import HardwareComponent
 from Auger.hardware.remcon32 import Remcon32
-try:
-    import configparser
-except: # python 2
-    import ConfigParser as configparser
+import configparser
 
 
 
@@ -21,15 +18,17 @@ class SEM_Remcon_HW(HardwareComponent):
     ''' Auger system uses a different subset of commands from standard Zeiss Gemini'''
     
     name = 'sem_remcon'
+    
      
     def setup(self):
-        self.name='sem_remcon'
-        self.debug='false'
-        
-            #create logged quantities
+        self.debug=False
+
+        #create logged quantities
         #+- 10 V dac output moves within "full_size" box determined by mag, calculate mag with pixel size
+        self.settings.New('port', dtype=str, initial='COM4')
+        
         self.settings.New(
-            'SEM_mode',dtype=str,initial='default',choices=('default',))
+            'SEM_mode',dtype=str,initial='default',ro=True)
         self.settings.New(
             'eht_on', dtype=bool, initial=False)         
         self.settings.New(
@@ -61,13 +60,32 @@ class SEM_Remcon_HW(HardwareComponent):
         self.settings.New(
             'detector1', dtype=str, initial='SE2', choices=('SE2','VPSE','InLens'))       
         self.settings.New(
-            'stig_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')\
-            # THIS IS CRITICALY IMPORTANT, do NOT remove again. Frank Oct 10, 2017
-            # Since it can't be read, it's not very useful
+            'stig_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
         self.settings.New(
-             'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+            'stig_x', dtype=float, unit=r'%')
+        self.settings.New(
+            'stig_y', dtype=float, unit=r'%')        
+        self.settings.stig_xy.connect_element_follower_lq(self.settings.stig_x, 0)
+        self.settings.stig_xy.connect_element_follower_lq(self.settings.stig_y, 1)
+        # THIS IS CRITICALY IMPORTANT, do NOT remove again. Frank Oct 10, 2017
+        # Since it can't be read, it's not very useful
+        self.settings.New(
+            'gun_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+        self.settings.New(
+            'gun_x', dtype=float, unit=r'%')
+        self.settings.New(
+            'gun_y', dtype=float, unit=r'%')
+        self.settings.gun_xy.connect_element_follower_lq(self.settings.gun_x, 0)
+        self.settings.gun_xy.connect_element_follower_lq(self.settings.gun_y, 1)
         self.settings.New(
             'aperture_xy', dtype=float, array=True, fmt='%1.1f', initial=[0,0], vmin=-100, vmax=100, unit=r'%')
+        self.settings.New(
+            'aperture_x', dtype=float, unit=r'%')
+        self.settings.New(
+            'aperture_y', dtype=float, unit=r'%')
+        self.settings.aperture_xy.connect_element_follower_lq(self.settings.aperture_x, 0)
+        self.settings.aperture_xy.connect_element_follower_lq(self.settings.aperture_y, 1)
+        
         # Since beamshift can't be read, give option to control or not
         self.settings.New(
             'control_beamshift', dtype=bool, initial=False)        
@@ -83,38 +101,40 @@ class SEM_Remcon_HW(HardwareComponent):
            
         self.select_aperture = self.settings.New( #not for Auger
             'select_aperture', dtype=int,ro=False, vmin=1, vmax=6, choices=aperture_choices)
-        self.settings.New('port', dtype=str, initial='COM4')
         
 
         self.settings.control_beamshift.add_listener(self.on_change_control_beamshift)
         self.settings.magnification.add_listener(self.on_new_mag)
         self.settings.full_size.add_listener(self.on_new_full_size)
 
+        # stage position: [x y z tilt rot M status]
+        self.settings.New('stage_position',
+                          dtype=float, array=True, ro = True, fmt='%1.3f', initial=[0,0,0,0,0,0,0] )
+
         
-#         self.stage_x=self.settings.New(name='stage_x',
-#                                                dtype=float,
-#                                                ro=False,
-#                                                vmin=5.0,
-#                                                vmax=95.0,
-#                                                initial=50,
-#                                                unit='mm')
-#          
-#         self.stage_y=self.settings.New(name='stage_y',
-#                                                dtype=float,
-#                                                ro=False,
-#                                                vmin=5.0,
-#                                                vmax=95.0,
-#                                                initial=50,
-#                                                unit='mm')
-#          
-#         self.stage_z=self.settings.New(name='stage_z',
-#                                                dtype=float,
-#                                                ro=False,
-#                                                vmin=0.0,
-#                                                vmax=25.0,
-#                                                initial=1.0,
-#                                                unit='mm')
-#         
+        self.settings.New('stage_x', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[0])
+        
+        self.settings.New('stage_y', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[1])
+        
+        self.settings.New('stage_z', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[2])
+
+        self.settings.New('stage_tilt', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[3])
+
+        self.settings.New('stage_rot', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[4])
+
+        self.settings.New('stage_M', dtype=float, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: pos[5])
+
+        self.settings.New('stage_is_moving', dtype=bool, ro=True)
+        self.settings.stage_x.connect_lq_math( (self.settings.stage_position,), lambda pos: bool(pos[6]))
+
+        self.settings.New('stage_initialized', dtype=bool, ro=True)
+        
         self.running_on_new_full_size = False
     
     def on_change_control_beamshift(self):
@@ -170,16 +190,16 @@ class SEM_Remcon_HW(HardwareComponent):
             read_func=R.get_stig,
             write_func=lambda XY: R.set_stig(*XY),
             )        
-#         S.gun_xy.connect_to_hardware(
-#             write_func=lambda XY: R.set_gun_align(*XY),
-#             )        
+        S.gun_xy.connect_to_hardware(
+            write_func=lambda XY: R.set_gun_align(*XY),
+            )        
         S.aperture_xy.connect_to_hardware(
             read_func=R.get_ap_xy,
             write_func=lambda XY: R.set_ap_xy(*XY),
             )        
-#         S.beamshift_xy.connect_to_hardware(
-#             write_func=lambda XY: R.set_beam_shift(*XY)
-#             )        
+        S.beamshift_xy.connect_to_hardware(
+             write_func=lambda XY: R.set_beam_shift(*XY)
+             )        
         S.WD.connect_to_hardware(
                 read_func = R.get_wd,
                 write_func = R.set_wd
@@ -195,21 +215,13 @@ class SEM_Remcon_HW(HardwareComponent):
         S.eht_on.connect_to_hardware(
                 read_func = R.get_eht_state,
                 write_func = R.set_eht_state
-                )        
-#         S.stage_x.hardware_read_func=\
-#             self.remcon.read_stage_x
-#         S.stage_x.hardware_set_func=\
-#             self.remcon.write_stage_x    
-#              
-#         S.stage_y.hardware_read_func=\
-#             self.remcon.read_stage_y
-#         
-#         S.stage_y.hardware_set_func=\
-#             self.remcon.write_stage_y
-#              
-#         S.stage_z.hardware_read_func=\
-#             self.remcon.read_stage_z   
-## Array implementation needed.
+                )
+        S.stage_position.connect_to_hardware(
+                read_func = R.get_stage_position,
+                )
+        S.stage_initialized.connect_to_hardware(
+                read_func = R.get_stage_initialized_state,
+                ) 
          
         S.detector0.connect_to_hardware(
                 read_func = lambda: R.get_chan_detector(True),
@@ -284,6 +296,8 @@ class Auger_Remcon_HW(SEM_Remcon_HW):
         self.settings.New('probe_current', dtype=str, 
                           initial='Max',
                           choices=('Max','3.0 nA','1.0 nA','400 pA'))
+        
+        self.settings['SEM_mode'] = 'Auger'
        
     def connect(self):
         SEM_Remcon_HW.connect(self, write_to_hardware=False)
@@ -291,6 +305,7 @@ class Auger_Remcon_HW(SEM_Remcon_HW):
         
         S.select_aperture.disconnect_from_hardware(dis_read=False)
         S.high_current.disconnect_from_hardware()
+        S.stage_position.disconnect_from_hardware()
         S.select_aperture.change_readonly(True)
         S.high_current.change_readonly(True)
                 

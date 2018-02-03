@@ -1,3 +1,3 @@
 from __future__ import absolute_import
 
-from ScopeFoundryHW.newport_esp300.esp300_hw import ESP300AxisHW
+from .esp300_single_axis_hw import ESP300AxisHW

@@ -34,7 +34,7 @@ class PowerMeterOptimizerMeasure(Measurement):
         self.optimize_ii = 0
 
         # hardware
-        self.powermeter = self.app.hardware.thorlabs_powermeter
+        self.powermeter = self.app.hardware['thorlabs_powermeter']
 
         #connect events
         self.ui.start_pushButton.clicked.connect(self.start)
@@ -84,8 +84,10 @@ class PowerMeterOptimizerMeasure(Measurement):
             self.optimize_ii += 1
             self.optimize_ii %= self.OPTIMIZE_HISTORY_LEN
             
-            pow_reading = self.powermeter.settings.power.read_from_hardware()
-
+            #pow_reading = self.powermeter.settings.power.read_from_hardware()
+            pow_reading = self.powermeter.power_meter.measure_power()
+            
+            
             self.optimize_history[self.optimize_ii] = pow_reading
             #self.pm_analog_readout_hc.voltage.read_from_hardware()
             if self.save_data.val:

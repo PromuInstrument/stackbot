@@ -18,9 +18,11 @@ app.load_view(H5TreeView(app))
 app.load_view(H5TreeSearchView(app))
 
 
-from viewers.gauss2d_fit_img import Gauss2DFitImgView, Gauss2DFitAPD_MCL_2dSlowScanView
+from viewers.gauss2d_fit_img import Gauss2DFitImgView, Gauss2DFitAPD_MCL_2dSlowScanView,\
+    Gauss2DFit_FiberAPD_View
 app.load_view(Gauss2DFitImgView(app))
 app.load_view(Gauss2DFitAPD_MCL_2dSlowScanView(app))
+app.load_view(Gauss2DFit_FiberAPD_View(app))
 
 
 try:
@@ -39,6 +41,7 @@ app.load_view(PicoHarpNPZView(app))
 from FoundryDataBrowser.viewers.picoharp_histogram_h5 import PicoHarpHistogramH5View
 app.load_view(PicoHarpHistogramH5View(app))
 
+from viewers.hyperspec_npz import HyperSpecNPZView
 app.load_view(HyperSpecNPZView(app))
 
 from viewers.hyperspec_npz import HyperSpecSpecMedianNPZView
@@ -64,7 +67,7 @@ app.load_view(APD_MCL_3DSlowScanView(app))
 from viewers.WinSpecMCL2DSlowScanView import WinSpecMCL2DSlowScanView
 app.load_view(WinSpecMCL2DSlowScanView(app))
 
-from viewers.WinSpecRemoteReadoutView import WinSpecRemoteReadoutView
+from viewers.winspec_remote_readout_h5 import WinSpecRemoteReadoutView
 app.load_view(WinSpecRemoteReadoutView(app))
 
 from viewers.power_scan_h5 import PowerScanH5View

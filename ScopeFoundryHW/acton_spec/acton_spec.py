@@ -39,7 +39,7 @@ class ActonSpectrometerHW(HardwareComponent):
                                 reread_from_hardware_after_write = True
                                 )
 
-        self.settings.New('grating_id', dtype=int, choices=(1,2,3,4,5,6))
+        self.settings.New('grating_id', dtype=int, initial=1, choices=(1,2,3,4,5,6))
         self.settings.New('grating_name', dtype=str, ro=True)
 
         self.settings.New(
@@ -56,7 +56,7 @@ class ActonSpectrometerHW(HardwareComponent):
         # f (nm), delta (angle), gamma(angle), n0, d_grating(nm), x_pixel(nm),
         # distances stored in nm
         self.settings.New('grating_calibrations', dtype=float, 
-                          array=True, initial=[[300e6,0,0,256, (1/150.)*1e6, 16e3]]*3)
+                          array=True, initial=[[300e6,0,0,256,0,  (1/150.)*1e6, 16e3]]*3)
 
     def connect(self):
         if self.debug: self.log.info( "connecting to acton_spectrometer" )
@@ -121,18 +121,18 @@ class ActonSpectrometerHW(HardwareComponent):
     def get_wl_calibration(self, px_index, binning=1, m_order=1):
         S = self.settings
         grating_id = S['grating_id'] - 1
-        f, delta, gamma, n0, d_grating, x_pixel  = S['grating_calibrations'][grating_id]
+        f, delta, gamma, n0, offset_adjust, d_grating, x_pixel  = S['grating_calibrations'][grating_id]
         binned_px = binning*px_index + 0.5*(binning-1)
-        wl = wl_p_calib(binned_px, n0, S['center_wl'], m_order, d_grating, x_pixel, f, delta, gamma)
+        wl = wl_p_calib(binned_px, n0, offset_adjust, S['center_wl'], m_order, d_grating, x_pixel, f, delta, gamma)
         #print('get_wl_calibration', grating_id, S['grating_calibrations'][grating_id], S['center_wl'], wl)
         return wl
         
-def wl_p_calib(px, n0, wl_center, m_order, d_grating, x_pixel, f, delta, gamma):
+def wl_p_calib(px, n0, offset_adjust, wl_center, m_order, d_grating, x_pixel, f, delta, gamma):
     #consts
     #d_grating = 1./150. #mm
     #x_pixel   = 16e-3 # mm
     #m_order   = 1 # diffraction order, unitless
-    n = px - n0
+    n = px - (n0+offset_adjust*wl_center)
 
     psi = np.arcsin( m_order* wl_center / (2*d_grating*np.cos(gamma/2)))
     eta = np.arctan(n*x_pixel*np.cos(delta) / (f+n*x_pixel*np.sin(delta)))

@@ -154,45 +154,15 @@
          <string>Scan</string>
         </property>
         <layout class="QGridLayout" name="gridLayout_5">
-         <item row="3" column="1">
+         <item row="4" column="1">
           <widget class="QDoubleSpinBox" name="line_time_doubleSpinBox"/>
          </item>
-         <item row="2" column="1">
-          <widget class="QDoubleSpinBox" name="pixel_time_doubleSpinBox"/>
-         </item>
-         <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="adc_oversample_doubleSpinBox"/>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="label_4">
-           <property name="text">
-            <string>frame time</string>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="0">
-          <widget class="QLabel" name="label_3">
-           <property name="text">
-            <string>Pixel time</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
           <widget class="QLabel" name="label">
            <property name="text">
             <string>Over Sample</string>
            </property>
           </widget>
-         </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label_2">
-           <property name="text">
-            <string>Line time</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QDoubleSpinBox" name="frame_time_doubleSpinBox"/>
          </item>
          <item row="0" column="1">
           <widget class="QDoubleSpinBox" name="n_pixels_doubleSpinBox"/>
@@ -203,6 +173,46 @@
             <string>n_pixels</string>
            </property>
           </widget>
+         </item>
+         <item row="5" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>frame time</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QDoubleSpinBox" name="adc_oversample_doubleSpinBox"/>
+         </item>
+         <item row="5" column="1">
+          <widget class="QDoubleSpinBox" name="frame_time_doubleSpinBox"/>
+         </item>
+         <item row="3" column="1">
+          <widget class="QDoubleSpinBox" name="pixel_time_doubleSpinBox"/>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Pixel time</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>Line time</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_7">
+           <property name="text">
+            <string>ADC Rate</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="adc_rate_doubleSpinBox"/>
          </item>
         </layout>
        </widget>
