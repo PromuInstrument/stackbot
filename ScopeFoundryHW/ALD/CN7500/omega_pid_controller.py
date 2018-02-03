@@ -56,7 +56,7 @@ class OmegaPIDController(object):
         return self.setp
     
     def read_output1(self):
-        self.outp1 = 0.1 * sefl.send_analog_read(0x1012)
+        self.outp1 = 0.1 * selfself,.send_analog_read(0x1012)
         return self.outp1
         
     def read_output2(self):
@@ -189,7 +189,11 @@ class OmegaPIDController(object):
         if self.debug: print "ouput", repr(output)
         assert output == cmd
 
+    def close(self):
+    	self.ser.close()
+    	del self.ser
 
+    	
     CTRL_METHODS = ("PID", "ON/OFF", "Manual", "PID Program Ctrl")
     HEAT_COOL_CTRLS = ("Heating", "Cooling", "Heating/Cooling", "Cooling/Heating")
 
@@ -242,6 +246,8 @@ class OmegaPIDController(object):
         #2000H~ 203FH ,Pattern 0~7 temperature set point setting Pattern 0 temperature is set to 2000H~2007H 
         #2080H~ 20BFH ,Pattern 0~7 execution time setting Pattern 0 time is set to 2080H~2087H 
         
-if __name__ == '__main__':
-    pid1 = OmegaPIDController(port="COM7", address=0x01, debug=True)    
-    print "TEMP:", pid1.read_temp()
+
+        
+# if __name__ == '__main__':
+#     pid1 = OmegaPIDController(port="COM7", address=0x01, debug=True)    
+#     print "TEMP:", pid1.read_temp()
