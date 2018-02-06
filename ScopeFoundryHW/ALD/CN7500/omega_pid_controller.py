@@ -13,7 +13,7 @@ class OmegaPIDController(object):
     """ Omega PID Controller 7600 series communicating via RS-485 Modbus ASCII protocol
     
     """
-    def __init__(self,port="COM7", address=0x01, debug=False):
+    def __init__(self,port="COM1", address=0x01, debug=False):
         self.port = port
         self.address = address
         self.debug =debug
@@ -56,7 +56,7 @@ class OmegaPIDController(object):
         return self.setp
     
     def read_output1(self):
-        self.outp1 = 0.1 * selfself,.send_analog_read(0x1012)
+        self.outp1 = 0.1 * self.send_analog_read(0x1012)
         return self.outp1
         
     def read_output2(self):
