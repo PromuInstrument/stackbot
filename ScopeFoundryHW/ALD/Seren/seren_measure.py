@@ -21,12 +21,12 @@ class Seren_Measure(Measurement):
         self.layout = QtWidgets.QVBoxLayout()
         self.ui.setLayout(self.layout)
     
-        self.seren = self.app.hardware['seren_hw']
+        self.seren_hw = self.app.hardware['seren_hw']
         
     def run(self):
         dt = 0.05
         while not self.interrupt_measurement_called:
-            self.seren.settings.forward_power.read_from_hardware()
+            self.seren_hw.settings.forward_power.read_from_hardware()
             time.sleep(dt)
-            self.seren.settings.reflected_power.read_from_hardware()
+            self.seren_hw.settings.reflected_power.read_from_hardware()
             time.sleep(dt)

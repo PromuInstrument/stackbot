@@ -89,6 +89,7 @@ class MKS_146_Interface(object):
             self.ser.flush()
             self.ser.write(message.encode())
             _resp = self._readline()
+#             .decode()
 
         print("wr_resp", _resp)
 

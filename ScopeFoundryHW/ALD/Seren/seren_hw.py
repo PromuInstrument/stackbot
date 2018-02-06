@@ -5,14 +5,14 @@ Created on Jan 26, 2018
                         <alanbuckley@berkeley.edu>
 '''
 from ScopeFoundry.hardware import HardwareComponent
-from ScopeFoundryHW.ALD.Seren import seren_interface
+from ScopeFoundryHW.ALD.Seren.seren_interface import Seren_Interface
 
 class Seren_HW(HardwareComponent):
     
     name = 'seren_hw'
     
     def setup(self):
-        self.settings.New(name="port", initial="COM7", dtype=str, ro=False)
+        self.settings.New(name="port", initial="COM6", dtype=str, ro=False)
         self.settings.New(name="enable_serial", initial=True, dtype=bool, ro=False)
         self.settings.New(name="forward_power", initial=0, dtype=int, ro=False)
         self.settings.New(name="reflected_power", initial=0, dtype=int, ro=True)
@@ -21,7 +21,7 @@ class Seren_HW(HardwareComponent):
         self.seren = None
         
     def connect(self):
-        self.seren = seren_interface(port=self.settings.port.val, debug=self.settings['debug'])
+        self.seren = Seren_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
         
         self.settings.enable_serial.connect_to_hardware(write_func=lambda x: self.serial_toggle(x))
         
@@ -48,10 +48,10 @@ class Seren_HW(HardwareComponent):
         self.seren.write_forward_sp(power)
     
     def read_fp_sp(self):
-        self.seren.read_forward()
+        return self.seren.read_forward()
     
     def read_rp_sp(self):
-        self.seren.read_reflected()
+        return self.seren.read_reflected()
     
     def disconnect(self):
         self.settings.disconnect_all_from_hardware()

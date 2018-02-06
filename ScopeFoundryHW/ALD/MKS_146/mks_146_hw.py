@@ -13,7 +13,7 @@ class MKS_146_Hardware(HardwareComponent):
     name = "mks_146_hw"
     
     def setup(self):
-        self.settings.New(name="port", initial="COM3", dtype=str, ro=False)
+        self.settings.New(name="port", initial="COM6", dtype=str, ro=False)
         self.settings.New(name="MFC1_flow", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
         self.settings.New(name="MFC2_flow", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
         self.settings.New(name="MFC1_valve", initial="C", dtype=str, choices = [

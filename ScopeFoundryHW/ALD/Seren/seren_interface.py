@@ -17,7 +17,7 @@ class Seren_Interface(object):
     
     name='seren_interface'
     
-    def __init__(self, port="COM1", debug=False):
+    def __init__(self, port="COM6", debug=False):
         self.port = port
         self.debug = debug
         self.lock = Lock()
@@ -63,13 +63,13 @@ class Seren_Interface(object):
         self.write_cmd("S")
     
     def write_forward_sp(self, power):
-        self.write_cmd("{:05d}_W".format(power))
+        self.write_cmd("{} W".format(int(power)))
     
     def read_forward(self):
-        self.write_cmd("W?")
+        return self.write_cmd("W?")
     
     def read_reflected(self):
-        self.write_cmd("R?")
+        return self.write_cmd("R?")
 
     
     def set_serial_control(self):
