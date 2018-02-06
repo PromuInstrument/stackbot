@@ -29,6 +29,9 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.MKS_600.mks_600_hw import MKS_600_Hardware
         self.add_hardware(MKS_600_Hardware(self))
         
+        from ScopeFoundryHW.ALD.CN7500.omega_hw import OmegaHW
+        self.add_hardware(OmegaHW(self))
+        
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_hw import Pfeiffer_VGC_Hardware
         self.add_hardware(Pfeiffer_VGC_Hardware(self))
           
