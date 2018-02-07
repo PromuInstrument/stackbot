@@ -1,6 +1,6 @@
 '''
 @author: Ed Barnard
-
+Updated by Alan Buckley (2/6/2018)
 '''
 
 from __future__ import division
@@ -57,6 +57,7 @@ class OmegaPIDController(object):
     
     def read_output1(self):
         self.outp1 = 0.1 * self.send_analog_read(0x1012)
+        print("output1:", 0.1 * self.send_analog_read(0x1012))
         return self.outp1
         
     def read_output2(self):
@@ -71,7 +72,7 @@ class OmegaPIDController(object):
         
     def set_output2(self, outp2):
         "set output in percent, only in manual control"
-        self.send_analog_write(0x1012, int(outp1*10) )
+        self.send_analog_write(0x1012, int(outp2*10) )
         self.outp2 = outp2
         return self.outp2
 
@@ -123,8 +124,8 @@ class OmegaPIDController(object):
         
         ascii_message = ":" + "".join( "%02X" % b for b in message) + "\r\n"
         
-        if self.debug:print repr(message)
-        if self.debug:print repr(ascii_message)
+        if self.debug:print(repr(message))
+        if self.debug:print(repr(ascii_message))
     
         return ascii_message
             
@@ -149,13 +150,14 @@ class OmegaPIDController(object):
         output = self.ser.readline() # is \r\n included !?
         ":01030200EA10"
 
-        assert output[0] == ':'
+        print("output:", output)
+        assert output[0] == ord(':')
         #create byte array from output
         output_hexstr = output[1:-2] # remove starting ":" and ending \r\n
         output_bytes = bytearray( 
 			[ int(output_hexstr[i:i+2], 16) for i in range(0, len(output_hexstr), 2) ] )
         
-        if self.debug: print "output_bytes", [hex(a) for a in output_bytes]
+        if self.debug: print("output_bytes", [hex(a) for a in output_bytes])
         
         lrc = (0x100 + 1 + ~(sum(output_bytes[:-1]) % 0x100)) % 0x100
         assert output_bytes[-1] == lrc # error check
@@ -166,7 +168,7 @@ class OmegaPIDController(object):
         
         data_bytes = output_bytes[3:-1]
         
-        if self.debug: print "data_bytes", [hex(a) for a in data_bytes]
+        if self.debug: print("data_bytes", [hex(a) for a in data_bytes])
         
         #return struct.unpack("<%ih" % length, data_bytes)
         data_shorts = [
@@ -184,10 +186,12 @@ class OmegaPIDController(object):
         cmd = self.analog_write_command(register, data)
         self.ser.write(cmd)
         output = self.ser.readline() # need to check to see if output contains \r\n
+        print("output/cmd  analog_write:", "_"+output.decode().strip()+"_", "_"+cmd.strip()+"_")
+        print("output/cmd len analog_write:", len(output.decode().strip()), len(cmd.strip()))
         # device should echo write command on success
-        if self.debug: print "cmd", repr(cmd)
-        if self.debug: print "ouput", repr(output)
-        assert output == cmd
+        if self.debug: print("cmd", repr(cmd))
+        if self.debug: print("ouput", repr(output))
+        assert output.decode().strip() == cmd.strip()
 
     def close(self):
     	self.ser.close()
