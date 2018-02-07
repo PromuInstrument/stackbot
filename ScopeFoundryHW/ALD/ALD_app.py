@@ -46,6 +46,9 @@ class ALD_App(BaseMicroscopeApp):
           
         from ScopeFoundryHW.ALD.MKS_600.mks_600_measure import MKS_600_Measure
         self.add_measurement(MKS_600_Measure(self))
+        
+        from ScopeFoundryHW.ALD.CN7500.omega_measure import OmegaMeasure
+        self.add_measurement(OmegaMeasure(self))
          
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_measure import Pfeiffer_VGC_Measure
         self.add_measurement(Pfeiffer_VGC_Measure(self))
