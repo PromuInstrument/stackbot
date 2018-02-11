@@ -17,11 +17,16 @@ class Seren_Measure(Measurement):
         Measurement.__init__(self, app)
         
     def setup(self):
-        self.ui = QtWidgets.QWidget()
-        self.layout = QtWidgets.QVBoxLayout()
-        self.ui.setLayout(self.layout)
-    
         self.seren_hw = self.app.hardware['seren_hw']
+        
+        self.ui_enabled = False
+        
+        if self.ui_enabled:
+            self.ui = QtWidgets.QWidget()
+            self.layout = QtWidgets.QVBoxLayout()
+            self.ui.setLayout(self.layout)
+    
+        
         
     def run(self):
         dt = 0.05

@@ -16,12 +16,15 @@ class MKS_146_Measure(Measurement):
     def __init__(self, app):
         Measurement.__init__(self, app)
         
+        
     def setup(self):
         
-        self.ui = QtWidgets.QWidget()
-        self.layout = QtWidgets.QVBoxLayout()
-        self.ui.setLayout(self.layout)
-    
+        self.ui_enabled = False
+        if self.ui_enabled:
+            self.ui = QtWidgets.QWidget()
+            self.layout = QtWidgets.QVBoxLayout()
+            self.ui.setLayout(self.layout)
+        
         self.mks = self.app.hardware['mks_146_hw']
         
     def run(self):
