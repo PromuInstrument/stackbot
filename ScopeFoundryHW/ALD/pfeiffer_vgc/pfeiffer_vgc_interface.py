@@ -30,7 +30,7 @@ class Pfeiffer_VGC_Interface(object):
     def ask_cmd(self, cmd):
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
-        message = cmd+b'\r\n'
+        message = cmd+'\r\n'
         self.ser.write(message)
         resp = self.ser.readline()
         
@@ -38,7 +38,7 @@ class Pfeiffer_VGC_Interface(object):
             logger.debug("readout: {}".format(cmd))
             print("ask_cmd resp:", resp)
         if resp == b"\x06\r\n":
-            self.ser.write(b"\x05"+b"\r\n")
+            self.ser.write(b"\x05".decode()+"\r\n")
             resp = self.ser.readline()
             return resp
         else: 
@@ -53,8 +53,8 @@ class Pfeiffer_VGC_Interface(object):
                   4: "Sensor off.",
                   5: "No sensor.",
                   6: "Identification error."}
-        selection = "{}".format(sensor).encode()
-        byte_array = self.ask_cmd(b"PR"+selection)
+        selection = "{}".format(sensor)#.encode()
+        byte_array = self.ask_cmd("PR"+selection)
         if byte_array is not None:
             resp = byte_array[:-2].decode().split(",")
         else:
@@ -67,13 +67,13 @@ class Pfeiffer_VGC_Interface(object):
             return value
         
     def sensor_type(self):
-        resp = self.ask_cmd(b"TID")
+        resp = self.ask_cmd("TID")
         sensor_list = resp[:-2].decode().split(",")
         return sensor_list
 #         return resp
 
     def read_units(self):
-        resp = self.ask_cmd(b"UNI")
+        resp = self.ask_cmd("UNI")
         return resp
     
     def write_units(self, unit_string):
@@ -82,7 +82,7 @@ class Pfeiffer_VGC_Interface(object):
                      "Torr": 1,
                      "Pascal": 2}
         unit_value = unit_dict[unit_string]
-        message = b"UNI,"+"{}".format(unit_value).encode()
+        message = "UNI,"+"{}".format(unit_value)
         print(message)
         resp = self.ask_cmd(message)
         return resp
