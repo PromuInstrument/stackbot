@@ -32,9 +32,13 @@ class MKS_146_Measure(Measurement):
         while not self.interrupt_measurement_called:
             self.mks.settings.MFC1_flow.read_from_hardware()
             time.sleep(dt)
-            self.mks.settings.MFC2_flow.read_from_hardware()
-            time.sleep(dt)
+#             self.mks.settings.MFC2_flow.read_from_hardware()
+#             time.sleep(dt)
+
             self.mks.settings.MFC1_SP.read_from_hardware()
             time.sleep(dt)
-            self.mks.settings.MFC2_SP.read_from_hardware()
+            self.mks.settings.CM_pressure.read_from_hardware()
+
+#             self.mks.settings.MFC2_SP.read_from_hardware()
+
             time.sleep(dt)
