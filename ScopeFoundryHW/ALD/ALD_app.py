@@ -29,8 +29,8 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.MKS_600.mks_600_hw import MKS_600_Hardware
         self.add_hardware(MKS_600_Hardware(self))
         
-        from ScopeFoundryHW.ALD.CN7500.omega_hw import OmegaHW
-        self.add_hardware(OmegaHW(self))
+#         from ScopeFoundryHW.ALD.CN7500.omega_hw import OmegaHW
+#         self.add_hardware(OmegaHW(self))
         
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_hw import Pfeiffer_VGC_Hardware
         self.add_hardware(Pfeiffer_VGC_Hardware(self))
@@ -43,12 +43,12 @@ class ALD_App(BaseMicroscopeApp):
           
         from ScopeFoundryHW.ALD.MKS_146.mks_146_measure import MKS_146_Measure
         self.add_measurement(MKS_146_Measure(self))
-          
+        
         from ScopeFoundryHW.ALD.MKS_600.mks_600_measure import MKS_600_Measure
         self.add_measurement(MKS_600_Measure(self))
         
-        from ScopeFoundryHW.ALD.CN7500.omega_measure import OmegaMeasure
-        self.add_measurement(OmegaMeasure(self))
+#         from ScopeFoundryHW.ALD.CN7500.omega_measure import OmegaMeasure
+#         self.add_measurement(OmegaMeasure(self))
          
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_measure import Pfeiffer_VGC_Measure
         self.add_measurement(Pfeiffer_VGC_Measure(self))
