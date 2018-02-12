@@ -42,7 +42,7 @@ class MKS_600_Interface(object):
         with self.lock:
             self.ser.flush()
             message = cmd+'\r\n'
-            self.ser.write(message.encode())
+            self.ser.write(message)
             resp = self.ser.readline()
         return resp
     
