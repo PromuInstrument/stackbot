@@ -11,7 +11,7 @@ from ScopeFoundry import h5_io
 
 class M4Hyperspectral2DScan(AttoCube2DSlowScan):
     
-    name = 'm4_hyperspectral_2d_scan'
+    name = 'hyperspectral_2d_scan'
         
     def setup(self):
         AttoCube2DSlowScan.setup(self)
@@ -50,8 +50,8 @@ class M4Hyperspectral2DScan(AttoCube2DSlowScan):
                                                                        compression='gzip')
 
     def collect_pixel(self, pixel_num, k, j, i):
-        
-        #print(self.name, "collecting pixel (k,j,i):",k,j,i, "pixel:", pixel_num+1,"of",self.Npixels)  
+        print(self.name, "collecting pixel (k,j,i):",k,j,i, "pixel:", pixel_num+1,"of",self.Npixels,
+              ' -->time remaining (min):',(self.Npixels-pixel_num-1)*self.app.hardware['winspec_remote_client'].settings['acq_time']/60.0)
         self.ccd_measure.interrupt_measurement_called = self.interrupt_measurement_called
         hdr,data = self.ccd_measure.acquire_data(debug=False)
         
