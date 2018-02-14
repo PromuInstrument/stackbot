@@ -6,6 +6,7 @@ import numpy
 import platform
 import os
 import logging
+from threading import Lock
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,8 @@ class PicoHarp300(object):
 
         self.mode = mode
         assert mode in ('HIST', 'T2','T3')
+        
+        self.lock = Lock()
 
         self.devnum = devnum
         self.Countrate    = [None,None]
@@ -53,13 +56,15 @@ class PicoHarp300(object):
         self._err_buffer = create_string_buffer(40)
         
         lib_version = create_string_buffer(8)
-        self.handle_err(phlib.PH_GetLibraryVersion(lib_version))
+        with self.lock:
+            self.handle_err(phlib.PH_GetLibraryVersion(lib_version))
         self.lib_version = lib_version.value
         if self.debug: logger.debug("PHLib Version: '%s'" % self.lib_version)
         assert self.lib_version == b"3.0"
         
         hw_serial = create_string_buffer(8)
-        self.handle_err(phlib.PH_OpenDevice(self.devnum, hw_serial)) 
+        with self.lock:
+            self.handle_err(phlib.PH_OpenDevice(self.devnum, hw_serial)) 
         self.hw_serial = hw_serial.value
         if self.debug: logger.debug( "Device %i Found, serial %s" % (self.devnum, self.hw_serial) )
         
@@ -67,18 +72,22 @@ class PicoHarp300(object):
 
         if self.mode == 'HIST':
             if self.debug: "HIST mode"
-            self.handle_err(phlib.PH_Initialize(self.devnum, self.MODE_HIST))
+            with self.lock:
+                self.handle_err(phlib.PH_Initialize(self.devnum, self.MODE_HIST))
         elif self.mode == 'T2':
             if self.debug: "T2 mode"
-            self.handle_err(phlib.PH_Initialize(self.devnum, self.MODE_T2))
+            with self.lock:
+                self.handle_err(phlib.PH_Initialize(self.devnum, self.MODE_T2))
         elif self.mode == 'T3':
             if self.debug: "T2 mode"
-            self.handle_err(phlib.PH_Initialize(self.devnum, self.MODE_T3))
+            with self.lock:
+                self.handle_err(phlib.PH_Initialize(self.devnum, self.MODE_T3))
 
         hw_model   = create_string_buffer(16)
         hw_partnum = create_string_buffer(8)
         hw_version = create_string_buffer(8)
-        self.handle_err(phlib.PH_GetHardwareInfo(
+        with self.lock:
+            self.handle_err(phlib.PH_GetHardwareInfo(
                                 self.devnum,hw_model,hw_partnum, hw_version))
         self.hw_model   = hw_model.value
         self.hw_partnum = hw_partnum.value
@@ -87,10 +96,12 @@ class PicoHarp300(object):
             logger.debug( "Found Model %s PartNum %s Version %s" % (self.hw_model, self.hw_partnum, self.hw_version) )
         
         if self.debug: logger.debug( "PicoHarp Calibrating..." )
-        self.handle_err( phlib.PH_Calibrate(self.devnum) )
+        with self.lock:
+            self.handle_err( phlib.PH_Calibrate(self.devnum) )
             
         # automatically stops acquiring a histogram when a bin is filled to 2**16
-        self.handle_err(phlib.PH_SetStopOverflow(self.devnum,1,65535)) 
+        with self.lock:
+            self.handle_err(phlib.PH_SetStopOverflow(self.devnum,1,65535)) 
     
     def handle_err(self, retcode):
         if retcode < 0:
@@ -132,7 +143,8 @@ class PicoHarp300(object):
     def write_SyncDivider(self, SyncDivider):
         self.SyncDivider = int(SyncDivider)
         if self.debug: logger.debug( "write_SyncDivider " + str(self.SyncDivider) )
-        self.handle_err(phlib.PH_SetSyncDiv(self.devnum, self.SyncDivider))
+        with self.lock:
+            self.handle_err(phlib.PH_SetSyncDiv(self.devnum, self.SyncDivider))
         #Note: after Init or SetSyncDiv you must allow 100 ms for valid new count rate readings
         time.sleep(0.11)
     
@@ -140,7 +152,8 @@ class PicoHarp300(object):
         self.CFDLevel[chan] = int(level)
         self.CFDZeroCross[chan] = int(zerocross)
         if self.debug: logger.debug( "write_InputCFD {} {} {}".format( chan, level, zerocross))
-        self.handle_err(phlib.PH_SetInputCFD(self.devnum, chan, int(level), int(zerocross)))
+        with self.lock:
+            self.handle_err(phlib.PH_SetInputCFD(self.devnum, chan, int(level), int(zerocross)))
         
     def write_CFDLevel0(self, level):
         self.write_InputCFD(0, level, self.CFDZeroCross[0])
@@ -156,13 +169,15 @@ class PicoHarp300(object):
         
     def write_Binning(self, Binning):
         self.Binning = int(Binning)
-        self.handle_err(phlib.PH_SetBinning(self.devnum, self.Binning))
+        with self.lock:
+            self.handle_err(phlib.PH_SetBinning(self.devnum, self.Binning))
         self.read_Resolution()
         self.time_array = numpy.arange(self.HISTCHAN, dtype=float)*self.Resolution
         
     def read_Resolution(self):
         r = c_double(0)
-        self.handle_err(phlib.PH_GetResolution(self.devnum, byref(r)))
+        with self.lock:
+            self.handle_err(phlib.PH_GetResolution(self.devnum, byref(r)))
         self.Resolution = r.value
         return self.Resolution
 
@@ -172,11 +187,13 @@ class PicoHarp300(object):
         :type SyncOffset: int
         """     
         self.SyncOffset = int(SyncOffset)
-        self.handle_err(phlib.PH_SetOffset(self.devnum, self.SyncOffset))
+        with self.lock:
+            self.handle_err(phlib.PH_SetOffset(self.devnum, self.SyncOffset))
 
     def read_count_rate(self, chan):
         cr = c_int(-1)
-        self.handle_err(phlib.PH_GetCountRate(self.devnum, chan, byref(cr)))
+        with self.lock:
+            self.handle_err(phlib.PH_GetCountRate(self.devnum, chan, byref(cr)))
         self.Countrate[chan] = cr.value
         return cr.value
     
@@ -195,8 +212,8 @@ class PicoHarp300(object):
         
     def start_histogram(self, Tacq=None):
         if self.debug: logger.debug( "Starting Histogram" )
-
-        self.handle_err(phlib.PH_ClearHistMem(self.devnum, 0))
+        with self.lock:    
+            self.handle_err(phlib.PH_ClearHistMem(self.devnum, 0))
         # always use Block 0 if not Routing
         self.start_measure(Tacq)
 
@@ -205,11 +222,13 @@ class PicoHarp300(object):
         # set a new acquisition time if given
         if Tacq:
             self.set_Tacq(Tacq)
-        self.handle_err(phlib.PH_StartMeas(self.devnum, self.Tacq))
+        with self.lock:
+            self.handle_err(phlib.PH_StartMeas(self.devnum, self.Tacq))
 
     def check_done_scanning(self):
         status = c_int()
-        self.handle_err(phlib.PH_CTCStatus(self.devnum, byref(status)))
+        with self.lock:
+            self.handle_err(phlib.PH_CTCStatus(self.devnum, byref(status)))
         if status.value == 0: # not done
             return False
         else: # scanning done
@@ -221,19 +240,22 @@ class PicoHarp300(object):
 
     def stop_measure(self):
         if self.debug: logger.debug( "PH Stop Measure" )
-        self.handle_err(phlib.PH_StopMeas(self.devnum))
+        with self.lock:
+            self.handle_err(phlib.PH_StopMeas(self.devnum))
         
     def read_histogram_data(self):
         if self.debug: logger.debug( "Read Histogram Data" )
         phlib.PH_GetHistogram.argtypes = (ctypes.c_int, ctypes.c_void_p, ctypes.c_int)
-        self.handle_err(phlib.PH_GetHistogram(self.devnum, self.histogram_data.ctypes.data, ctypes.c_int(0) )) # grab block 0
+        with self.lock:
+            self.handle_err(phlib.PH_GetHistogram(self.devnum, self.histogram_data.ctypes.data, ctypes.c_int(0) )) # grab block 0
         return self.histogram_data
 
     def read_fifo(self, max_count=TTREADMAX):
         nactual = c_int()
         #blocksz = TTREADMAX; // in steps of 512
         assert max_count % 512 == 0
-        self.handle_err(phlib.PH_ReadFiFo(self.devnum, self.tttr_buffer.ctypes.data, max_count, byref(nactual)))
+        with self.lock:
+            self.handle_err(phlib.PH_ReadFiFo(self.devnum, self.tttr_buffer.ctypes.data, max_count, byref(nactual)))
         return nactual.value, self.tttr_buffer
     
     def write_stop_overflow(self, stop_on_overflow=True, stopcount=65535):
@@ -248,17 +270,20 @@ class PicoHarp300(object):
         else:
             overflow_int = 0
         
-        self.handle_err(phlib.PH_SetStopOverflow(self.devnum, overflow_int, stopcount))
+        with self.lock:
+            self.handle_err(phlib.PH_SetStopOverflow(self.devnum, overflow_int, stopcount))
         
     def read_elapsed_meas_time(self):
         elapsed_time = ctypes.c_double()
-        self.handle_err(phlib.PH_GetElapsedMeasTime(self.devnum, byref(elapsed_time)))
+        with self.lock:
+            self.handle_err(phlib.PH_GetElapsedMeasTime(self.devnum, byref(elapsed_time)))
     
         self.elapsed_time = elapsed_time.value
         return self.elapsed_time
     
     def close(self):
-        return self.handle_err(phlib.PH_CloseDevice(self.devnum))
+        with self.lock:
+            return self.handle_err(phlib.PH_CloseDevice(self.devnum))
     
 
 if __name__ == '__main__':
