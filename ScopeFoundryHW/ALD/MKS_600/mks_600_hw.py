@@ -7,7 +7,6 @@ Created on Nov 20, 2017
 
 from ScopeFoundry import HardwareComponent
 from ScopeFoundryHW.ALD.MKS_600.mks_600_interface import MKS_600_Interface
-from jupyter_client.connect import channel_socket_types
 
 class MKS_600_Hardware(HardwareComponent):
     
