@@ -82,15 +82,17 @@ class MKS_600_Interface(object):
             return self.prtemp
             
     def read_sp(self, ch):
-        channels = {1: 1,
-                     2: 2,
-                     3: 3,
-                     4: 4,
-                     5: 10}
-        assert ch in channels.keys()
-        resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
-        return float(resp)
-    
+        if ch in range(0,6):
+            channels = {1: 1,
+                         2: 2,
+                         3: 3,
+                         4: 4,
+                         5: 10}
+            resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
+            return float(resp)
+        else:
+            return 0.
+        
     def switch_sp(self, ch):
         assert 0 <= ch <= 5
         self.ask_cmd("D{}".format(ch))
@@ -105,17 +107,14 @@ class MKS_600_Interface(object):
         resp = self.ask_cmd("R6")[2:-2]
         return float(resp)
         
-    def open_valve(self):
-        """Command valve to move to full open"""
-        self.ask_cmd("O")
+    def set_valve(self, value):
+        assign = {6: "O",
+                  7: "C"}
+        self.ask_cmd(assign[value])
     
     def halt_valve(self):
         """Halt valve at current position"""
         self.ask_cmd("H")
-    
-    def close_valve(self):
-        """Command valve to move to full close"""
-        self.ask_cmd("C")
         
     
     def close(self):
