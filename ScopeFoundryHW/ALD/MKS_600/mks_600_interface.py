@@ -91,6 +91,10 @@ class MKS_600_Interface(object):
         resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
         return float(resp)
     
+    def switch_sp(self, ch):
+        assert 0 <= ch <= 5
+        self.ask_cmd("D{}".format(ch))
+        
     def write_sp(self, ch, pct):
         assert 0. <= pct <= 100.
         assert 0 <= ch <= 5

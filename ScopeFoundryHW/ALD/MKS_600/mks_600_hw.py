@@ -36,7 +36,7 @@ class MKS_600_Hardware(HardwareComponent):
         self.settings.valve_open.connect_to_hardware(write_func=lambda x: self.set_valve(x))
         self.settings.sp.connect_to_hardware(write_func=lambda x: self.write_sp(x),
                                              read_func=self.read_sp)
-        
+        self.settings.sp_channel.add_listener(self.switch_sp, str)
         
     def read_pressure(self):
         choice = self.settings['units']
@@ -50,14 +50,18 @@ class MKS_600_Hardware(HardwareComponent):
     
     def read_sp(self):
         choice = self.settings['sp_channel']
-        ch = self.assign[choice]
-        resp = self.mks.read_sp(ch)
+        channel = self.assign[choice]
+        resp = self.mks.read_sp(channel)
         return resp 
+    
+    def switch_sp(self, choice):
+        channel = self.assign[choice]
+        self.mks.switch_sp(channel)
     
     def write_sp(self, pct):
         choice = self.settings['sp_channel']
-        ch = self.assign[choice]
-        self.mks.write_sp(ch, pct)
+        channel = self.assign[choice]
+        self.mks.write_sp(channel, pct)
     
 
     def read_valve(self):
