@@ -12,10 +12,18 @@ class MKS_600_Hardware(HardwareComponent):
     
     name = "mks_600_hw"
     
+    assign = {'A': 1,
+              'B': 2,
+              'C': 3,
+              'D': 4, 
+              'E': 5}
+    
     def setup(self):
         self.settings.New(name="port", initial="COM5", dtype=str, ro=False)
-#         self.settings.New(name="pressure", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
-#         self.settings.New(name="units", initial="mbar", dtype=str, ro=True)
+        self.settings.New(name="pressure", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
+        self.settings.New(name="units", initial="mbar", dtype=str, ro=False, choices=(('mbar'), ('torr'), ('mtorr')))
+        self.settings.New(name="sp_channel", initial="A", dtype=str, ro=False, choices=(('A'), ('B'), ('C'), ('D'), ('E')))
+        self.settings.New(name="sp", initial=0.0, dtype=float, ro=False)
         self.settings.New(name="valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
         self.settings.New(name="valve_open", initial=False, dtype=bool, ro=False)
         self.mks = None
@@ -23,17 +31,35 @@ class MKS_600_Hardware(HardwareComponent):
     def connect(self):
         self.mks = MKS_600_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
         
-#         self.settings.pressure.connect_to_hardware(read_func=self.read_pressure)
-#         self.settings.units.connect_to_hardware(read_func=self.read_units)
+        self.settings.pressure.connect_to_hardware(read_func=self.read_pressure)
         self.settings.valve_position.connect_to_hardware(read_func=self.read_valve)
         self.settings.valve_open.connect_to_hardware(write_func=lambda x: self.set_valve(x))
+        self.settings.sp.connect_to_hardware(write_func=lambda x: self.write_sp(x),
+                                             read_func=self.read_sp)
+        
         
     def read_pressure(self):
-        return self.mks.read_pressure()
+        choice = self.settings['units']
+        if choice == 'torr':
+            c = 1
+        elif choice == 'mbar':
+            c = (101325/76000)
+        elif choice == 'mtorr':
+            c=1000
+        return c*self.mks.read_pressure()
     
-    def read_units(self):
-        return self.mks.read_pressure_units()
+    def read_sp(self):
+        choice = self.settings['sp_channel']
+        ch = self.assign[choice]
+        resp = self.mks.read_sp(ch)
+        return resp 
     
+    def write_sp(self, pct):
+        choice = self.settings['sp_channel']
+        ch = self.assign[choice]
+        self.mks.write_sp(ch, pct)
+    
+
     def read_valve(self):
         return self.mks.read_valve()
     

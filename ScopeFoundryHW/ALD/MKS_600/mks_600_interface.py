@@ -66,36 +66,13 @@ class MKS_600_Interface(object):
             return self.sensor_range
         
 
-    def read_pressure_units(self):
-        resp = self.ask_cmd("R34")[1:-2]
-        if resp != b'':
-            value = int(resp)
-            units = {0: "Torr",
-                    1: "mTorr",
-                    2: "mbar",
-                    3: u"\u03bc"+"bar",
-                    4: "kPa",
-                    5: "Pa",
-                    6: "cmH2O",
-                    7: "inH2O"}
-            resp = units[value]
-            ## Store successfully retrieved value
-            self.units = resp
-            return resp
-        else: 
-            print("Pressure misread, using last stored temp value.")
-            self.error_count += 1
-            self.ser.flush()
-            ## Read failed, return last stored value
-            return self.units
-    
     def read_pressure(self):
         resp = self.ask_cmd("R5")[1:-2]
         if resp != b'':
-            fl = float(resp)
-            pct = fl/100
+            pct = float(resp)
+            dec = pct/100
             fs = self.read_sensor_range()
-            self.prtemp = pct*fs
+            self.prtemp = dec*fs
             return pct*fs
         else:
             print("Pressure misread, using last stored temp value.")
@@ -104,6 +81,21 @@ class MKS_600_Interface(object):
             ## Read failed, return last stored value
             return self.prtemp
             
+    def read_sp(self, ch):
+        channels = {1: 1,
+                     2: 2,
+                     3: 3,
+                     4: 4,
+                     5: 10}
+        assert ch in channels.keys()
+        resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
+        return float(resp)
+    
+    def write_sp(self, ch, pct):
+        assert 0. <= pct <= 100.
+        assert 0 <= ch <= 5
+        self.ask_cmd("S{} {}".format(int(ch), pct))
+        
         
     def read_valve(self):
         resp = self.ask_cmd("R6")[2:-2]
