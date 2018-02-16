@@ -56,7 +56,9 @@ class MKS_146_Hardware(HardwareComponent):
 #         self.settings.MFC2_SP.connect_to_hardware(write_func=lambda x: self.MFC2_write_SP(x),
 #                                                   read_func=self.MFC2_read_SP)
         
-        self.settings.CM_pressure.connect_to_hardware(read_func=self.CM_pressure_read)
+        
+        
+#         self.settings.CM_pressure.connect_to_hardware(read_func=self.CM_pressure_read) DEMO PURPOSES. Restore after reconnecting a sensor to this channel.
         
         self.read_from_hardware()
         
