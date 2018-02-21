@@ -48,11 +48,15 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW
         self.add_hardware_component(ThorlabsPowerMeterHW(self))
 
-        from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYZStageHW
-        self.add_hardware_component(AttoCubeXYZStageHW(self))
+#         from ScopeFoundryHW.attocube_ecc100 import AttoCubeXYZStageHW
+#         self.add_hardware_component(AttoCubeXYZStageHW(self))
 
-        from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
-        self.add_hardware_component(ESP300AxisHW(self))
+#         from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
+#         self.add_hardware_component(ESP300AxisHW(self))
+        
+        from ScopeFoundryHW.thorlabs_stepper_motors import ThorlabsStepperControllerHW
+        self.add_hardware_component(ThorlabsStepperControllerHW)
+        
         
         #Add measurement components
         print("Create Measurement objects")
@@ -98,11 +102,11 @@ class M3MicroscopeApp(BaseMicroscopeApp):
 #         from ScopeFoundryHW.attocube_ecc100.attocube_slowscan import AttoCube2DSlowScan
 #         self.add_measurement(AttoCube2DSlowScan(self))
 
-#         from  plimg_microscope import fiber_scan 
-#         self.add_measurement(fiber_scan.FiberPowerMeterScan(self))
-#         self.add_measurement(fiber_scan.FiberAPDScan(self))
-#         self.add_measurement(fiber_scan.FiberPicoharpScan(self))
-#         self.add_measurement(fiber_scan.FiberWinSpecScan(self))
+        from  plimg_microscope import fiber_scan 
+        self.add_measurement(fiber_scan.FiberPowerMeterScan(self))
+        self.add_measurement(fiber_scan.FiberAPDScan(self))
+        self.add_measurement(fiber_scan.FiberPicoharpScan(self))
+        self.add_measurement(fiber_scan.FiberWinSpecScan(self))
         
         from ScopeFoundryHW.dli_powerswitch import DLIPowerSwitchHW
         self.add_hardware(DLIPowerSwitchHW(self))
