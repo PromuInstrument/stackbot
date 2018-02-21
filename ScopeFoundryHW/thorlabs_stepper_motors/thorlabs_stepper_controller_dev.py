@@ -1,6 +1,7 @@
 import time
 import logging
 import ctypes
+from ctypes import byref, c_int
 from threading import Lock
 
 logger = logging.getLogger(__name__)
@@ -122,7 +123,7 @@ class ThorlabsStepperControllerDev(object):
             self.num_chans = S.SBC_GetNumChannels(self._id)
         
         # polling required to update device status, otherwise must use request functions before reads
-        # self.ff_dll.FF_StartPolling(self._sernum, int(self.poll_time*1000) )
+        #self.sbc_dll.SBC_StartPolling(self._id, 500 )
         
         #time.sleep(0.2)
     
@@ -150,8 +151,8 @@ class ThorlabsStepperControllerDev(object):
     
     
     def write_chan_enable(self, chan, enable=True):
+        print("write_chan_enable", chan, enable)
         if enable:
-            print("write_chan_enable", chan)
             with self.lock: _err(self.sbc_dll.SBC_EnableChannel(self._id, chan))
         else:
             with self.lock: _err(self.sbc_dll.SBC_DisableChannel(self._id, chan))
@@ -163,7 +164,8 @@ class ThorlabsStepperControllerDev(object):
         motor will move until position is reached, or stopped
         pos is an integer in device units (microsteps)
         """
-        with self.lock: _err(self.sbc_dll.SBC_MoveToPosition(self._id, chan, int(pos)))
+        with self.lock:
+            _err(self.sbc_dll.SBC_MoveToPosition(self._id, chan, int(pos)))
         
     def move_and_wait(self, chan,pos, timeout=10):
         self.write_move_to_position(chan, pos)
@@ -193,5 +195,43 @@ class ThorlabsStepperControllerDev(object):
             if (time.time() - t0) > timeout:
                 self.stop_profiled(chan)
                 raise( IOError("Failed to home"))
+            
+            
+    def read_velocity(self,chan):
+        return self.read_velocity_params(chan)[1]
 
+    def read_acceleration(self,chan):
+        return self.read_velocity_params(chan)[0]
+
+    def read_velocity_params(self, chan):
+        """SBC_GetVelParams  ( char const *  serialNo,  
+          short  channel,  
+          int *  acceleration,  
+          int *  maxVelocity  
+         ) 
+        """
+       
+        acc = c_int()
+        vel = c_int()
+
+        with self.lock:
+            _err(self.sbc_dll.SBC_RequestVelParams(self._id, chan))
+            _err(self.sbc_dll.SBC_GetVelParams(self._id, chan, byref(acc), byref(vel)))
         
+        return acc.value, vel.value
+    
+    def write_velocity_params(self, chan, acc, vel):
+        with self.lock:
+            _err(self.sbc_dll.SBC_SetVelParams(self._id, chan, int(acc), int(vel)))
+
+    def read_homing_velocity(self, chan):
+        with self.lock:
+            _err(self.sbc_dll.SBC_RequestHomingParams(self._id, chan))
+            vel = self.sbc_dll.SBC_GetHomingVelocity(self._id, chan)
+        return vel
+
+    def write_homing_velocity(self, chan, vel):
+        with self.lock:
+            _err(self.sbc_dll.SBC_SetHomingVelocity(self._id, chan, int(vel)))
+        
+    
