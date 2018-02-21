@@ -221,9 +221,10 @@ class LoggingQTextEditHandler(Handler, QtCore.QObject):
         self.new_log_signal.emit(log_entry)
         
     def on_new_log(self, log_entry):
-        self.textEdit.moveCursor(QtGui.QTextCursor.End)
-        self.textEdit.insertHtml(log_entry)
-        self.textEdit.moveCursor(QtGui.QTextCursor.End)
+        #self.textEdit.moveCursor(QtGui.QTextCursor.End)
+        #self.textEdit.insertHtml(log_entry)
+        #self.textEdit.moveCursor(QtGui.QTextCursor.End)
+        self.textEdit.setHtml(log_entry)
         
     level_styles = dict(
         CRITICAL="color: red;",
@@ -768,7 +769,7 @@ class BaseMicroscopeApp(BaseApp):
         for hw_name,hw in self.hardware.items():
             for lq_name in hw.settings.keys():
                 list.append('hardware/'+hw_name+"/"+lq_name)
-        for measure_name,measure in self.measurement.items():
+        for measure_name,measure in self.measurements.items():
             for lq_name in measure.settings.keys():
                 list.append('measurement/'+measure_name+"/"+lq_name)
         for lq_name in self.settings.keys():

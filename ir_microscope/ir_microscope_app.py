@@ -23,7 +23,10 @@ class IRMicroscopeApp(BaseMicroscopeApp):
     
     def setup(self):
         
+        
+        
         self.add_quickbar(load_qt_ui_file(sibling_path(__file__, 'ir_quick_access.ui')))
+
         
         print("Adding Hardware Components")
         
@@ -225,8 +228,31 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         #self.measurement_state_changed[bool].connect(self.gui.ui.apd_optimize_startstop_checkBox.setChecked)      
         """
         
+
         ##########
-        self.settings_load_ini('ir_microscope_defaults.ini')
+        # app level logged quantities
+        for lq_name in ["h_axis","v_axis"]:
+            self.settings.New(lq_name, dtype=str, choices=("x", "y", "z"))
+            getattr(self.settings, lq_name).connect_to_widget(\
+                                    getattr(Q, lq_name+'_comboBox'))
+            getattr(self.settings, lq_name).connect_to_lq( \
+                                    getattr(self.measurements['trpl_scan'].settings,lq_name) )
+            getattr(self.settings, lq_name).connect_to_lq(\
+                                    getattr(self.measurements['hyperspectral_2d_scan'].settings,lq_name) )
+                      
+
+        for lq_name in ['h0','h1','v0','v1','dh','dv']:
+            self.settings.New(lq_name, dtype=float, unit='um')
+            getattr(self.settings, lq_name).connect_to_widget(\
+                                    getattr(Q, lq_name+'_doubleSpinBox'))
+            getattr(self.settings, lq_name).connect_lq_scale( \
+                                    getattr(self.measurements['trpl_scan'].settings,lq_name), 1000)
+            getattr(self.settings, lq_name).connect_lq_scale( \
+                                    getattr(self.measurements['hyperspectral_2d_scan'].settings,lq_name), 1000)
+        ##########
+        self.settings_load_ini('ir_microscope_defaults.ini')                        
+        
+
 
 if __name__ == '__main__':
     import sys

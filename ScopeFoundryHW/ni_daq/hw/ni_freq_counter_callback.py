@@ -79,7 +79,12 @@ class NI_FreqCounterCallBackHW(HardwareComponent):
         Stores count rate in the buffer
         """
         S = self.settings
-        self.current_count = self.counter_task.read_buffer(count=self.n_samples_cb)[-1]
+        try:
+            self.current_count = self.counter_task.read_buffer(count=self.n_samples_cb)[-1]
+        except Exception as err:
+            self.current_count =0
+            self.restart_task()
+            raise err
         count_rate = (self.current_count - self.prev_count)/S['cb_interval']
         self.cb_buffer[self.cb_buffer_i] = count_rate
         self.cb_buffer_i += 1
