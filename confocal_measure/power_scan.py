@@ -213,6 +213,7 @@ class PowerScanMeasure(Measurement):
                 self.spectra.append( spec )
                 self.integrated_spectra.append(spec.sum())
             if self.settings['collect_ascom_img']:
+                self.ascom_camera_capture.interrupt_measurement_called = False
                 self.ascom_camera_capture.run()
                 img = self.ascom_camera_capture.img.copy()
                 self.ascom_img_stack.append(img)
