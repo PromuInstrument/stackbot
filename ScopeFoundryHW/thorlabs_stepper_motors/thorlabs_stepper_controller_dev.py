@@ -1,7 +1,7 @@
 import time
 import logging
 import ctypes
-from ctypes import byref, c_int
+from ctypes import byref, c_int, c_uint16, c_uint32
 from threading import Lock
 
 logger = logging.getLogger(__name__)
@@ -164,6 +164,8 @@ class ThorlabsStepperControllerDev(object):
         motor will move until position is reached, or stopped
         pos is an integer in device units (microsteps)
         """
+        if self.debug:
+            logger.debug("write_move_to_position chan {} --> {}".format(chan,pos) )
         with self.lock:
             _err(self.sbc_dll.SBC_MoveToPosition(self._id, chan, int(pos)))
         
@@ -234,4 +236,42 @@ class ThorlabsStepperControllerDev(object):
         with self.lock:
             _err(self.sbc_dll.SBC_SetHomingVelocity(self._id, chan, int(vel)))
         
-    
+        
+    def read_message_queue(self, chan):
+        """returns a list of messages and clears the queue,
+        may be empty if no messages are available"""
+        messages = []
+        messageType = c_uint16()
+        messageID = c_uint16()
+        messageData = c_uint32()
+        
+        message_type_names = {
+            0: "GenericDevice",
+            1: "GenericPiezo",  
+            2: "GenericMotor", 
+            3: "GenericDCMotor",  
+            4: "GenericSimpleMotor", 
+            5: "RackDevice" ,
+            6: "Laser",
+            7: "TECCtlr",  
+            8: "Quad", 
+            9: "NanoTrak",  
+            10:"Specialized",  
+            11:"Solenoid"}
+
+        
+        with self.lock:
+            num_messages = self.sbc_dll.SBC_MessageQueueSize(self._id, chan)
+            for i in range(num_messages):
+                success = self.sbc_dll.SBC_GetNextMessage(
+                                        self._id, chan,
+                                        byref(messageType), byref(messageID), byref(messageData))
+        
+                message = (message_type_names[messageType.value],
+                           messageID.value, messageData.value)
+                messages.append(message)
+                
+            self.sbc_dll.SBC_ClearMessageQueue(self._id, chan)
+        
+        return messages
+        

@@ -29,12 +29,15 @@ class ThorlabsStepper2DScan(BaseRaster2DSlowScan):
         h = self.settings['h_axis']
         v = self.settings['v_axis']
         
-        #print(h, v, S[h + '_position'], S[h + '_target_position'], S[v + '_position'], S[v + '_target_position'], )
+        print(h, v, S[h + '_position'], S[h + '_target_position'], S[v + '_position'], S[v + '_target_position'], )
         
         return np.sqrt(    (S[h + '_position'] - S[h + '_target_position'])**2 
                          + (S[v + '_position'] - S[v + '_target_position'])**2)
 
     def move_position_start(self, h,v):
+        
+        #self.interrupt_measurement_called = False
+        print('moving!')
         
         if not self.stage.settings['connected']:
             raise IOError("Not connected to thorlabs stepper stage")
@@ -42,10 +45,20 @@ class ThorlabsStepper2DScan(BaseRaster2DSlowScan):
         h_axis = self.settings['h_axis']
         v_axis = self.settings['v_axis']
         
-        self.stage.settings[h_axis + "_target_position"] = h
-        self.stage.settings[v_axis + "_target_position"] = v
+        print('calculating distance')
+        h_target = self.stage.settings.get_lq(h_axis + "_target_position")
+        h_target.update_value(h)
+        h_target.write_to_hardware()
+
+        v_target = self.stage.settings.get_lq(v_axis + "_target_position")
+        v_target.update_value(v)
+        v_target.write_to_hardware()
+        #self.stage.settings[h_axis + "_target_position"] = h
+        #self.stage.settings[v_axis + "_target_position"] = v
         
-        #print(self.name, "move_position_start", h,v)
+        
+        
+        print(self.name, "move_position_start", h,v)
         
         # Wait until stage has moved to target
         while True:
@@ -53,14 +66,16 @@ class ThorlabsStepper2DScan(BaseRaster2DSlowScan):
                 self.stage.stop_all_axes()
                 break
             
+            #print('waiting')
             time.sleep(0.005)
                 
             for ax in [h_axis, v_axis]:
                 self.stage.settings.get_lq(ax + "_position").read_from_hardware()
                 
-            #print(self.distance_from_target())
+            print("distance_from_target", self.distance_from_target())
 
             if self.distance_from_target() < 0.01:
+                print('close enough to target')
                 break
 #             if (time.time() - t0) > timeout:
 #                 raise IOError("AttoCube ECC100 took too long to reach position")
@@ -68,6 +83,8 @@ class ThorlabsStepper2DScan(BaseRaster2DSlowScan):
 
         print(self.name, "move_position arrived", h,v)
 
+    def post_scan_cleanup(self):
+        self.stage.stop_all_axes()
         
     def move_position_slow(self, h,v, dh,dv):
         self.move_position_start(h, v)
