@@ -57,6 +57,8 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_stepper_motors import ThorlabsStepperControllerHW
         self.add_hardware_component(ThorlabsStepperControllerHW)
         
+        from ScopeFoundryHW.ni_daq.hw.ni_digital_out import NIDigitalOutHW
+        self.add_hardware(NIDigitalOutHW(self, name='flip_mirrors', line_names=['apd_flip', '_', '_', '_', '_', '_', '_', '_']))
         
         #Add measurement components
         print("Create Measurement objects")
@@ -111,6 +113,9 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.dli_powerswitch import DLIPowerSwitchHW
         self.add_hardware(DLIPowerSwitchHW(self))
         
+        
+        from plimg_microscope.auto_focus_measure import AutoFocusMeasure
+        self.add_measurement(AutoFocusMeasure(self))
         #set some default logged quantities
         #
         
