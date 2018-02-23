@@ -116,6 +116,10 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         
         from plimg_microscope.auto_focus_measure import AutoFocusMeasure
         self.add_measurement(AutoFocusMeasure(self))
+        
+        from plimg_microscope.power_scan_maps import PowerScanMapMeasurement
+        self.add_measurement(PowerScanMapMeasurement(self))
+        
         #set some default logged quantities
         #
         
