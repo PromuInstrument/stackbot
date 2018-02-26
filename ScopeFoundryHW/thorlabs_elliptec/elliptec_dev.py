@@ -10,27 +10,25 @@ class ThorlabsElliptecDevice(object):
         self.ser = serial.Serial(port,  baudrate=9600, timeout=0.1)
         
     
-    
     """
-The communications protocol used in the ELLx Elliptec Thorlabs
-module is based on the message structure that always starts with
-a fixed length, 3-byte message header which, in some cases, is followed 
-by a variable length data packet. For simple commands, the 3-byte
-message header is sufficient to convey the entire command. 
-
-Some commands require parameters so 3 byte packet must be followed by the data bytes. 
-The number of data bytes depends on command and length is now part of the packet is implicit 
-(see command detail to see length).  
-
-Data packets coming from modules are terminated with carriage return CR (0xD)
-first and then line feed LS (0xA). Each module has a 2 second time out such 
-that the discard packet is discarded if time between each byte sent is higher
-longer than 2 seconds. Alternatively carriage return CR can be used to clear receiving 
-state machine and exit from a time out error or cancel a command not completed.
- 
-Error must be cleared reading module status see "gs". 
-
-"""
+    The communications protocol used in the ELLx Elliptec Thorlabs
+    module is based on the message structure that always starts with
+    a fixed length, 3-byte message header which, in some cases, is followed 
+    by a variable length data packet. For simple commands, the 3-byte
+    message header is sufficient to convey the entire command. 
+    
+    Some commands require parameters so 3 byte packet must be followed by the data bytes. 
+    The number of data bytes depends on command and length is now part of the packet is implicit 
+    (see command detail to see length).  
+    
+    Data packets coming from modules are terminated with carriage return CR (0xD)
+    first and then line feed LS (0xA). Each module has a 2 second time out such 
+    that the discard packet is discarded if time between each byte sent is higher
+    longer than 2 seconds. Alternatively carriage return CR can be used to clear receiving 
+    state machine and exit from a time out error or cancel a command not completed.
+     
+    Error must be cleared reading module status see "gs".
+    """
     
     
     def ask(self, cmd, addr=None):
@@ -42,6 +40,11 @@ Error must be cleared reading module status see "gs".
         self.ser.write(full_cmd.encode())
         resp = self.ser.readline().decode()
         # TO DO check if error in resp
+        if resp[1:3] == 'GS':
+            code = int(resp[3:5], 16)
+            if code > 0:
+                raise IOError("Elliptec Error {}: {}".format(code, ERROR_TABLE.get(code, 'Reserved')))
+        
         return resp
         
     
@@ -63,22 +66,39 @@ Error must be cleared reading module status see "gs".
         self.ser.close()
     
     def jog_forward(self, addr=None):
-        return self.ask('fw', addr)
+        resp = self.ask('fw', addr)
+        if resp[1:3] == 'PO':
+            self.position = int(resp[3:], 16)
+            self.position_mm = self.position / self.hw_info['pulses_per_unit']
+        return self.position_mm
 
     def jog_backward(self, addr=None):
-        return self.ask('bw', addr)
+        resp = self.ask('bw', addr)
+        if resp[1:3] == 'PO':
+            self.position = int(resp[3:], 16)
+            self.position_mm = self.position / self.hw_info['pulses_per_unit']
+        return self.position_mm
     
     def get_jog_step_size(self, addr=None):
         resp = self.ask('gj', addr)
-        return resp[3:]
-
-    def set_jog_step_size(self, addr=None):
-        resp = self.ask('sj{}', addr)
+        return int(resp[3:],16)
+    def get_job_step_size_mm(self, addr=None):
+        return self.get_job_step_size(addr) / self.hw_info['pulses_per_unit']
+    
+    def set_jog_step_size(self, step_size, addr=None):
+        resp = self.ask('sj{:08X}'.format(step_size), addr)
+        return resp
+    def set_jog_step_size_mm(self, step_size, addr=None):
+        return self.set_jog_step_size(step_size*self.hw_info['pulses_per_unit'], addr)
 
     def home_device(self, direction=0, addr=None):
         """Instruct hardware unit to move to the home position"""
         assert direction in (0,1)
-        return self.ask('ho{}'.format(direction), addr)
+        resp = self.ask('ho{}'.format(direction), addr)
+        if resp[1:3] == 'PO':
+            self.position = int(resp[3:], 16)
+            self.position_mm = self.position / self.hw_info['pulses_per_unit']
+        return self.position_mm
 
     
     def move_absolute(self, pos, addr=None):        
@@ -88,10 +108,22 @@ Error must be cleared reading module status see "gs".
         pulses (0x2000 in hexadecimal).
         TX'Ama00002000'
         """
-        return self.ask('ma{:08X}'.format(pos),addr)
-    
+        resp = self.ask('ma{:08X}'.format(pos),addr) 
+        if resp[1:3] == 'PO':
+            self.position = int(resp[3:], 16)
+            self.position_mm = self.position / self.hw_info['pulses_per_unit']
+        return self.position
+
     def move_absolute_mm(self, pos, addr=None):
-        return self.move_absolute(pos*self.hw_info['pulses_per_unit'], addr)
+        return self.move_absolute(pos*self.hw_info['pulses_per_unit'], addr) / self.hw_info['pulses_per_unit']
+    
+    def get_position(self, addr=None):
+        resp = self.ask('gp', addr)
+        assert resp[1:3] == 'PO'
+        pos = int(resp[3:], 16)
+        return pos
+    def get_position_mm(self, addr=None):
+        return self.get_position(addr) / self.hw_info['pulses_per_unit']
 
     def get_status(self, addr=None):
         resp = self.ask("gs", addr)
