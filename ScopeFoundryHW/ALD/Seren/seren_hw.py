@@ -44,10 +44,10 @@ class Seren_HW(HardwareComponent):
         else:
             self.seren.emitter_off()
     
-    def write_fp_sp(self, power):
-        self.seren.write_forward_sp(power)
+    def write_fp(self, power):
+        self.seren.write_forward(power)
     
-    def read_fp_sp(self):
+    def read_fp(self):
         return self.seren.read_forward()
     
     def read_rp_sp(self):

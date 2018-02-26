@@ -49,7 +49,7 @@ class Seren_Interface(object):
         message = str(cmd)+'\r'
         with self.lock:
             self.ser.flush()
-            self.ser.write(message.encode())
+            self.ser.write(message)
             _resp = self.cr_readline()
         if _resp != (b'\r' or b'N\r'):
             return _resp
@@ -62,7 +62,7 @@ class Seren_Interface(object):
     def emitter_off(self):
         self.write_cmd("S")
     
-    def write_forward_sp(self, power):
+    def write_forward(self, power):
         self.write_cmd("{} W".format(int(power)))
     
     def read_forward(self):
