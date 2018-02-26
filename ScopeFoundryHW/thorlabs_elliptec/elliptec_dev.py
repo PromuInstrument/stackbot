@@ -64,6 +64,11 @@ class ThorlabsElliptecDevice(object):
             travel = int(resp[21:25], 16), # in mm or deg
             pulses_per_unit = int(resp[25:33], 16), # pulses per unit (mm or deg)
         )
+        if self.debug:
+            for k,v in self.hw_info.items():
+                print(k, "-->", v)
+        if self.hw_info['pulses_per_unit'] == 0:
+            self.hw_info['pulses_per_unit'] = 1 # fix for slider style (ELL9)
         return self.hw_info
         
     def close(self):
