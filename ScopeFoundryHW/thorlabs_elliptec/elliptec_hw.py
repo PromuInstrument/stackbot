@@ -1,14 +1,15 @@
 from ScopeFoundry.hardware import HardwareComponent
 from ScopeFoundryHW.thorlabs_elliptec.elliptec_dev import ThorlabsElliptecDevice
+import time
 
 class ThorlabsElliptecSingleHW(HardwareComponent):
     
     name = 'elliptec'
     
     def setup(self):
-        self.settings.New('port', dtype=str, initial='COM6')
+        self.settings.New('port', dtype=str, initial='COM3')
         self.settings.New('addr', dtype=int, initial=0, vmin=0, vmax=15)
-        self.settings.New('position', dtype=float, initial=0)
+        self.settings.New('position', dtype=float, initial=0, unit='mm', spinbox_decimals=4)
         
         self.add_operation('Home', self.home_device)
         
@@ -19,8 +20,8 @@ class ThorlabsElliptecSingleHW(HardwareComponent):
         
         self.settings.position.reread_from_hardware_after_write = True
         self.settings.position.connect_to_hardware(
-            read_func= self.dev.get_position,
-            write_func= self.dev.move_absolute
+            read_func= self.dev.get_position_mm,
+            write_func= self.dev.move_absolute_mm
             )
 
         self.settings.position.read_from_hardware()
@@ -36,7 +37,8 @@ class ThorlabsElliptecSingleHW(HardwareComponent):
             
     def home_device(self):
         self.dev.home_device()
-            
+        self.settings.position.read_from_hardware()
+
 class ThorlabsElliptcMultiHW(HardwareComponent):
     
     name = 'elliptec_motors'
@@ -46,11 +48,11 @@ class ThorlabsElliptcMultiHW(HardwareComponent):
         HardwareComponent.__init__(self, app, debug=debug, name=name)
         
     def setup(self):
-        self.settings.New('port', dtype=str, initial='COM6')
+        self.settings.New('port', dtype=str, initial='COM3')
 
         for addr, name in self.motors:
             self.add_operation('Home '+name, lambda name=name: self.home_device(name) )
-            self.settings.New(name + '_position', dtype=float, initial=0)
+            self.settings.New(name + '_position', dtype=float, initial=0, unit='mm', spinbox_decimals=4)
 
 
     def connect(self):
@@ -59,11 +61,11 @@ class ThorlabsElliptcMultiHW(HardwareComponent):
 
         
         for addr, name in self.motors:
-            pos = self.settings.get_lq(name + "_position")
+            pos = self.settings.get_lq(name + "_position", )
             pos.reread_from_hardware_after_write = True
             pos.connect_to_hardware(
-                read_func= lambda addr=addr: self.dev.get_position(addr),
-                write_func=  lambda x, addr=addr: self.dev.move_absolute(x, addr)
+                read_func= lambda addr=addr: self.dev.get_position_mm(addr),
+                write_func=  lambda x, addr=addr: self.dev.move_absolute_mm(x, addr)
                 )
             
             self.dev.get_information(addr)

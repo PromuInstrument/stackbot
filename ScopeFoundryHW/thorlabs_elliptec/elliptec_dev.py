@@ -7,7 +7,7 @@ class ThorlabsElliptecDevice(object):
         self.addr = addr # default address
         self.debug = debug
         
-        self.ser = serial.Serial(port,  baudrate=9600, timeout=0.1)
+        self.ser = serial.Serial(port,  baudrate=9600, timeout=2.0)
         
     
     """
@@ -37,8 +37,12 @@ class ThorlabsElliptecDevice(object):
         else:
             assert 0<= addr < 16 
         full_cmd = "{:X}{}".format(addr, cmd)
+        if self.debug:
+            print("ThorlabsElliptec -->" + full_cmd)
         self.ser.write(full_cmd.encode())
         resp = self.ser.readline().decode()
+        if self.debug:
+            print("ThorlabsElliptec <--" + resp)
         # TO DO check if error in resp
         if resp[1:3] == 'GS':
             code = int(resp[3:5], 16)
@@ -108,7 +112,7 @@ class ThorlabsElliptecDevice(object):
         pulses (0x2000 in hexadecimal).
         TX'Ama00002000'
         """
-        resp = self.ask('ma{:08X}'.format(pos),addr) 
+        resp = self.ask('ma{:08X}'.format(int(pos)),addr) 
         if resp[1:3] == 'PO':
             self.position = int(resp[3:], 16)
             self.position_mm = self.position / self.hw_info['pulses_per_unit']
@@ -121,9 +125,12 @@ class ThorlabsElliptecDevice(object):
         resp = self.ask('gp', addr)
         assert resp[1:3] == 'PO'
         pos = int(resp[3:], 16)
+        def s32(value):
+            return -(value & 0x80000000) | (value & 0x7fffffff)
+        pos = s32(pos)
         return pos
     def get_position_mm(self, addr=None):
-        return self.get_position(addr) / self.hw_info['pulses_per_unit']
+        return self.get_position(addr)*1.0 / self.hw_info['pulses_per_unit']
 
     def get_status(self, addr=None):
         resp = self.ask("gs", addr)

@@ -1,5 +1,6 @@
 from ScopeFoundry import BaseMicroscopeApp
-from ScopeFoundryHW.thorlabs_elliptec.elliptec_hw import ThorlabsElliptecSingleHW
+from ScopeFoundryHW.thorlabs_elliptec.elliptec_hw import ThorlabsElliptecSingleHW,\
+    ThorlabsElliptcMultiHW
 
 class ElliptecTestApp(BaseMicroscopeApp):
     
@@ -7,7 +8,9 @@ class ElliptecTestApp(BaseMicroscopeApp):
     
     def setup(self):
         
-        self.add_hardware(ThorlabsElliptecSingleHW)
+        self.add_hardware(ThorlabsElliptecSingleHW(self))
+        
+        self.add_hardware(ThorlabsElliptcMultiHW(self))
         
 if __name__ == '__main__':
     import sys
