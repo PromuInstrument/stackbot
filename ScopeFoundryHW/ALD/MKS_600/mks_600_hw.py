@@ -23,11 +23,11 @@ class MKS_600_Hardware(HardwareComponent):
     def setup(self):
         self.settings.New(name="port", initial="COM5", dtype=str, ro=False)
         self.settings.New(name="pressure", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
-        self.settings.New(name="units", initial="mbar", dtype=str, ro=False, choices=(('mbar'), ('torr'), ('mtorr')))
+        self.settings.New(name="units", initial="torr", dtype=str, ro=False, choices=(('mbar'), ('torr'), ('mtorr')))
         self.settings.New(name="sp_channel", initial="A", dtype=str, ro=False, choices=(('A'), ('B'), ('C'), ('D'), ('E'), ('Open'), ('Close')))
-        self.settings.New(name="sp", initial=0.0, dtype=float, ro=False)
+        self.settings.New(name="sp_readout", initial=0.0, spinbox_decimals=4, dtype=float, ro=True)
+        self.settings.New(name="sp_set_value", initial=0.0, spinbox_decimals=4, dtype=float, ro=False)
         self.settings.New(name="valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
-#         self.settings.New(name="valve_open", initial=False, dtype=bool, ro=False)
         self.mks = None
     
     def connect(self):
@@ -35,9 +35,10 @@ class MKS_600_Hardware(HardwareComponent):
         
         self.settings.pressure.connect_to_hardware(read_func=self.read_pressure)
         self.settings.valve_position.connect_to_hardware(read_func=self.read_valve)
-#         self.settings.valve_open.connect_to_hardware(write_func=lambda x: self.set_valve(x))
-        self.settings.sp.connect_to_hardware(write_func=lambda x: self.write_sp(x),
-                                             read_func=self.read_sp)
+
+        self.settings.sp_set_value.connect_to_hardware(write_func=lambda x: self.write_sp(x))
+        self.settings.sp_readout.connect_to_hardware(read_func=self.read_sp)
+        
         self.settings.sp_channel.add_listener(self.switch_sp, str)
         
     def read_pressure(self):
@@ -67,7 +68,9 @@ class MKS_600_Hardware(HardwareComponent):
     def write_sp(self, pct):
         choice = self.settings['sp_channel']
         channel = self.assign[choice]
+        print(pct)
         self.mks.write_sp(channel, pct)
+        print(self.mks.read_sp(channel))
     
 
     def read_valve(self):

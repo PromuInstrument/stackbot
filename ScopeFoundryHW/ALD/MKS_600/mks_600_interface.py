@@ -73,7 +73,7 @@ class MKS_600_Interface(object):
             dec = pct/100
             fs = self.read_sensor_range()
             self.prtemp = dec*fs
-            return pct*fs
+            return self.prtemp
         else:
             print("Pressure misread, using last stored temp value.")
             self.error_count += 1
@@ -89,7 +89,7 @@ class MKS_600_Interface(object):
                          4: 4,
                          5: 10}
             resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
-            return float(resp)
+            return 2*float(resp)
         else:
             return 0.
         
@@ -97,9 +97,11 @@ class MKS_600_Interface(object):
         assert 0 <= ch <= 5
         self.ask_cmd("D{}".format(ch))
         
-    def write_sp(self, ch, pct):
-        assert 0. <= pct <= 100.
+    def write_sp(self, ch, pr):
+        assert 0. <= pr <= 2.
         assert 0 <= ch <= 5
+        pct = pr/2.
+        print('cmd:', "S{} {}".format(int(ch), pct))
         self.ask_cmd("S{} {}".format(int(ch), pct))
         
         
