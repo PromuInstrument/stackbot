@@ -38,7 +38,7 @@ class ALDRelayInterface(object):
         self.ser.flush()
         message = cmd+'\n'
         with self.lock:
-            self.ser.write(message.encode())
+            self.ser.write(message)
             resp = self.ser.readline().decode()
         return resp
     
@@ -47,7 +47,7 @@ class ALDRelayInterface(object):
         self.ser.flush()
         message = '1?\n'
         with self.lock:
-            self.ser.write(message.encode())
+            self.ser.write(message)
             attempts = 4
             row = 0
             while attempts > 0:

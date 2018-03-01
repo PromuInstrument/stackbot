@@ -15,7 +15,7 @@ class ALDRelayHW(HardwareComponent):
     name = 'ald_relay_hw'
     
     def setup(self):
-        self.settings.New(name='port', initial='COM4', dtype=str, ro=False)
+        self.settings.New(name='port', initial='COM9', dtype=str, ro=False)
         for relay in range(1,5,1):
             self.settings.New(name="relay{}".format(relay), initial=False, dtype=bool, ro=False)
             self.settings.New(name="pulse{}".format(relay), initial=False, dtype=bool, ro=False)
