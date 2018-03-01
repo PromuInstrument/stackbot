@@ -27,9 +27,11 @@ class Seren_HW(HardwareComponent):
         
         self.settings.RF_enable.connect_to_hardware(write_func=lambda x: self.RF_toggle(x))
         
-        self.settings.forward_power.connect_to_hardware(write_func=lambda x: self.write_fp_sp(x))
+        self.settings.forward_power.connect_to_hardware(write_func=lambda x: self.write_fp(x),
+                                                        read_func=self.read_fp)
 
-        self.settings.reflected_power.connect_to_hardware(read_func=self.read_rp_sp)
+        self.settings.reflected_power.connect_to_hardware(read_func=self.read_rp)
+
 
     def serial_toggle(self, status):
         if status:
@@ -43,14 +45,13 @@ class Seren_HW(HardwareComponent):
         else:
             self.seren.emitter_off()
     
-    def write_fp_sp(self, power):
-        self.seren.write_forward_sp(power)
+    def write_fp(self, power):
+        self.seren.write_forward(power)
+
+    def read_fp(self):
+        return self.seren.read_forward()
     
-    def read_fp_sp(self):
-        resp = self.seren.read_forward()
-        return resp
-    
-    def read_rp_sp(self):
+    def read_rp(self):
         resp = self.seren.read_reflected()
         return resp
     
