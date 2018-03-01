@@ -27,8 +27,7 @@ class Seren_HW(HardwareComponent):
         
         self.settings.RF_enable.connect_to_hardware(write_func=lambda x: self.RF_toggle(x))
         
-        self.settings.forward_power.connect_to_hardware(write_func=lambda x: self.write_fp_sp(x),
-                                                        read_func=self.read_fp_sp)
+        self.settings.forward_power.connect_to_hardware(write_func=lambda x: self.write_fp_sp(x))
 
         self.settings.reflected_power.connect_to_hardware(read_func=self.read_rp_sp)
 
@@ -48,10 +47,12 @@ class Seren_HW(HardwareComponent):
         self.seren.write_forward_sp(power)
     
     def read_fp_sp(self):
-        return self.seren.read_forward()
+        resp = self.seren.read_forward()
+        return resp
     
     def read_rp_sp(self):
-        return self.seren.read_reflected()
+        resp = self.seren.read_reflected()
+        return resp
     
     def disconnect(self):
         self.settings.disconnect_all_from_hardware()
