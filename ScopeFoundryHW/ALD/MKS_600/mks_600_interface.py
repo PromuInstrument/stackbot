@@ -34,7 +34,6 @@ class MKS_600_Interface(object):
         self.float = None
         self.prtemp = None
         self.valve_open = None
-        self.valve_thresholds = (0.08, 99.90)
         self.sensor_range = None
         self.error_count = 0
         
@@ -89,7 +88,8 @@ class MKS_600_Interface(object):
                          4: 4,
                          5: 10}
             resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
-            return 2*float(resp)
+            print('read_sp resp:', resp, 2.*float(resp))
+            return 2.*float(resp)
         else:
             return 0.
         
@@ -97,10 +97,10 @@ class MKS_600_Interface(object):
         assert 0 <= ch <= 5
         self.ask_cmd("D{}".format(ch))
         
-    def write_sp(self, ch, pr):
-        assert 0. <= pr <= 2.
+    def write_sp(self, ch, p):
+        assert 0. <= p <= 2.
         assert 0 <= ch <= 5
-        pct = pr/2.
+        pct = p/2.
         print('cmd:', "S{} {}".format(int(ch), pct))
         self.ask_cmd("S{} {}".format(int(ch), pct))
         

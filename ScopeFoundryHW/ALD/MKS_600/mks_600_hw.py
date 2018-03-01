@@ -65,11 +65,11 @@ class MKS_600_Hardware(HardwareComponent):
         else:
             self.mks.set_valve(channel)
     
-    def write_sp(self, pct):
+    def write_sp(self, p):
         choice = self.settings['sp_channel']
         channel = self.assign[choice]
-        print(pct)
-        self.mks.write_sp(channel, pct)
+        print(p)
+        self.mks.write_sp(channel, p)
         print(self.mks.read_sp(channel))
     
 
