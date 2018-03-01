@@ -64,7 +64,9 @@ class MKS_146_Interface(object):
             cmd_header = str(cmd)
         message = '@'+cmd_header+str(param)+'?\r'
         self.ser.write(message)
-        cmd_r, resp = self.ser.readline().decode().split(':')
+#         cmd_r, resp = self.ser.readline().decode().split(':')
+        resp = self.ser.readline()
+        print(resp)
         if self.debug:
             print("read_cmd sent: {}".format(message))
             print("cmd_r:", cmd_r, "resp:", resp)
