@@ -2,11 +2,14 @@ from __future__ import division, print_function
 import visa
 import time
 import logging
+from threading import Lock
+from ScopeFoundry.logged_quantity import DummyLock
 
 TRIES_BEFORE_FAILURE = 10
 RETRY_SLEEP_TIME = 0.010  # in seconds
 
 logger = logging.getLogger(__name__)
+
 
 
 class ThorlabsPM100D(object):
@@ -21,18 +24,22 @@ class ThorlabsPM100D(object):
     
         self.port = port
         self.debug = debug
-
+        self.lock = Lock()
+        #self.lock = LogLock('Thorlabs_PM100D')
+        #self.lock = DummyLock()
+        
         self.visa_resource_manager = visa.ResourceManager()
     
         if debug: self.visa_resource_manager.list_resources()
     
         self.pm = self.visa_resource_manager.get_instrument(port)
+        self.pm.timeout = 1000
     
         self.idn = self.ask("*IDN?")
         
         self.sensor_idn = self.ask("SYST:SENS:IDN?")
         
-        self.write("CONF:POW") # set to power meaurement
+        self.write("CONF:POW") # set to power measurement
 
         self.wavelength_min = float(self.ask("SENS:CORR:WAV? MIN"))
         self.wavelength_max = float(self.ask("SENS:CORR:WAV? MAX"))
@@ -56,13 +63,15 @@ class ThorlabsPM100D(object):
     
     def ask(self, cmd):
         if self.debug: logger.debug( "PM100D ask " + repr(cmd) )
-        resp = self.pm.ask(cmd)
+        with self.lock:
+            resp = self.pm.ask(cmd)
         if self.debug: logger.debug( "PM100D resp ---> " + repr(resp) )
         return resp
     
     def write(self, cmd):
         if self.debug: logger.debug( "PM100D write" + repr(cmd) )
-        resp = self.pm.write(cmd)
+        with self.lock:
+            resp = self.pm.write(cmd)
         if self.debug: logger.debug( "PM100D written --->" + repr(resp))
         
     def get_wavelength(self):

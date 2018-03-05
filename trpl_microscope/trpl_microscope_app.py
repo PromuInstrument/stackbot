@@ -9,6 +9,8 @@ logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
 logging.getLogger('PyQt5').setLevel(logging.WARNING)
 logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
+logging.getLogger('pyvisa').setLevel(logging.WARNING)
+
 
 class TRPLMicroscopeApp(BaseMicroscopeApp):
 
@@ -61,7 +63,8 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
         self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
         
-        #self.oceanoptics_spec_hc = self.add_hardware_component(OceanOpticsSpectrometerHC(self))
+        from ScopeFoundryHW.oceanoptics_spec.oceanoptics_spec import OceanOpticsSpectrometerHW
+        self.add_hardware_component(OceanOpticsSpectrometerHW(self))
         
         #self.crystaltech_aotf_hc = self.add_hardware_component(CrystalTechAOTF(self))
         
@@ -84,22 +87,49 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.picoharp.picoharp_hist_measure import PicoHarpHistogramMeasure
         self.add_measurement(PicoHarpHistogramMeasure(self))
 
+        from ScopeFoundryHW.oceanoptics_spec.oo_spec_measure import  OOSpecLive
+        self.add_measurement(OOSpecLive(self))
+
+
         # Combined Measurements
         from confocal_measure.power_scan import PowerScanMeasure
         self.add_measurement_component(PowerScanMeasure(self))        
 
         # Mapping Measurements        
         from confocal_measure.apd_mcl_2dslowscan import APD_MCL_2DSlowScan, APD_MCL_3DSlowScan
-        self.add_measurement(APD_MCL_2DSlowScan)
-        self.add_measurement(APD_MCL_3DSlowScan)
+        apd_scan = self.add_measurement(APD_MCL_2DSlowScan(self))
+        self.add_measurement(APD_MCL_3DSlowScan(self))
         
         from confocal_measure import Picoharp_MCL_2DSlowScan
-        self.add_measurement_component(Picoharp_MCL_2DSlowScan(self))
-                
+        picoharp_scan = self.add_measurement(Picoharp_MCL_2DSlowScan(self))
+        
+        from confocal_measure.andor_hyperspec_scan import AndorHyperSpec2DScan
+        andor_scan = self.add_measurement(AndorHyperSpec2DScan(self))
+
+        # connect mapping measurement settings        
+        lq_names =  ['h0', 'h1', 'v0', 'v1',  'Nh', 'Nv', 'h_axis', 'v_axis']
+        
+        for scan in [picoharp_scan, andor_scan]:
+            for lq_name in lq_names:
+                master_scan_lq =  apd_scan.settings.get_lq(lq_name)
+                scan.settings.get_lq(lq_name).connect_to_lq(master_scan_lq)     
+            
+
+        
         ####### Quickbar connections #################################
         
         Q = self.quickbar
         
+        # 2D Scan Area
+        apd_scan.settings.h0.connect_to_widget(Q.h0_doubleSpinBox)
+        apd_scan.settings.h1.connect_to_widget(Q.h1_doubleSpinBox)
+        apd_scan.settings.v0.connect_to_widget(Q.v0_doubleSpinBox)
+        apd_scan.settings.v1.connect_to_widget(Q.v1_doubleSpinBox)
+        apd_scan.settings.dh.connect_to_widget(Q.dh_doubleSpinBox)
+        apd_scan.settings.dv.connect_to_widget(Q.dv_doubleSpinBox)
+        apd_scan.settings.h_axis.connect_to_widget(Q.h_axis_comboBox)
+        apd_scan.settings.v_axis.connect_to_widget(Q.v_axis_comboBox)
+                
         
         # MadCity Labs
         mcl = self.hardware['mcl_xyz_stage']
@@ -128,9 +158,9 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         #connect events
         apd = self.hardware['apd_counter']
         apd.settings.int_time.connect_to_widget(Q.apd_counter_int_doubleSpinBox)
-        apd.settings.count_rate.updated_text_value.connect(
-                                           Q.apd_counter_output_lineEdit.setText)
-        
+        #apd.settings.count_rate.updated_text_value.connect(
+        #                                   Q.apd_counter_output_lineEdit.setText)
+        apd.settings.count_rate.connect_to_widget(Q.apd_counter_output_lineEdit)
 
         apd_opt = self.measurements['apd_optimizer']
         #apd.settings
@@ -150,7 +180,7 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         andor.settings.temperature.connect_to_widget(Q.andor_ccd_temp_doubleSpinBox)
         andor.settings.ccd_status.connect_to_widget(Q.andor_ccd_status_label)
         andor.settings.shutter_open.connect_to_widget(Q.andor_ccd_shutter_open_checkBox)
-
+        andor.settings.output_amp.connect_to_widget(Q.andor_ccd_output_amp_comboBox)
         
         # Andor Readout
         aro = self.measurements['andor_ccd_readout']
@@ -175,6 +205,11 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         shutter.settings.shutter_open.connect_to_widget(Q.shutter_open_checkBox)
         
         self.hardware['flip_mirror'].settings.mirror_position.connect_to_widget(Q.flip_mirror_checkBox)
+        
+        ################# Shared Settings for Map Measurements ########################
+        
+        
+        
         
         ##########
         self.settings_load_ini('trpl_defaults.ini')

@@ -2,10 +2,10 @@
 from Ed Barnard and Lev Lozhkin"""
 from __future__ import absolute_import
 from ScopeFoundry import HardwareComponent
-from ScopeFoundryHW.xbox_controller.xbcontrol_ec import XboxControlDevice
+from ScopeFoundryHW.xbox_controller.xbox_controller_device import XboxControllerDevice
 
 
-class XboxControlHW(HardwareComponent):
+class XboxControllerHW(HardwareComponent):
 
     name = "xbox_controller"
 
@@ -103,7 +103,7 @@ class XboxControlHW(HardwareComponent):
     def connect(self):
         """Creates joystick object and connects to controller upon clicking "connect" in ScopeFoundry app."""
         # Reference to equipment level joystick object
-        self.xb_dev = XboxControlDevice()
+        self.xb_dev = XboxControllerDevice()
         #self.joystick = self.xb_interface.joystick
         
     def disconnect(self):

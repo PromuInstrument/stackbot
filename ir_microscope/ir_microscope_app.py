@@ -23,7 +23,10 @@ class IRMicroscopeApp(BaseMicroscopeApp):
     
     def setup(self):
         
+        
+        
         self.add_quickbar(load_qt_ui_file(sibling_path(__file__, 'ir_quick_access.ui')))
+
         
         print("Adding Hardware Components")
         
@@ -31,7 +34,10 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         self.add_hardware(ph.PicoHarpHW(self))
 
         from ScopeFoundryHW.winspec_remote import WinSpecRemoteClientHW
-        self.add_hardware_component(WinSpecRemoteClientHW(self))  
+        self.add_hardware_component(WinSpecRemoteClientHW(self))
+        
+        from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
+        self.add_hardware(ActonSpectrometerHW(self))
                 
         from ScopeFoundryHW.tenma_power.tenma_hw import TenmaHW
         self.add_hardware(TenmaHW(self))
@@ -59,11 +65,15 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.attocube_ecc100.attocube_xyz_hw import AttoCubeXYZStageHW
         self.add_hardware(AttoCubeXYZStageHW(self))                        
               
-        from ScopeFoundryHW.powermate.powermate_hw import PowermateHWSimple
-        self.add_hardware(PowermateHWSimple)
+        from ScopeFoundryHW.powermate.powermate_hw import PowermateHW
+        self.add_hardware(PowermateHW(self))
         
         from ScopeFoundryHW.thorlabs_motorized_filter_flipper.thorlabsMFF_hardware import ThorlabsMFFHW
         self.add_hardware_component(ThorlabsMFFHW(self))        
+        
+        from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
+        self.add_hardware(XboxControllerHW(self))
+        
         
                         
         print("Adding Measurement Components")
@@ -87,8 +97,20 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.attocube_ecc100.attocube_stage_control import AttoCubeStageControlMeasure
         self.add_measurement(AttoCubeStageControlMeasure(self))
 
-        from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasureSimple
-        self.add_measurement(PowermateMeasureSimple)
+        from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasure
+        self.add_measurement(PowermateMeasure(self))
+        
+        from ScopeFoundryHW.attocube_ecc100.attocube_home_axis_measurement import AttoCubeHomeAxisMeasurement
+        self.add_measurement(AttoCubeHomeAxisMeasurement(self))
+        from measurements.stage_motion_measure import StageHomeAxesMeasure
+        self.add_measurement(StageHomeAxesMeasure(self))
+        
+        
+        from measurements.xbox_controller_measure import XboxControllerMeasure
+        self.add_measurement(XboxControllerMeasure(self))
+        
+        
+        #from ScopeFoundryHW.xbox_controller.xbox_controller_test_measure import 
         
         ####### Quickbar connections #################################
         
@@ -96,20 +118,24 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         # Powermate
         pm_measure = self.measurements['powermate_measure'] 
-        pm_measure.settings.pm_0_data_handler_selector.connect_to_widget(Q.powermate_0_comboBox)
-        pm_measure.settings.pm_1_data_handler_selector.connect_to_widget(Q.powermate_1_comboBox)
+        pm_measure.settings.dev_0_lq_path_moved.connect_to_widget(Q.powermate_0_comboBox)
+        pm_measure.settings.dev_1_lq_path_moved.connect_to_widget(Q.powermate_1_comboBox)
 
         # LED
-        tenma = self.hardware['tenma_powersupply']
-        Q.tenma_power_on_pushButton.clicked.connect(lambda: tenma.write_both(V=3.0,I=0.1,impose_connection=True))
-        Q.tenma_power_off_pushButton.clicked.connect(tenma.zero_both)
+        tenmaHW = self.hardware['tenma_powersupply']
+        Q.tenma_power_on_pushButton.clicked.connect(lambda: tenmaHW.write_both(V=3.0,I=0.1,impose_connection=True))
+        Q.tenma_power_off_pushButton.clicked.connect(tenmaHW.zero_both)
         
-        tenma.settings.actual_current.connect_to_widget(Q.tenma_power_current_doubleSpinBox)
-        Q.tenma_power_current_lineEdit.returnPressed.connect(tenma.settings.set_current.update_value)
+        tenmaHW.settings.actual_current.connect_to_widget(Q.tenma_power_current_doubleSpinBox)
+        Q.tenma_power_current_plus_pushButton.clicked.connect(lambda: tenmaHW.write_delta_current(delta = 0.05))
+        Q.tenma_power_current_minus_pushButton.clicked.connect(lambda: tenmaHW.write_delta_current(delta = -0.05))
+        Q.tenma_power_current_lineEdit.returnPressed.connect(tenmaHW.settings.set_current.update_value)
         Q.tenma_power_current_lineEdit.returnPressed.connect(lambda: Q.tenma_power_current_lineEdit.setText(""))
 
-        tenma.settings.actual_voltage.connect_to_widget(Q.tenma_power_voltage_doubleSpinBox)
-        Q.tenma_power_voltage_lineEdit.returnPressed.connect(tenma.settings.set_voltage.update_value)
+        tenmaHW.settings.actual_voltage.connect_to_widget(Q.tenma_power_voltage_doubleSpinBox)
+        Q.tenma_power_voltage_plus_pushButton.clicked.connect(lambda: tenmaHW.write_delta_voltage(delta = 0.2))
+        Q.tenma_power_voltage_minus_pushButton.clicked.connect(lambda: tenmaHW.write_delta_voltage(delta = -0.2))
+        Q.tenma_power_voltage_lineEdit.returnPressed.connect(tenmaHW.settings.set_voltage.update_value)
         Q.tenma_power_voltage_lineEdit.returnPressed.connect(lambda: Q.tenma_power_voltage_lineEdit.setText(""))
         
         # Atto Cube
@@ -129,6 +155,11 @@ class IRMicroscopeApp(BaseMicroscopeApp):
 
         self.measurements['AttoCubeStageControlMeasure'].settings.activation.connect_to_widget(Q.stage_live_update_checkBox)
         #stage.settings.move_speed.connect_to_widget(Q.nanodrive_move_slow_doubleSpinBox)   
+        
+        #acton spectrometer
+        acton_spec = self.hardware['acton_spectrometer']
+        acton_spec.settings.center_wl.connect_to_widget(Q.center_wl_doubleSpinBox)
+        acton_spec.settings.grating_id.connect_to_widget(Q.grating_id_comboBox)
         
         #connect events
         #apd = self.hardware['apd_counter']
@@ -197,8 +228,31 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         #self.measurement_state_changed[bool].connect(self.gui.ui.apd_optimize_startstop_checkBox.setChecked)      
         """
         
+
         ##########
-        self.settings_load_ini('ir_microscope_defaults.ini')
+        # app level logged quantities
+        for lq_name in ["h_axis","v_axis"]:
+            self.settings.New(lq_name, dtype=str, choices=("x", "y", "z"))
+            getattr(self.settings, lq_name).connect_to_widget(\
+                                    getattr(Q, lq_name+'_comboBox'))
+            getattr(self.settings, lq_name).connect_to_lq( \
+                                    getattr(self.measurements['trpl_scan'].settings,lq_name) )
+            getattr(self.settings, lq_name).connect_to_lq(\
+                                    getattr(self.measurements['hyperspectral_2d_scan'].settings,lq_name) )
+                      
+
+        for lq_name in ['h0','h1','v0','v1','dh','dv']:
+            self.settings.New(lq_name, dtype=float, unit='um')
+            getattr(self.settings, lq_name).connect_to_widget(\
+                                    getattr(Q, lq_name+'_doubleSpinBox'))
+            getattr(self.settings, lq_name).connect_lq_scale( \
+                                    getattr(self.measurements['trpl_scan'].settings,lq_name), 1000)
+            getattr(self.settings, lq_name).connect_lq_scale( \
+                                    getattr(self.measurements['hyperspectral_2d_scan'].settings,lq_name), 1000)
+        ##########
+        self.settings_load_ini('ir_microscope_defaults.ini')                        
+        
+
 
 if __name__ == '__main__':
     import sys

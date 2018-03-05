@@ -34,39 +34,39 @@ class OceanOpticsSpectrometer(object):
         if ndev_ids < 1:
             raise IOError("No OceanOptics devices found")
         if ndev_ids > 1:
-            print "more than one device attached. Will pick the first one"
+            print("more than one device attached. Will pick the first one")
 
-        if self.debug: print "ndevs", ndevs, ndev_ids
+        if self.debug: print( "ndevs", ndevs, ndev_ids)
         
         #get dev_id
-        dev_ids = np.empty( ndev_ids, dtype=np.int) # long
+        dev_ids = np.empty( ndev_ids, dtype=ctypes.c_long) # long
         
-        _S.sbapi_get_device_ids( dev_ids.ctypes.data, ndev_ids )
+        _S.sbapi_get_device_ids( dev_ids.ctypes, ndev_ids )
         
-        if debug: print "dev_ids", dev_ids
+        if debug: print("dev_ids", dev_ids)
 
         self.dev_id = dev_id = int(dev_ids[0])
-        if debug: print "dev_id", dev_id
+        if debug: print("dev_id", dev_id)
         
         # open device
         retcode = _S.sbapi_open_device(dev_id, byref(err_code))
         if retcode != 0: self._handle_sbapi_error()
 
         # get device type
-        dev_type_buffer = ctypes.create_string_buffer(' ', 256)
+        dev_type_buffer = ctypes.create_string_buffer(b'', 256)
         _S.sbapi_get_device_type(dev_id, byref(err_code), dev_type_buffer, 256)
-        self.dev_type = str(dev_type_buffer.raw).strip('\x00')
-        if debug: print "dev_type", repr(self.dev_type)
+        self.dev_type = dev_type_buffer.raw.strip(b'\x00').decode()
+        if debug: print("dev_type", repr(self.dev_type))
 
         # get features for device, will pick the first one
         n_features = _S.sbapi_get_number_of_spectrometer_features(int(self.dev_id), byref(err_code))
-        print repr(n_features), err_code.value
+        print(repr(n_features), err_code.value)
         self._handle_sbapi_error() 
-        print repr(n_features)
+        print(repr(n_features))
         feature_ids = np.empty( n_features, dtype=int)
-        print _S.sbapi_get_spectrometer_features(dev_id, byref(err_code), feature_ids.ctypes.data, n_features)
+        print(_S.sbapi_get_spectrometer_features(dev_id, byref(err_code), feature_ids.ctypes, n_features))
         self.feature_id = feature_id = int(feature_ids[0])
-        if debug: print "features", n_features, feature_ids
+        if debug: print("features", n_features, feature_ids)
 
         # set trigger mode
         #   Mode (Input) a trigger mode
@@ -76,19 +76,19 @@ class OceanOpticsSpectrometer(object):
 
         # get minimum integration time
         self.min_int_time = _S.sbapi_spectrometer_get_minimum_integration_time_micros(dev_id, feature_id, byref(err_code) )
-        if debug: print "min_int_time", self.min_int_time, "microsec"
+        if debug: print("min_int_time", self.min_int_time, "microsec")
         
         # get spectrum parameters
         self.Nspec = Nspec = _S.sbapi_spectrometer_get_formatted_spectrum_length( dev_id, feature_id, byref(err_code) )
         self.wavelengths = np.zeros( Nspec, dtype=float )
-        _S.sbapi_spectrometer_get_wavelengths(dev_id, feature_id, byref(err_code), self.wavelengths.ctypes.data, Nspec)
-        if debug: print Nspec, self.wavelengths[[0,1,-2,-1]]
+        _S.sbapi_spectrometer_get_wavelengths(dev_id, feature_id, byref(err_code), self.wavelengths.ctypes, Nspec)
+        if debug: print(Nspec, self.wavelengths[[0,1,-2,-1]])
         
         # read dark pixels
         ndark = _S.sbapi_spectrometer_get_electric_dark_pixel_count(dev_id, feature_id, byref(err_code))
         self.dark_indices = np.zeros(ndark, dtype=int)
-        _S.sbapi_spectrometer_get_electric_dark_pixel_indices(dev_id, feature_id, byref(err_code), self.dark_indices.ctypes.data, ndark)
-        if debug: print "dark", ndark, self.dark_indices
+        _S.sbapi_spectrometer_get_electric_dark_pixel_indices(dev_id, feature_id, byref(err_code), self.dark_indices.ctypes, ndark)
+        if debug: print("dark", ndark, self.dark_indices)
 
         # set integration to minimum by default
         self.int_time = self.min_int_time
@@ -112,7 +112,7 @@ class OceanOpticsSpectrometer(object):
         return self.set_integration_time(int_time*1e6)
     
     def acquire_spectrum(self):
-        _S.sbapi_spectrometer_get_formatted_spectrum(self.dev_id, self.feature_id, byref(self.err_code), self.spectrum.ctypes.data, self.Nspec)
+        _S.sbapi_spectrometer_get_formatted_spectrum(self.dev_id, self.feature_id, byref(self.err_code), self.spectrum.ctypes, self.Nspec)
         return self.spectrum
 
     def _handle_sbapi_error(self):
@@ -120,7 +120,7 @@ class OceanOpticsSpectrometer(object):
             return
         error_str_buffer = ctypes.create_string_buffer(' ', 256)
         error_str = str(error_str_buffer.raw).strip('\x00')
-        _S.sbapi_get_error_string( error_code)
+        _S.sbapi_get_error_string(self.error_code)
         raise IOError(error_str)
 
         
@@ -166,7 +166,7 @@ if __name__ == '__main__':
             oospec.start_threaded_acquisition()
             fig.canvas.draw()
         else:
-            print oospec.threaded_time_elapsed_remaining()
+            print(oospec.threaded_time_elapsed_remaining())
     
     timer = fig.canvas.new_timer( interval= 250)
     timer.add_callback( update_fig, ax)

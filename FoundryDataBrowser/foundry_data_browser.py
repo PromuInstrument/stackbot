@@ -18,9 +18,11 @@ app.load_view(H5TreeView(app))
 app.load_view(H5TreeSearchView(app))
 
 
-from viewers.gauss2d_fit_img import Gauss2DFitImgView, Gauss2DFitAPD_MCL_2dSlowScanView
+from viewers.gauss2d_fit_img import Gauss2DFitImgView, Gauss2DFitAPD_MCL_2dSlowScanView,\
+    Gauss2DFit_FiberAPD_View
 app.load_view(Gauss2DFitImgView(app))
 app.load_view(Gauss2DFitAPD_MCL_2dSlowScanView(app))
+app.load_view(Gauss2DFit_FiberAPD_View(app))
 
 
 try:
@@ -86,8 +88,8 @@ app.load_view(AugerSpecMapView(app))
 from viewers.power_scan_npz import PowerScanNPZView
 app.load_view(PowerScanNPZView(app))
 
-from viewers.andor_ccd_readout_npz import AndorCCDReadoutNPZ
-app.load_view(AndorCCDReadoutNPZ(app))
+from viewers.andor_ccd_readout import AndorCCDReadout
+app.load_view(AndorCCDReadout(app))
 
 from viewers.hyperspec_cl_h5 import HyperSpecCLH5View
 app.load_view(HyperSpecCLH5View(app))

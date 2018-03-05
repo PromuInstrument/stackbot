@@ -75,14 +75,18 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         if debug:
             print(self.name,'acquire_data()')
         W = self.winspec_hc.winspec_client
+        if debug:
+            print(self.name, 'start acq')
         W.start_acq()
         
         while( W.get_status() ):
+            #if debug: print(self.name, 'status', W.get_status())
             if self.interrupt_measurement_called:
-                break
+                return (None, None)
             time.sleep(0.01)
-        
-        
+            
+        if debug:
+            print(self.name, 'get_data')
         hdr, data = W.get_data()  
         #print("getting_data")
         return hdr,np.array(data).reshape(( hdr.frame_count, hdr.ydim, hdr.xdim) )
@@ -103,32 +107,49 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         #print(self.wls)       
         return wls 
     
+    def evaluate_wls_acton_spectrometer(self, hdr, px_index):
+        hbin = hdr.bin_x
+        px_index = np.arange(self.data.shape[-1])
+        spec_hw = self.app.hardware['acton_spectrometer']
+        return spec_hw.get_wl_calibration(px_index, hbin)        
 
         
     def run(self):
         
+        self.winspec_hc.settings['connected'] = False
+        time.sleep(0.2)
+        self.winspec_hc.settings['connected'] = True
+        time.sleep(0.2)
+        
+        
+        
         while not self.interrupt_measurement_called:
-            print("test")
+            #print("test")
             try:
                 print("start acq")
-                self.hdr,self.data = self.acquire_data()
+                hdr,data = self.acquire_data()
+                if hdr is None or data is None:
+                    raise IOError("Failed to acquire Data (probably interrupted)")
+                self.hdr = hdr
+                self.data = data
                 print("end acq")
                 wl_calib = self.settings['wl_calib']
+                px_index = np.arange(self.data.shape[-1])
                 if wl_calib=='winspec':
                     self.wls = self.evaluate_wls_winspec(self.hdr)
                 elif wl_calib=='acton_spectrometer':
                     hbin = self.hdr.bin_x
                     px_index = np.arange(self.data.shape[-1])
                     spec_hw = self.app.hardware['acton_spectrometer']
-                    self.wls = spec_hw.get_wl_calibration(px_index, hbin)
+                    self.wls = self.evaluate_wls_acton_spectrometer(self.hdr, px_index)
                 elif wl_calib=='pixels':
                     binning = self.hdr.bin_x
                     px_index = np.arange(self.data.shape[-1])
                     self.wls = binned_px = binning*px_index + 0.5*(binning-1)
                 elif wl_calib=='raw_pixels':
-                    self.wls = np.arange(self.data.shape[-1])
+                    self.wls = px_index
                 else:
-                    self.wls = np.arange(self.data.shape[-1])
+                    self.wls = px_index
                 
                 self.wls_mean = self.wls.mean()
                     
@@ -146,6 +167,9 @@ class WinSpecRemoteReadoutMeasure(Measurement):
             finally:
                 if not self.settings['continuous']:
                     break
+        
+        
+        
             
     def update_display(self):
         

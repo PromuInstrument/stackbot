@@ -28,6 +28,7 @@ class WinSpecRemoteClient(object):
     
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((host, port))
+        self.sock.settimeout(2.0)
         self.debug = debug
         
     def ask_cmd(self, cmd):
