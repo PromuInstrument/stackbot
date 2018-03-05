@@ -18,3 +18,6 @@ dist
 *.mat
 ScopeFoundry/ScopeFoundry.egg-info
 ScopeFoundry/__pycache__/
+supra_cl/log/
+supra_cl/cl_mirror_positioner/log/
+ScopeFoundryHW/andor_camera/log/
