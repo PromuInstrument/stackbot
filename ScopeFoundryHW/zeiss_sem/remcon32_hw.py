@@ -9,7 +9,7 @@ Revised by Alan Buckley
 'remote control of Zeiss Gemini SEM using the Remcon32 serial interface'
 
 from ScopeFoundry import HardwareComponent
-from Auger.hardware.remcon32 import Remcon32
+from .remcon32 import Remcon32
 import configparser
 
 

@@ -32,10 +32,10 @@ class SupraCLApp(BaseMicroscopeApp):
 
         
         ### SEM
-        from Auger.hardware.remcon32_hw import SEM_Remcon_HW
+        from ScopeFoundryHW.zeiss_sem.remcon32_hw import SEM_Remcon_HW
         self.add_hardware(SEM_Remcon_HW(self))
 
-        from SEM.measurements.sem_recipe_control import SEMRecipeControlMeasure
+        from ScopeFoundryHW.zeiss_sem.sem_recipe_control import SEMRecipeControlMeasure
         self.add_measurement(SEMRecipeControlMeasure(self))
         
 
