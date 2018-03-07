@@ -39,4 +39,57 @@ Force SEM on connect:
 	for CL main SE2 secondary inlens
 	beam shift to zero
 	scan rotate to 90 degres
+
 	
+===================
+TODO 2018-03-05
+
++++++DONE++++++_
+
+* Comments / description textbox cursor jumps around -- Fixed
+* Pixel zero should be set to pixel 1 for counter channels -- Fixed (we think)
+
+	REMCOM is stage initialized check -- Aready implemented, works
+	Get/Set 6-axis stage, works at HW level
+
+Combine mirror motion measurements -- Done
+
++++++
+
+description updated during run is not saved in H5 (not obvious how to do this)
+
+Sort out SEM/remcon and Auger/remcon, second has stage stuff, including INI status
+
+Mirror INI
+
+
+Add quickbar
+
+wavelength calibration
+
+relative intensity calibration for andor / spec
+
+SEM stage
+	delta xyz buttons
+	memorize sample positions (x,y,z,r)
+		(move to new sample position, drop sample by 1mm, move to xyr, raise by 0.6mm away from sample z)
+
+
+Disable unused channels
+
+Quad View, make BP image adjustable after acqusiition
+
+Fix oversample problem by computing oversample and ADC rate:
+	f(line_size, pixel_time) --> oversample, adc_rate
+
+Andor Camera
+	QE Spectral response
+	Baseline clamp
+	
+Image histograms, ignore zero pixels (or use masked array)
+
+Quadview history plot, clear or remove zeros from running average
+
+Store / restore subwindow layouts
+
+non-hyperspectral imaging, acquire one spectrum per image.
