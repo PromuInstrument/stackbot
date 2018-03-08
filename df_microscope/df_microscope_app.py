@@ -28,8 +28,10 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
         
         from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
-        self.add_hardware_component(ESP300AxisHW(self))
+        self.add_hardware(ESP300AxisHW(self))
 
+        from ScopeFoundryHW.thorlabs_integrated_stepper.thorlabs_integrated_stepper_motor_hw import ThorlabsIntegratedStepperMottorHW
+        self.add_hardware(ThorlabsIntegratedStepperMottorHW(self))
 
         print("Adding Measurement Components")
         
@@ -58,10 +60,11 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         from confocal_measure import WinSpecMCL2DSlowScan
         self.add_measurement_component(WinSpecMCL2DSlowScan(self))
                 
+        from confocal_measure.polarized_hyperspec_scan_measure import PolarizedHyperspecScanMeasure
+        self.add_measurement(PolarizedHyperspecScanMeasure(self))
+        
         # load default settings 
-        self.hardware['thorlabs_powermeter'].settings['port'] = 'USB0::0x1313::0x8078::P0013111::INSTR'
-        self.hardware['power_wheel_arduino'].settings['ser_port'] = 'COM5'
-        self.hardware['esp300'].settings['port'] = 'COM6'
+        self.settings_load_ini('df_microscope_defaults.ini')
 
         
 if __name__ == '__main__':
