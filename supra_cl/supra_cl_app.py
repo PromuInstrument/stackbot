@@ -106,8 +106,10 @@ class SupraCLApp(BaseMicroscopeApp):
 
         self.settings_load_ini('supra_cl_defaults.ini')
         
-        logging.getLogger('LoggedQuantity').setLevel(logging.DEBUG)
-
+        #logging.getLogger('LoggedQuantity').setLevel(logging.DEBUG)
+        
+    def setup_ui(self):
+        self.load_window_positions_json("default_window_pos.json")
 
         
 if __name__ == '__main__':
