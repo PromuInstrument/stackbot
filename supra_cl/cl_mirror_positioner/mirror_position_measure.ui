@@ -118,70 +118,6 @@
      </layout>
     </widget>
    </item>
-   <item row="1" column="0">
-    <widget class="QGroupBox" name="hw_groupBox">
-     <property name="title">
-      <string>Hardware</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_4">
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="hw_cl_mirror_connect_checkBox">
-        <property name="styleSheet">
-         <string notr="true"/>
-        </property>
-        <property name="text">
-         <string>cl_mirror</string>
-        </property>
-        <property name="iconSize">
-         <size>
-          <width>16</width>
-          <height>16</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QCheckBox" name="hw_angle_connect_checkBox">
-        <property name="text">
-         <string>Angle</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QCheckBox" name="live_checkBox">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="autoFillBackground">
-         <bool>false</bool>
-        </property>
-        <property name="styleSheet">
-         <string notr="true">QCheckBox::indicator::unchecked {
-background-color: red;
-}
-
-QCheckBox::indicator::checked {
-background-color: green;
-}</string>
-        </property>
-        <property name="text">
-         <string>Live</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QCheckBox" name="hw_xyz_connect_checkBox">
-        <property name="text">
-         <string>XYZ</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
    <item row="2" column="0" colspan="2">
     <widget class="QGroupBox" name="groupBox">
      <property name="title">
@@ -203,7 +139,7 @@ background-color: green;
             </sizepolicy>
            </property>
            <property name="title">
-            <string>Current Position</string>
+            <string>Current Delta</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_10">
             <item row="0" column="0">
@@ -378,7 +314,7 @@ Yaw</string>
          <item row="1" column="1">
           <widget class="QGroupBox" name="groupBox_4">
            <property name="title">
-            <string>GroupBox</string>
+            <string>Current Delta</string>
            </property>
            <layout class="QGridLayout" name="gridLayout_11">
             <item row="0" column="0">
@@ -837,6 +773,83 @@ Loop</string>
       </size>
      </property>
     </spacer>
+   </item>
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="hw_groupBox">
+     <property name="title">
+      <string>Hardware</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_4">
+      <item row="1" column="2">
+       <widget class="QCheckBox" name="hw_angle_connect_checkBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>Angle</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QCheckBox" name="live_checkBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="styleSheet">
+         <string notr="true">QCheckBox::indicator::unchecked {
+background-color: red;
+}
+
+QCheckBox::indicator::checked {
+background-color: green;
+}</string>
+        </property>
+        <property name="text">
+         <string>Live</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="hw_xyz_connect_checkBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="text">
+         <string>XYZ</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_23">
+        <property name="text">
+         <string>Status:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="hw_cl_mirror_connect_checkBox">
+        <property name="styleSheet">
+         <string notr="true"/>
+        </property>
+        <property name="text">
+         <string>Connect CL Mirror</string>
+        </property>
+        <property name="iconSize">
+         <size>
+          <width>16</width>
+          <height>16</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
    </item>
   </layout>
  </widget>
