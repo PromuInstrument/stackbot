@@ -1,7 +1,7 @@
 from ScopeFoundry import BaseMicroscopeApp
 
 
-# import logging
+import logging
 # logging.basicConfig(level='DEBUG')
 # logging.getLogger('').setLevel(logging.DEBUG)
 # logging.getLogger("ipykernel").setLevel(logging.WARNING)
@@ -9,7 +9,6 @@ from ScopeFoundry import BaseMicroscopeApp
 # logging.getLogger('PyQt5').setLevel(logging.WARNING)
 # logging.getLogger('traitlets').setLevel(logging.WARNING)
 # 
-# logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
 
 
 class SupraCLApp(BaseMicroscopeApp):
@@ -37,6 +36,9 @@ class SupraCLApp(BaseMicroscopeApp):
 
         from ScopeFoundryHW.zeiss_sem.sem_recipe_control import SEMRecipeControlMeasure
         self.add_measurement(SEMRecipeControlMeasure(self))
+        
+        from ScopeFoundryHW.zeiss_sem.stage_delta_control import SEMStageDeltaControl
+        self.add_measurement(SEMStageDeltaControl(self))
         
 
         ######### CL Mirror
@@ -103,6 +105,9 @@ class SupraCLApp(BaseMicroscopeApp):
         self.add_measurement(CLQuadView(self))
 
         self.settings_load_ini('supra_cl_defaults.ini')
+        
+        logging.getLogger('LoggedQuantity').setLevel(logging.DEBUG)
+
 
         
 if __name__ == '__main__':

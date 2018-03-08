@@ -56,12 +56,16 @@ Combine mirror motion measurements -- Done
 
 +++++
 
+array logged quantity UI sync issue (eg stage_position)
+
 description updated during run is not saved in H5 (not obvious how to do this)
 
 Sort out SEM/remcon and Auger/remcon, second has stage stuff, including INI status
 
 Mirror INI
 
+Mirror motion:
+	enable/disable closed loop for all
 
 Add quickbar
 
@@ -70,7 +74,7 @@ wavelength calibration
 relative intensity calibration for andor / spec
 
 SEM stage
-	delta xyz buttons
+	delta xyz buttons  --- DONE, need idiot proofing
 	memorize sample positions (x,y,z,r)
 		(move to new sample position, drop sample by 1mm, move to xyr, raise by 0.6mm away from sample z)
 
