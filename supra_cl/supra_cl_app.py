@@ -64,6 +64,9 @@ class SupraCLApp(BaseMicroscopeApp):
         from supra_cl.cl_mirror_positioner.mirror_position_measure import MirrorPositionMeasure
         self.add_measurement(MirrorPositionMeasure(self))
 
+        from supra_cl.cl_mirror_positioner.mirror_recipe_control import MirrorRecipeControl
+        self.add_measurement(MirrorRecipeControl(self))
+
 #         from supra_cl.cl_mirror_positioner.cl_mirror_remote_control import CLMirrorRemoteControlMeasure
 #         self.add_measurement(CLMirrorRemoteControlMeasure)
         ######################
