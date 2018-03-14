@@ -98,7 +98,7 @@ class MKS_600_Interface(object):
         self.ask_cmd("D{}".format(ch))
         
     def write_sp(self, ch, p):
-        assert 0. <= p <= 2.
+        assert 0. <= p <= 200.
         assert 0 <= ch <= 5
         pct = p/2.
         print('cmd:', "S{} {}".format(int(ch), pct))
