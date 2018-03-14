@@ -88,8 +88,8 @@ class MKS_600_Interface(object):
                          4: 4,
                          5: 10}
             resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
-            print('read_sp resp:', resp, 2.*float(resp))
-            return 2.*float(resp)
+            print('read_sp resp:', resp, 2.*(float(resp)/100))
+            return 2.*(float(resp)/100)
         else:
             return 0.
         
@@ -98,9 +98,9 @@ class MKS_600_Interface(object):
         self.ask_cmd("D{}".format(ch))
         
     def write_sp(self, ch, p):
-        assert 0. <= p <= 200.
+        assert 0. <= p <= 2.
         assert 0 <= ch <= 5
-        pct = p/2.
+        pct = (p/2.)*100
         print('cmd:', "S{} {}".format(int(ch), pct))
         self.ask_cmd("S{} {}".format(int(ch), pct))
         
