@@ -28,9 +28,8 @@ class MKS_146_Interface(object):
         self.ser.flush()
         
         time.sleep(1)
-        self.valve_settings={-1: "N",
-                              0: "C", 
-                              1: "O"}
+
+
         self.error_messages = {'E111': "Unrecognized Command",
                                 'E112': "Inappropriate Command",
                                 'E122': "Invalid data field",
@@ -45,13 +44,14 @@ class MKS_146_Interface(object):
             cmd_header = str(cmd)
         message = '@'+cmd_header+str(param)+'?\r'
         self.ser.write(message)
-        resp = self.ser.readline().decode()
+        resp = self.ser.readline().decode().strip().split(':')
+        print('read_cmd_nd:', resp)
         if self.debug:
             print("read_cmd sent: {}".format(message))
             if resp[0] == 'E':
                 error = resp.strip()
                 print(error, self.error_messages)
-        return resp.strip()
+        return resp
     
     def read_cmd(self, cmd, param):
         if self.ser.in_waiting > 0:
@@ -65,8 +65,8 @@ class MKS_146_Interface(object):
         message = '@'+cmd_header+str(param)+'?\r'
         self.ser.write(message)
 #         cmd_r, resp = self.ser.readline().decode().split(':')
-        resp = self.ser.readline()
-        print(resp)
+        cmd_r, resp = self.ser.readline().decode().strip().split(':')
+        print("read_cmd:",resp)
         if self.debug:
             print("read_cmd sent: {}".format(message))
             print("cmd_r:", cmd_r, "resp:", resp)
@@ -123,15 +123,13 @@ class MKS_146_Interface(object):
             return float(resp[1:])
         else: return float(resp)
     
-    def MFC_write_valve_status(self, param, valve_open=False):
-        data = self.valve_settings[valve_open]
-        self.write_cmd(104,param,data)
+    def MFC_write_valve_status(self, param, state):
+        self.write_cmd(104,param,state)
     
     def MFC_read_valve_status(self, param):
         '''Initially set to 'N' when found.'''
-        settings_r = self._reverse(self.valve_settings)
         resp = self.read_cmd(104,param)
-        return settings_r[resp]
+        return resp
     
     def autodetect(self):
         config = {'CC': "Cold Cathode",
@@ -152,21 +150,20 @@ class MKS_146_Interface(object):
                 'HCL': 'Hot Cathode, low power',
                 'HCH': 'Hot Cathode, high power',
                 '1A': 'Thermocouple board'}
-        resp = self.read_cmd_nd(704,1)
         sensors = []
-        data = resp.strip().split(":")
-        for d in data[1:]:
-            sensors.append(d)
+        output = []
+        resp = self.read_cmd_nd(704,1)
+        data = resp[1:]
+        for entry in data:
+            sensors.append(entry)
         for i in range(4):
             resp = self.ser.readline()
             data = resp.strip().split(b":")
             for d in data:
                 sensors.append(d.decode())
-        while sensors[0] != ('S1' or ''):
-            mks.ser.readline()
-        output = []
         for i in range(5):
             output.append(config[sensors[2*i+1]])
+        print(output)
         return output
     
     def _reverse(self, _dict):

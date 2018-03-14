@@ -13,102 +13,132 @@ class MKS_146_Hardware(HardwareComponent):
     name = "mks_146_hw"
     
     def setup(self):
+        
+        self.MFC_count = 1
+        
         self.settings.New(name="port", initial="COM8", dtype=str, ro=False)
-        self.settings.New(name="MFC1_flow", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
-#         self.settings.New(name="MFC2_flow", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
+        self.settings.New(name="MFC0_flow", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
 
-        self.settings.New(name="MFC1_valve", initial="C", dtype=str, choices = [
+        self.settings.New(name="MFC0_valve", initial="C", dtype=str, choices = [
                                                                 ("Open", "O"),
                                                                 ("Closed", "C"),
                                                                 ("Cancel", "N")])
          
-#         self.settings.New(name="MFC2_valve", initial="C", dtype=str, choices = [
-#                                                                 ("Open", "O"),
-#                                                                 ("Closed", "C"),
-#                                                                 ("Cancel", "N")])
-#         
-        self.settings.New(name="CM_pressure", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
+         
 
 
-        self.settings.New(name="MFC1_SP", initial=0.0, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
+        self.settings.New(name="MFC0_SP", initial=0.0, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
 
-#         self.settings.New(name="MFC2_SP", initial=0.0, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
-        
-        self.MFC1_chan = 1
-        self.MFC2_chan = None
-        self.CM_chan = 2
-        
+        if self.MFC_count > 1:
+            self.settings.New(name="MFC1_flow", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
+            self.settings.New(name="MFC1_SP", initial=0.0, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
+            self.settings.New(name="MFC1_valve", initial="C", dtype=str, choices = [
+                                                                    ("Open", "O"),
+                                                                    ("Closed", "C"),
+                                                                    ("Cancel", "N")])
+
+
+                
         self.mks = None
-        
+    def chan_assign(self):            
+        skip = True
+        slot = 0
+        for i, sensor_type in enumerate(self.assignment):
+            if (sensor_type == "Mass Flow Controller") and skip:
+                '''Skip first instrument, flag next for LQ assignment'''
+                skip = not True
+                if self.debug_mode:
+                    print('Skipped assigment of channel {}'.format(i))
+            elif (sensor_type == "Mass Flow Controller") and (not skip):
+                
+                setattr(self, 'MFC{}_chan'.format(slot), i)
+                if self.debug_mode:
+                    print(getattr(self, 'MFC{}_chan'.format(slot)))
+                self.settings.get_lq('MFC{}_flow'.format(slot)).connect_to_hardware(
+                                                    read_func=getattr(self,'MFC{}_read_flow'.format(slot)))
+                if self.debug_mode:
+                    print('MFC{}_flow'.format(slot))
+                self.settings.get_lq('MFC{}_valve'.format(slot)).connect_to_hardware(
+                                                    write_func=getattr(self,'MFC{}_write_valve'.format(slot)),
+                                                    read_func=getattr(self, 'MFC{}_read_valve'.format(slot)))
+                if self.debug_mode:
+                    print('MFC{}_valve'.format(slot))
+                self.settings.get_lq('MFC{}_SP'.format(slot)).connect_to_hardware(
+                                                    write_func=getattr(self,'MFC{}_write_SP'.format(slot)),
+                                                    read_func=getattr(self, 'MFC{}_read_SP'.format(slot)))
+                if self.debug_mode:
+                    print('MFC{}_SP'.format(slot))
+                    print('Assigned MFC{} to channel {}'.format(slot, i))
+                slot += 1
+                if self.MFC_count == 1:
+                    skip = True
+            else: pass
+    
+    
     def connect(self):
         self.mks = MKS_146_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
 
-                
-        self.settings.MFC1_flow.connect_to_hardware(read_func=self.MFC1_read_flow)
-#         self.settings.MFC2_flow.connect_to_hardware(read_func=self.MFC2_read_flow)
-
-        self.settings.MFC1_valve.connect_to_hardware(write_func=lambda x: self.MFC1_write_valve(x),
-                                                     read_func=self.MFC1_read_valve)
-#         self.settings.MFC2_valve.connect_to_hardware(write_func=lambda x: self.MFC2_write_valve(x),
-#                                                      read_func=self.MFC2_read_valve)
-        self.settings.MFC1_SP.connect_to_hardware(write_func=lambda x: self.MFC1_write_SP(x),
-                                                  read_func=self.MFC1_read_SP)
-#         self.settings.MFC2_SP.connect_to_hardware(write_func=lambda x: self.MFC2_write_SP(x),
-#                                                   read_func=self.MFC2_read_SP)
+        self.assignment = self.mks.autodetect()
         
-        
-        
-#         self.settings.CM_pressure.connect_to_hardware(read_func=self.CM_pressure_read) DEMO PURPOSES. Restore after reconnecting a sensor to this channel.
+        self.chan_assign()
         
         self.read_from_hardware()
-        
-    def CM_pressure_read(self):
-        channel = self.CM_chan
-        return self.mks.CM_read_pressure(channel)
+                
+    def MFC0_read_flow(self):
+        if hasattr(self, 'MFC0_chan'):
+            channel = self.MFC0_chan
+            return self.mks.MFC_read_flow(channel)
         
     def MFC1_read_flow(self):
-        channel = self.MFC1_chan
-        return self.mks.MFC_read_flow(channel)
-    
-    def MFC2_read_flow(self):
-        channel = self.MFC2_chan
-        return self.mks.MFC_read_flow(channel)
+        if hasattr(self, 'MFC1_chan'):
+            channel = self.MFC1_chan
+            return self.mks.MFC_read_flow(channel)
     
 
-    def MFC1_read_SP(self):
-        channel = self.MFC1_chan
-        return self.mks.MFC_read_SP(channel)
+    def MFC0_read_SP(self):
+        if hasattr(self, 'MFC0_chan'):
+            channel = self.MFC0_chan
+            return self.mks.MFC_read_SP(channel)
     
-    def MFC2_read_SP(self):
-        if self.MFC2_chan is not None:
-            channel = self.MFC2_chan
-        return self.mks.MFC_read_SP(channel)
+    def MFC1_read_SP(self):
+        if hasattr(self, 'MFC1_chan'):
+            channel = self.MFC1_chan
+            return self.mks.MFC_read_SP(channel)
+    
+    def MFC0_write_SP(self, SP):
+        if hasattr(self, 'MFC0_chan'):
+            channel = self.MFC0_chan
+            return self.mks.MFC_write_SP(channel, SP)
     
     def MFC1_write_SP(self, SP):
-        channel = self.MFC1_chan
-        return self.mks.MFC_write_SP(channel, SP)
+        if hasattr(self, 'MFC1_chan'):
+            channel = self.MFC1_chan
+            return self.mks.MFC_write_SP(channel, SP)
+        
     
-    def MFC2_write_SP(self, SP):
-        channel = self.MFC2_chan
-        return self.mks.MFC_write_SP(channel, SP)
-    
+    def MFC0_write_valve(self, status):
+        if hasattr(self, 'MFC0_chan'):
+            channel = self.MFC0_chan
+            if self.debug_mode:
+                print('MFC0_write_valve_status:', status)
+            return self.mks.MFC_write_valve_status(channel, status)
     
     def MFC1_write_valve(self, status):
-        channel = self.MFC1_chan
-        return self.mks.MFC_write_valve_status(channel, status)
-    
-    def MFC2_write_valve(self, status):
-        channel = self.MFC2_chan
-        return self.mks.MFC_write_valve_status(channel, status)
-    
+        if hasattr(self, 'MCF1_chan'):
+            channel = self.MFC1_chan
+            if self.debug_mode:
+                print('MFC1_write_valve_status:', status)
+            return self.mks.MFC_write_valve_status(channel, status)
+        
+    def MFC0_read_valve(self):
+        if hasattr(self, 'MFC0_chan'):
+            channel = self.MFC0_chan
+            return self.mks.MFC_read_valve_status(channel)
+        
     def MFC1_read_valve(self):
-        channel = self.MFC1_chan
-        return self.mks.MFC_read_valve_status(channel)
-    
-    def MFC2_read_valve(self):
-        channel = self.MFC2_chan
-        return self.mks.MFC_read_valve_status(channel)
-    
+        if hasattr(self, 'MFC1_chan'):
+            channel = self.MFC1_chan
+            return self.mks.MFC_read_valve_status(channel)
     
     def disconnect(self):
         self.settings.disconnect_all_from_hardware()
