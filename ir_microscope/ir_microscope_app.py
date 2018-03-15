@@ -7,6 +7,9 @@ import ScopeFoundryHW
 from ir_microscope.measurements import apd_scan, hyperspectral_scan,\
     picoharp_attocube_slow_scans
 from ir_microscope import measurements
+import numpy as np
+from ScopeFoundry import LQRange
+
 
 
 logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
@@ -15,6 +18,7 @@ logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
 logging.getLogger('PyQt5').setLevel(logging.WARNING)
 logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
+logging.getLogger('pyvisa').setLevel(logging.WARNING)
 
 
 class IRMicroscopeApp(BaseMicroscopeApp):
@@ -74,6 +78,8 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
         self.add_hardware(XboxControllerHW(self))
         
+        from ScopeFoundryHW.filter_wheel_arduino.filter_wheel_arduino_hw import FilterWheelArduinoHW
+        self.add_hardware(FilterWheelArduinoHW(self))
         
                         
         print("Adding Measurement Components")
@@ -108,6 +114,7 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         from measurements.xbox_controller_measure import XboxControllerMeasure
         self.add_measurement(XboxControllerMeasure(self))
+        
         
         
         #from ScopeFoundryHW.xbox_controller.xbox_controller_test_measure import 
@@ -153,7 +160,9 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         Q.z_set_lineEdit.returnPressed.connect(stage.settings.z_target_position.update_value)
         Q.z_set_lineEdit.returnPressed.connect(lambda: Q.z_set_lineEdit.setText(""))
 
-        self.measurements['AttoCubeStageControlMeasure'].settings.activation.connect_to_widget(Q.stage_live_update_checkBox)
+        self.measurements['attocube_stage_control_measure'].settings.activation.connect_to_widget(Q.stage_live_update_checkBox)
+        self.measurements['attocube_stage_control_measure'].settings.wobble.connect_to_widget(Q.stage_wobble_checkBox)
+        
         #stage.settings.move_speed.connect_to_widget(Q.nanodrive_move_slow_doubleSpinBox)   
         
         #acton spectrometer
@@ -188,7 +197,16 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.move_fwd)
         Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.move_bkwd)
 
+        # Filter Wheel
+        fw = self.hardware['filter_wheel']
+        fw.settings.current_filter.connect_to_widget(Q.current_filter_doubleSpinBox)
+        Q.target_filter_lineEdit.returnPressed.connect(fw.settings.target_filter.update_value)
+        Q.target_filter_lineEdit.returnPressed.connect(lambda: Q.target_filter_lineEdit.setText(""))
 
+        #Q.move_filter_fwd_pushButton.clicked.connect(fw.increase_target_filter)
+        #Q.move_filter_bkwd_pushButton.clicked.connect(fw.decrease_target_filter)
+        Q.zero_filter_pushButton.clicked.connect(fw.zero_filter)
+        
         # Thorlabs Flip Mirror
         MFF = self.hardware['thorlabs_MFF']
         MFF.settings.pos.connect_to_widget(Q.thorlabs_MFF_comboBox)
@@ -231,28 +249,74 @@ class IRMicroscopeApp(BaseMicroscopeApp):
 
         ##########
         # app level logged quantities
-        for lq_name in ["h_axis","v_axis"]:
-            self.settings.New(lq_name, dtype=str, choices=("x", "y", "z"))
-            getattr(self.settings, lq_name).connect_to_widget(\
+        # 2d scan
+        _2D_scans = ['trpl_scan', 'hyperspectral_2d_scan']
+        
+        #Create and connect logged quantities to widget and equivalent lqs measurements
+        S = self.settings        
+        for ii,lq_name in enumerate(["h_axis","v_axis"]):
+            S.New(lq_name, dtype=str, initial='xy'[ii], choices=("x", "y", "z"), ro=False)
+            getattr(S, lq_name).connect_to_widget(\
                                     getattr(Q, lq_name+'_comboBox'))
-            getattr(self.settings, lq_name).connect_to_lq( \
-                                    getattr(self.measurements['trpl_scan'].settings,lq_name) )
-            getattr(self.settings, lq_name).connect_to_lq(\
-                                    getattr(self.measurements['hyperspectral_2d_scan'].settings,lq_name) )
-                      
+            for m in _2D_scans:
+                getattr(S, lq_name).connect_to_lq( \
+                                    getattr(self.measurements[m].settings,lq_name) )
 
         for lq_name in ['h0','h1','v0','v1','dh','dv']:
-            self.settings.New(lq_name, dtype=float, unit='um')
-            getattr(self.settings, lq_name).connect_to_widget(\
+            S.New(lq_name, dtype=float, unit='mm', ro=False, spinbox_decimals=6, spinbox_step=0.001,)
+            getattr(S, lq_name).connect_to_widget(\
                                     getattr(Q, lq_name+'_doubleSpinBox'))
-            getattr(self.settings, lq_name).connect_lq_scale( \
-                                    getattr(self.measurements['trpl_scan'].settings,lq_name), 1000)
-            getattr(self.settings, lq_name).connect_lq_scale( \
-                                    getattr(self.measurements['hyperspectral_2d_scan'].settings,lq_name), 1000)
+            for m in _2D_scans:
+                getattr(S, lq_name).connect_to_lq( \
+                                        getattr(self.measurements[m].settings,lq_name))
+                    
+        
+        for lq_name in ['Nh', 'Nv']:
+            S.New(lq_name, dtype=int, ro=False, vmin=2, initial=11)
+            getattr(S, lq_name).connect_to_widget(\
+                                    getattr(Q, lq_name+'_doubleSpinBox'))
+            for m in _2D_scans:
+                getattr(S, lq_name).connect_to_lq( \
+                                        getattr(self.measurements[m].settings,lq_name))
+
+        for lq_name in ['h_center', 'v_center', 'h_span', 'v_span']:
+            S.New(lq_name, dtype=float, unit='mm', initial=0.005, ro=False, spinbox_decimals=6, spinbox_step=0.001,)
+            getattr(S, lq_name).connect_to_widget(\
+                                                    getattr(Q, lq_name+'_doubleSpinBox'))
+
+        
+                
+        #make connected ranges
+        self.h_range=LQRange(S.get_lq('h0'),S.get_lq('h1'),S.get_lq('dh'),S.get_lq('Nh'),
+                             S.get_lq('h_center'), S.get_lq('h_span'))
+        self.v_range=LQRange(S.get_lq('v0'),S.get_lq('v1'),S.get_lq('dv'),S.get_lq('Nv'),
+                             S.get_lq('v_center'), S.get_lq('v_span'))
+
+        self.coppy_current_position_to_2d_scan_center()
+                
+        Q.copy_current_position_to_2d_scan_center_pushButton.clicked.connect(
+            lambda:self.coppy_current_position_to_2d_scan_center(decimal_places=3.0))
+
+        
         ##########
         self.settings_load_ini('ir_microscope_defaults.ini')                        
         
+    def coppy_current_position_to_2d_scan_center(self, decimal_places=3.0):
+        S_stage = self.hardware['attocube_xyz_stage'].settings
+        current_postions = {'x':S_stage['x_position'],
+                            'y':S_stage['y_position'],
+                            'z':S_stage['z_position']}
+        if decimal_places >= 0:
+            for ax in 'xyz':
+                val = np.ceil(current_postions[ax]*10**decimal_places)/(10.0**decimal_places)
+                current_postions[ax] = val
+        
+        S = self.settings
+        S['h_center'] = current_postions[S['h_axis']]
+        S['v_center'] = current_postions[S['v_axis']]
 
+        
+        
 
 if __name__ == '__main__':
     import sys
