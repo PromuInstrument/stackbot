@@ -1,6 +1,6 @@
 '''
 @author: Ed Barnard
-Updated by Alan Buckley (2/6/2018)
+Updated by Alan Buckley (2/6/2018) and (3/15/18)
 '''
 
 from __future__ import division
@@ -9,8 +9,8 @@ import struct
 import numpy as np
 
 
-class OmegaPIDController(object):
-    """ Omega PID Controller 7600 series communicating via RS-485 Modbus ASCII protocol
+class PIDController(object):
+    """ Generic PID Controller communicating via RS-485 Modbus ASCII protocol
     
     """
     def __init__(self,port="COM1", address=0x01, debug=False):
@@ -127,7 +127,7 @@ class OmegaPIDController(object):
         if self.debug:print(repr(message))
         if self.debug:print(repr(ascii_message))
     
-        return ascii_message
+        return ascii_message.encode()
             
     def analog_read_command(self, register, length):
         return self.modbus_command(0x03, register, data=length)
@@ -145,10 +145,10 @@ class OmegaPIDController(object):
         register = int(register)
         length = int(length)
         assert 1 <= length <= 8
-        
+
         self.ser.write(self.analog_read_command(register, length))
         output = self.ser.readline() # is \r\n included !?
-        ":01030200EA10"
+        """:01030200EA10"""
 
         print("output:", output)
         assert output[0] == ord(':')
