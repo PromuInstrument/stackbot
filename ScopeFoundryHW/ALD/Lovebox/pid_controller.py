@@ -4,6 +4,7 @@ Updated by Alan Buckley (2/6/2018) and (3/15/18)
 '''
 
 from __future__ import division
+from threading import Lock
 import serial
 import struct
 import numpy as np
@@ -17,6 +18,7 @@ class PIDController(object):
         self.port = port
         self.address = address
         self.debug =debug
+        self.lock = Lock()
         
         """If port is a Serial object (or other file-like object)
         use it instead of creating a new serial port"""
@@ -146,12 +148,15 @@ class PIDController(object):
         length = int(length)
         assert 1 <= length <= 8
 
-        self.ser.write(self.analog_read_command(register, length))
-        output = self.ser.readline() # is \r\n included !?
-        """:01030200EA10"""
+        with self.lock:
+            self.ser.write(self.analog_read_command(register, length))
+            output = self.ser.readline() # is \r\n included !? Yes.
+            """:01030200EA10"""
 
-        print("output:", output)
+        print('send_analog_read output:', output.decode())
         assert output[0] == ord(':')
+        
+
         #create byte array from output
         output_hexstr = output[1:-2] # remove starting ":" and ending \r\n
         output_bytes = bytearray( 
@@ -184,14 +189,10 @@ class PIDController(object):
 
     def send_analog_write(self, register, data):
         cmd = self.analog_write_command(register, data)
-        self.ser.write(cmd)
-        output = self.ser.readline() # need to check to see if output contains \r\n
-        print("output/cmd  analog_write:", "_"+output.decode().strip()+"_", "_"+cmd.strip()+"_")
-        print("output/cmd len analog_write:", len(output.decode().strip()), len(cmd.strip()))
-        # device should echo write command on success
-        if self.debug: print("cmd", repr(cmd))
-        if self.debug: print("ouput", repr(output))
-        assert output.decode().strip() == cmd.strip()
+        with self.lock:
+            self.ser.write(cmd)
+            output = self.ser.readline()
+        print('send_analog_write:', output)
 
     def close(self):
     	self.ser.close()

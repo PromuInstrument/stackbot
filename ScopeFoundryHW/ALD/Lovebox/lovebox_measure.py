@@ -10,9 +10,9 @@ from ScopeFoundry import Measurement
 from PyQt5 import QtWidgets
 import time 
 
-class OmegaMeasure(Measurement):
+class LoveboxMeasure(Measurement):
     
-    name = "omega"
+    name = "lovebox"
     
     def __init__(self, app):
         Measurement.__init__(self, app)
@@ -23,10 +23,10 @@ class OmegaMeasure(Measurement):
         self.layout = QtWidgets.QVBoxLayout()
         self.ui.setLayout(self.layout)
     
-        self.omega = self.app.hardware['omega']
+        self.lovebox = self.app.hardware['lovebox']
         
     def run(self):
         dt=0.1
         while not self.interrupt_measurement_called:
             time.sleep(dt)
-            self.omega.read_from_hardware()
+            self.lovebox.read_from_hardware()
