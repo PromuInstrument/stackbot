@@ -59,7 +59,6 @@ class PIDController(object):
     
     def read_output1(self):
         self.outp1 = 0.1 * self.send_analog_read(0x1012)
-        print("output1:", 0.1 * self.send_analog_read(0x1012))
         return self.outp1
         
     def read_output2(self):
@@ -153,7 +152,6 @@ class PIDController(object):
             output = self.ser.readline() # is \r\n included !? Yes.
             """:01030200EA10"""
 
-        print('send_analog_read output:', output.decode())
         assert output[0] == ord(':')
         
 
@@ -192,7 +190,6 @@ class PIDController(object):
         with self.lock:
             self.ser.write(cmd)
             output = self.ser.readline()
-        print('send_analog_write:', output)
 
     def close(self):
     	self.ser.close()
