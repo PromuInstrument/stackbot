@@ -1,7 +1,7 @@
 from ScopeFoundry import BaseMicroscopeApp
 
 
-# import logging
+import logging
 # logging.basicConfig(level='DEBUG')
 # logging.getLogger('').setLevel(logging.DEBUG)
 # logging.getLogger("ipykernel").setLevel(logging.WARNING)
@@ -9,7 +9,6 @@ from ScopeFoundry import BaseMicroscopeApp
 # logging.getLogger('PyQt5').setLevel(logging.WARNING)
 # logging.getLogger('traitlets').setLevel(logging.WARNING)
 # 
-# logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
 
 
 class SupraCLApp(BaseMicroscopeApp):
@@ -32,11 +31,14 @@ class SupraCLApp(BaseMicroscopeApp):
 
         
         ### SEM
-        from Auger.hardware.remcon32_hw import SEM_Remcon_HW
+        from ScopeFoundryHW.zeiss_sem.remcon32_hw import SEM_Remcon_HW
         self.add_hardware(SEM_Remcon_HW(self))
 
-        from SEM.measurements.sem_recipe_control import SEMRecipeControlMeasure
+        from ScopeFoundryHW.zeiss_sem.sem_recipe_control import SEMRecipeControlMeasure
         self.add_measurement(SEMRecipeControlMeasure(self))
+        
+        from ScopeFoundryHW.zeiss_sem.stage_delta_control import SEMStageDeltaControl
+        self.add_measurement(SEMStageDeltaControl(self))
         
 
         ######### CL Mirror
@@ -62,8 +64,11 @@ class SupraCLApp(BaseMicroscopeApp):
         from supra_cl.cl_mirror_positioner.mirror_position_measure import MirrorPositionMeasure
         self.add_measurement(MirrorPositionMeasure(self))
 
-        from supra_cl.cl_mirror_positioner.cl_mirror_remote_control import CLMirrorRemoteControlMeasure
-        self.add_measurement(CLMirrorRemoteControlMeasure)
+        from supra_cl.cl_mirror_positioner.mirror_recipe_control import MirrorRecipeControl
+        self.add_measurement(MirrorRecipeControl(self))
+
+#         from supra_cl.cl_mirror_positioner.cl_mirror_remote_control import CLMirrorRemoteControlMeasure
+#         self.add_measurement(CLMirrorRemoteControlMeasure)
         ######################
 
 
@@ -103,6 +108,11 @@ class SupraCLApp(BaseMicroscopeApp):
         self.add_measurement(CLQuadView(self))
 
         self.settings_load_ini('supra_cl_defaults.ini')
+        
+        #logging.getLogger('LoggedQuantity').setLevel(logging.DEBUG)
+        
+    def setup_ui(self):
+        self.load_window_positions_json("default_window_pos.json")
 
         
 if __name__ == '__main__':
