@@ -57,6 +57,8 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.Seren.seren_measure import Seren_Measure
         self.add_measurement(Seren_Measure(self))
         
+        from ScopeFoundryHW.ALD.ALD_recipes.ALD_functions import ALD_routine
+        self.add_measurement(ALD_routine(self))
         
 if __name__ == '__main__':
     import sys
