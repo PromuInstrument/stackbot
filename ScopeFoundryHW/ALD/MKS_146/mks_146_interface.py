@@ -23,6 +23,7 @@ class MKS_146_Interface(object):
         self.port = port
         self.debug = debug
         
+        self.lock = Lock()
         self.ser = serial.Serial(port=self.port, baudrate=9600, bytesize=serial.SEVENBITS, timeout=1,
                                  parity=serial.PARITY_EVEN, stopbits=serial.STOPBITS_ONE)
         self.ser.flush()
@@ -36,15 +37,16 @@ class MKS_146_Interface(object):
                                 'E131': "Bad checksum"}
 
     def read_cmd_nd(self, cmd, param):
-        if self.ser.in_waiting > 0:
-            self.ser.flush()
+#         if self.ser.in_waiting > 0:
+#             self.ser.flush()
         if cmd < 100:
             cmd_header = "0"+str(cmd)
         else:
             cmd_header = str(cmd)
         message = '@'+cmd_header+str(param)+'?\r'
-        self.ser.write(message)
-        resp = self.ser.readline().decode().strip().split(':')
+        with self.lock:
+            self.ser.write(message)
+            resp = self.ser.readline().decode().strip().split(':')
         print('read_cmd_nd:', resp)
         if self.debug:
             print("read_cmd sent: {}".format(message))
@@ -54,30 +56,27 @@ class MKS_146_Interface(object):
         return resp
     
     def read_cmd(self, cmd, param):
-        if self.ser.in_waiting > 0:
-            self.ser.flush()
-        if self.debug: 
-            logger.debug("ask_cmd: {}".format(cmd))
+#         if self.ser.in_waiting > 0:
+#             self.ser.flush()
+#         if self.debug: 
+#             logger.debug("ask_cmd: {}".format(cmd))
         if cmd < 100:
             cmd_header = "0"+str(cmd)
         else:
             cmd_header = str(cmd)
         message = '@'+cmd_header+str(param)+'?\r'
-        self.ser.write(message)
-#         cmd_r, resp = self.ser.readline().decode().split(':')
-        cmd_r, resp = self.ser.readline().decode().strip().split(':')
+        with self.lock:
+            self.ser.write(message)
+            cmd, resp = self.ser.readline().decode().strip().split(':')
         print("read_cmd:",resp)
-        if self.debug:
-            print("read_cmd sent: {}".format(message))
-            print("cmd_r:", cmd_r, "resp:", resp)
-            if resp[0] == 'E':
-                error = resp[:-1]
-                print(error, self.error_messages)
-        return resp.strip()
+        if resp[0] == '+':
+            return resp[1:]
+        else:
+            return resp
     
     def write_cmd(self, cmd, param, data=None):
-        if self.ser.in_waiting > 0:
-            self.ser.flush()
+#         if self.ser.in_waiting > 0:
+#             self.ser.flush()
         if cmd < 100:
             cmd_head = "0"+str(cmd)
         else:
@@ -87,15 +86,15 @@ class MKS_146_Interface(object):
             message = '@'+cmd_head+str(param)+':'+str(data)+'\r'
         else: 
             message = '@'+cmd_head+str(param)+'\r'
-        self.ser.write(message)
-        cmd_r, resp = self.ser.readline().decode().split(':')
+        with self.lock:
+            self.ser.write(message)
+            cmd_r, resp = self.ser.readline().decode().split(':')
         if self.debug:
             print("write_cmd sent: {}".format(message))
             print("cmd_r:", cmd_r, "resp:", resp)
             if resp[0] == 'E':
                 error = resp[:-1]
                 print(error, self.error_messages)
-#         return resp.strip()
     
 
     def MFC_read_SP(self, param):
