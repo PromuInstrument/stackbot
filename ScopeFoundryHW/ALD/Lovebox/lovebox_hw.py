@@ -17,7 +17,7 @@ class LoveboxHW(HardwareComponent):
     HEAT_COOL_CTRLS = ("Heating", "Cooling", "Heating/Cooling", "Cooling/Heating")
 
     def setup(self):
-        self.settings.New(name='port', initial='COM9', dtype=str, ro=False)
+        self.settings.New(name='port', initial='COM4', dtype=str, ro=False)
         self.settings.New(name='control_method', initial='PID', dtype=str, choices=self.CTRL_METHODS, ro=False)
         self.settings.New(name='heat_cool_control', initial='Heating', dtype=str, choices=self.HEAT_COOL_CTRLS, ro=False)
         self.settings.New(name='pv_temp', initial=0.0, dtype=float, spinbox_decimals=1, ro=True)
