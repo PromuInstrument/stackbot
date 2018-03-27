@@ -19,9 +19,9 @@ class LoveboxMeasure(Measurement):
         
     def setup(self):
         
-        self.ui = QtWidgets.QWidget()
-        self.layout = QtWidgets.QVBoxLayout()
-        self.ui.setLayout(self.layout)
+#         self.ui = QtWidgets.QWidget()
+#         self.layout = QtWidgets.QVBoxLayout()
+#         self.ui.setLayout(self.layout)
     
         self.lovebox = self.app.hardware['lovebox']
         
