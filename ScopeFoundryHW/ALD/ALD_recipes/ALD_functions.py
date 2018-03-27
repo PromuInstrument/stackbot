@@ -11,21 +11,20 @@ class ALD_routine(Measurement):
     
     name = 'ALD_routine'
     
-    def __init__(self):
+    def setup(self):
         self.relay = self.app.hardware['ald_relay_hw']
         self.lovebox = self.app.hardware['lovebox']
         self.mks146 = self.app.hardware['mks_146_hw']
         self.mks600 = self.app.hardware['mks_600_hw']
         self.vgc = self.app.hardware['pfeiffer_vgc_hw']
         self.seren = self.app.hardware['seren_hw']
-        self.seren.serial_toggle(True)
         
         
         self.MFC_valve_states = {'Open': 'O',
                              'Closed': 'C',
                              'Cancel': 'N'}
 
-    def precursor_1_dose(self, width=0.8):
+    def precursor_1_dose(self, width=0.008):
         """argument 'width' has units of seconds"""
         relay = 0
         chamber_pressure = 15 #mtorr
@@ -45,7 +44,7 @@ class ALD_routine(Measurement):
                 print("Pulse sending--", "pressure:", pressure, "> chamber:", chamber_pressure)
             self.relay.relay.send_pulse(relay, 1e3*width)
 
-    def precursor_purge(self, pressure_sp=0.04, temp_sp):
+    def precursor_purge(self, pressure_sp, temp_sp):
         '''Argument pressure_sp in units of torr,
             temp_sp is in units of degrees C.'''
         self.mks600.write_sp(0.04)
@@ -112,6 +111,8 @@ class ALD_routine(Measurement):
             
         
     def run(self):
+        self.seren.serial_toggle(True)
+
         self.run_count = 0
         self.loops_elapsed = 0
         self.loops = 1
@@ -120,7 +121,7 @@ class ALD_routine(Measurement):
         while (self.loops_elapsed <= self.loops) or not self.interrupt_measurement_called:
             while not self.interrupt_measurement_called or \
                         (self.run_count <= self.total_cycles):
-                self.precursor_1_dose(0.8)
+                self.precursor_1_dose(0.008)
                 
                 self.precursor_purge(0.04, 20) #temp = 20 C
                 
