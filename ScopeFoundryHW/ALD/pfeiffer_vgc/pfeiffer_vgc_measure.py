@@ -83,7 +83,7 @@ class Pfeiffer_VGC_Measure(Measurement):
         
     def read_pressures(self):
         def direct_read(sensor):
-            measure = self.vgc.read_sensor(sensor)
+            measure = self.vgc.vgc.read_sensor(sensor)
             return measure/(101325/76000)
         measurements = []
         for i in (1,2,3):
@@ -93,16 +93,18 @@ class Pfeiffer_VGC_Measure(Measurement):
     
     def routine(self):
         readout = self.read_pressures()
-        self.database.data_entry(*readout)
+        print(readout)
+#         self.database.data_entry(*readout)
         self.index = self.history_i % self.HIST_LEN
-        self.pressure_chan_history[:, self.index] = readout
+        self.pressure_history[:, self.index] = readout
+        print(self.pressure_history)
         self.history_i += 1
-    
+     
     def update_display(self):
         self.vLine.setPos(self.index)
-        for i in range(self.NUM_CHANS):
-            self.plot_lines[i].setData(
-                self.pressure_chan_history[i,:])
+#         for i in range(self.NUM_CHANS):
+#             self.plot_lines[i].setData(
+#                 self.pressure_history[i,:])
     
     def reconnect_server(self):
         self.database.connect()
@@ -112,7 +114,22 @@ class Pfeiffer_VGC_Measure(Measurement):
     
     def run(self):
         dt=0.1
-        while not self.interrupt_measurement_called:
-            self.vgc.read_from_hardware()
-            time.sleep(dt)
+        self.HIST_LEN = self.settings['history_length']
+        try:
+            self.db_connect()
+            while not self.interrupt_measurement_called:
+                if self.server_connected:
+                    self.update_display()
+                    self.routine()
+                    self.vgc.read_from_hardware()
+                    time.sleep(dt)
+                else:
+                    self.reconnect_server()
+                    self.server_connected = True
+                    self.routine()
+                    time.sleep(dt)
+        finally:
+            self.disconnect_server()
+            self.server_connected = False
             
+                        
