@@ -31,9 +31,7 @@ class Pfeiffer_VGC_Hardware(HardwareComponent):
         self.vgc = None
         
         # Constants
-        self.ch1_index = 0
-        self.ch2_index = 1
-        self.ch3_index = 2
+        self.ch1_index, self.ch2_index, self.ch3_index = (0,1,2)
         
     def connect(self):
         self.vgc = Pfeiffer_VGC_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
