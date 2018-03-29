@@ -119,4 +119,4 @@ class PicoHarpHW(HardwareComponent):
         cr0 = self.settings.count_rate0.read_from_hardware()
         rep_period_s = 1.0/cr0
         time_bin_resolution = self.settings['Resolution']*1e-12
-        return int(np.ceil(rep_period_s/time_bin_resolution))
+        return int(min([np.ceil(rep_period_s/time_bin_resolution), 65535]))
