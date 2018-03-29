@@ -260,7 +260,7 @@ class PowerScanMeasure(Measurement):
         finally:
             self.h5_file.close()
         
-        print(self.name, 'data saved', self.fname)
+        print(self.name, 'data saved')
 
 
     def move_to_min_pos(self):
