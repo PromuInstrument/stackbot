@@ -29,6 +29,9 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         
         from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
         self.add_hardware_component(ESP300AxisHW(self))
+        
+        from ScopeFoundryHW.shutter_servo_arduino.shutter_servo_arduino_hc import ShutterServoHW
+        self.add_hardware(ShutterServoHW(self))
 
 
         print("Adding Measurement Components")
