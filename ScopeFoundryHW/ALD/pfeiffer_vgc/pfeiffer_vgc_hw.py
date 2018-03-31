@@ -14,19 +14,21 @@ class Pfeiffer_VGC_Hardware(HardwareComponent):
     
     def setup(self):
         self.settings.New(name="port", initial="COM3", dtype=str, ro=False)
-        self.settings.New(name="ch1_pressure", initial=0.0, fmt='%e', spinbox_decimals=6, dtype=float, ro=True)
-        self.settings.New(name="ch2_pressure", initial=0.0, fmt='%e', dtype=float, spinbox_decimals=6, ro=True)
-        self.settings.New(name="ch3_pressure", initial=0.0, fmt='%e', dtype=float, spinbox_decimals=6, ro=True)
+        self.ch1 = self.settings.New(name="ch1_pressure", initial=0.0, si=True, unit='mbar', fmt='%e', dtype=float, spinbox_decimals=6,  ro=True)
+        self.ch2 = self.settings.New(name="ch2_pressure", initial=0.0, si=True, unit='mbar', fmt='%e', dtype=float, spinbox_decimals=6, ro=True)
+        self.ch3 = self.settings.New(name="ch3_pressure", initial=0.0, si=True, unit='mbar', fmt='%e', dtype=float, spinbox_decimals=6, ro=True)
         
-        self.settings.New(name="ch1_units", initial="torr", dtype=str, ro=True, choices=(('mbar'), ('torr'), ('mtorr')))
-        self.settings.New(name="ch2_units", initial="torr", dtype=str, ro=True, choices=(('mbar'), ('torr'), ('mtorr')))
-        self.settings.New(name="ch3_units", initial="mtorr", dtype=str, ro=True, choices=(('mbar'), ('torr'), ('mtorr')))
+        self.ch1s = self.settings.New(name="ch1_pressure_scaled", initial=0.0, si=True, unit='torr', fmt='%e', spinbox_decimals=6, ro=True) 
+        self.ch2s = self.settings.New(name="ch2_pressure_scaled", initial=0.0, si=True, unit='torr', fmt='%e', spinbox_decimals=6, ro=True)
+        self.ch3s = self.settings.New(name="ch3_pressure_scaled", initial=0.0, si=True, unit='torr', fmt='%e', spinbox_decimals=6, ro=True)
         
         self.settings.New(name="ch1_sensor_type", initial="None", dtype=str,  ro=True)
         self.settings.New(name="ch2_sensor_type", initial="None", dtype=str,  ro=True)
         self.settings.New(name="ch3_sensor_type", initial="None", dtype=str,  ro=True)
 
-        
+        self.ch1s.connect_lq_scale(self.ch1, (76000/101325))
+        self.ch2s.connect_lq_scale(self.ch2, (76000/101325))
+        self.ch3s.connect_lq_scale(self.ch3, (76000/101325))
         
         self.vgc = None
         
@@ -48,49 +50,29 @@ class Pfeiffer_VGC_Hardware(HardwareComponent):
         
         self.settings.ch3_sensor_type.connect_to_hardware(read_func=getattr(self, 'read_ch3_sensor_type'))
         
+        self.settings.ch1_sensor_type.read_from_hardware()
+        self.settings.ch2_sensor_type.read_from_hardware()
+        self.settings.ch3_sensor_type.read_from_hardware()
+        
     def read_ch1_pressure(self):
-        choice = self.settings['ch1_units']
         sensor = self.ch1_index + 1
-        if choice == 'mbar':
-            return self.vgc.read_sensor(sensor)
-        elif choice == 'torr':
-            measure = self.vgc.read_sensor(sensor)
-            return measure/(101325/76000)
-        elif choice == 'mtorr':
-            measure = self.vgc.read_sensor(sensor)
-            return (1000*measure)/(101325/76000)
+        return self.vgc.read_sensor(sensor)
     
     def read_ch1_sensor_type(self):
         channel = self.ch1_index
         return self.vgc.sensor_type()[channel]
     
     def read_ch2_pressure(self):
-        choice = self.settings['ch2_units']
         sensor = self.ch2_index + 1
-        if choice == 'mbar':
-            return self.vgc.read_sensor(sensor)
-        elif choice == 'torr':
-            measure = self.vgc.read_sensor(sensor)
-            return measure/(101325/76000)
-        elif choice == 'mtorr':
-            measure = self.vgc.read_sensor(sensor)
-            return (1000*measure)/(101325/76000)
+        return self.vgc.read_sensor(sensor)
     
     def read_ch2_sensor_type(self):
         channel = self.ch2_index
         return self.vgc.sensor_type()[channel]
     
     def read_ch3_pressure(self):
-        choice = self.settings['ch3_units']
         sensor = self.ch3_index + 1
-        if choice == 'mbar':
-            return self.vgc.read_sensor(sensor)
-        elif choice == 'torr':
-            measure = self.vgc.read_sensor(sensor)
-            return measure/(101325/76000)
-        elif choice == 'mtorr':
-            measure = self.vgc.read_sensor(sensor)
-            return (1000*measure)/(101325/76000)
+        return self.vgc.read_sensor(sensor)
         
     def read_ch3_sensor_type(self):
         channel = self.ch3_index
