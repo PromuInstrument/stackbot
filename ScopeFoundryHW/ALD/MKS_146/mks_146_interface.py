@@ -68,7 +68,6 @@ class MKS_146_Interface(object):
         with self.lock:
             self.ser.write(message)
             cmd, resp = self.ser.readline().decode().strip().split(':')
-        print("read_cmd:",resp)
         if resp[0] == '+':
             return resp[1:]
         else:
