@@ -88,7 +88,6 @@ class MKS_600_Interface(object):
                          4: 4,
                          5: 10}
             resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
-            print('read_sp resp:', resp, 2.*(float(resp)/100))
             return 2.*(float(resp)/100)
         else:
             return 0.
