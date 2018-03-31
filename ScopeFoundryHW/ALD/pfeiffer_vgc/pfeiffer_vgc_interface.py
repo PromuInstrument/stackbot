@@ -8,6 +8,7 @@ Created on Nov 20, 2017
 import serial
 import time
 import logging
+from threading import Lock
 
 logger = logging.getLogger(__name__)
 
@@ -21,8 +22,10 @@ class Pfeiffer_VGC_Interface(object):
         if self.debug:
             pass
         
-        self.ser = serial.Serial(port=self.port, baudrate=9600, bytesize=serial.EIGHTBITS, timeout=0.1,
+        
+        self.ser = serial.Serial(port=self.port, baudrate=9600, bytesize=serial.EIGHTBITS, timeout=1,
                                  parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE)
+        self.lock = Lock()
         self.ser.flush()
         
         time.sleep(1)
@@ -30,16 +33,20 @@ class Pfeiffer_VGC_Interface(object):
     def ask_cmd(self, cmd):
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
+        
         message = cmd+'\r\n'
-        self.ser.write(message)
-        resp = self.ser.readline()
+        
+        with self.lock:
+            self.ser.write(message)
+            resp = self.ser.readline()
         
         if self.debug:
             logger.debug("readout: {}".format(cmd))
             print("ask_cmd resp:", resp)
         if resp == b"\x06\r\n":
-            self.ser.write(b"\x05".decode()+"\r\n")
-            resp = self.ser.readline()
+            with self.lock:
+                self.ser.write(b"\x05".decode()+"\r\n")
+                resp = self.ser.readline()
             return resp
         else: 
             print("Acknowledgement not received:{}".format(resp))
@@ -68,9 +75,9 @@ class Pfeiffer_VGC_Interface(object):
         
     def sensor_type(self):
         resp = self.ask_cmd("TID")
-        sensor_list = resp[:-2].decode().split(",")
+        sensor_list = resp.strip().decode().split(",")
         return sensor_list
-#         return resp
+
 
     def read_units(self):
         resp = self.ask_cmd("UNI")
