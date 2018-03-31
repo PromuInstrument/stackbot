@@ -27,11 +27,10 @@ class ALD_routine(Measurement):
     def precursor_1_dose(self, width=0.008):
         """argument 'width' has units of seconds"""
         relay = 0
-        chamber_pressure = 15 #mtorr
+        chamber_pressure = 15e-3 #torr
         
         def pressure_and_flow():
-            measure = self.read_pressure()
-            pressure = (1000*measure)/(101325/76000) #mtorr
+            pressure = self.read_pressure() #torr
             flow = self.mks146.MFC0_read_flow()
             return pressure, flow
         
@@ -94,24 +93,24 @@ class ALD_routine(Measurement):
     def select_gauge(self, val):
         gauge_range = {'TKP': (1e-3, 1e3),
                   'PKR': (1e-8, 9.999e-4)}
-        gauge_select = {'TKP': self.vgc.vgc.read_ch2_pressure,
-                  'PKR': self.vgc.vgc.read_ch3_pressure}
+        gauge_select = {'TKP': self.vgc.settings['ch2_pressure_scaled'],
+                            'PKR': self.vgc.settings['ch3_pressure_scaled']}
         for k,v in gauge_range.items():
             if (min(v) <= val <= max(v)):
-                return gauge_select[k]()
+                return gauge_select[k]
             else:   pass
     
     def read_pressure(self):
         '''Reads off PKR for ball park estimate, 
         then decides upon the gauge with the 
         more accurate reading'''
-        read = self.vgc.vgc.read_ch3_pressure()
+        read = self.vgc.settings['ch3_pressure_scaled']
         selection = self.select_gauge(read)
         return selection
             
         
     def run(self):
-        self.seren.serial_toggle(True)
+#         self.seren.serial_toggle(True)
 
         self.run_count = 0
         self.loops_elapsed = 0
@@ -127,7 +126,7 @@ class ALD_routine(Measurement):
                 
                 self.plasma_stabilization(0.010) # pressure = 10 mtorr
     
-                self.plasma_dose(30, 5) #time = 30 s, power = 5 W
+#                 self.plasma_dose(30, 5) #time = 30 s, power = 5 W
                 
                 self.plasma_purge(0.015) # 15 mtorr
                 
