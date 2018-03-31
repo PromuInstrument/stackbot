@@ -93,18 +93,17 @@ class Pfeiffer_VGC_Measure(Measurement):
     
     def routine(self):
         readout = self.read_pressures()
-        print(readout)
-#         self.database.data_entry(*readout)
+        self.database.data_entry(*readout)
         self.index = self.history_i % self.HIST_LEN
         self.pressure_history[:, self.index] = readout
-        print(self.pressure_history)
         self.history_i += 1
      
     def update_display(self):
         self.vLine.setPos(self.index)
-#         for i in range(self.NUM_CHANS):
-#             self.plot_lines[i].setData(
-#                 self.pressure_history[i,:])
+        
+        for i in range(self.NUM_CHANS):
+            self.plot_lines[i].setData(
+                self.pressure_history[i,:self.index])
     
     def reconnect_server(self):
         self.database.connect()
@@ -119,9 +118,12 @@ class Pfeiffer_VGC_Measure(Measurement):
             self.db_connect()
             while not self.interrupt_measurement_called:
                 if self.server_connected:
-                    self.update_display()
                     self.routine()
-                    self.vgc.read_from_hardware()
+                    self.update_display()
+                    
+                    self.vgc.settings.ch1_pressure.read_from_hardware()
+                    self.vgc.settings.ch2_pressure.read_from_hardware()
+                    self.vgc.settings.ch3_pressure.read_from_hardware()
                     time.sleep(dt)
                 else:
                     self.reconnect_server()
