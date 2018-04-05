@@ -22,7 +22,7 @@ class MKS_146_Hardware(HardwareComponent):
         self.settings.New(name="MFC0_valve", initial="C", dtype=str, choices = [
                                                                 ("Open", "O"),
                                                                 ("Closed", "C"),
-                                                                ("Cancel", "N")])
+                                                                ("Manual", "N")])
          
          
 
@@ -48,7 +48,7 @@ class MKS_146_Hardware(HardwareComponent):
                 '''Skip first instrument, flag next for LQ assignment'''
                 skip = not True
                 if self.debug_mode:
-                    print('Skipped assigment of channel {}'.format(i))
+                    print('Skipped assignment of channel {}'.format(i))
             elif (sensor_type == "Mass Flow Controller") and (not skip):
                 
                 setattr(self, 'MFC{}_chan'.format(slot), i)
@@ -82,7 +82,11 @@ class MKS_146_Hardware(HardwareComponent):
         
         self.chan_assign()
         
+        self.settings.get_lq('MFC0_valve').update_value('C')
+        
         self.read_from_hardware()
+        
+        
                 
     def MFC0_read_flow(self):
         if hasattr(self, 'MFC0_chan'):
