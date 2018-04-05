@@ -24,7 +24,7 @@ class MKS_600_Hardware(HardwareComponent):
         self.settings.New(name="port", initial="COM5", dtype=str, ro=False)
         self.settings.New(name="pressure", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
         self.settings.New(name="units", initial="torr", dtype=str, ro=False, choices=(('mbar'), ('torr'), ('mtorr')))
-        self.settings.New(name="sp_channel", initial="A", dtype=str, ro=False, choices=(('A'), ('B'), ('C'), ('D'), ('E'), ('Open'), ('Close')))
+        self.settings.New(name="sp_channel", initial="Open", dtype=str, ro=False, choices=(('A'), ('B'), ('C'), ('D'), ('E'), ('Open'), ('Close')))
         self.settings.New(name="sp_readout", initial=0.0, spinbox_decimals=4, dtype=float, ro=True)
         self.settings.New(name="sp_set_value", initial=0.0, spinbox_decimals=4, dtype=float, ro=False)
         self.settings.New(name="valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
@@ -40,6 +40,9 @@ class MKS_600_Hardware(HardwareComponent):
         self.settings.sp_readout.connect_to_hardware(read_func=self.read_sp)
         
         self.settings.sp_channel.add_listener(self.switch_sp, str)
+        set = self.settings['sp_channel']
+        print('set', set)
+        self.switch_sp(set)
         
     def read_pressure(self):
         choice = self.settings['units']
@@ -85,6 +88,7 @@ class MKS_600_Hardware(HardwareComponent):
     
     
     def disconnect(self):
+        
         self.settings.disconnect_all_from_hardware()
         if self.mks is not None:
             self.mks.close()
