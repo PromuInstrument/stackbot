@@ -129,6 +129,7 @@ class Pfeiffer_VGC_Measure(Measurement):
                     self.reconnect_server()
                     self.server_connected = True
                     self.routine()
+                    self.update_display()
                     time.sleep(dt)
         finally:
             self.disconnect_server()
