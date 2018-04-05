@@ -50,7 +50,7 @@ class LoveboxHW(HardwareComponent):
 #         self.settings.get_lq('output2').connect_to_hardware(
 #                                                     write_func=self.lovebox.set_output2,
 #                                                     read_func=self.lovebox.read_output2)
-        
+        self.set_control_method(self.settings['control_method'])
         
     def set_control_method(self, control):
         select = self.CTRL_METHODS.index(control)
