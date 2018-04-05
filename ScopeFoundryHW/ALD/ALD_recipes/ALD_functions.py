@@ -22,12 +22,26 @@ class ALD_routine(Measurement):
         
         self.MFC_valve_states = {'Open': 'O',
                              'Closed': 'C',
-                             'Cancel': 'N'}
-
-    def precursor_1_dose(self, width=0.008):
+                             'Manual': 'N'}
+        
+        self.mks600.settings.get_lq('sp_channel').update_value('Open')
+        
+        self.mks146.settings.get_lq('MFC0_SP').update_value(0)
+        state = self.MFC_valve_states['Closed']
+        self.mks146.settings.get_lq('MFC0_valve').update_value(state)
+        
+        self.mks600.settings.get_lq('sp_channel').update_value("A")
+    
+    def precursor_1_dose(self, flow_sp, width=0.008):
         """argument 'width' has units of seconds"""
         relay = 0
         chamber_pressure = 15e-3 #torr
+        
+        self.mks600.settings.get_lq('sp_set_value').update_value(chamber_pressure)
+        self.mks146.settings.get_lq('MFC0_SP').update_value(flow_sp)
+        state = self.MFC_valve_states['Manual']
+        self.mks146.settings.get_lq('MFC0_valve').update_value(state)
+        print('Changed?', self.mks146.settings['MFC0_SP'], self.mks146.settings['MFC0_valve'])
         
         def pressure_and_flow():
             pressure = self.read_pressure() #torr
@@ -35,30 +49,33 @@ class ALD_routine(Measurement):
             return pressure, flow
         
         pressure, flow = pressure_and_flow()
-        while not (chamber_pressure-1 < pressure < chamber_pressure+1) \
+        while not (chamber_pressure-(2e-3) < pressure < chamber_pressure+(2e-3)) \
                 and not (10 <= flow <= 20):
             pressure, flow = pressure_and_flow()
         else:
-            if self.debug_mode:
-                print("Pulse sending--", "pressure:", pressure, "> chamber:", chamber_pressure)
+
             self.relay.relay.send_pulse(relay, 1e3*width)
+            print("Pulse sent: precursor dose complete")
 
     def precursor_purge(self, pressure_sp, temp_sp):
         '''Argument pressure_sp in units of torr,
             temp_sp is in units of degrees C.'''
-        self.mks600.write_sp(0.04)
+        self.mks600.settings['sp_channel'] = 'A'
+        self.mks600.settings.get_lq('sp_set_value').update_value(pressure_sp)
+        self.lovebox.settings['sv_setpoint'] = temp_sp
         pressure = self.read_pressure()
+        p_tolerance = 0.0025
         temp = self.lovebox.lovebox.read_temp()
-        while not (pressure_sp-0.001 <= pressure <= pressure_sp+0.001) \
+        while not (pressure_sp-p_tolerance <= pressure <= pressure_sp+p_tolerance) \
                 and not (temp_sp+0.1 <= temp <= temp_sp+0.1):
             '''Check pressure and temp until conditions are within desired SP range.'''
             pressure = self.read_pressure()
             temp = self.lovebox.lovebox.read_temp()
         else:
             '''Close MFC if above conditions are met.'''
-            state = 'C'
-            assert state in self.MFC_valve_states.values()
-            self.mks146.write_value(state)
+            state = self.MFC_valve_states['Closed']
+            self.mks146.settings.get_lq('MFC0_valve').update_value(state)
+            print("Precursor purge complete")
             
     def plasma_stabilization(self, pressure_sp):
         pressure = self.read_pressure()
@@ -67,7 +84,7 @@ class ALD_routine(Measurement):
             time.sleep(0.5)
         else:
             return
-        
+            print("Plasma stabilization complete")
     
     def plasma_dose(self, width, power):
         """Argument 'width' has units of seconds
@@ -78,17 +95,23 @@ class ALD_routine(Measurement):
         time.sleep(width)
         self.seren.RF_toggle(False)
         self.seren.write_fp(0)
+        print('Plasma dose')
         
     def plasma_purge(self, pressure_sp=0.015):
         '''Enter pressure_sp in units of torr'''
         flow = self.mks146.MFC0_read_flow()
-        p_tolerance = 0.001
-        if flow >= .005:
+        self.mks600.settings.get_lq('sp_set_value').update_value(pressure_sp)
+        p_tolerance = 0.003
+        if flow <= .015:
+            print('No flow. Proceeding with plasma purge.')
             pressure = self.read_pressure()
             while not (pressure_sp - p_tolerance <= pressure <= pressure_sp+p_tolerance):
+                pressure = self.read_pressure()
                 time.sleep(0.5)
+            else:
+                print('plasma purge while ended')
         else:
-            print('No flow.')
+            print('Warning, non-zero flow')
 
     def select_gauge(self, val):
         gauge_range = {'TKP': (1e-3, 1e3),
@@ -117,23 +140,28 @@ class ALD_routine(Measurement):
         self.loops = 1
         self.total_cycles = 10
         self.dt = 0.1
+        
+        ### Use single loop of N number of cycles.
+        
         while (self.loops_elapsed <= self.loops) or not self.interrupt_measurement_called:
             while not self.interrupt_measurement_called or \
                         (self.run_count <= self.total_cycles):
-                self.precursor_1_dose(0.008)
+                self.precursor_1_dose(10, 0.008) # flow = 10 sccm, pulse_width=0.008 s 
                 
-                self.precursor_purge(0.04, 20) #temp = 20 C
+                self.precursor_purge(0.04, 25) #pressure = 0.04 torr, temp = 20 C
                 
                 self.plasma_stabilization(0.010) # pressure = 10 mtorr
     
-#                 self.plasma_dose(30, 5) #time = 30 s, power = 5 W
+                self.plasma_dose(3, 5) #time = 30 s, power = 5 W
                 
                 self.plasma_purge(0.015) # 15 mtorr
                 
                 self.run_count += 1
                 time.sleep(self.dt)
-            self.loops_elapsed += 1
+                self.loops_elapsed += 1
+                print("loops_elapsed:",self.loops_elapsed)
         else: 
+            self.mks600.settings.get_lq('sp_channel').update_value('Open')
             print('All loops and cycles completed.')
             
         
