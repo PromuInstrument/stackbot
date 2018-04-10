@@ -57,7 +57,7 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from Auger.hardware.auger_electron_analyzer_hw import AugerElectronAnalyzerHW
         self.add_hardware(AugerElectronAnalyzerHW(self))
         
-        from Auger.hardware.remcon32_hw import Auger_Remcon_HW
+        from ScopeFoundryHW.zeiss_sem.remcon32_hw import Auger_Remcon_HW
         self.add_hardware(Auger_Remcon_HW(self))
 
         ########## Measurements
