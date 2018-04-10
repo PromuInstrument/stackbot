@@ -123,7 +123,7 @@ class ThorlabsStepperControllerDev(object):
             self.num_chans = S.SBC_GetNumChannels(self._id)
         
         # polling required to update device status, otherwise must use request functions before reads
-        #self.sbc_dll.SBC_StartPolling(self._id, 500 )
+        #self.sbc_dll.SBC_StartPolling(self._id, 100 )
         
         #time.sleep(0.2)
     
@@ -261,7 +261,10 @@ class ThorlabsStepperControllerDev(object):
 
         
         with self.lock:
+            #self.sbc_dll.SBC_RequestStatu
+            
             num_messages = self.sbc_dll.SBC_MessageQueueSize(self._id, chan)
+            #print(num_messages)
             for i in range(num_messages):
                 success = self.sbc_dll.SBC_GetNextMessage(
                                         self._id, chan,
@@ -273,5 +276,6 @@ class ThorlabsStepperControllerDev(object):
                 
             self.sbc_dll.SBC_ClearMessageQueue(self._id, chan)
         
+        print(messages)
         return messages
         

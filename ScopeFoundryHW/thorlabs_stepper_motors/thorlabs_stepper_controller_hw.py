@@ -170,3 +170,7 @@ class ThorlabsStepperControllerHW(HardwareComponent):
         for axis_name, axis_num in self.ax_dict.items():
             self.settings.get_lq(axis_name + "_position").read_from_hardware()
             
+    
+    def read_message_queue(self,ax_name):
+        return self.dev.read_message_queue(self.ax_dict[ax_name])
+            
