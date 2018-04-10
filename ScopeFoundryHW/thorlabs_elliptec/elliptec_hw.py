@@ -7,7 +7,7 @@ class ThorlabsElliptecSingleHW(HardwareComponent):
     name = 'elliptec'
     
     def setup(self):
-        self.settings.New('port', dtype=str, initial='COM3')
+        self.settings.New('port', dtype=str, initial='COM7')
         self.settings.New('addr', dtype=int, initial=0, vmin=0, vmax=15)
         self.settings.New('position', dtype=float, initial=0, unit='mm', spinbox_decimals=4)
         
