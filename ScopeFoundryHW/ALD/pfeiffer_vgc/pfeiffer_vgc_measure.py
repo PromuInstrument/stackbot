@@ -122,7 +122,7 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.database.closeout()
     
     def run(self):
-        dt=0.1
+        dt=0.2
         self.HIST_LEN = self.settings['history_length']
         try:
 #             self.db_connect()
