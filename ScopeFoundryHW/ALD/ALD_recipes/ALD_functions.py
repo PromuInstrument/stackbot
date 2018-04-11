@@ -135,12 +135,23 @@ class ALD_routine(Measurement):
         return selection
     
     def shutdown(self):
-        pass
+        self.ramp_throttle_open()
+        
     
     def ramp_throttle_open(self):
-#         self.mks600.switch_sp()
-#         self.mks600.write_sp()
-        pass 
+        self.shutdown_ready = False
+        pressure = self.vgc.settings['ch2_pressure_scaled']
+        if pressure < 1e-2:
+            self.mks600.settings.sp_channel.update_value('B')
+            self.mks600.write_sp(0.0002)
+            time.sleep(10)
+            self.mks600.write_sp(0.0001)
+            time.sleep(20)
+            self.mks600.settings.sp_channel.update_value('Open')
+            self.shutdown_ready = True
+        else:
+            print('Disable pump before equalizing chamber pressures')
+            pass
     
     def run(self):
 #         self.seren.serial_toggle(True)
@@ -164,11 +175,14 @@ class ALD_routine(Measurement):
             self.plasma_purge(0.015) # 15 mtorr
                 
             self.run_count += 1
+            
             time.sleep(self.dt)
+            
             self.loops_elapsed += 1
+            
             print("loops_elapsed:", self.loops_elapsed)
         else: 
-            self.mks600.settings.get_lq('sp_channel').update_value('Open')
+            self.shutdown()
             print('All loops and cycles completed.')
             
         
