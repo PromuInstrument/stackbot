@@ -49,6 +49,7 @@ class ALD_routine(Measurement):
             return pressure, flow
         
         pressure, flow = pressure_and_flow()
+        print('Waiting for temperature and pressure to reach desired settings.')
         while not (chamber_pressure-(2e-3) < pressure < chamber_pressure+(2e-3)) \
                 and not (10 <= flow <= 20):
             pressure, flow = pressure_and_flow()
@@ -66,6 +67,7 @@ class ALD_routine(Measurement):
         pressure = self.read_pressure()
         p_tolerance = 0.0025
         temp = self.lovebox.lovebox.read_temp()
+        print('Waiting for temperature and pressure to reach desired settings.')
         while not (pressure_sp-p_tolerance <= pressure <= pressure_sp+p_tolerance) \
                 and not (temp_sp+0.1 <= temp <= temp_sp+0.1):
             '''Check pressure and temp until conditions are within desired SP range.'''
@@ -83,19 +85,20 @@ class ALD_routine(Measurement):
         while not (pressure_sp - p_tolerance <= pressure < pressure + p_tolerance):
             time.sleep(0.5)
         else:
-            return
             print("Plasma stabilization complete")
-    
+            return
+            
     def plasma_dose(self, width, power):
         """Argument 'width' has units of seconds
         power has units of Watts
         """
+        print('Plasma dose.')
         self.seren.write_fp(power)
         self.seren.RF_toggle(True)
         time.sleep(width)
         self.seren.RF_toggle(False)
         self.seren.write_fp(0)
-        print('Plasma dose')
+        print('Plasma dose finished.')
         
     def plasma_purge(self, pressure_sp=0.015):
         '''Enter pressure_sp in units of torr'''
@@ -130,36 +133,40 @@ class ALD_routine(Measurement):
         read = self.vgc.settings['ch3_pressure_scaled']
         selection = self.select_gauge(read)
         return selection
-            
-        
+    
+    def shutdown(self):
+        pass
+    
+    def ramp_throttle_open(self):
+#         self.mks600.switch_sp()
+#         self.mks600.write_sp()
+        pass 
+    
     def run(self):
 #         self.seren.serial_toggle(True)
 
         self.run_count = 0
         self.loops_elapsed = 0
-        self.loops = 1
-        self.total_cycles = 10
+        self.loops = 10
         self.dt = 0.1
         
         ### Use single loop of N number of cycles.
         
         while (self.loops_elapsed <= self.loops) or not self.interrupt_measurement_called:
-            while not self.interrupt_measurement_called or \
-                        (self.run_count <= self.total_cycles):
-                self.precursor_1_dose(10, 0.008) # flow = 10 sccm, pulse_width=0.008 s 
+            self.precursor_1_dose(.8, 0.012) # flow = 10 sccm, pulse_width=0.008 s 
                 
-                self.precursor_purge(0.04, 25) #pressure = 0.04 torr, temp = 20 C
+            self.precursor_purge(0.04, 25) #pressure = 0.04 torr, temp = 20 C
                 
-                self.plasma_stabilization(0.010) # pressure = 10 mtorr
-    
-                self.plasma_dose(3, 5) #time = 30 s, power = 5 W
+            self.plasma_stabilization(0.010) # pressure = 10 mtorr
+
+            self.plasma_dose(3, 5) #time = 30 s, power = 5 W
+            
+            self.plasma_purge(0.015) # 15 mtorr
                 
-                self.plasma_purge(0.015) # 15 mtorr
-                
-                self.run_count += 1
-                time.sleep(self.dt)
-                self.loops_elapsed += 1
-                print("loops_elapsed:",self.loops_elapsed)
+            self.run_count += 1
+            time.sleep(self.dt)
+            self.loops_elapsed += 1
+            print("loops_elapsed:", self.loops_elapsed)
         else: 
             self.mks600.settings.get_lq('sp_channel').update_value('Open')
             print('All loops and cycles completed.')
