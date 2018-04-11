@@ -20,6 +20,12 @@ class MKS_600_Hardware(HardwareComponent):
               'Open': 6,
               'Close': 7}
     
+    sp_defaults = {'A': 1.5e-2,
+                   'B': 2e-4,
+                   'C': 0,
+                   'D': 0, 
+                   'E': 0}
+    
     def setup(self):
         self.settings.New(name="port", initial="COM5", dtype=str, ro=False)
         self.settings.New(name="pressure", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
@@ -28,6 +34,7 @@ class MKS_600_Hardware(HardwareComponent):
         self.settings.New(name="sp_readout", initial=0.0, spinbox_decimals=4, dtype=float, ro=True)
         self.settings.New(name="sp_set_value", initial=0.0, spinbox_decimals=4, dtype=float, ro=False)
         self.settings.New(name="valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
+        self.settings.add_operation('Force SP defaults', self.set_sp_defaults)
         self.mks = None
     
     def connect(self):
@@ -40,9 +47,13 @@ class MKS_600_Hardware(HardwareComponent):
         self.settings.sp_readout.connect_to_hardware(read_func=self.read_sp)
         
         self.settings.sp_channel.add_listener(self.switch_sp, str)
-        set = self.settings['sp_channel']
-        print('set', set)
-        self.switch_sp(set)
+        self.settings.get_lq('sp_channel').update_value('A')
+    
+    def set_sp_defaults(self):
+        for channel, value in self.sp_defaults.items():
+            self.switch_sp(channel)
+            self.write_sp(value)
+        self.settings.sp_channel.update_value('A')
         
     def read_pressure(self):
         choice = self.settings['units']
