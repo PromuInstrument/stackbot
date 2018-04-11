@@ -57,7 +57,7 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.plot.addLegend()
         self.layout.addWidget(self.plot_widget)
         self.setup_buffers_constants()
-        self.plot_names =  ['TKP_1', 'TKP_2', 'PKR_3']
+        self.plot_names =  ['TKP_1', 'TKP_2', 'PKR_3', 'MAN_4']
         self.plot_lines = []
         for i in range(self.NUM_CHANS):
             color = pg.intColor(i)
@@ -75,27 +75,30 @@ class Pfeiffer_VGC_Measure(Measurement):
     
     def setup_buffers_constants(self):
         self.HIST_LEN = 1000
-        self.NUM_CHANS = 3
+        self.NUM_CHANS = 4
         self.history_i = 0
         self.index = 0
         self.pressure_history = np.zeros((self.NUM_CHANS, 
                 self.HIST_LEN))
         
     def read_pressures(self):
-        def direct_read(sensor):
-            measure = self.vgc.vgc.read_sensor(sensor)
-            return measure/(101325/76000)
+#         def direct_read(sensor):
+#             measure = self.vgc.vgc.read_sensor(sensor)
+#             return measure/(101325/76000)
         measurements = []
         for i in (1,2,3):
-            _measure = direct_read(i)
+#             _measure = direct_read(i)
+            _measure = self.vgc.settings['ch{}_pressure_scaled'.format(i)]
             measurements.append(_measure)
         return measurements
     
     def routine(self):
         readout = self.read_pressures()
-        self.database.data_entry(*readout)
+        man_readout = self.app.hardware['mks_600_hw'].settings['pressure'] 
+#         self.database.data_entry(*readout)
         self.index = self.history_i % self.HIST_LEN
-        self.pressure_history[:, self.index] = readout
+        self.pressure_history[:3, self.index] = readout
+        self.pressure_history[3, self.index] = man_readout + 1e-5
         self.history_i += 1
      
     def update_display(self):
@@ -115,24 +118,22 @@ class Pfeiffer_VGC_Measure(Measurement):
         dt=0.1
         self.HIST_LEN = self.settings['history_length']
         try:
-            self.db_connect()
+#             self.db_connect()
             while not self.interrupt_measurement_called:
-                if self.server_connected:
+#                 if self.server_connected:
+                if True:
                     self.routine()
-                    self.update_display()
-                    
                     self.vgc.settings.ch1_pressure.read_from_hardware()
                     self.vgc.settings.ch2_pressure.read_from_hardware()
                     self.vgc.settings.ch3_pressure.read_from_hardware()
                     time.sleep(dt)
                 else:
-                    self.reconnect_server()
+#                     self.reconnect_server()
                     self.server_connected = True
                     self.routine()
-                    self.update_display()
                     time.sleep(dt)
         finally:
-            self.disconnect_server()
-            self.server_connected = False
-            
+#             self.disconnect_server()
+#             self.server_connected = False
+            pass
                         
