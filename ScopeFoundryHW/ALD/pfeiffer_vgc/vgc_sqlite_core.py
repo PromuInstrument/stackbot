@@ -35,6 +35,14 @@ class SQLite_Wrapper(object):
                   (_datetime, p1, p2, p3))
         self.conn.commit()
 
+    def check_db(self):
+    	self.c.execute('SELECT Count(*) FROM PressureTable')
+    	size = self.c.fetchone()[0]
+    	if size > 0:
+    		self.setup_table()
+    		self.setup_index()
+    	else:
+    		pass
 
     def read_db_all(self):
         self.c.execute("""SELECT * FROM PressureTable""")
