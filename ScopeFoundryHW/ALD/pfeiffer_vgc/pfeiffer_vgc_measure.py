@@ -34,6 +34,7 @@ class Pfeiffer_VGC_Measure(Measurement):
     def ui_setup(self):
         self.ui = QtWidgets.QWidget()
         self.layout = QtWidgets.QVBoxLayout()
+        self.ui.show()
         self.ui.setLayout(self.layout)
         self.ui.setWindowTitle('Pfeiffer Controller Pressure History')
         self.control_widget = QtWidgets.QGroupBox('Pfeiffer VGC Measure')
@@ -65,7 +66,9 @@ class Pfeiffer_VGC_Measure(Measurement):
                 name = self.plot_names[i])
             self.plot_lines.append(plot_line)
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
-        self.plot.addItem(self.vLine)    
+        self.plot.addItem(self.vLine)
+        
+        
     
     def db_connect(self):
         self.database = SQLite_Wrapper()
@@ -96,9 +99,13 @@ class Pfeiffer_VGC_Measure(Measurement):
         readout = self.read_pressures()
         man_readout = self.app.hardware['mks_600_hw'].settings['pressure'] 
 #         self.database.data_entry(*readout)
-        self.index = self.history_i % self.HIST_LEN
-        self.pressure_history[:3, self.index] = readout
-        self.pressure_history[3, self.index] = man_readout + 1e-5
+        if self.history_i < self.HIST_LEN:
+            self.index = self.history_i % self.HIST_LEN
+        else:
+            self.index = self.HIST_LEN
+            self.pressure_history = np.roll(self.pressure_history, -1, axis=1)
+        self.pressure_history[:3, self.index-1] = readout
+        self.pressure_history[3, self.index-1] = man_readout + 1e-5
         self.history_i += 1
      
     def update_display(self):
@@ -122,10 +129,10 @@ class Pfeiffer_VGC_Measure(Measurement):
             while not self.interrupt_measurement_called:
 #                 if self.server_connected:
                 if True:
-                    self.routine()
                     self.vgc.settings.ch1_pressure.read_from_hardware()
                     self.vgc.settings.ch2_pressure.read_from_hardware()
                     self.vgc.settings.ch3_pressure.read_from_hardware()
+                    self.routine()
                     time.sleep(dt)
                 else:
 #                     self.reconnect_server()
