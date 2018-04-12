@@ -25,7 +25,11 @@ class ALD_params(Measurement):
         self.ui_enabled = True
         if self.ui_enabled:
             self.ui_setup()
-            
+        
+        if hasattr(self.app.hardware, 'seren_hw'):
+            self.seren = self.app.hardware.seren_hw
+        else:
+            print('Connect Seren HW component first.')
 
     def ui_setup(self):
         self.ui = QtWidgets.QWidget()
@@ -59,4 +63,25 @@ class ALD_params(Measurement):
         self.recipe_control_widget.layout().addWidget(self.recipe_stop_button)
         self.recipe_start_button.clicked.connect(self.app.measurements['ALD_routine'].start)
         self.recipe_stop_button.clicked.connect(self.app.measurements['ALD_routine'].interrupt)
+    
         
+    
+    def setup_buffers_constants(self):
+        self.HIST_LEN = 500
+        self.NUM_CHANS = 2
+        self.history_i = 0
+        self.index = 0
+        self.rf_history = np.zeros((self.NUM_CHANS, self.HIST_LEN))
+
+    def routine(self):
+        entry = np.array(self.seren.settings['forward_power'], \
+                         self.seren.settings['reflected_power'])
+        if self.history_i < self.HIST_LEN:
+            self.index = self.history_i % self.HIST_LEN
+        else:
+            self.index = self.HIST_LEN
+            self.pressure_history = np.roll(self.rf_history, -1, axis=1)
+        self.pressure_history[:, self.index-1] = entry
+        self.history_i += 1
+    
+    
