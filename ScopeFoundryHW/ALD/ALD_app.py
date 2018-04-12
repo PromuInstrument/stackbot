@@ -60,6 +60,9 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_functions import ALD_routine
         self.add_measurement(ALD_routine(self))
         
+        from ScopeFoundryHW.ALD.ALD_recipes.ALD_params_measure import ALD_params
+        self.add_measurement(ALD_params(self))
+        
 if __name__ == '__main__':
     import sys
     app = ALD_App(sys.argv)
