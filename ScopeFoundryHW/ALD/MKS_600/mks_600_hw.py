@@ -34,7 +34,7 @@ class MKS_600_Hardware(HardwareComponent):
         self.settings.New(name="sp_readout", initial=0.0, spinbox_decimals=4, dtype=float, ro=True)
         self.settings.New(name="sp_set_value", initial=0.0, spinbox_decimals=4, dtype=float, ro=False)
         self.settings.New(name="valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
-        self.settings.add_operation('Force SP defaults', self.set_sp_defaults)
+        self.add_operation('Force SP defaults', self.set_sp_defaults)
         self.mks = None
     
     def connect(self):
