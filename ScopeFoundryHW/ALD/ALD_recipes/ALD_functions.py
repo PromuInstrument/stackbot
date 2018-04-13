@@ -24,13 +24,13 @@ class ALD_routine(Measurement):
                              'Closed': 'C',
                              'Manual': 'N'}
         
-        self.mks600.settings.get_lq('sp_channel').update_value('Open')
+        self.mks600.settings['sp_channel'] = 'Open'
         
-        self.mks146.settings.get_lq('MFC0_SP').update_value(0.0002)
+        self.mks146.settings['MFC0_SP'] = 0.0002
         state = self.MFC_valve_states['Closed']
-        self.mks146.settings.get_lq('MFC0_valve').update_value(state)
+        self.mks146.settings['MFC0_valve'] = state
         
-        self.mks600.settings.get_lq('sp_channel').update_value("A")
+        self.mks600.settings['sp_channel'] = "A"
     
     def precursor_1_dose(self, flow_sp, width=0.008):
         """argument 'width' has units of seconds"""
@@ -41,9 +41,9 @@ class ALD_routine(Measurement):
         self.mks600.settings['sp_channel'] = "A"
         time.sleep(0.1)
         self.mks600.settings['sp_set_value'] = chamber_pressure
-        self.mks146.settings.get_lq('MFC0_SP').update_value(flow_sp)
+        self.mks146.settings['MFC0_SP'] = flow_sp
         state = self.MFC_valve_states['Manual']
-        self.mks146.settings.get_lq('MFC0_valve').update_value(state)
+        self.mks146.settings['MFC0_valve'] = state
         print('Changed?', self.mks146.settings['MFC0_SP'], self.mks146.settings['MFC0_valve'])
         
         def pressure_and_flow():
@@ -57,9 +57,7 @@ class ALD_routine(Measurement):
                 and not (10 <= flow <= 20):
             pressure, flow = pressure_and_flow()
             if self.interrupt_measurement_called:
-                self.mks600.settings.get_lq('sp_channel').update_value("Open")
-                state = self.MFC_valve_states['Closed']
-                self.mks146.settings.get_lq('MFC0_valve').update_value(state)
+                self.shutdown()
                 break
         else:
 
@@ -71,7 +69,7 @@ class ALD_routine(Measurement):
             temp_sp is in units of degrees C.'''
         print('Start precursor purge')
         self.mks600.settings['sp_channel'] = 'A'
-        self.mks600.settings.get_lq('sp_set_value').update_value(pressure_sp)
+        self.mks600.settings['sp_set_value'] = pressure_sp
         self.lovebox.settings['sv_setpoint'] = temp_sp
         pressure = self.read_pressure()
         p_tolerance = 0.0025
@@ -82,10 +80,13 @@ class ALD_routine(Measurement):
             '''Check pressure and temp until conditions are within desired SP range.'''
             pressure = self.read_pressure()
             temp = self.lovebox.lovebox.read_temp()
+            if self.interrupt_measurement_called:
+                self.shutdown()
+                break
         else:
             '''Close MFC if above conditions are met.'''
             state = self.MFC_valve_states['Closed']
-            self.mks146.settings.get_lq('MFC0_valve').update_value(state)
+            self.mks146.settings['MFC0_valve'] = state
             print("Precursor purge complete")
             
     def plasma_stabilization(self, pressure_sp):
@@ -153,22 +154,22 @@ class ALD_routine(Measurement):
         self.ramp_throttle_open()
         if self.shutdown_ready:
             state = self.MFC_valve_states['Closed']
-            self.mks146.settings.get_lq('MFC0_valve').update_value(state)
+            self.mks146.settings['MFC0_valve'] = state
     
     def ramp_throttle_open(self):
         print('Ramping down.')
         self.shutdown_ready = False
         pressure = self.vgc.settings['ch2_pressure_scaled']
         if pressure < 1e-2:
-            self.mks600.settings.sp_channel.update_value('B')
+            self.mks600.settings['sp_channel'] = 'B'
             self.mks600.write_sp(0.0002)
             time.sleep(10)
             self.mks600.write_sp(0.0001)
             time.sleep(20)
-            self.mks600.settings.sp_channel.update_value('Open')
+            self.mks600.settings['sp_channel']= 'Open'
             self.shutdown_ready = True
         else:
-            print('Disable pump before equalizing chamber pressures')
+            print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
             pass
     
     def run(self):
@@ -181,7 +182,8 @@ class ALD_routine(Measurement):
         
         ### Use single loop of N number of cycles.
         
-        while (self.loops_elapsed <= self.loops) or not self.interrupt_measurement_called:
+        while (self.loops_elapsed <= self.loops):
+            
             self.precursor_1_dose(.8, 0.012) # flow = 10 sccm, pulse_width=0.008 s 
             
             if self.interrupt_measurement_called: 
