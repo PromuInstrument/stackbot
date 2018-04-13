@@ -17,7 +17,7 @@ class MKS_146_Hardware(HardwareComponent):
         self.MFC_count = 1
         
         self.settings.New(name="port", initial="COM8", dtype=str, ro=False)
-        self.settings.New(name="MFC0_flow", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
+        self.settings.New(name="MFC0_flow", fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
 
         self.settings.New(name="MFC0_valve", initial="C", dtype=str, choices = [
                                                                 ("Open", "O"),
@@ -27,11 +27,11 @@ class MKS_146_Hardware(HardwareComponent):
          
 
 
-        self.settings.New(name="MFC0_SP", initial=0.0, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
+        self.settings.New(name="MFC0_SP", initial=0.0002, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
 
         if self.MFC_count > 1:
-            self.settings.New(name="MFC1_flow", initial=0.0, fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
-            self.settings.New(name="MFC1_SP", initial=0.0, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
+            self.settings.New(name="MFC1_flow", fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
+            self.settings.New(name="MFC1_SP", initial=0.0002, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
             self.settings.New(name="MFC1_valve", initial="C", dtype=str, choices = [
                                                                     ("Open", "O"),
                                                                     ("Closed", "C"),
