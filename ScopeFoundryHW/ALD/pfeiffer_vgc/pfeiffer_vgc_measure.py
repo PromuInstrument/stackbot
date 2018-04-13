@@ -28,8 +28,10 @@ class Pfeiffer_VGC_Measure(Measurement):
         if self.ui_enabled:
             self.ui_setup()   
             
-        
-        self.vgc = self.app.hardware['pfeiffer_vgc_hw']
+        if hasattr(self.app.hardware, 'pfeiffer_vgc_hw'):
+            self.vgc = self.app.hardware['pfeiffer_vgc_hw']
+        else:
+            print("Connect Pfeiffer HW component first.")
     
     def ui_setup(self):
         self.ui = QtWidgets.QWidget()
