@@ -84,4 +84,13 @@ class ALD_params(Measurement):
         self.pressure_history[:, self.index-1] = entry
         self.history_i += 1
     
+    def update_display(self):
+        self.vLine.setPos(self.index)
+        for i in range(self.NUM_CHANS):
+            self.plot_lines[i].setData(
+                self.rf_history[i, :self.index])
     
+    def run(self):
+        dt = 0.2
+        self.HIST_LEN = self.settings['history_length']
+        pass
