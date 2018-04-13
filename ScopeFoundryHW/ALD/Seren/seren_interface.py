@@ -30,6 +30,8 @@ class Seren_Interface(object):
         
         time.sleep(1)
         
+        self.set_serial_control()
+        
 
     def cr_readline(self):
         eol = b'\r'
