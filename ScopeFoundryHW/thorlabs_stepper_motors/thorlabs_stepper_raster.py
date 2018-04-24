@@ -15,7 +15,7 @@ class ThorlabsStepper2DScan(BaseRaster2DSlowScan):
         BaseRaster2DSlowScan.setup(self)
         
         self.settings.New("h_axis", initial="x", dtype=str, choices=("x", "y", "z"))
-        self.settings.New("v_axis", initial="y", dtype=str, choices=("x", "y", "z"))
+        self.settings.New("v_axis", initial="z", dtype=str, choices=("x", "y", "z"))
 
         self.stage = self.app.hardware['thorlabs_stepper_controller']
 
@@ -46,37 +46,68 @@ class ThorlabsStepper2DScan(BaseRaster2DSlowScan):
         v_axis = self.settings['v_axis']
         
         print('calculating distance')
-        h_target = self.stage.settings.get_lq(h_axis + "_target_position")
-        h_target.update_value(h)
-        h_target.write_to_hardware()
+        #h_target = self.stage.settings.get_lq(h_axis + "_target_position")
+        #h_target.update_value(h)
+        #h_target.write_to_hardware()
 
-        v_target = self.stage.settings.get_lq(v_axis + "_target_position")
-        v_target.update_value(v)
-        v_target.write_to_hardware()
-        #self.stage.settings[h_axis + "_target_position"] = h
-        #self.stage.settings[v_axis + "_target_position"] = v
+        #v_target = self.stage.settings.get_lq(v_axis + "_target_position")
+        #v_target.update_value(v)
+        #v_target.write_to_hardware()
+        self.stage.settings[h_axis + "_target_position"] = h
+        self.stage.settings[v_axis + "_target_position"] = v
         
         
         
-        print(self.name, "move_position_start", h,v)
+        print(self.name, "move_position", h,v)
         
         # Wait until stage has moved to target
         while True:
-            if self.interrupt_measurement_called:
-                self.stage.stop_all_axes()
-                break
             
             #print('waiting')
-            time.sleep(0.005)
+            time.sleep(0.10)
                 
             for ax in [h_axis, v_axis]:
                 self.stage.settings.get_lq(ax + "_position").read_from_hardware()
                 
             print("distance_from_target", self.distance_from_target())
+            #print(self.stage.settings['z_acceleration'])
 
-            if self.distance_from_target() < 0.01:
-                print('close enough to target')
+            
+            
+            h_done = False
+            v_done = False
+            
+            messages = self.stage.read_message_queue(h_axis)
+            for m_type, m_id, m_data in messages:
+                if m_type == 'GenericMotor' and m_id == 1: 
+                    h_done = True
+                    # moving done message
+            if len(messages) == 0:
+                h_done = True
+
+            messages = self.stage.read_message_queue(v_axis)
+            for m_type, m_id, m_data in messages:
+                if m_type == 'GenericMotor' and m_id == 1: 
+                    v_done = True
+            if len(messages) == 0:
+                v_done = True
+                
+#            if self.interrupt_measurement_called:
+#                self.stage.stop_all_axes()
+#                break
+
+            if self.interrupt_measurement_called:
+                h_done = True
+                v_done = True
                 break
+
+
+            if self.distance_from_target() < 0.01 and h_done and v_done:
+                print('close enough to target')
+                time.sleep(0.10)
+                break
+            
+            
 #             if (time.time() - t0) > timeout:
 #                 raise IOError("AttoCube ECC100 took too long to reach position")
 #             time.sleep(0.005)

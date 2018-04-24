@@ -11,7 +11,7 @@ class AutoFocusMeasure(Measurement):
         
         self.settings.New('use_current_z', dtype=bool, initial=False)
         self.settings.New('z_center', dtype=float, initial=50, spinbox_decimals=3)
-        self.settings.New('z_range', dtype=float, initial=1, spinbox_decimals=3)
+        self.settings.New('z_range', dtype=float, initial=2, spinbox_decimals=3)
         self.settings.New('Nz', dtype=int, initial=50)
         
         self.settings.New('z_correction', dtype=float)
