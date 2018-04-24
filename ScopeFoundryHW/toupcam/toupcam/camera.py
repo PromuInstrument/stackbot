@@ -16,15 +16,22 @@
 
 # ============= enthought library imports =======================
 # ============= standard library imports ========================
+from __future__ import absolute_import
 import ctypes
 import os
-
 from PIL import Image
 from numpy import zeros, uint8, uint32
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except:
+    from io import StringIO
 # ============= local library imports  ==========================
-from core import lib, TOUPCAM_EVENT_IMAGE, TOUPCAM_EVENT_STILLIMAGE, success, HToupCam
 
+from .core import lib, TOUPCAM_EVENT_IMAGE, TOUPCAM_EVENT_STILLIMAGE, success, HToupCam
+
+def get_number_cameras():
+    x = lib.Toupcam_Enum(None)
+    return x
 
 class ToupCamCamera(object):
     _data = None
@@ -32,12 +39,12 @@ class ToupCamCamera(object):
     _temptint_cb = None
     _save_path = None
 
-    def __init__(self, resolution=2, bits=32):
+    def __init__(self, resolution=2, bits=32, cam_index=0):
         if bits not in (32,):
             raise ValueError('Bits needs to by 8 or 32')
         # bits = 8
         self.resolution = resolution
-        self.cam = self.get_camera()
+        self.cam = self.get_camera(cam_index)
         self.bits = bits
 
     # icamera interface
@@ -211,10 +218,15 @@ class ToupCamCamera(object):
     def set_auto_exposure(self, expo_enabled):
         lib.Toupcam_put_AutoExpoEnable(self.cam, expo_enabled)
 
-    def get_camera(self, cid=None):
-        func = lib.Toupcam_Open
-        func.restype = ctypes.POINTER(HToupCam)
-        cam = func(cid)
+    def get_camera(self, cid=None, cam_index=None):
+        if cam_index is not None:
+            func = lib.ToupCam_OpenByIndex
+            func.restype = ctypes.POINTER(HToupCam)
+            cam = func(cam_index)
+        else:
+            func = lib.Toupcam_Open
+            func.restype = ctypes.POINTER(HToupCam)
+            cam = func(cid)
         return cam
 
     def get_serial(self):
