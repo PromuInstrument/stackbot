@@ -1,0 +1,38 @@
+ScopeFoundryHW.elgato_steamdeck
+===============================
+
+Elgato StreamDeck button controller plug-in for ScopeFoundry.
+
+This interface uses the StreamDeck library by abcminiuser <https://github.com/abcminiuser/python-elgato-streamdeck>
+which relies on the hidapi backend.
+
+Bitmap font and library from AdaFruit by Tony DiCola <https://github.com/adafruit/micropython-adafruit-bitmap-font>
+
+Icons from Open Iconic <https://useiconic.com/open>
+
+These libraries are used under the terms of the MIT licence 
+<https://opensource.org/licenses/MIT>
+
+
+
+
+ScopeFoundry is a Python platform for controlling custom laboratory 
+experiments and visualizing scientific data
+
+<http://www.scopefoundry.org>
+
+This software is not made by or endorsed by Elgato Systems GmbH.
+
+
+Authors
+----------
+
+Edward S. Barnard <esbarnard@lbl.gov>
+
+
+Requirements
+------------
+
+    * ScopeFoundry
+    * Hidapi
+    * Pillow (PIL fork)
