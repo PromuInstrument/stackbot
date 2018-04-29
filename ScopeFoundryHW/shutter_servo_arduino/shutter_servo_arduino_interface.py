@@ -44,7 +44,7 @@ class ShutterServoArduino(object):
         return resp 
     
     
-    def write_posititon(self, pos):
+    def write_position(self, pos):
         pos = int(pos)
         assert 0 <=  pos <= 180
         self.send_cmd(str(pos).encode())
