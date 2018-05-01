@@ -1,0 +1,2 @@
+Icons borrowed from https://github.com/akej74/grid-control
+This project served as a PyQt reference as well
