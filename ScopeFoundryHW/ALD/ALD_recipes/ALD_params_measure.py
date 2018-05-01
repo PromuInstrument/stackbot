@@ -6,10 +6,12 @@ Created on Apr 11, 2018
 '''
 
 from ScopeFoundry import Measurement
-from PyQt5 import QtWidgets
+from PyQt5 import QtWidgets, QtGui, QtCore
+from . import resources
 import pyqtgraph as pg
 import numpy as np
 import time
+from PyQt5.Qt import QVBoxLayout
 
 class ALD_params(Measurement):
     
@@ -42,6 +44,9 @@ class ALD_params(Measurement):
         self.ui.setWindowTitle('ALD Control Panel')
         self.ui.setLayout(self.layout)
         
+        self.GREEN = '://icons//green-led-on.png'
+        self.RED = "://icons//led-red-on.png"
+
         
         self.rf_widget = QtWidgets.QGroupBox('RF Settings')
         self.layout.addWidget(self.rf_widget)
@@ -65,13 +70,42 @@ class ALD_params(Measurement):
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
         self.rf_plot.addItem(self.vLine)
         
+        self.shutter_control_widget = QtWidgets.QGroupBox('Shutter Controls')
+        self.shutter_status = QtWidgets.QLabel(self.shutter_control_widget)
+        font = QtGui.QFont()
+        font.setPointSize(10)
+        font.setBold(False)
+        font.setWeight(50)
+        self.shutter_status.setFont(font)
+        self.shutter_status.setText("")
+        self.shutter_status.setPixmap(QtGui.QPixmap(self.GREEN))
+        self.shutter_status.setScaledContents(True)
+        self.shutter_status.setObjectName('shutter_status_label')
+        self.shutter_status.setGeometry(QtCore.QRect(10,20,20,20))
+        
+        self.layout.addWidget(self.shutter_control_widget)
+        self.shutter_control_widget.setLayout(QtWidgets.QGridLayout())
+        
+        self.shutter_control_widget.layout().addWidget(self.shutter_status, 0, 0)
+        
+        self.shaul_shutter_toggle = QtWidgets.QPushButton('Shaul\'s Huge Shutter Button')
+        self.shaul_shutter_toggle.setMinimumHeight(200)
+        font = self.shaul_shutter_toggle.font()
+        font.setPointSize(24)
+        self.shaul_shutter_toggle.setFont(font)
+        self.shutter_control_widget.layout().addWidget(self.shaul_shutter_toggle, 0, 1)
+        
+
+        
         
         self.recipe_control_widget = QtWidgets.QGroupBox('Recipe Controls')
         self.layout.addWidget(self.recipe_control_widget)
         self.recipe_control_widget.setLayout(QtWidgets.QGridLayout())
-        
+
         self.recipe_start_button = QtWidgets.QPushButton('Start Recipe')
         self.recipe_stop_button = QtWidgets.QPushButton('Stop Recipe')
+
+        
         self.recipe_control_widget.layout().addWidget(self.recipe_start_button, 0, 0)
         self.recipe_control_widget.layout().addWidget(self.recipe_stop_button, 0, 1)
         self.recipe_start_button.clicked.connect(self.app.measurements['ALD_routine'].start)
