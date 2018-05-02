@@ -27,11 +27,11 @@ class MKS_146_Hardware(HardwareComponent):
          
 
 
-        self.settings.New(name="MFC0_SP", initial=0.0002, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
+        self.settings.New(name="MFC0_SP", initial=0.0002, fmt="%1.4f", spinbox_decimals=4, dtype=float, vmin=0.0002, vmax=20, ro=False)
 
         if self.MFC_count > 1:
-            self.settings.New(name="MFC1_flow", fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
-            self.settings.New(name="MFC1_SP", initial=0.0002, fmt="%1.3f", spinbox_decimals=3, dtype=float, ro=False)
+            self.settings.New(name="MFC1_flow", fmt="%1.4f", spinbox_decimals=4, dtype=float, ro=True)
+            self.settings.New(name="MFC1_SP", initial=0.0002, fmt="%1.4f", spinbox_decimals=4, dtype=float, vmin=0.0002, vmax=20, ro=False)
             self.settings.New(name="MFC1_valve", initial="C", dtype=str, choices = [
                                                                     ("Open", "O"),
                                                                     ("Closed", "C"),
