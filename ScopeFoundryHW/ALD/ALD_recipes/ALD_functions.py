@@ -196,7 +196,7 @@ class ALD_routine(Measurement):
                 self.shutdown()
                 break
                 
-            self.plasma_stabilization(0.010) # pressure = 10 mtorr
+            self.plasma_stabilization(0.010) # pressure = 10 mtorr expressed as 0.01
 
             if self.interrupt_measurement_called: 
                 self.shutdown()
