@@ -60,6 +60,13 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.ni_daq.hw.ni_digital_out import NIDigitalOutHW
         self.add_hardware(NIDigitalOutHW(self, name='flip_mirrors', line_names=['apd_flip', '_', '_', '_', '_', '_', '_', '_']))
         
+        from ScopeFoundryHW.shutter_servo_arduino.shutter_servo_arduino_hc import ShutterServoHW
+        self.add_hardware(ShutterServoHW(self))
+        
+        from ScopeFoundryHW.thorlabs_elliptec.elliptec_hw import ThorlabsElliptecSingleHW
+        self.add_hardware(ThorlabsElliptecSingleHW(self, name='collection_filter'))
+        self.add_hardware(ThorlabsElliptecSingleHW(self, name='laser_in_shutter'))
+        
         #Add measurement components
         print("Create Measurement objects")
 
@@ -119,6 +126,9 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         
         from plimg_microscope.power_scan_maps import PowerScanMapMeasurement
         self.add_measurement(PowerScanMapMeasurement(self))
+        
+        from plimg_microscope.laser_line_writer import LaserLineWriter
+        self.add_measurement(LaserLineWriter(self))
         
         #set some default logged quantities
         #

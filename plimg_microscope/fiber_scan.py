@@ -32,6 +32,8 @@ class FiberAPDScan(ThorlabsStepper2DScan):
     def pre_scan_setup(self):
         self.apd = self.app.hardware['apd_counter']
 
+
+        self.count_rate_map = np.zeros(self.scan_shape,dtype=float)
         if self.settings['save_h5']:
             self.count_rate_map_h5 = self.h5_meas_group.create_dataset('count_rate_map', 
                                                                        shape=self.scan_shape,
@@ -45,6 +47,7 @@ class FiberAPDScan(ThorlabsStepper2DScan):
         time.sleep(self.apd.settings['int_time'])
         
         self.display_image_map[k,j,i] = count_rate
+        self.count_rate_map[k,j,i] = count_rate
         if self.settings['save_h5']:
             self.count_rate_map_h5[k,j,i] = count_rate
 

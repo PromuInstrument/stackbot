@@ -58,7 +58,7 @@ class PowerWheelArduino(object):
         
         while(self.is_moving_to):
             if self.debug: print('sleep')
-            time.sleep(0.050)
+            time.sleep(0.1)
             self.read_status()
         
         
@@ -91,6 +91,13 @@ class PowerWheelArduino(object):
             print("read_encoder", self.encoder_pos)
 
         return self.encoder_pos
+    
+    def write_absolute_position_and_wait(self, target_position):
+        current_position = self.read_encoder()
+        print('the current powerwheel position is: ', current_position)
+        delta_steps = target_position - current_position
+        self.write_steps_and_wait(delta_steps)
+        print('the new powerwheel position is: ', self.read_encoder())
         
     def write_zero_encoder(self):
         self.send_cmd(b"az")
