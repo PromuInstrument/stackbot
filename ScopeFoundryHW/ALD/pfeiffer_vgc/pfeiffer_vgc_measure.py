@@ -9,6 +9,7 @@ from ScopeFoundryHW.ALD.pfeiffer_vgc.vgc_sqlite_core import SQLite_Wrapper
 from ScopeFoundry import Measurement
 from PyQt5 import QtWidgets
 import pyqtgraph as pg
+from pyqtgraph.dockarea import DockArea
 import numpy as np
 import time 
 
@@ -34,14 +35,29 @@ class Pfeiffer_VGC_Measure(Measurement):
             print("Connect Pfeiffer HW component first.")
     
     def ui_setup(self):
-        self.ui = QtWidgets.QWidget()
+#         self.ui = QtWidgets.QWidget()
+
+        self.ui = DockArea()
         self.layout = QtWidgets.QVBoxLayout()
         self.ui.show()
         self.ui.setLayout(self.layout)
         self.ui.setWindowTitle('Pfeiffer Controller Pressure History')
-        self.control_widget = QtWidgets.QGroupBox('Pfeiffer VGC Measure')
-        self.layout.addWidget(self.control_widget, stretch=0)
+        self.widget_setup()
+        self.dockArea_setup()
+    
+    def dockArea_setup(self):
+        self.ui.addDock(name='Pressure History', position='top', widget=self.group_widget)
+    
+    def widget_setup(self):
+        
+        self.group_widget = QtWidgets.QGroupBox('Pfeiffer VGC Measure')
+        self.group_widget.setLayout(QtWidgets.QVBoxLayout())
+        
+        self.control_widget = QtWidgets.QWidget()
         self.control_widget.setLayout(QtWidgets.QHBoxLayout())
+        
+        self.group_widget.layout().addWidget(self.control_widget, stretch=0)
+        
 
         ui_list = ('history_length',)
         self.control_widget.layout().addWidget(self.settings.New_UI(include=ui_list))
@@ -53,12 +69,12 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.stop_button.clicked.connect(self.interrupt)
         
         self.plot_widget = pg.GraphicsLayoutWidget()
+        
         self.plot = self.plot_widget.addPlot(title='Chamber Pressures')
         self.plot.setLogMode(y=True)
         self.plot.setYRange(-8,2)
         self.plot.showGrid(y=True)
         self.plot.addLegend()
-        self.layout.addWidget(self.plot_widget)
         self.setup_buffers_constants()
         self.plot_names =  ['TKP_1', 'TKP_2', 'PKR_3', 'MAN_4']
         self.plot_lines = []
@@ -70,7 +86,8 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
         self.plot.addItem(self.vLine)
         
-        
+        self.group_widget.layout().addWidget(self.plot_widget)
+
     
     def db_connect(self):
         self.database = SQLite_Wrapper()
