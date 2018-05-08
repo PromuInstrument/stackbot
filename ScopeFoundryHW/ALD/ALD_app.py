@@ -25,7 +25,7 @@ class ALD_App(BaseMicroscopeApp):
 #         relay.settings['connected'] = True
         
         from ScopeFoundryHW.ALD.ALD_shutter.ALD_shutter import ALD_Shutter
-        self.add_hardware(ALD_Shutter(self))
+        self.add_hardware(ALD_Shutter(self)).settings['connected'] = True
         
         from ScopeFoundryHW.ALD.Lovebox.lovebox_hw import LoveboxHW
         self.add_hardware(LoveboxHW(self))#.settings['connected'] = True
