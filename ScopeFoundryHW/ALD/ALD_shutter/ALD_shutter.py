@@ -22,7 +22,6 @@ class ALD_Shutter(HardwareComponent):
         
     def connect(self):
 
-        self.settings['debug_mode'] = True
         self.servo = ShutterServoArduino(port=self.settings['port'], debug=self.settings['debug_mode'])
         
         if self.settings['debug_mode']:
@@ -31,13 +30,22 @@ class ALD_Shutter(HardwareComponent):
             self.settings.position.connect_to_hardware(write_func=self.servo.write_position,
                                                read_func=self.servo.read_position)
     
+        self.settings.shutter_open.add_listener(self.shutter_cmd, bool)
+    
+    def shutter_cmd(self, x):
+        state = x
+        self.settings['shutter_open'] = x
+        if self.settings['shutter_open']:
+            self.settings['position'] = 1
+        else:
+            self.settings['position'] = 166    
+    
     def shutter_toggle(self):
         self.settings['shutter_open'] = not self.settings['shutter_open']
         if self.settings['shutter_open']:
-            self.settings['position'] = 0
+            self.settings['position'] = 1
         else:
-            self.settings['position'] = 165
-    
+            self.settings['position'] = 166 
     
     def disconnect(self):
         self.settings.disconnect_all_from_hardware()
