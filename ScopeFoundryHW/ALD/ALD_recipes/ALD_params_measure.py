@@ -9,6 +9,7 @@ from ScopeFoundry import Measurement
 from PyQt5 import QtWidgets, QtGui, QtCore
 from . import resources
 import pyqtgraph as pg
+from pyqtgraph.dockarea import DockArea
 import numpy as np
 import time
 from PyQt5.Qt import QVBoxLayout
@@ -19,35 +20,68 @@ class ALD_params(Measurement):
     
     def __init__(self, app):
         Measurement.__init__(self, app)
+
+        
         
     def setup(self):
+        self.cb_stylesheet = '''
+        QCheckBox::indicator {
+            width: 100px;
+            height: 100px;
+        }
+        QCheckBox::indicator:checked {
+            image: url(://icons//green-led-on.png);
+        }
+        QCheckBox::indicator:unchecked {
+            image: url(://icons//led-red-on.png);
+        }
+        '''
+
         self.settings.New('RF_pulse_duration', dtype=int, initial=1)
         self.settings.New('history_length', dtype=int, initial=1000, vmin=1)
-        
+        self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
         self.setup_buffers_constants()
-        
-        self.ui_enabled = True
-        if self.ui_enabled:
-            self.ui_setup()
         
         if hasattr(self.app.hardware, 'seren_hw'):
             self.seren = self.app.hardware.seren_hw
         else:
             print('Connect Seren HW component first.')
 
+        if hasattr(self.app.hardware, 'ald_shutter'):
+            self.shutter = self.app.hardware.ald_shutter
+        else:
+            print('Connect ALD shutter HW component first.')
+        
+        self.ui_enabled = True
+        if self.ui_enabled:
+            self.ui_setup()
         
 
+
     def ui_setup(self):
-        self.ui = QtWidgets.QWidget()
+        
+        self.ui = DockArea()
         self.layout = QtWidgets.QVBoxLayout()
         self.ui.show()
         self.ui.setWindowTitle('ALD Control Panel')
         self.ui.setLayout(self.layout)
-        
-        self.GREEN = '://icons//green-led-on.png'
-        self.RED = "://icons//led-red-on.png"
+        self.widget_setup()
+        self.dockArea_setup()
 
+    def dockArea_setup(self):
+        self.ui.addDock(name="Shutter Controls", position='right', widget=self.shutter_control_widget)
+        self.ui.addDock(name="RF Settings", position='top', widget=self.rf_widget)
+        self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
+    
+    def load_ui_defaults(self):
         
+        pass
+    
+    def save_ui_defaults(self):
+        
+        pass
+    
+    def widget_setup(self):
         self.rf_widget = QtWidgets.QGroupBox('RF Settings')
         self.layout.addWidget(self.rf_widget)
         self.rf_widget.setLayout(QtWidgets.QVBoxLayout())
@@ -70,34 +104,27 @@ class ALD_params(Measurement):
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
         self.rf_plot.addItem(self.vLine)
         
+        
         self.shutter_control_widget = QtWidgets.QGroupBox('Shutter Controls')
-        self.shutter_status = QtWidgets.QLabel(self.shutter_control_widget)
-        font = QtGui.QFont()
-        font.setPointSize(10)
-        font.setBold(False)
-        font.setWeight(50)
-        self.shutter_status.setFont(font)
-        self.shutter_status.setText("")
-        self.shutter_status.setPixmap(QtGui.QPixmap(self.GREEN))
-        self.shutter_status.setScaledContents(True)
-        self.shutter_status.setObjectName('shutter_status_label')
-        self.shutter_status.setGeometry(QtCore.QRect(10,20,20,20))
-        
-        self.layout.addWidget(self.shutter_control_widget)
         self.shutter_control_widget.setLayout(QtWidgets.QGridLayout())
+        self.shutter_control_widget.setStyleSheet(self.cb_stylesheet)
+
+        self.layout.addWidget(self.shutter_control_widget)        
         
+        self.shutter_status = QtWidgets.QCheckBox(self.shutter_control_widget)
         self.shutter_control_widget.layout().addWidget(self.shutter_status, 0, 0)
-        
+        self.shutter.settings.get_lq('shutter_open').connect_bidir_to_widget(self.shutter_status)
+
         self.shaul_shutter_toggle = QtWidgets.QPushButton('Shaul\'s Huge Shutter Button')
         self.shaul_shutter_toggle.setMinimumHeight(200)
         font = self.shaul_shutter_toggle.font()
         font.setPointSize(24)
         self.shaul_shutter_toggle.setFont(font)
         self.shutter_control_widget.layout().addWidget(self.shaul_shutter_toggle, 0, 1)
-        
+        if hasattr(self, 'shutter'):
+            self.shaul_shutter_toggle.clicked.connect(self.shutter.shutter_toggle)
 
-        
-        
+
         self.recipe_control_widget = QtWidgets.QGroupBox('Recipe Controls')
         self.layout.addWidget(self.recipe_control_widget)
         self.recipe_control_widget.setLayout(QtWidgets.QGridLayout())
