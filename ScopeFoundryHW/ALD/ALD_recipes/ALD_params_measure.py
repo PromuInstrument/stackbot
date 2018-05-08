@@ -113,7 +113,7 @@ class ALD_params(Measurement):
         
         self.shutter_status = QtWidgets.QCheckBox(self.shutter_control_widget)
         self.shutter_control_widget.layout().addWidget(self.shutter_status, 0, 0)
-        self.shutter.settings.get_lq('shutter_open').connect_bidir_to_widget(self.shutter_status)
+        self.shutter.settings.shutter_open.connect_to_widget(self.shutter_status)
 
         self.shaul_shutter_toggle = QtWidgets.QPushButton('Shaul\'s Huge Shutter Button')
         self.shaul_shutter_toggle.setMinimumHeight(200)
