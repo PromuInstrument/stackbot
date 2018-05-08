@@ -16,7 +16,7 @@ class ALD_Shutter(HardwareComponent):
     
     def setup(self):
         
-        self.settings.New('port', dtype=str, initial='COM5', ro=False)
+        self.settings.New('port', dtype=str, initial='COM10', ro=False)
         self.settings.New('position', dtype=int, initial=0, ro=False)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=False)
         

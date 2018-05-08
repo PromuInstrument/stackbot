@@ -30,7 +30,7 @@ class ShutterServoArduino(object):
         
     def send_cmd(self, cmd):
         if self.debug: logger.debug( "send_cmd:" + repr(cmd))
-        self.ser.write(cmd + b"\r\n")
+        self.ser.write(cmd + "\r\n")
     
     def ask(self, cmd):
         if self.debug: logger.debug( "ask:" +  repr(cmd) )
@@ -43,12 +43,12 @@ class ShutterServoArduino(object):
     def write_position(self, pos):
         pos = int(pos)
         assert 0 <=  pos <= 180
-        self.send_cmd(str(pos).encode())
+        self.send_cmd(str(pos))
         self.position = pos
         return self.position
 
     def read_position(self):
-        resp = self.ask(b"?")
+        resp = self.ask("?")
         self.position = int(resp)
         return self.position
         
