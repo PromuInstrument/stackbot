@@ -6,12 +6,10 @@ Created on 31.08.2014
 from ScopeFoundry import HardwareComponent
 
 try:
-    from equipment.keithley_sourcemeter import KeithleySourceMeter
+    from .keithley_sourcemeter_interface import KeithleySourceMeter
 except Exception as err:
-    print "Cannot load required modules for Keithley SourceMeter:", err
+    print("Cannot load required modules for Keithley SourceMeter:", err)
 
-
-KeithleyPort = 'COM1'
 
 class KeithleySourceMeterComponent(HardwareComponent): #object-->HardwareComponent
     
@@ -21,15 +19,17 @@ class KeithleySourceMeterComponent(HardwareComponent): #object-->HardwareCompone
     def setup(self):
         self.debug = True
         
+        self.port = self.add_logged_quantity('port', dtype=str, initial='COM21')
+        
         self.voltage = self.add_logged_quantity('v', dtype=float, unit='V', ro=True, si=True)
         self.current = self.add_logged_quantity('i', dtype=float, unit='A', ro=True, si=True)
         
         
     def connect(self):
-        if self.debug: print "connecting to keithley sourcemeter"
+        if self.debug: print("connecting to keithley sourcemeter")
         
         # Open connection to hardware
-        self.keithley = KeithleySourceMeter(port=KeithleyPort, debug=True)
+        self.keithley = KeithleySourceMeter(port=self.port.val, debug=True)
         
         # connect logged quantities
         self.voltage.hardware_read_func = \
@@ -37,7 +37,7 @@ class KeithleySourceMeterComponent(HardwareComponent): #object-->HardwareCompone
         self.current.hardware_read_func = \
             self.keithley.getI_A
         
-        print 'connected to ',self.name
+        print('connected to ',self.name)
     
 
     def disconnect(self):
@@ -51,7 +51,7 @@ class KeithleySourceMeterComponent(HardwareComponent): #object-->HardwareCompone
         # clean up hardware object
         del self.keithley
         
-        print 'disconnected ',self.name
+        print('disconnected ',self.name)
         
         
         
