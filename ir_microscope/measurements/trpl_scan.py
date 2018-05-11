@@ -6,13 +6,19 @@ from ScopeFoundry.helper_funcs import sibling_path
 import numpy as np
 import time
 import pyqtgraph as pg
-from ScopeFoundryHW.attocube_ecc100.attocube_slowscan import AttoCube2DSlowScan
+from .ir_microscope_scans import IRMicroscope2DScan
+import datetime
 
-class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
+
+class TRPL2DScan(IRMicroscope2DScan):
     
-    name = 'trpl_scan'
+    name = 'trpl_2d_scan'
+    
+    def __init__(self, app):
+        IRMicroscope2DScan.__init__(self, app, use_external_range_sync=True)
+    
     def setup(self):
-        AttoCube2DSlowScan.setup(self)
+        IRMicroscope2DScan.setup(self)
         self.ph_hw = self.app.hardware['picoharp']
         
         dui_filename = sibling_path(__file__,"picoharp_hist_measure_details.ui")
@@ -29,9 +35,11 @@ class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
         ph_hw.settings.count_rate0.connect_to_widget(self.dui.ch0_doubleSpinBox)
         ph_hw.settings.count_rate1.connect_to_widget(self.dui.ch1_doubleSpinBox)
         ph_hw.settings.histogram_channels.connect_to_widget(self.dui.histogram_channels_doubleSpinBox)
-        
-    
+
+
+
     def pre_scan_setup(self):
+        IRMicroscope2DScan.pre_scan_setup(self)
         
         self.ph  = self.ph_hw.picoharp
         
@@ -42,35 +50,31 @@ class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
         self.num_hist_chans=self.ph_hw.settings['histogram_channels']
         self.data_slice = slice(0,self.num_hist_chans)
         
-
         self.integrated_count_map_h5 = self.h5_meas_group.create_dataset('integrated_count_map', 
                                                                    shape=self.scan_shape,
                                                                    dtype=float, 
                                                                    compression='gzip')
 
         time_trace_map_shape = self.scan_shape + (self.num_hist_chans,)
-       
+        self.time_trace_map_h5 = self.h5_meas_group.create_dataset('time_trace_map',
+                                                              shape=time_trace_map_shape,
+                                                              dtype=float)
         
         self.time_array = self.ph.time_array*1e-3
         self.h5_meas_group['time_array'] = self.time_array[self.data_slice]
         self.elapsed_time_h5 = self.h5_meas_group['elapsed_time'] = np.zeros(self.scan_shape, dtype=float)
-        
-        #self.app.settings_auto_save()
-        
-
+ 
         # pyqt graph
         self.initial_scan_setup_plotting = True
 
     def post_scan_cleanup(self):
-        pass
+        IRMicroscope2DScan.post_scan_cleanup(self)
+
     
     def collect_pixel(self, pixel_num, k, j, i):
-        
+        IRMicroscope2DScan.collect_pixel(self, pixel_num, k, j, i)
         # collect data
         print(self.name, 'collect_pixel', pixel_num, k, j, i)
-        #t0 = time.time()
-
-        #hist_data, elapsed_time = self.read_picoharp_histogram()
         
         ph = self.ph_hw.picoharp
         ph.start_histogram()
@@ -94,11 +98,9 @@ class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
         # display count-AC_FRAMERATE
         self.integrated_count_map_h5[k,j,i] = hist_data.sum() * 1.0/elapsed_time
         self.display_image_map[k,j,i] = hist_data.sum() * 1.0/elapsed_time
-        
-        import datetime
+
         print('pixel',  datetime.timedelta(seconds=(self.Npixels - pixel_num)*elapsed_time*1e-3), 'left')
         
-        print( 'pixel done' )
     
     def read_picoharp_histogram(self):
 
@@ -121,7 +123,7 @@ class Picoharp_AttoCube_2DSlowScan(AttoCube2DSlowScan):
 
         
     def update_display(self):
-        AttoCube2DSlowScan.update_display(self)
+        IRMicroscope2DScan.update_display(self)
         
         # setup lifetime window
         if not hasattr(self, 'lifetime_graph_layout'):
