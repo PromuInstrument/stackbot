@@ -12,7 +12,10 @@ from ScopeFoundry import h5_io
 class M4Hyperspectral2DScan(AttoCube2DSlowScan):
     
     name = 'hyperspectral_2d_scan'
-        
+    
+    def __init__(self, app):
+        AttoCube2DSlowScan.__init__(self, app, use_external_range_sync=True)
+
     def setup(self):
         AttoCube2DSlowScan.setup(self)
         #print(self.name, "setup() called")
@@ -48,12 +51,29 @@ class M4Hyperspectral2DScan(AttoCube2DSlowScan):
                                                                        shape=self.map_shape,
                                                                        dtype=float, 
                                                                        compression='gzip')
+            #self.wls_h5 = self.h5_meas_group.create_dataset('wls', shape=1024, dtype = float, compression ='gzip')
 
     def collect_pixel(self, pixel_num, k, j, i):
         print(self.name, "collecting pixel (k,j,i):",k,j,i, "pixel:", pixel_num+1,"of",self.Npixels,
               ' -->time remaining (min):',(self.Npixels-pixel_num-1)*self.app.hardware['winspec_remote_client'].settings['acq_time']/60.0)
         self.ccd_measure.interrupt_measurement_called = self.interrupt_measurement_called
-        hdr,data = self.ccd_measure.acquire_data(debug=False)
+        
+        
+        counter=0 
+        retry = True
+        while(retry):
+            try:
+                counter +=1
+                hdr,data = self.ccd_measure.acquire_data(debug=False)
+                print(counter)
+                retry = False
+            except:
+                print('An error occurred while aquire_data(), try', counter, '/4')
+                retry = True
+            finally:
+                if counter > 3:
+                    retry = False
+                    #self.measurement_sucessfully_completed = False
         
         if hdr is None or data is None:
             raise IOError("Failed to acquire Data (probably interrupted)")
@@ -63,6 +83,7 @@ class M4Hyperspectral2DScan(AttoCube2DSlowScan):
         if pixel_num == 0:
             self.wls = self.ccd_measure.evaluate_wls_acton_spectrometer(self.hdr, self.px_index)
             self.h5_meas_group['wls'] = self.wls            
+            print(self.h5_meas_group['wls'].value)
             time.sleep(0.01)
             
         self.display_image_map[k,j,i] = self.data.sum()
