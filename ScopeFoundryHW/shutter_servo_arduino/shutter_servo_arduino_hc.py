@@ -12,12 +12,14 @@ except Exception as err:
     print("Cannot load required modules for ShutterServoArduino:", err)
 
 
-SHUTTER_SERVO_ARDUINO_PORT = "COM6"
 
 class ShutterServoHW(HardwareComponent):
     
     def setup(self):
         self.name = 'shutter_servo'
+        
+        
+        self.port = self.add_logged_quantity('port', dtype=str, initial='COM6', )
         
         # Create logged quantities        
         self.angle = self.add_logged_quantity("angle", dtype=int, vmin=0, vmax=180, unit='deg')
@@ -35,7 +37,7 @@ class ShutterServoHW(HardwareComponent):
         if self.debug_mode.val: self.log.debug( "connecting to shutter servo arduino" )
         
         # Open connection to hardware
-        self.shutter_servo = ShutterServoArduino(port=SHUTTER_SERVO_ARDUINO_PORT, debug=self.debug_mode.val)
+        self.shutter_servo = ShutterServoArduino(port=self.port.val, debug=self.debug_mode.val)
 
         # connect logged quantities
         self.angle.hardware_read_func = \

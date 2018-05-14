@@ -10,8 +10,9 @@ class AttoCube2DSlowScan(BaseRaster2DSlowScan):
     
     name = "AttoCube2DSlowScan"
     
-    def __init__(self, app):
-        BaseRaster2DSlowScan.__init__(self, app, h_limits=(-12.5,12.5), v_limits=(-12.5,12.5), h_unit="mm", v_unit="mm")        
+    def __init__(self, app, use_external_range_sync=False):
+        BaseRaster2DSlowScan.__init__(self, app, h_limits=(-12.5,12.5), v_limits=(-12.5,12.5), h_unit="mm", v_unit="mm", 
+                                      use_external_range_sync=use_external_range_sync)        
     
     def setup(self):
         BaseRaster2DSlowScan.setup(self)

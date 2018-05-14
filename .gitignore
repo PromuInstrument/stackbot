@@ -25,3 +25,5 @@ trpl_microscope/log/
 plimg_microscope/log/
 ir_microscope/log/
 ScopeFoundry/log/
+ScopeFoundryHW/thorlabs_stepper_motors/log/
+ScopeFoundry/tests/log/

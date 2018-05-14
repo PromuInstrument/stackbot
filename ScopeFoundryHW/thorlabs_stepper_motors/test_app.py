@@ -9,6 +9,8 @@ class ThorlabsStepperTestApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_stepper_motors.thorlabs_stepper_controller_hw import ThorlabsStepperControllerHW
         self.add_hardware(ThorlabsStepperControllerHW(self, ax_names='xyz'))
         
+        from ScopeFoundryHW.thorlabs_stepper_motors.thorlabs_stepper_raster import ThorlabsStepperDelay2DScan
+        self.add_measurement(ThorlabsStepperDelay2DScan(self))
         
 if __name__ == '__main__':
     import sys
