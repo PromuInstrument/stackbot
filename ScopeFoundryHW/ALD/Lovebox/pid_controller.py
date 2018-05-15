@@ -78,12 +78,12 @@ class PIDController(object):
         return self.outp2
 
     def read_prop_band(self):
-        prop = self.send_analog_read(0x1009)
+        prop = 0.1*self.send_analog_read(0x1009)
         return prop
 
     def set_prop_band(self, p):
         assert 0. <= p <= 999.9
-        self.send_analog_write(0x1009, p)
+        self.send_analog_write(0x1009, int(10*p))
     
     def read_integral_time(self):
         integral_t = self.send_analog_read(0x100A)
