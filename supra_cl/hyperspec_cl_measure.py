@@ -38,6 +38,7 @@ class HyperSpecCLMeasure(SyncRasterScan):
         ccd.settings['readout_mode'] = 'FullVerticalBinning' # FVB
         #ccd.settings['num_kin'] = self.Npixels
         ccd.settings['exposure_time'] = (1.0 / sync_raster_daq.settings['dac_rate']) - 6.0e-3
+        
         #ccd.settings['kin_time'] = (1.0 / sync_raster_daq.settings['dac_rate'])
         # Other useful defaults
         #ccd.settings['output_amp'] = 0
@@ -52,7 +53,13 @@ class HyperSpecCLMeasure(SyncRasterScan):
         ccd_Ny, ccd_Nx = ccd.settings['readout_shape']
     
         assert ccd_Ny == 1
-    
+
+
+        hbin = ccd.ccd_dev.get_current_hbin()
+        px_index = np.arange(ccd_Nx)
+        spec_hw = self.app.hardware['acton_spectrometer']
+        self.wls = spec_hw.get_wl_calibration(px_index, hbin)
+
         # create data buffer
         self.spec_buffer = np.zeros(shape=(self.Npixels, ccd_Nx), dtype=np.int32) # buffer for spectra (for one spatial frame)
         self.spec_map = np.zeros( shape=self.scan_shape + (ccd_Nx,), dtype=np.int32) # spatial hyperspec data cube
@@ -63,7 +70,7 @@ class HyperSpecCLMeasure(SyncRasterScan):
         self.andor_ccd_total_i = 0
         if self.settings['save_h5']:
             self.spec_map_h5 = self.create_h5_framed_dataset('spec_map', self.spec_map, compression=None, chunks=(1, 1, 1, Ni, ccd_Nx))
-            #self.h5_m['wls'] = 
+            self.h5_m['wls'] = self.wls
 
         # start ccd camera, wait for trigger
         ccd.ccd_dev.start_acquisition()

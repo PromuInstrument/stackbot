@@ -164,7 +164,7 @@ class HyperSpecCLQuadView(Measurement):
             title="Spectrum", colspan=2)
         self.spectrum_plot.addLegend()
         self.spectrum_plot.showButtons()
-        self.spectrum_plot.setLabel('bottom', text='wavelength', units='px')
+        self.spectrum_plot.setLabel('bottom', text='wavelength', units='nm')
         self.current_spec_plotline = self.spectrum_plot.plot()
         #self.roi_spec_plotline = self.spectrum_plot.plot()
         
@@ -256,14 +256,16 @@ class HyperSpecCLQuadView(Measurement):
 
             
         # Update Spectrum
-        # need wavelength
         M = self.hyperspec_scan
-        self.current_spec_plotline.setData(
+        self.current_spec_plotline.setData(M.wls,
             M.spec_buffer[M.andor_ccd_pixel_i-1])
         
         
         try:
-            kk0, kk1 = self.bp_region.getRegion()
+            wl0, wl1 = self.bp_region.getRegion()
+            kk0 = M.wls.searchsorted(wl0)
+            kk1 = M.wls.searchsorted(wl1)
+            #kk0, kk1 = self.bp_region.getRegion()
             bp_img = M.spec_map[0,:,:, int(kk0):int(kk1)].sum(axis=2)
             self.bp_img_item.setImage(bp_img, autoDownsample=True, autoRange=False, autoLevels=False)
             self.hist_lut_bp.imageChanged(autoLevel=False)
