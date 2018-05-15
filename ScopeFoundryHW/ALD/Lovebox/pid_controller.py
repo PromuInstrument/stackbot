@@ -17,7 +17,7 @@ class PIDController(object):
     def __init__(self,port="COM1", address=0x01, debug=False):
         self.port = port
         self.address = address
-        self.debug =debug
+        self.debug = debug
         self.lock = Lock()
         
         """If port is a Serial object (or other file-like object)
