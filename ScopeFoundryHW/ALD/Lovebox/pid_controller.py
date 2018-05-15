@@ -1,6 +1,6 @@
 '''
 @author: Ed Barnard
-Updated by Alan Buckley (2/6/2018) and (3/15/18)
+Updated by Alan Buckley (2/6, 3/15, 5/15 of 2018)
 '''
 
 from __future__ import division
@@ -77,6 +77,29 @@ class PIDController(object):
         self.outp2 = outp2
         return self.outp2
 
+    def read_prop_band(self):
+        prop = self.send_analog_read(0x1009)
+        return prop
+
+    def set_prop_band(self, p):
+        assert 0. <= p <= 999.9
+        self.send_analog_write(0x1009, p)
+    
+    def read_integral_time(self):
+        integral_t = self.send_analog_read(0x100A)
+        return integral_t
+    
+    def set_integral_time(self, integral_t):
+        assert 0 <= int(integral_t) <= 9999
+        self.send_analog_write(0x100A, int(integral_t))
+    
+    def read_derivative_time(self):
+        derivative_t = self.send_analog_read(0x100B)
+        return derivative_t
+        
+    def set_derivative_time(self, derivative_t):
+        assert 0 <= int(derivative_t) <= 9999
+        self.send_analog_write(0x100B, derivative_t)
 
     def read_ctrl_method(self):
         self.ctrl_method_i = self.send_analog_read(0x1005)
