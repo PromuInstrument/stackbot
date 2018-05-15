@@ -13,19 +13,22 @@ class LoveboxHW(HardwareComponent):
     
     name = 'lovebox'
     CTRL_METHODS = ("PID", "Manual")
+    initial_PID_defaults = (30.0, 28, 7)
+    desired_PID_profile = (50.0, 30, 10)
 #     CTRL_METHODS = ("PID", "ON/OFF", "Manual", "PID Program Ctrl")
 #     HEAT_COOL_CTRLS = ("Heating")
 
     def setup(self):
+        self.active_profile = self.desired_PID_profile
         self.settings.New(name='port', initial='COM4', dtype=str, ro=False)
         self.settings.New(name='control_method', initial='PID', dtype=str, choices=self.CTRL_METHODS, ro=False)
         self.settings.New(name='heat_cool_control', initial='Heating', dtype=str, ro=True)
         self.settings.New(name='pv_temp', initial=0.0, dtype=float, spinbox_decimals=1, ro=True)
         self.settings.New(name='sv_setpoint', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
         self.settings.New(name='output1', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
-        self.settings.New(name='Proportional_band', initial=0.0, dtype=float, spinbox_decimals=1, ro=False, vmin=0.1, vmax=999.9)
-        self.settings.New(name='Integral_time', initial=0, dtype=int, ro=False, vmin=0, vmax=9999)
-        self.settings.New(name='Derivative_time', initial=0, dtype=int, ro=False, vmin=0, vmax=9999)
+        self.settings.New(name='Proportional_band', initial=self.active_profile[0], dtype=float, spinbox_decimals=1, ro=False, vmin=0.1, vmax=999.9)
+        self.settings.New(name='Integral_time', initial=self.active_profile[1], dtype=int, ro=False, vmin=0, vmax=9999)
+        self.settings.New(name='Derivative_time', initial=self.active_profile[2], dtype=int, ro=False, vmin=0, vmax=9999)
         
 #         lq.change_ro(True)
         
