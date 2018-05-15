@@ -23,7 +23,9 @@ class LoveboxHW(HardwareComponent):
         self.settings.New(name='pv_temp', initial=0.0, dtype=float, spinbox_decimals=1, ro=True)
         self.settings.New(name='sv_setpoint', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
         self.settings.New(name='output1', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
-#         self.settings.New(name='output2', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
+        self.settings.New(name='Proportional_band', initial=0.0, dtype=float, spinbox_decimals=1, ro=False, vmin=0.1, vmax=999.9)
+        self.settings.New(name='Integral_time', initial=0, dtype=int, ro=False, vmin=0, vmax=9999)
+        self.settings.New(name='Derivative_time', initial=0, dtype=int, ro=False, vmin=0, vmax=9999)
         
 #         lq.change_ro(True)
         
@@ -47,9 +49,17 @@ class LoveboxHW(HardwareComponent):
         self.settings.get_lq('output1').connect_to_hardware(
                                                     write_func=self.lovebox.set_output1,
                                                     read_func=self.lovebox.read_output1)
-#         self.settings.get_lq('output2').connect_to_hardware(
-#                                                     write_func=self.lovebox.set_output2,
-#                                                     read_func=self.lovebox.read_output2)
+
+        self.settings.get_lq('Proportional_band').connect_to_hardware(
+                                                    read_func=self.lovebox.read_prop_band)
+        
+        self.settings.get_lq('Integral_time').connect_to_hardware(
+                                                    read_func=self.lovebox.read_integral_time)
+        
+        self.settings.get_lq('Derivative_time').connect_to_hardware(
+                                                    read_func=self.lovebox.read_derivative_time)
+        
+        
         self.set_control_method(self.settings['control_method'])
         
     def set_control_method(self, control):
