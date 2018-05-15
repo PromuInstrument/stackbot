@@ -54,12 +54,15 @@ class LoveboxHW(HardwareComponent):
                                                     read_func=self.lovebox.read_output1)
 
         self.settings.get_lq('Proportional_band').connect_to_hardware(
+                                                    write_func=self.lovebox.set_prop_band,
                                                     read_func=self.lovebox.read_prop_band)
         
         self.settings.get_lq('Integral_time').connect_to_hardware(
+                                                    write_func=self.lovebox.set_integral_time,
                                                     read_func=self.lovebox.read_integral_time)
         
         self.settings.get_lq('Derivative_time').connect_to_hardware(
+                                                    write_func=self.lovebox.set_derivative_time,
                                                     read_func=self.lovebox.read_derivative_time)
         
         
