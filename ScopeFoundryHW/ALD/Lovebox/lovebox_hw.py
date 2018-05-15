@@ -19,7 +19,7 @@ class LoveboxHW(HardwareComponent):
 #     HEAT_COOL_CTRLS = ("Heating")
 
     def setup(self):
-        self.active_profile = self.desired_PID_profile
+        self.active_profile = self.initial_PID_defaults
         self.settings.New(name='port', initial='COM4', dtype=str, ro=False)
         self.settings.New(name='control_method', initial='PID', dtype=str, choices=self.CTRL_METHODS, ro=False)
         self.settings.New(name='heat_cool_control', initial='Heating', dtype=str, ro=True)
@@ -27,6 +27,7 @@ class LoveboxHW(HardwareComponent):
         self.settings.New(name='sv_setpoint', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
         self.settings.New(name='output1', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
         self.settings.New(name='Proportional_band', initial=self.active_profile[0], dtype=float, spinbox_decimals=1, ro=False, vmin=0.1, vmax=999.9)
+        
         self.settings.New(name='Integral_time', initial=self.active_profile[1], dtype=int, ro=False, vmin=0, vmax=9999)
         self.settings.New(name='Derivative_time', initial=self.active_profile[2], dtype=int, ro=False, vmin=0, vmax=9999)
         
@@ -65,9 +66,18 @@ class LoveboxHW(HardwareComponent):
                                                     write_func=self.lovebox.set_derivative_time,
                                                     read_func=self.lovebox.read_derivative_time)
         
-        
         self.set_control_method(self.settings['control_method'])
-        
+
+               
+        if self.lovebox.read_ctrl_method()[1] == 'PID':
+            '''Force update of LQs since direct update does not work.'''
+            p, i, d = self.active_profile
+            self.lovebox.set_prop_band(p)
+            self.lovebox.set_integral_time(i)
+            self.lovebox.set_derivative_time(d)
+
+            
+
     def set_control_method(self, control):
         select = self.CTRL_METHODS.index(control)
         self.lovebox.set_ctrl_method(select)
