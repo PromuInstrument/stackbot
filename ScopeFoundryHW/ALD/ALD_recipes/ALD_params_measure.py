@@ -191,9 +191,9 @@ class ALD_params(Measurement):
         self.thermal_history = np.zeros((self.T_CHANS, self.HIST_LEN))
 
     def routine(self):
-        rf_entry = np.array(self.seren.settings['forward_power'], \
-                         self.seren.settings['reflected_power'])
-        t_entry = np.array(self.lovebox.settings['pv_temp'])
+        rf_entry = np.array([self.seren.settings['forward_power_readout'], \
+                         self.seren.settings['reflected_power']])
+        t_entry = np.array([self.lovebox.settings['pv_temp']])
         
         if self.history_i < self.HIST_LEN:
             self.index = self.history_i % self.HIST_LEN
@@ -212,7 +212,7 @@ class ALD_params(Measurement):
     def update_display(self):
         level = self.lovebox.settings['sv_setpoint']
         self.hLine1.setPos(level)
-        self.vLine.setPos(self.index)
+#         self.vLine.setPos(self.index)
         self.vLine1.setPos(self.index)
         
         for i in range(self.T_CHANS):
@@ -226,8 +226,10 @@ class ALD_params(Measurement):
         dt = 0.2
         self.HIST_LEN = self.settings['history_length']
         while not self.interrupt_measurement_called:
-            self.seren.settings.forward_power.read_from_hardware()
+            self.seren.settings.forward_power_readout.read_from_hardware()
             self.seren.settings.reflected_power.read_from_hardware()
+            self.lovebox.settings.pv_temp.read_from_hardware()
+            self.lovebox.settings.sv_setpoint.read_from_hardware()
             self.routine()
             time.sleep(dt)
             
