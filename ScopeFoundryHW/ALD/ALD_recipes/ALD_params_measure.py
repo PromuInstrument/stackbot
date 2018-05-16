@@ -38,7 +38,7 @@ class ALD_params(Measurement):
         '''
 
         self.settings.New('RF_pulse_duration', dtype=int, initial=1)
-        self.settings.New('history_length', dtype=int, initial=1000, vmin=1)
+        self.settings.New('history_length', dtype=int, initial=10000, vmin=1)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
         self.setup_buffers_constants()
         
