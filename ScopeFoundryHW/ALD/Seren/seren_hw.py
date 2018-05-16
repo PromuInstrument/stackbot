@@ -14,7 +14,8 @@ class Seren_HW(HardwareComponent):
     def setup(self):
         self.settings.New(name="port", initial="COM6", dtype=str, ro=False)
         self.settings.New(name="enable_serial", initial=True, dtype=bool, ro=False)
-        self.settings.New(name="forward_power", initial=0, dtype=int, ro=False)
+        self.settings.New(name="set_forward_power", initial=0, dtype=int, ro=False)
+        self.settings.New(name="forward_power_readout", initial=0, dtype=int, ro=True)
         self.settings.New(name="reflected_power", initial=0, dtype=int, ro=True)
         self.settings.New(name="RF_enable", initial=False, dtype=bool, ro=False)
         
@@ -27,11 +28,15 @@ class Seren_HW(HardwareComponent):
         
         self.settings.RF_enable.connect_to_hardware(write_func=lambda x: self.RF_toggle(x))
         
-        self.settings.forward_power.connect_to_hardware(write_func=lambda x: self.write_fp(x),
-                                                        read_func=self.read_fp)
+        self.settings.set_forward_power.connect_to_hardware(write_func=lambda x: self.write_fp(x))
+        
+        self.settings.forward_power_readout.connect_to_hardware(read_func=self.read_fp)
 
         self.settings.reflected_power.connect_to_hardware(read_func=self.read_rp)
 
+        self.settings.set_forward_power.add_listener(self.read_from_hardware)
+
+        self.settings.RF_enable.add_listener(self.read_from_hardware)
 
     def serial_toggle(self, status):
         if status:
@@ -47,7 +52,8 @@ class Seren_HW(HardwareComponent):
     
     def write_fp(self, power):
         self.seren.write_forward(power)
-
+        self.read_from_hardware()
+        
     def read_fp(self):
         return self.seren.read_forward()
     
