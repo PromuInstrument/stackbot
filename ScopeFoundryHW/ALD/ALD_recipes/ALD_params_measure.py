@@ -52,6 +52,9 @@ class ALD_params(Measurement):
         else:
             print('Connect ALD shutter HW component first.')
         
+        if hasattr(self.app.hardware, 'lovebox'):
+            self.lovebox = self.app.hardware.lovebox
+        
         self.ui_enabled = True
         if self.ui_enabled:
             self.ui_setup()
@@ -70,8 +73,9 @@ class ALD_params(Measurement):
 
     def dockArea_setup(self):
         self.ui.addDock(name="Shutter Controls", position='right', widget=self.shutter_control_widget)
-        self.ui.addDock(name="RF Settings", position='top', widget=self.rf_widget)
-        self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
+        self.ui.addDock(name="Thermal History", position='top', widget=self.thermal_widget)
+#         self.ui.addDock(name="RF Settings", position='top', widget=self.rf_widget)
+#         self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
     
     def load_ui_defaults(self):
         
@@ -82,6 +86,35 @@ class ALD_params(Measurement):
         pass
     
     def widget_setup(self):
+        self.setup_shutter_control_widget()
+        self.setup_thermal_control_widget()
+
+    def setup_thermal_control_widget(self):
+        self.thermal_widget = QtWidgets.QGroupBox('Thermal Controller Overview')
+        self.layout.addWidget(self.thermal_widget)
+        self.thermal_widget.setLayout(QtWidgets.QVBoxLayout())
+        self.thermal_channels = 1
+        
+        plot_ui_list = ('history_length',)
+        self.thermal_widget.layout().addWidget(self.settings.New_UI(include=plot_ui_list))
+        self.thermal_plot_widget = pg.GraphicsLayoutWidget()
+        self.thermal_plot = self.thermal_plot_widget.addPlot(title='Temperature History')
+        self.thermal_plot.showGrid(y=True)
+        self.thermal_plot.addLegend()
+        self.thermal_widget.layout().addWidget(self.thermal_plot_widget)
+        self.thermal_plot_names = ['Heater Temperature']
+        self.thermal_plot_lines = []
+        for i in range(self.thermal_channels):
+            color = pg.intColor(i)
+            plot_line = self.thermal_plot.plot([1], pen=pg.mkPen(color, width=2),
+                                                    name = self.thermal_plot_names[i])
+            self.thermal_plot_lines.append(plot_line)
+        self.vLine1 = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine1 = pg.InfiniteLine(angle=0, movable=False)
+        self.thermal_plot.addItem(self.vLine1)
+        self.thermal_plot.addItem(self.hLine1)
+    
+    def setup_rf_widget(self):
         self.rf_widget = QtWidgets.QGroupBox('RF Settings')
         self.layout.addWidget(self.rf_widget)
         self.rf_widget.setLayout(QtWidgets.QVBoxLayout())
@@ -104,7 +137,7 @@ class ALD_params(Measurement):
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
         self.rf_plot.addItem(self.vLine)
         
-        
+    def setup_shutter_control_widget(self):
         self.shutter_control_widget = QtWidgets.QGroupBox('Shutter Controls')
         self.shutter_control_widget.setLayout(QtWidgets.QGridLayout())
         self.shutter_control_widget.setStyleSheet(self.cb_stylesheet)
@@ -124,7 +157,7 @@ class ALD_params(Measurement):
         if hasattr(self, 'shutter'):
             self.shaul_shutter_toggle.clicked.connect(self.shutter.shutter_toggle)
 
-
+    def setup_recipe_control_widget(self):
         self.recipe_control_widget = QtWidgets.QGroupBox('Recipe Controls')
         self.layout.addWidget(self.recipe_control_widget)
         self.recipe_control_widget.setLayout(QtWidgets.QGridLayout())
@@ -149,28 +182,44 @@ class ALD_params(Measurement):
     
     
     def setup_buffers_constants(self):
-        self.HIST_LEN = 500
-        self.NUM_CHANS = 2
+        self.HIST_LEN = self.settings.history_length.val
+        self.RF_CHANS = 2
+        self.T_CHANS = 1
         self.history_i = 0
         self.index = 0
-        self.rf_history = np.zeros((self.NUM_CHANS, self.HIST_LEN))
+        self.rf_history = np.zeros((self.RF_CHANS, self.HIST_LEN))
+        self.thermal_history = np.zeros((self.T_CHANS, self.HIST_LEN))
 
     def routine(self):
-        entry = np.array(self.seren.settings['forward_power'], \
+        rf_entry = np.array(self.seren.settings['forward_power'], \
                          self.seren.settings['reflected_power'])
+        t_entry = np.array(self.lovebox.settings['pv_temp'])
+        
         if self.history_i < self.HIST_LEN:
             self.index = self.history_i % self.HIST_LEN
         else:
             self.index = self.HIST_LEN
-            self.pressure_history = np.roll(self.rf_history, -1, axis=1)
-        self.pressure_history[:, self.index-1] = entry
+            self.rf_history = np.roll(self.rf_history, -1, axis=1)
+            self.thermal_history = np.roll(self.thermal_history, -1, axis=1)
+        self.rf_history[:, self.index-1] = rf_entry
+        self.thermal_history[:, self.index-1] = t_entry
+        
+        
         self.history_i += 1
+        
+        
     
     def update_display(self):
+        level = self.lovebox.settings['sv_setpoint']
+        self.hLine1.setPos(level)
         self.vLine.setPos(self.index)
-        for i in range(self.NUM_CHANS):
-            self.plot_lines[i].setData(
-                self.rf_history[i, :self.index])
+        self.vLine1.setPos(self.index)
+        
+        for i in range(self.T_CHANS):
+#             self.plot_lines[i].setData(
+#                 self.rf_history[i, :self.index])
+            self.thermal_plot_lines[i].setData(
+                self.thermal_history[i, :self.index])
     
     
     def run(self):
