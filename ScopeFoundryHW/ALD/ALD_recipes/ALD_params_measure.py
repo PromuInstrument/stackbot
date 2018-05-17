@@ -138,8 +138,10 @@ class ALD_params(Measurement):
             plot_line = self.rf_plot.plot([1], pen=pg.mkPen(color, width=2),
                                           name = self.rf_plot_names[i])
             self.rf_plot_lines.append(plot_line)
-        self.vLine = pg.InfiniteLine(angle=90, movable=False)
+        self.vLine2 = pg.InfiniteLine(angle=90, movable=False)
+        self.hLine2 = pg.InfiniteLine(angle=0, movable=False)
         self.rf_plot.addItem(self.vLine2)
+        self.rf_plot.addItem(self.hLine2)
         
         
     def setup_shutter_control_widget(self):
