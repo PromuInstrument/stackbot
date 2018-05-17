@@ -55,6 +55,9 @@ class ALD_params(Measurement):
         if hasattr(self.app.hardware, 'lovebox'):
             self.lovebox = self.app.hardware.lovebox
         
+        if hasattr(self.app.hardware, 'mks_146_hw'):
+            self.mks146 = self.app.hardware.mks_146_hw
+        
         self.ui_enabled = True
         if self.ui_enabled:
             self.ui_setup()
@@ -74,7 +77,7 @@ class ALD_params(Measurement):
     def dockArea_setup(self):
         self.ui.addDock(name="Shutter Controls", position='right', widget=self.shutter_control_widget)
         self.ui.addDock(name="Thermal History", position='top', widget=self.thermal_widget)
-#         self.ui.addDock(name="RF Settings", position='top', widget=self.rf_widget)
+        self.ui.addDock(name="RF Settings", position='top', widget=self.rf_widget)
 #         self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
     
     def load_ui_defaults(self):
@@ -88,6 +91,7 @@ class ALD_params(Measurement):
     def widget_setup(self):
         self.setup_shutter_control_widget()
         self.setup_thermal_control_widget()
+        self.setup_rf_flow_widget()
 
     def setup_thermal_control_widget(self):
         self.thermal_widget = QtWidgets.QGroupBox('Thermal Controller Overview')
@@ -114,7 +118,7 @@ class ALD_params(Measurement):
         self.thermal_plot.addItem(self.vLine1)
         self.thermal_plot.addItem(self.hLine1)
     
-    def setup_rf_widget(self):
+    def setup_rf_flow_widget(self):
         self.rf_widget = QtWidgets.QGroupBox('RF Settings')
         self.layout.addWidget(self.rf_widget)
         self.rf_widget.setLayout(QtWidgets.QVBoxLayout())
@@ -123,19 +127,20 @@ class ALD_params(Measurement):
         self.rf_widget.layout().addWidget(self.settings.New_UI(include=plot_ui_list))
         
         self.rf_plot_widget = pg.GraphicsLayoutWidget()
-        self.rf_plot = self.rf_plot_widget.addPlot(title='RF Power')
+        self.rf_plot = self.rf_plot_widget.addPlot(title='RF power and scaled MFC flow')
         self.rf_plot.showGrid(y=True)
         self.rf_plot.addLegend()
         self.rf_widget.layout().addWidget(self.rf_plot_widget)
-        self.rf_plot_names = ['Forward', 'Reflected']
+        self.rf_plot_names = ['Forward', 'Reflected', 'MFC flow (scaled)']
         self.rf_plot_lines = []
-        for i in range(self.NUM_CHANS):
+        for i in range(self.RF_CHANS):
             color = pg.intColor(i)
             plot_line = self.rf_plot.plot([1], pen=pg.mkPen(color, width=2),
                                           name = self.rf_plot_names[i])
             self.rf_plot_lines.append(plot_line)
         self.vLine = pg.InfiniteLine(angle=90, movable=False)
-        self.rf_plot.addItem(self.vLine)
+        self.rf_plot.addItem(self.vLine2)
+        
         
     def setup_shutter_control_widget(self):
         self.shutter_control_widget = QtWidgets.QGroupBox('Shutter Controls')
@@ -183,7 +188,7 @@ class ALD_params(Measurement):
     
     def setup_buffers_constants(self):
         self.HIST_LEN = self.settings.history_length.val
-        self.RF_CHANS = 2
+        self.RF_CHANS = 3
         self.T_CHANS = 1
         self.history_i = 0
         self.index = 0
@@ -192,7 +197,8 @@ class ALD_params(Measurement):
 
     def routine(self):
         rf_entry = np.array([self.seren.settings['forward_power_readout'], \
-                         self.seren.settings['reflected_power']])
+                         self.seren.settings['reflected_power'], \
+                         self.mks146.settings['MFC0_flow']])
         t_entry = np.array([self.lovebox.settings['pv_temp']])
         
         if self.history_i < self.HIST_LEN:
@@ -210,14 +216,19 @@ class ALD_params(Measurement):
         
     
     def update_display(self):
-        level = self.lovebox.settings['sv_setpoint']
-        self.hLine1.setPos(level)
-#         self.vLine.setPos(self.index)
+        lovebox_level = self.lovebox.settings['sv_setpoint']
+        self.hLine1.setPos(lovebox_level)
         self.vLine1.setPos(self.index)
         
+        flow_level = self.mks146.settings['MFC0_SP']
+        self.hLine2.setPos(flow_level)
+        self.vLine2.setPos(self.index)
+        
+        for i in range(self.RF_CHANS):
+            self.rf_plot_lines[i].setData(
+                self.rf_history[i, :self.index])
+
         for i in range(self.T_CHANS):
-#             self.plot_lines[i].setData(
-#                 self.rf_history[i, :self.index])
             self.thermal_plot_lines[i].setData(
                 self.thermal_history[i, :self.index])
     
@@ -230,6 +241,8 @@ class ALD_params(Measurement):
             self.seren.settings.reflected_power.read_from_hardware()
             self.lovebox.settings.pv_temp.read_from_hardware()
             self.lovebox.settings.sv_setpoint.read_from_hardware()
+            self.mks146.settings.MFC0_flow.read_from_hardware()
+            self.mks146.settings.MFC0_SP.read_from_hardware()
             self.routine()
             time.sleep(dt)
             
