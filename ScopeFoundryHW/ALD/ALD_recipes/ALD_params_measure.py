@@ -6,6 +6,7 @@ Created on Apr 11, 2018
 '''
 
 from ScopeFoundry import Measurement
+from ScopeFoundry.ndarray_interactive import ArrayLQ_QTableModel
 from PyQt5 import QtWidgets, QtGui, QtCore
 from . import resources
 import pyqtgraph as pg
@@ -40,6 +41,9 @@ class ALD_params(Measurement):
         self.settings.New('RF_pulse_duration', dtype=int, initial=1)
         self.settings.New('history_length', dtype=int, initial=10000, vmin=1)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
+        
+        self.settings.New('time', dtype=float, array=True, initial=[[0.1,0.05,0.2,0.3,0.3]], fmt='%1.3f', ro=False)
+        
         self.setup_buffers_constants()
         
         if hasattr(self.app.hardware, 'seren_hw'):
@@ -78,7 +82,7 @@ class ALD_params(Measurement):
         self.ui.addDock(name="Shutter Controls", position='right', widget=self.shutter_control_widget)
         self.ui.addDock(name="Thermal History", position='top', widget=self.thermal_widget)
         self.ui.addDock(name="RF Settings", position='top', widget=self.rf_widget)
-#         self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
+        self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
     
     def load_ui_defaults(self):
         
@@ -92,6 +96,7 @@ class ALD_params(Measurement):
         self.setup_shutter_control_widget()
         self.setup_thermal_control_widget()
         self.setup_rf_flow_widget()
+        self.setup_recipe_control_widget()
 
     def setup_thermal_control_widget(self):
         self.thermal_widget = QtWidgets.QGroupBox('Thermal Controller Overview')
@@ -178,12 +183,16 @@ class ALD_params(Measurement):
         self.recipe_start_button.clicked.connect(self.app.measurements['ALD_routine'].start)
         self.recipe_stop_button.clicked.connect(self.app.measurements['ALD_routine'].interrupt)
     
-        self.rf_pulse_label = QtWidgets.QLabel('RF Pulse Duration [s]')
-        self.recipe_control_widget.layout().addWidget(self.rf_pulse_label, 1, 0)
+        self.pulse_label = QtWidgets.QLabel('RF Durations [s]')
+        self.recipe_control_widget.layout().addWidget(self.pulse_label, 1, 0)
     
-        self.rf_pulse_field = QtWidgets.QDoubleSpinBox()
-        self.recipe_control_widget.layout().addWidget(self.rf_pulse_field, 1, 1)
-        self.settings.RF_pulse_duration.connect_bidir_to_widget(self.rf_pulse_field)
+        self.pulse_table = QtWidgets.QTableView()
+        self.pulse_table.setMaximumHeight(65)
+        names = ['t1', 't2 (TiCl4 PV)', 't3', 't4 (Shutter)', 't5', 'sum']
+        self.tableModel = ArrayLQ_QTableModel(self.settings.time, col_names=names)
+        self.pulse_table.setModel(self.tableModel)
+        self.recipe_control_widget.layout().addWidget(self.pulse_table, 1, 1)
+#         self.settings.time.connect_bidir_to_widget(self.pulse_field)
     
         
     
@@ -197,7 +206,7 @@ class ALD_params(Measurement):
         self.rf_history = np.zeros((self.RF_CHANS, self.HIST_LEN))
         self.thermal_history = np.zeros((self.T_CHANS, self.HIST_LEN))
 
-    def routine(self):
+    def plot_routine(self):
         rf_entry = np.array([self.seren.settings['forward_power_readout'], \
                          self.seren.settings['reflected_power'], \
                          self.mks146.settings['MFC0_flow']])
@@ -245,6 +254,6 @@ class ALD_params(Measurement):
             self.lovebox.settings.sv_setpoint.read_from_hardware()
             self.mks146.settings.MFC0_flow.read_from_hardware()
             self.mks146.settings.MFC0_SP.read_from_hardware()
-            self.routine()
+            self.plot_routine()
             time.sleep(dt)
             
