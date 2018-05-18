@@ -8,7 +8,7 @@ Created on Apr 11, 2018
 from ScopeFoundry import Measurement
 from ScopeFoundry.ndarray_interactive import ArrayLQ_QTableModel
 from PyQt5 import QtWidgets, QtGui, QtCore
-from . import resources
+from ScopeFoundryHW.ALD.ALD_recipes import resources
 import pyqtgraph as pg
 from pyqtgraph.dockarea import DockArea
 import numpy as np
@@ -20,9 +20,7 @@ class ALD_params(Measurement):
     name = 'ALD_params'
     
     def __init__(self, app):
-        Measurement.__init__(self, app)
-
-        
+        Measurement.__init__(self, app)        
         
     def setup(self):
         self.cb_stylesheet = '''
@@ -45,11 +43,15 @@ class ALD_params(Measurement):
         self.settings.New('time', dtype=float, array=True, initial=[[0.1,0.05,0.2,0.3,0.3]], fmt='%1.3f', ro=False)
         
         self.setup_buffers_constants()
+
         
         if hasattr(self.app.hardware, 'seren_hw'):
             self.seren = self.app.hardware.seren_hw
-        else:
-            print('Connect Seren HW component first.')
+            self.psu_check()
+            if self.psu_connected:
+                print('Seren PSU Connected')
+            else:
+                print('Connect Seren HW component first.')
 
         if hasattr(self.app.hardware, 'ald_shutter'):
             self.shutter = self.app.hardware.ald_shutter
@@ -66,7 +68,12 @@ class ALD_params(Measurement):
         if self.ui_enabled:
             self.ui_setup()
         
-
+    def psu_check(self):        
+        resp = self.seren.seren.write_cmd('R')
+        if resp == '':
+            self.psu_connected = False
+        else:
+            self.psu_connected = True
 
     def ui_setup(self):
         
@@ -79,7 +86,7 @@ class ALD_params(Measurement):
         self.dockArea_setup()
 
     def dockArea_setup(self):
-        self.ui.addDock(name="Shutter Controls", position='right', widget=self.shutter_control_widget)
+        self.ui.addDock(name="Shutter Controls", position='bottom', widget=self.shutter_control_widget)
         self.ui.addDock(name="Thermal History", position='top', widget=self.thermal_widget)
         self.ui.addDock(name="RF Settings", position='top', widget=self.rf_widget)
         self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
@@ -248,8 +255,10 @@ class ALD_params(Measurement):
         dt = 0.2
         self.HIST_LEN = self.settings['history_length']
         while not self.interrupt_measurement_called:
-            self.seren.settings.forward_power_readout.read_from_hardware()
-            self.seren.settings.reflected_power.read_from_hardware()
+            self.psu_check()
+            if self.psu_connected == True:
+                self.seren.settings.forward_power_readout.read_from_hardware()
+                self.seren.settings.reflected_power.read_from_hardware()
             self.lovebox.settings.pv_temp.read_from_hardware()
             self.lovebox.settings.sv_setpoint.read_from_hardware()
             self.mks146.settings.MFC0_flow.read_from_hardware()
