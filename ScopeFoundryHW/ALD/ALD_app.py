@@ -40,8 +40,7 @@ class ALD_App(BaseMicroscopeApp):
         self.add_hardware(Pfeiffer_VGC_Hardware(self)).settings['connected'] = True
           
         from ScopeFoundryHW.ALD.Seren.seren_hw import Seren_HW
-        self.add_hardware(Seren_HW(self)).settings['connected'] = True
-        
+        self.add_hardware(Seren_HW(self))
         
         from ScopeFoundryHW.ALD.ALD_relay.ald_relay_measure import ALDRelayMeasure
         self.add_measurement(ALDRelayMeasure(self)).start()
