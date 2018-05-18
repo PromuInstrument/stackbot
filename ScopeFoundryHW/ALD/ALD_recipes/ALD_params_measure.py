@@ -40,15 +40,15 @@ class ALD_params(Measurement):
         self.settings.New('history_length', dtype=int, initial=10000, vmin=1)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
         
-        self.settings.New('time', dtype=float, array=True, initial=[[0.1,0.05,0.2,0.3,0.3]], fmt='%1.3f', ro=False)
-        
+        self.settings.New('time', dtype=float, array=True, initial=[[0.1,0.05,0.2,0.3,0.3, 0]], fmt='%1.3f', ro=False)
+        self.settings.time.add_listener(self.sum)
         self.setup_buffers_constants()
 
         
         if hasattr(self.app.hardware, 'seren_hw'):
             self.seren = self.app.hardware.seren_hw
-            self.psu_check()
-            if self.psu_connected:
+            self.app.measurements.psu_check()
+            if self.app.measurements.psu_connected:
                 print('Seren PSU Connected')
             else:
                 print('Connect Seren HW component first.')
@@ -67,13 +67,12 @@ class ALD_params(Measurement):
         self.ui_enabled = True
         if self.ui_enabled:
             self.ui_setup()
-        
-    def psu_check(self):        
-        resp = self.seren.seren.write_cmd('R')
-        if resp == '':
-            self.psu_connected = False
-        else:
-            self.psu_connected = True
+    
+    def sum(self):
+        sum_value = np.sum(self.settings['time'][0][:5])
+        self.settings['time'][0][5] = sum_value
+    
+
 
     def ui_setup(self):
         
@@ -92,11 +91,9 @@ class ALD_params(Measurement):
         self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
     
     def load_ui_defaults(self):
-        
         pass
     
     def save_ui_defaults(self):
-        
         pass
     
     def widget_setup(self):
@@ -199,12 +196,11 @@ class ALD_params(Measurement):
         self.tableModel = ArrayLQ_QTableModel(self.settings.time, col_names=names)
         self.pulse_table.setModel(self.tableModel)
         self.recipe_control_widget.layout().addWidget(self.pulse_table, 1, 1)
-#         self.settings.time.connect_bidir_to_widget(self.pulse_field)
     
         
-    
-    
+
     def setup_buffers_constants(self):
+        self.psu_connected = None
         self.HIST_LEN = self.settings.history_length.val
         self.RF_CHANS = 3
         self.T_CHANS = 1
@@ -227,7 +223,6 @@ class ALD_params(Measurement):
             self.thermal_history = np.roll(self.thermal_history, -1, axis=1)
         self.rf_history[:, self.index-1] = rf_entry
         self.thermal_history[:, self.index-1] = t_entry
-        
         
         self.history_i += 1
         
@@ -255,14 +250,6 @@ class ALD_params(Measurement):
         dt = 0.2
         self.HIST_LEN = self.settings['history_length']
         while not self.interrupt_measurement_called:
-            self.psu_check()
-            if self.psu_connected == True:
-                self.seren.settings.forward_power_readout.read_from_hardware()
-                self.seren.settings.reflected_power.read_from_hardware()
-            self.lovebox.settings.pv_temp.read_from_hardware()
-            self.lovebox.settings.sv_setpoint.read_from_hardware()
-            self.mks146.settings.MFC0_flow.read_from_hardware()
-            self.mks146.settings.MFC0_SP.read_from_hardware()
             self.plot_routine()
             time.sleep(dt)
             
