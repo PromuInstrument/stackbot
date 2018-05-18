@@ -58,8 +58,8 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_measure import Pfeiffer_VGC_Measure
         self.add_measurement(Pfeiffer_VGC_Measure(self)).start()
         
-        from ScopeFoundryHW.ALD.Seren.seren_measure import Seren_Measure
-        self.add_measurement(Seren_Measure(self))
+        from ScopeFoundryHW.ALD.Seren.seren_measure import Seren
+        self.add_measurement(Seren(self))
         
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_functions import ALD_routine
         self.add_measurement(ALD_routine(self))
