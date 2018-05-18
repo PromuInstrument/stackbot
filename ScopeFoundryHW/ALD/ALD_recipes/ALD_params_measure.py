@@ -47,8 +47,7 @@ class ALD_params(Measurement):
         
         if hasattr(self.app.hardware, 'seren_hw'):
             self.seren = self.app.hardware.seren_hw
-            self.app.measurements.psu_check()
-            if self.app.measurements.psu_connected:
+            if self.app.measurements.seren.psu_connected:
                 print('Seren PSU Connected')
             else:
                 print('Connect Seren HW component first.')
