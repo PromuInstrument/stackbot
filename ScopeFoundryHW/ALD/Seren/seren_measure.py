@@ -17,9 +17,14 @@ class Seren(Measurement):
         Measurement.__init__(self, app)
         
     def setup(self):
-        self.seren = self.app.hardware['seren_hw']
+        
         self.psu_connected = None
-        self.psu_check()
+        if hasattr(self.app.hardware, 'seren'):
+            self.seren = self.app.hardware['seren_hw']
+            self.psu_check()
+        else:
+            print('Seren hardware component not connected.')
+        
         self.ui_enabled = False
         
         if self.ui_enabled:
