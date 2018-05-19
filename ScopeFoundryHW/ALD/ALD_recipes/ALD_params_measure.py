@@ -175,7 +175,10 @@ class ALD_params(Measurement):
     def setup_recipe_control_widget(self):
         self.recipe_control_widget = QtWidgets.QGroupBox('Recipe Controls')
         self.layout.addWidget(self.recipe_control_widget)
-        self.recipe_control_widget.setLayout(QtWidgets.QGridLayout())
+        
+        self.rec_gridLayout = QtWidgets.QGridLayout()
+#         self.rec_gridLayout.setSizeConstraint(self.rec_gridLayout.SetMinimumSize)
+        self.recipe_control_widget.setLayout(self.rec_gridLayout)
 
         self.recipe_start_button = QtWidgets.QPushButton('Start Recipe')
         self.recipe_stop_button = QtWidgets.QPushButton('Stop Recipe')
@@ -185,6 +188,9 @@ class ALD_params(Measurement):
         self.recipe_control_widget.layout().addWidget(self.recipe_stop_button, 0, 1)
         self.recipe_start_button.clicked.connect(self.app.measurements['ALD_routine'].start)
         self.recipe_stop_button.clicked.connect(self.app.measurements['ALD_routine'].interrupt)
+    
+        self.rec_gridLayout.setColumnMinimumWidth(250,0)
+
     
         self.pulse_label = QtWidgets.QLabel('RF Durations [s]')
         self.recipe_control_widget.layout().addWidget(self.pulse_label, 1, 0)
