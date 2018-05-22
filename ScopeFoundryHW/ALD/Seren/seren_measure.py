@@ -19,9 +19,9 @@ class Seren(Measurement):
     def setup(self):
         
         self.psu_connected = None
-        if hasattr(self.app.hardware, 'seren'):
+        if hasattr(self.app.hardware, 'seren_hw'):
             self.seren = self.app.hardware['seren_hw']
-            self.psu_check()
+#             self.psu_check()
         else:
             print('Seren hardware component not connected.')
         
@@ -46,10 +46,10 @@ class Seren(Measurement):
     def run(self):
         dt = 0.1
         while not self.interrupt_measurement_called:
-            if self.psu_connected:
-                self.seren_hw.settings.forward_power.read_from_hardware()
-                time.sleep(dt)
-                self.seren_hw.settings.reflected_power.read_from_hardware()
-                time.sleep(dt)
-            else:
-                break
+#             if self.psu_connected:
+            self.seren.settings.forward_power_readout.read_from_hardware()
+            time.sleep(dt)
+            self.seren.settings.reflected_power.read_from_hardware()
+            time.sleep(dt)
+#             else:
+#                 break
