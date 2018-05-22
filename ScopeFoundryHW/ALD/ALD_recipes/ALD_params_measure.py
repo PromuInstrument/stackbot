@@ -12,7 +12,9 @@ from ScopeFoundryHW.ALD.ALD_recipes import resources
 import pyqtgraph as pg
 from pyqtgraph.dockarea import DockArea
 import numpy as np
+import datetime
 import time
+import os
 from PyQt5.Qt import QVBoxLayout
 
 class ALD_params(Measurement):
@@ -40,9 +42,11 @@ class ALD_params(Measurement):
         self.settings.New('history_length', dtype=int, initial=10000, vmin=1)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
         
+        
         self.settings.New('time', dtype=float, array=True, initial=[[0.1,0.05,0.2,0.3,0.3, 0]], fmt='%1.3f', ro=False)
         self.settings.time.add_listener(self.sum)
         self.setup_buffers_constants()
+        self.settings.New('save_path', dtype=str, initial=self.full_file_path, ro=False)
 
         
         if hasattr(self.app.hardware, 'seren_hw'):
@@ -88,7 +92,8 @@ class ALD_params(Measurement):
         self.ui.addDock(name="Thermal History", position='top', widget=self.thermal_widget)
         self.ui.addDock(name="RF Settings", position='top', widget=self.rf_widget)
         self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
-    
+        
+        
     def load_ui_defaults(self):
         pass
     
@@ -180,14 +185,19 @@ class ALD_params(Measurement):
 #         self.rec_gridLayout.setSizeConstraint(self.rec_gridLayout.SetMinimumSize)
         self.recipe_control_widget.setLayout(self.rec_gridLayout)
 
-        self.recipe_start_button = QtWidgets.QPushButton('Start Recipe')
-        self.recipe_stop_button = QtWidgets.QPushButton('Stop Recipe')
+        self.export_button = QtWidgets.QPushButton('Export Temperature Data')
+        self.save_field = QtWidgets.QLineEdit('Directory')
+        self.recipe_start_button = QtWidgets.QPushButton('Start 1 Recipe')
+#         self.settings.directory.add_listener()
 
+
+        self.recipe_control_widget.layout().addWidget(self.recipe_start_button, 0, 1)
+        self.recipe_control_widget.layout().addWidget(self.export_button, 2, 0)
+        self.recipe_control_widget.layout().addWidget(self.save_field, 2, 1)
         
-        self.recipe_control_widget.layout().addWidget(self.recipe_start_button, 0, 0)
-        self.recipe_control_widget.layout().addWidget(self.recipe_stop_button, 0, 1)
         self.recipe_start_button.clicked.connect(self.app.measurements['ALD_routine'].start)
-        self.recipe_stop_button.clicked.connect(self.app.measurements['ALD_routine'].interrupt)
+        self.export_button.clicked.connect(self.export_to_disk)
+        self.settings.save_path.connect_to_widget(self.save_field)
     
         self.rec_gridLayout.setColumnMinimumWidth(250,0)
 
@@ -205,6 +215,9 @@ class ALD_params(Measurement):
         
 
     def setup_buffers_constants(self):
+        home = os.path.expanduser("~")
+        self.path = home+'\\Desktop\\'
+        self.full_file_path = self.path+'np_export'
         self.psu_connected = None
         self.HIST_LEN = self.settings.history_length.val
         self.RF_CHANS = 3
@@ -213,26 +226,33 @@ class ALD_params(Measurement):
         self.index = 0
         self.rf_history = np.zeros((self.RF_CHANS, self.HIST_LEN))
         self.thermal_history = np.zeros((self.T_CHANS, self.HIST_LEN))
+        self.time_history = np.zeros((1, self.HIST_LEN), dtype='datetime64[s]')
+        
+
 
     def plot_routine(self):
         rf_entry = np.array([self.seren.settings['forward_power_readout'], \
                          self.seren.settings['reflected_power'], \
                          self.mks146.settings['MFC0_flow']])
         t_entry = np.array([self.lovebox.settings['pv_temp']])
-        
+        time_entry = datetime.datetime.now()
         if self.history_i < self.HIST_LEN:
             self.index = self.history_i % self.HIST_LEN
         else:
             self.index = self.HIST_LEN
             self.rf_history = np.roll(self.rf_history, -1, axis=1)
             self.thermal_history = np.roll(self.thermal_history, -1, axis=1)
+            self.time_history = np.roll(self.time_history, -1, axis=1)
         self.rf_history[:, self.index-1] = rf_entry
         self.thermal_history[:, self.index-1] = t_entry
-        
+        self.time_history[:, self.index-1] = time_entry
         self.history_i += 1
-        
-        
     
+    def export_to_disk(self):
+        path = self.settings['save_path']
+        np.save(path+'_temperature.npy', self.thermal_history)
+        np.save(path+'_times.npy', self.time_history)
+        
     def update_display(self):
         lovebox_level = self.lovebox.settings['sv_setpoint']
         self.hLine1.setPos(lovebox_level)
