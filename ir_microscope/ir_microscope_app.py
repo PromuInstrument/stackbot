@@ -26,8 +26,6 @@ class IRMicroscopeApp(BaseMicroscopeApp):
     
     def setup(self):
         
-        
-        
         self.add_quickbar(load_qt_ui_file(sibling_path(__file__, 'ir_quick_access.ui')))
 
         
@@ -82,6 +80,9 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         from ScopeFoundryHW.filter_wheel_arduino.filter_wheel_arduino_hw import FilterWheelArduinoHW
         self.add_hardware(FilterWheelArduinoHW(self))
+        
+        from ScopeFoundryHW.arduino_tc4.arduino_tc4_hw import ArduinoTc4HW
+        self.add_hardware(ArduinoTc4HW(self))
         
                         
         print("Adding Measurement Components")
