@@ -109,8 +109,8 @@ class MKS_600_Interface(object):
         return float(resp)
         
     def set_valve(self, value):
-        assign = {6: "O",
-                  7: "C"}
+        assign = {True: "O",
+                  False: "C"}
         self.ask_cmd(assign[value])
     
     def halt_valve(self):

@@ -47,13 +47,16 @@ class MKS_600_Hardware(HardwareComponent):
         self.settings.sp_readout.connect_to_hardware(read_func=self.read_sp)
         
         self.settings.sp_channel.add_listener(self.switch_sp, str)
-        self.settings.get_lq('sp_channel').update_value('A')
+        
+        self.settings['sp_channel'] = 'Open'
+        self.set_valve(True)
+        
     
     def set_sp_defaults(self):
         for channel, value in self.sp_defaults.items():
             self.switch_sp(channel)
             self.write_sp(value)
-        self.settings.sp_channel.update_value('A')
+        self.settings.sp_channel.update_value('Open')
         
     def read_pressure(self):
         choice = self.settings['units']
@@ -77,7 +80,9 @@ class MKS_600_Hardware(HardwareComponent):
         if channel in range(0,6):
             self.mks.switch_sp(channel)
         else:
-            self.mks.set_valve(channel)
+            table = {6: True,
+                     7: False}
+            self.mks.set_valve(table[channel])
     
     def write_sp(self, p):
         choice = self.settings['sp_channel']
@@ -91,10 +96,8 @@ class MKS_600_Hardware(HardwareComponent):
         return self.mks.read_valve()
     
     def set_valve(self, valve):
-        if valve:
-            return self.mks.open_valve()
-        else:
-            return self.mks.close_valve()
+        return self.mks.set_valve(valve)
+
 
     
     
