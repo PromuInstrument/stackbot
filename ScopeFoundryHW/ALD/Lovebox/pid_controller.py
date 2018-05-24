@@ -51,7 +51,11 @@ class PIDController(object):
     def read_setpoint(self):
         self.setp = 0.1 * self.send_analog_read(0x1001)
         return self.setp
-        
+    
+    def autotune(self, status):
+        assert status in [0,1]
+        self.send_analog_write(0x0813, int(status))
+    
     def set_setpoint(self, setp):
         self.send_analog_write(0x1001, int(setp*10) )
         self.setp = setp
