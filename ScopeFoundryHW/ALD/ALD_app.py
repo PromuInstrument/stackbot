@@ -8,10 +8,8 @@ Created on Nov 20, 2017
 from ScopeFoundry.base_app import BaseMicroscopeApp
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
-logging.getLogger('PyQt5').setLevel(logging.WARN)
-logging.getLogger('ipykernel').setLevel(logging.WARN)
-logging.getLogger('traitlets').setLevel(logging.WARN)
+logging.disable(50)
+
 
 
 class ALD_App(BaseMicroscopeApp):
@@ -40,7 +38,7 @@ class ALD_App(BaseMicroscopeApp):
         self.add_hardware(Pfeiffer_VGC_Hardware(self)).settings['connected'] = True
           
         from ScopeFoundryHW.ALD.Seren.seren_hw import Seren_HW
-        self.add_hardware(Seren_HW(self))
+        self.add_hardware(Seren_HW(self)).settings['connected'] = True
         
         from ScopeFoundryHW.ALD.ALD_relay.ald_relay_measure import ALDRelayMeasure
         self.add_measurement(ALDRelayMeasure(self)).start()
@@ -58,14 +56,13 @@ class ALD_App(BaseMicroscopeApp):
         self.add_measurement(Pfeiffer_VGC_Measure(self)).start()
         
         from ScopeFoundryHW.ALD.Seren.seren_measure import Seren
-        self.add_measurement(Seren(self))
+        self.add_measurement(Seren(self)).start()
         
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_functions import ALD_routine
         self.add_measurement(ALD_routine(self))
         
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_params_measure import ALD_params
         self.add_measurement(ALD_params(self))
-        
         
         
 if __name__ == '__main__':

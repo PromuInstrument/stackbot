@@ -39,9 +39,10 @@ class ALD_params(Measurement):
         '''
 
         self.settings.New('RF_pulse_duration', dtype=int, initial=1)
-        self.settings.New('history_length', dtype=int, initial=10000, vmin=1)
+        self.settings.New('history_length', dtype=int, initial=1e6, vmin=1)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
-        
+        self.settings.New('display_window', dtype=int, initial=1e4, vmin=1)
+
         
         self.settings.New('time', dtype=float, array=True, initial=[[0.1,0.05,0.2,0.3,0.3, 0]], fmt='%1.3f', ro=False)
         self.settings.time.add_listener(self.sum)
@@ -112,8 +113,7 @@ class ALD_params(Measurement):
         self.thermal_widget.setLayout(QtWidgets.QVBoxLayout())
         self.thermal_channels = 1
         
-        plot_ui_list = ('history_length',)
-        self.thermal_widget.layout().addWidget(self.settings.New_UI(include=plot_ui_list))
+
         self.thermal_plot_widget = pg.GraphicsLayoutWidget()
         self.thermal_plot = self.thermal_plot_widget.addPlot(title='Temperature History')
         self.thermal_plot.showGrid(y=True)
@@ -135,9 +135,6 @@ class ALD_params(Measurement):
         self.rf_widget = QtWidgets.QGroupBox('RF Settings')
         self.layout.addWidget(self.rf_widget)
         self.rf_widget.setLayout(QtWidgets.QVBoxLayout())
-        
-        plot_ui_list = ('history_length',)
-        self.rf_widget.layout().addWidget(self.settings.New_UI(include=plot_ui_list))
         
         self.rf_plot_widget = pg.GraphicsLayoutWidget()
         self.rf_plot = self.rf_plot_widget.addPlot(title='RF power and scaled MFC flow')
@@ -181,38 +178,58 @@ class ALD_params(Measurement):
         self.recipe_control_widget = QtWidgets.QGroupBox('Recipe Controls')
         self.layout.addWidget(self.recipe_control_widget)
         
-        self.rec_gridLayout = QtWidgets.QGridLayout()
-#         self.rec_gridLayout.setSizeConstraint(self.rec_gridLayout.SetMinimumSize)
-        self.recipe_control_widget.setLayout(self.rec_gridLayout)
-
-        self.export_button = QtWidgets.QPushButton('Export Temperature Data')
-        self.save_field = QtWidgets.QLineEdit('Directory')
-        self.recipe_start_button = QtWidgets.QPushButton('Start 1 Recipe')
-#         self.settings.directory.add_listener()
-
-
-        self.recipe_control_widget.layout().addWidget(self.recipe_start_button, 0, 1)
-        self.recipe_control_widget.layout().addWidget(self.export_button, 2, 0)
-        self.recipe_control_widget.layout().addWidget(self.save_field, 2, 1)
-        
-        self.recipe_start_button.clicked.connect(self.app.measurements['ALD_routine'].start)
-        self.export_button.clicked.connect(self.export_to_disk)
-        self.settings.save_path.connect_to_widget(self.save_field)
+        self.recLayout = QtWidgets.QVBoxLayout()
+        self.recipe_control_widget.setLayout(self.recLayout)
     
-        self.rec_gridLayout.setColumnMinimumWidth(250,0)
-
-    
+        self.table_widget = QtWidgets.QWidget()
+        self.table_widget_layout = QtWidgets.QHBoxLayout()
+        self.table_widget.setLayout(self.table_widget_layout)
+                
         self.pulse_label = QtWidgets.QLabel('RF Durations [s]')
-        self.recipe_control_widget.layout().addWidget(self.pulse_label, 1, 0)
-    
+        self.table_widget.layout().addWidget(self.pulse_label)
+
         self.pulse_table = QtWidgets.QTableView()
         self.pulse_table.setMaximumHeight(65)
         names = ['t1', 't2 (TiCl4 PV)', 't3', 't4 (Shutter)', 't5', 'sum']
         self.tableModel = ArrayLQ_QTableModel(self.settings.time, col_names=names)
         self.pulse_table.setModel(self.tableModel)
-        self.recipe_control_widget.layout().addWidget(self.pulse_table, 1, 1)
+        self.table_widget.layout().addWidget(self.pulse_table)
+        self.recipe_control_widget.layout().addWidget(self.table_widget)
     
+    
+    
+        self.field_panel = QtWidgets.QWidget()
+        self.field_panel_layout = QtWidgets.QGridLayout()
+        self.field_panel.setLayout(self.field_panel_layout)
+        self.recipe_control_widget.layout().addWidget(self.field_panel)
         
+        self.export_button = QtWidgets.QPushButton('Export Temperature Data')
+        self.save_field = QtWidgets.QLineEdit('Directory')
+        self.save_field.setMinimumWidth(200)
+        self.save_field.setMaximumWidth(600)
+
+    
+        self.field_panel.layout().addWidget(self.export_button, 1, 0)
+        self.field_panel.layout().addWidget(self.save_field, 1, 1)
+        
+        self.export_button.clicked.connect(self.export_to_disk)
+        self.settings.save_path.connect_to_widget(self.save_field)
+    
+
+        self.recipe_panel = QtWidgets.QWidget()
+        self.recipe_panel_layout = QtWidgets.QGridLayout()
+        self.recipe_panel.setLayout(self.recipe_panel_layout)    
+        self.recipe_start_button = QtWidgets.QPushButton('Start 1 Recipe')
+    
+        self.recipe_panel.layout().addWidget(self.recipe_start_button, 0, 0)
+    
+        self.recipe_start_button.clicked.connect(self.app.measurements['ALD_routine'].start)
+
+        self.recipe_control_widget.layout().addWidget(self.recipe_panel)
+
+
+        plot_ui_list = ('display_window','history_length')
+        self.recipe_panel.layout().addWidget(self.settings.New_UI(include=plot_ui_list), 1,0)
 
     def setup_buffers_constants(self):
         home = os.path.expanduser("~")
@@ -220,32 +237,41 @@ class ALD_params(Measurement):
         self.full_file_path = self.path+'np_export'
         self.psu_connected = None
         self.HIST_LEN = self.settings.history_length.val
+        self.WINDOW = self.settings.display_window.val
+        self.HIST_LEN = 200
+        self.WINDOW = 50
         self.RF_CHANS = 3
         self.T_CHANS = 1
         self.history_i = 0
         self.index = 0
+        
         self.rf_history = np.zeros((self.RF_CHANS, self.HIST_LEN))
         self.thermal_history = np.zeros((self.T_CHANS, self.HIST_LEN))
         self.time_history = np.zeros((1, self.HIST_LEN), dtype='datetime64[s]')
-        
+        self.debug_mode = False
 
 
     def plot_routine(self):
-        rf_entry = np.array([self.seren.settings['forward_power_readout'], \
-                         self.seren.settings['reflected_power'], \
-                         self.mks146.settings['MFC0_flow']])
-        t_entry = np.array([self.lovebox.settings['pv_temp']])
+        if self.debug_mode:
+            rf_entry = np.random.rand(3,)
+            t_entry = np.random.rand(1,)
+        else:
+            rf_entry = np.array([self.seren.settings['forward_power_readout'], \
+                             self.seren.settings['reflected_power'], \
+                             self.mks146.settings['MFC0_flow']])
+            t_entry = np.array([self.lovebox.settings['pv_temp']])
+
         time_entry = datetime.datetime.now()
-        if self.history_i < self.HIST_LEN:
+        if self.history_i < self.HIST_LEN-1:
             self.index = self.history_i % self.HIST_LEN
         else:
-            self.index = self.HIST_LEN
+            self.index = self.HIST_LEN-1
             self.rf_history = np.roll(self.rf_history, -1, axis=1)
             self.thermal_history = np.roll(self.thermal_history, -1, axis=1)
             self.time_history = np.roll(self.time_history, -1, axis=1)
-        self.rf_history[:, self.index-1] = rf_entry
-        self.thermal_history[:, self.index-1] = t_entry
-        self.time_history[:, self.index-1] = time_entry
+        self.rf_history[:, self.index] = rf_entry
+        self.thermal_history[:, self.index] = t_entry
+        self.time_history[:, self.index] = time_entry
         self.history_i += 1
     
     def export_to_disk(self):
@@ -254,26 +280,43 @@ class ALD_params(Measurement):
         np.save(path+'_times.npy', self.time_history)
         
     def update_display(self):
+        self.WINDOW = self.settings.display_window.val
         lovebox_level = self.lovebox.settings['sv_setpoint']
         self.hLine1.setPos(lovebox_level)
-        self.vLine1.setPos(self.index)
+        
         
         flow_level = self.mks146.settings['MFC0_SP']
-        self.hLine2.setPos(flow_level)
-        self.vLine2.setPos(self.index)
         
+        self.hLine2.setPos(flow_level)
+        
+
+        
+        lower = self.index-self.WINDOW
+
         for i in range(self.RF_CHANS):
-            self.rf_plot_lines[i].setData(
-                self.rf_history[i, :self.index])
+            if self.index >= self.WINDOW:
+
+                self.rf_plot_lines[i].setData(
+                    self.rf_history[i, lower:self.index])
+            else:
+                self.rf_plot_lines[i].setData(
+                    self.rf_history[i, :self.index])
+                self.vLine1.setPos(self.index)
+                self.vLine2.setPos(self.index)
 
         for i in range(self.T_CHANS):
-            self.thermal_plot_lines[i].setData(
-                self.thermal_history[i, :self.index])
-    
+            if self.index >= self.WINDOW:
+                self.thermal_plot_lines[i].setData(
+                    self.thermal_history[i, lower:self.index])
+                
+            else:
+                self.thermal_plot_lines[i].setData(
+                    self.thermal_history[i, :self.index])
+                self.vLine1.setPos(self.index)
+                self.vLine2.setPos(self.index)
     
     def run(self):
         dt = 0.2
-        self.HIST_LEN = self.settings['history_length']
         while not self.interrupt_measurement_called:
             self.plot_routine()
             time.sleep(dt)
