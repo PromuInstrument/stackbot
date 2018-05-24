@@ -8,6 +8,7 @@ Created on Apr 11, 2018
 from ScopeFoundry import Measurement
 from ScopeFoundry.ndarray_interactive import ArrayLQ_QTableModel
 from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5.Qt import QVBoxLayout
 from ScopeFoundryHW.ALD.ALD_recipes import resources
 import pyqtgraph as pg
 from pyqtgraph.dockarea import DockArea
@@ -15,7 +16,7 @@ import numpy as np
 import datetime
 import time
 import os
-from PyQt5.Qt import QVBoxLayout
+
 
 class ALD_params(Measurement):
     
@@ -238,8 +239,6 @@ class ALD_params(Measurement):
         self.psu_connected = None
         self.HIST_LEN = self.settings.history_length.val
         self.WINDOW = self.settings.display_window.val
-        self.HIST_LEN = 200
-        self.WINDOW = 50
         self.RF_CHANS = 3
         self.T_CHANS = 1
         self.history_i = 0
@@ -281,12 +280,14 @@ class ALD_params(Measurement):
         
     def update_display(self):
         self.WINDOW = self.settings.display_window.val
+        self.vLine1.setPos(self.WINDOW)
+        self.vLine2.setPos(self.WINDOW)
+        
         lovebox_level = self.lovebox.settings['sv_setpoint']
         self.hLine1.setPos(lovebox_level)
         
         
         flow_level = self.mks146.settings['MFC0_SP']
-        
         self.hLine2.setPos(flow_level)
         
 
@@ -297,21 +298,21 @@ class ALD_params(Measurement):
             if self.index >= self.WINDOW:
 
                 self.rf_plot_lines[i].setData(
-                    self.rf_history[i, lower:self.index])
+                    self.rf_history[i, lower:self.index+1])
             else:
                 self.rf_plot_lines[i].setData(
-                    self.rf_history[i, :self.index])
+                    self.rf_history[i, :self.index+1])
                 self.vLine1.setPos(self.index)
                 self.vLine2.setPos(self.index)
 
         for i in range(self.T_CHANS):
             if self.index >= self.WINDOW:
                 self.thermal_plot_lines[i].setData(
-                    self.thermal_history[i, lower:self.index])
+                    self.thermal_history[i, lower:self.index+1])
                 
             else:
                 self.thermal_plot_lines[i].setData(
-                    self.thermal_history[i, :self.index])
+                    self.thermal_history[i, :self.index+1])
                 self.vLine1.setPos(self.index)
                 self.vLine2.setPos(self.index)
     
