@@ -236,8 +236,8 @@ class ALD_params(Measurement):
         self.path = home+'\\Desktop\\'
         self.full_file_path = self.path+'np_export'
         self.psu_connected = None
-#         self.HIST_LEN = self.settings.history_length.val
-#         self.WINDOW = self.settings.display_window.val
+        self.HIST_LEN = self.settings.history_length.val
+        self.WINDOW = self.settings.display_window.val
         self.HIST_LEN = 200
         self.WINDOW = 50
         self.RF_CHANS = 3
@@ -248,7 +248,7 @@ class ALD_params(Measurement):
         self.rf_history = np.zeros((self.RF_CHANS, self.HIST_LEN))
         self.thermal_history = np.zeros((self.T_CHANS, self.HIST_LEN))
         self.time_history = np.zeros((1, self.HIST_LEN), dtype='datetime64[s]')
-        self.debug_mode = True
+        self.debug_mode = False
 
 
     def plot_routine(self):
@@ -270,8 +270,6 @@ class ALD_params(Measurement):
             self.thermal_history = np.roll(self.thermal_history, -1, axis=1)
             self.time_history = np.roll(self.time_history, -1, axis=1)
         self.rf_history[:, self.index] = rf_entry
-        if self.index >= 190:
-            print(self.history_i, self.index)
         self.thermal_history[:, self.index] = t_entry
         self.time_history[:, self.index] = time_entry
         self.history_i += 1
@@ -282,7 +280,7 @@ class ALD_params(Measurement):
         np.save(path+'_times.npy', self.time_history)
         
     def update_display(self):
-#         self.WINDOW = self.settings.display_window.val
+        self.WINDOW = self.settings.display_window.val
         lovebox_level = self.lovebox.settings['sv_setpoint']
         self.hLine1.setPos(lovebox_level)
         
@@ -297,12 +295,10 @@ class ALD_params(Measurement):
 
         for i in range(self.RF_CHANS):
             if self.index >= self.WINDOW:
-                print(self.rf_history[i,lower+40:self.index])
-                
+
                 self.rf_plot_lines[i].setData(
                     self.rf_history[i, lower:self.index])
             else:
-                print('else')
                 self.rf_plot_lines[i].setData(
                     self.rf_history[i, :self.index])
                 self.vLine1.setPos(self.index)
@@ -314,7 +310,6 @@ class ALD_params(Measurement):
                     self.thermal_history[i, lower:self.index])
                 
             else:
-                print('else')
                 self.thermal_plot_lines[i].setData(
                     self.thermal_history[i, :self.index])
                 self.vLine1.setPos(self.index)
@@ -322,7 +317,6 @@ class ALD_params(Measurement):
     
     def run(self):
         dt = 0.2
-#         self.HIST_LEN = self.settings['history_length']
         while not self.interrupt_measurement_called:
             self.plot_routine()
             time.sleep(dt)
