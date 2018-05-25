@@ -18,14 +18,15 @@ dist
 *.mat
 ScopeFoundry/ScopeFoundry.egg-info
 ScopeFoundry/__pycache__/
+supra_cl/log/
+supra_cl/cl_mirror_positioner/log/
+ScopeFoundryHW/andor_camera/log/
 trpl_microscope/log/
 plimg_microscope/log/
+ScopeFoundryHW/thorlabs_stepper_motors/log/
 ir_microscope/log/
-ScopeFoundryHW/xbox_controller/log/ScopeFoundry_log_180410_121913.txt
-ScopeFoundryHW/xbox_controller/log/ScopeFoundry_log_180410_120523.txt
-ScopeFoundryHW/thorlabs_stepper_motors/log/thorlab_stepper_test_app_log_180306_131207.txt
+ScopeFoundryHW/xbox_controller/log/
+ScopeFoundryHW/thorlabs_stepper_motors/log/
 ScopeFoundryHW/princeton_omaV/OMAV InGaAs System Manual.pdf
-ScopeFoundryHW/powermate/log/ScopeFoundry_log_180323_151332.txt
-ScopeFoundryHW/powermate/log/ScopeFoundry_log_180323_132928.txt
-ScopeFoundryHW/powermate/log/ScopeFoundry_log_180323_132917.txt
-ir_microscope/asd.ini
+ScopeFoundryHW/powermate/log/
+ScopeFoundry/tests/log

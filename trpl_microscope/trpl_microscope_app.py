@@ -52,8 +52,8 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.mcl_stage.mcl_xyz_stage import MclXYZStageHW
         self.add_hardware(MclXYZStageHW(self))
         
-        #from ScopeFoundryHW.keithley_sourcemeter.keithley_sourcemeter_hc import KeithleySourceMeterComponent
-        #self.add_hardware(KeithleySourceMeterComponent)
+        from ScopeFoundryHW.keithley_sourcemeter.keithley_sourcemeter_hc import KeithleySourceMeterComponent
+        self.add_hardware(KeithleySourceMeterComponent(self))
 
         
         #self.srs_lockin_hc = self.add_hardware_component(SRSLockinComponent(self))
@@ -95,6 +95,10 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from confocal_measure.power_scan import PowerScanMeasure
         self.add_measurement_component(PowerScanMeasure(self))        
 
+        # Current Measurements
+        from ScopeFoundryHW.keithley_sourcemeter.photocurrent_iv import PhotocurrentIVMeasurement
+        self.add_measurement(PhotocurrentIVMeasurement(self))
+
         # Mapping Measurements        
         from confocal_measure.apd_mcl_2dslowscan import APD_MCL_2DSlowScan, APD_MCL_3DSlowScan
         apd_scan = self.add_measurement(APD_MCL_2DSlowScan(self))
@@ -114,7 +118,7 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
                 master_scan_lq =  apd_scan.settings.get_lq(lq_name)
                 scan.settings.get_lq(lq_name).connect_to_lq(master_scan_lq)     
             
-
+                    
         
         ####### Quickbar connections #################################
         
