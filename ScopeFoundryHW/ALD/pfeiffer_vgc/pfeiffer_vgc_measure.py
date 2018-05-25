@@ -11,8 +11,9 @@ from PyQt5 import QtWidgets
 import pyqtgraph as pg
 from pyqtgraph.dockarea import DockArea
 import numpy as np
+import datetime
 import time 
-
+import os
 
 class Pfeiffer_VGC_Measure(Measurement):
     
@@ -23,7 +24,11 @@ class Pfeiffer_VGC_Measure(Measurement):
         
     def setup(self):
 
-        self.settings.New('history_length', dtype=int, initial=1000, vmin=1)
+        self.settings.New('display_window', dtype=int, initial=1e4, vmin=200)
+        self.settings.New('history_length', dtype=int, initial=1e6, vmin=1000)
+        self.setup_buffers_constants()
+        self.settings.New('save_path', dtype=str, initial=self.full_file_path, ro=False)
+
 
         self.ui_enabled = True
         if self.ui_enabled:
@@ -47,9 +52,27 @@ class Pfeiffer_VGC_Measure(Measurement):
     
     def dockArea_setup(self):
         self.ui.addDock(name='Pressure History', position='top', widget=self.group_widget)
-    
-    def widget_setup(self):
+        self.ui.addDock(name='NumPy Export', position='bottom', widget=self.export_widget)
         
+    def widget_setup(self):
+        self.setup_plot_group_widget()
+        self.setup_export_widget()
+        
+        
+    def setup_export_widget(self):
+        self.export_widget = QtWidgets.QGroupBox('Pressure Export')
+        self.export_widget.setLayout(QtWidgets.QHBoxLayout())
+        self.export_widget.setMaximumHeight(100)
+        self.export_button = QtWidgets.QPushButton('Export Pressure Data')
+        self.save_field = QtWidgets.QLineEdit('Directory')
+        self.export_widget.layout().addWidget(self.export_button)
+        self.export_widget.layout().addWidget(self.save_field)
+        self.export_button.clicked.connect(self.export_to_disk)
+        self.settings.save_path.connect_to_widget(self.save_field)
+
+        
+        
+    def setup_plot_group_widget(self):
         self.group_widget = QtWidgets.QGroupBox('Pfeiffer VGC Measure')
         self.group_widget.setLayout(QtWidgets.QVBoxLayout())
         
@@ -59,8 +82,20 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.group_widget.layout().addWidget(self.control_widget, stretch=0)
         
 
-        ui_list = ('history_length',)
-        self.control_widget.layout().addWidget(self.settings.New_UI(include=ui_list))
+        
+        self.display_label = QtWidgets.QLabel('Display Window')
+        self.history_label = QtWidgets.QLabel('History Length')
+        self.display_field = QtWidgets.QLineEdit()
+        self.history_field = QtWidgets.QLineEdit()
+        
+        self.control_widget.layout().addWidget(self.display_label)
+        self.control_widget.layout().addWidget(self.display_field)
+        self.control_widget.layout().addWidget(self.history_label)
+        self.control_widget.layout().addWidget(self.history_field)
+        
+        self.settings.display_window.connect_to_widget(self.display_field)
+        self.settings.history_length.connect_to_widget(self.history_field)
+        
         self.start_button = QtWidgets.QPushButton('Start')
         self.stop_button = QtWidgets.QPushButton('Stop')
         self.control_widget.layout().addWidget(self.start_button)
@@ -75,7 +110,6 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.plot.setYRange(-8,2)
         self.plot.showGrid(y=True)
         self.plot.addLegend()
-        self.setup_buffers_constants()
         self.plot_names =  ['TKP_1', 'TKP_2', 'PKR_3', 'MAN_4']
         self.plot_lines = []
         for i in range(self.NUM_CHANS):
@@ -96,43 +130,64 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.database.setup_index()
     
     def setup_buffers_constants(self):
-        self.HIST_LEN = 1000
+        home = os.path.expanduser("~")
+        self.path = home+'\\Desktop\\'
+        self.full_file_path = self.path+'np'
+        self.HIST_LEN = self.settings.history_length.val
+        self.WINDOW = self.settings.display_window.val
         self.NUM_CHANS = 4
         self.history_i = 0
         self.index = 0
         self.pressure_history = np.zeros((self.NUM_CHANS, 
                 self.HIST_LEN))
+        self.time_history = np.zeros((1, self.HIST_LEN), dtype='datetime64[s]')
+        self.debug_mode = True
         
     def read_pressures(self):
-#         def direct_read(sensor):
-#             measure = self.vgc.vgc.read_sensor(sensor)
-#             return measure/(101325/76000)
         measurements = []
         for i in (1,2,3):
-#             _measure = direct_read(i)
             _measure = self.vgc.settings['ch{}_pressure_scaled'.format(i)]
             measurements.append(_measure)
-        return measurements
+        return np.array(measurements)
     
     def routine(self):
-        readout = self.read_pressures()
-        man_readout = self.app.hardware['mks_600_hw'].settings['pressure'] 
-#         self.database.data_entry(*readout)
-        if self.history_i < self.HIST_LEN:
+        if self.debug_mode:
+            readout = np.random.rand(3,)
+            man_readout = np.random.rand(1,)
+        else:
+            readout = self.read_pressures()
+            man_readout = np.array(self.app.hardware['mks_600_hw'].settings['pressure'])
+        
+        time_entry = datetime.datetime.now()
+        if self.history_i < self.HIST_LEN-1:
             self.index = self.history_i % self.HIST_LEN
         else:
-            self.index = self.HIST_LEN
+            self.index = self.HIST_LEN-1
             self.pressure_history = np.roll(self.pressure_history, -1, axis=1)
-        self.pressure_history[:3, self.index-1] = readout
-        self.pressure_history[3, self.index-1] = man_readout + 1e-5
+            self.time_history = np.roll(self.time_history, -1, axis=1)
+        self.pressure_history[:3, self.index] = readout
+        self.pressure_history[3, self.index] = man_readout + 1e-5
         self.history_i += 1
-     
+    
+    def export_to_disk(self):
+        path = self.settings['save_path']
+        np.save(path+'_pressures.npy', self.pressure_history)
+        np.save(path+'_times.npy', self.time_history)
+    
     def update_display(self):
-        self.vLine.setPos(self.index)
+        self.WINDOW = self.settings.display_window.val
+        self.vLine.setPos(self.WINDOW)
         
+        lower = self.index-self.WINDOW
+
         for i in range(self.NUM_CHANS):
-            self.plot_lines[i].setData(
-                self.pressure_history[i,:self.index])
+            if self.index >= self.WINDOW:
+                self.plot_lines[i].setData(
+                    self.pressure_history[i,lower:self.index+1])
+            else:
+                self.plot_lines[i].setData(
+                    self.pressure_history[i,:self.index+1])
+                self.vLine.setPos(self.index)
     
     def reconnect_server(self):
         self.database.connect()
