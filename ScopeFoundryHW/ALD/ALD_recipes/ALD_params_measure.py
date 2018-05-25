@@ -11,7 +11,7 @@ from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.Qt import QVBoxLayout
 from ScopeFoundryHW.ALD.ALD_recipes import resources
 import pyqtgraph as pg
-from pyqtgraph.dockarea import DockArea
+from pyqtgraph.dockarea import DockArea, Dock
 import numpy as np
 import datetime
 import time
@@ -90,9 +90,22 @@ class ALD_params(Measurement):
         self.dockArea_setup()
 
     def dockArea_setup(self):
-        self.ui.addDock(name="Shutter Controls", position='bottom', widget=self.shutter_control_widget)
-        self.ui.addDock(name="Thermal History", position='top', widget=self.thermal_widget)
-        self.ui.addDock(name="RF Settings", position='top', widget=self.rf_widget)
+        self.rf_dock = Dock('RF Settings')
+        self.rf_dock.addWidget(self.rf_widget)
+        self.ui.addDock(self.rf_dock)
+
+        self.thermal_dock = Dock('Thermal History')
+        self.thermal_dock.addWidget(self.thermal_widget)
+        self.ui.addDock(self.thermal_dock, position='right', relativeTo=self.rf_dock)
+        
+        self.shutter_dock = Dock('Shutter Controls')
+        self.shutter_dock.addWidget(self.shutter_control_widget)
+        self.ui.addDock(self.shutter_dock, position='bottom')
+        
+        self.display_ctrl_dock = Dock('Display Controls')
+        self.display_ctrl_dock.addWidget(self.display_control_widget)
+        self.ui.addDock(self.display_ctrl_dock, position='right', relativeTo=self.shutter_dock)
+        
         self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
         
         
