@@ -16,6 +16,7 @@ import numpy as np
 import datetime
 import time
 import os
+from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
 
 
 class ALD_params(Measurement):
@@ -43,10 +44,10 @@ class ALD_params(Measurement):
         self.settings.New('history_length', dtype=int, initial=1e6, vmin=1)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
         self.settings.New('display_window', dtype=int, initial=1e4, vmin=1)
+        self.settings.New('cycles', dtype=int, initial=1, ro=False, vmin=1)
+    
+        self.settings.New('time', dtype=float, array=True, initial=[[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]], fmt='%1.3f', ro=False)
 
-        
-        self.settings.New('time', dtype=float, array=True, initial=[[0.1,0.05,0.2,0.3,0.3, 0]], fmt='%1.3f', ro=False)
-        self.settings.time.add_listener(self.sum)
         self.setup_buffers_constants()
         self.settings.New('save_path', dtype=str, initial=self.full_file_path, ro=False)
 
@@ -69,15 +70,27 @@ class ALD_params(Measurement):
         if hasattr(self.app.hardware, 'mks_146_hw'):
             self.mks146 = self.app.hardware.mks_146_hw
         
+        if hasattr(self.app.measurements, 'ALD_Recipe'):
+            self.recipe = self.app.measurements.ALD_Recipe
+        else:
+            print('ALD_Recipe not setup')
+            
         self.ui_enabled = True
         if self.ui_enabled:
             self.ui_setup()
+
+        self.settings.time.add_listener(self.sum)
+        self.settings.cycles.add_listener(self.sum)
     
     def sum(self):
-        sum_value = np.sum(self.settings['time'][0][:5])
-        self.settings['time'][0][5] = sum_value
-    
-
+        prepurge = self.settings['time'][0][0]
+        cycles = self.settings['cycles']
+        total_loop_time = cycles*np.sum(self.settings['time'][0][1:5])
+        print(total_loop_time)
+        postpurge = self.settings['time'][0][5]
+        sum_value = prepurge + total_loop_time + postpurge
+        self.settings['time'][0][6] = sum_value
+        self.tableModel.on_lq_updated_value()
 
     def ui_setup(self):
         
@@ -191,42 +204,61 @@ class ALD_params(Measurement):
 
     def setup_recipe_control_widget(self):
         self.recipe_control_widget = QtWidgets.QGroupBox('Recipe Controls')
-        self.layout.addWidget(self.recipe_control_widget)
-        
         self.recLayout = QtWidgets.QVBoxLayout()
         self.recipe_control_widget.setLayout(self.recLayout)
+        self.layout.addWidget(self.recipe_control_widget)
     
+        ## Settings Widget
+        self.settings_widget = QtWidgets.QWidget()
+        self.settings_layout = QtWidgets.QGridLayout()
+        self.settings_widget.setLayout(self.settings_layout)
+        
+        self.cycle_label = QtWidgets.QLabel('N Cycles')
+        self.settings_widget.layout().addWidget(self.cycle_label, 0,0)
+        self.cycle_field = QtWidgets.QDoubleSpinBox()
+        self.settings.cycles.connect_to_widget(self.cycle_field)
+        self.settings_widget.layout().addWidget(self.cycle_field, 1,0)
+        self.recipe_control_widget.layout().addWidget(self.settings_widget)
+    
+        ## Table Widget
         self.table_widget = QtWidgets.QWidget()
         self.table_widget_layout = QtWidgets.QHBoxLayout()
         self.table_widget.setLayout(self.table_widget_layout)
-                
-        self.pulse_label = QtWidgets.QLabel('RF Durations [s]')
+
+        self.pulse_label = QtWidgets.QLabel('Step Durations [s]')
         self.table_widget.layout().addWidget(self.pulse_label)
 
         self.pulse_table = QtWidgets.QTableView()
         self.pulse_table.setMaximumHeight(65)
-        names = ['t1 Purge', 't2 (TiCl4 PV)', 't3 Purge', 't4 (Shutter)', 't5 Wait', u'\u03a3'+'t'+u'\u1d62']
+        names = ['t'+u'\u2080'+' Pre Purge', 't'+u'\u2081'+' (TiCl'+u'\u2084'+' PV)',\
+                  't'+u'\u2082'+' Purge', 't'+u'\u2083'+' (N'+u'\u2082'+'/Shutter)', \
+                 't'+u'\u2084'+' Purge', 't'+u'\u2085'+' Post Purge', u'\u03a3'+'t'+u'\u1d62']
         self.tableModel = ArrayLQ_QTableModel(self.settings.time, col_names=names)
         self.pulse_table.setModel(self.tableModel)
         self.table_widget.layout().addWidget(self.pulse_table)
         self.recipe_control_widget.layout().addWidget(self.table_widget)
     
-    
-    
-        
-    
-
         self.recipe_panel = QtWidgets.QWidget()
         self.recipe_panel_layout = QtWidgets.QGridLayout()
-        self.recipe_panel.setLayout(self.recipe_panel_layout)    
-        self.recipe_start_button = QtWidgets.QPushButton('Start 1 Recipe')
-    
-        self.recipe_panel.layout().addWidget(self.recipe_start_button, 0, 0)
-    
-        self.recipe_start_button.clicked.connect(self.app.measurements['ALD_routine'].start)
+        self.recipe_panel.setLayout(self.recipe_panel_layout)
+        
+        self.single_start_button = QtWidgets.QPushButton('Start 1 Recipe')
+        self.single_start_button.clicked.connect(self.load_single_recipe)
+        self.recipe_panel.layout().addWidget(self.single_start_button, 0, 0)
+        
+        self.start_button = QtWidgets.QPushButton('Start Recipe')
+        self.start_button.clicked.connect(self.recipe.start)
+        self.recipe_panel.layout().addWidget(self.start_button, 0, 1)
+        
+        self.abort_button = QtWidgets.QPushButton('Abort Recipe')
+        self.abort_button.clicked.connect(self.recipe.interrupt)
+        self.recipe_panel.layout().addWidget(self.abort_button, 0, 2)
 
         self.recipe_control_widget.layout().addWidget(self.recipe_panel)
 
+    def load_single_recipe(self):
+        self.recipe.load_times()
+        self.recipe.routine()
 
         
     def setup_display_controls(self):
@@ -248,8 +280,6 @@ class ALD_params(Measurement):
         
         self.export_button.clicked.connect(self.export_to_disk)
         self.settings.save_path.connect_to_widget(self.save_field)
-
-#         self.display_control_widget.layout().addWidget(self.field_panel)
         
         plot_ui_list = ('display_window','history_length')
         self.field_panel.layout().addWidget(self.settings.New_UI(include=plot_ui_list), 2,0)
