@@ -120,6 +120,7 @@ class ALD_params(Measurement):
         self.setup_thermal_control_widget()
         self.setup_rf_flow_widget()
         self.setup_recipe_control_widget()
+        self.setup_display_controls()
 
     def setup_thermal_control_widget(self):
         self.thermal_widget = QtWidgets.QGroupBox('Thermal Controller Overview')
@@ -212,22 +213,7 @@ class ALD_params(Measurement):
     
     
     
-        self.field_panel = QtWidgets.QWidget()
-        self.field_panel_layout = QtWidgets.QGridLayout()
-        self.field_panel.setLayout(self.field_panel_layout)
-        self.recipe_control_widget.layout().addWidget(self.field_panel)
         
-        self.export_button = QtWidgets.QPushButton('Export Temperature Data')
-        self.save_field = QtWidgets.QLineEdit('Directory')
-        self.save_field.setMinimumWidth(200)
-        self.save_field.setMaximumWidth(600)
-
-    
-        self.field_panel.layout().addWidget(self.export_button, 1, 0)
-        self.field_panel.layout().addWidget(self.save_field, 1, 1)
-        
-        self.export_button.clicked.connect(self.export_to_disk)
-        self.settings.save_path.connect_to_widget(self.save_field)
     
 
         self.recipe_panel = QtWidgets.QWidget()
@@ -242,8 +228,32 @@ class ALD_params(Measurement):
         self.recipe_control_widget.layout().addWidget(self.recipe_panel)
 
 
+        
+    def setup_display_controls(self):
+        self.display_control_widget = QtWidgets.QGroupBox('Display Control Panel')
+        self.display_control_widget.setLayout(QtWidgets.QVBoxLayout())
+        
+        self.field_panel = QtWidgets.QWidget()
+        self.field_panel_layout = QtWidgets.QGridLayout()
+        self.field_panel.setLayout(self.field_panel_layout)
+        self.display_control_widget.layout().addWidget(self.field_panel)
+        
+        self.export_button = QtWidgets.QPushButton('Export Temperature Data')
+        self.save_field = QtWidgets.QLineEdit('Directory')
+        self.save_field.setMinimumWidth(200)
+        self.save_field.setMaximumWidth(600)
+
+        self.field_panel.layout().addWidget(self.export_button, 1, 0)
+        self.field_panel.layout().addWidget(self.save_field, 1, 1)
+        
+        self.export_button.clicked.connect(self.export_to_disk)
+        self.settings.save_path.connect_to_widget(self.save_field)
+
+#         self.display_control_widget.layout().addWidget(self.field_panel)
+        
         plot_ui_list = ('display_window','history_length')
-        self.recipe_panel.layout().addWidget(self.settings.New_UI(include=plot_ui_list), 1,0)
+        self.field_panel.layout().addWidget(self.settings.New_UI(include=plot_ui_list), 2,0)
+
 
     def setup_buffers_constants(self):
         home = os.path.expanduser("~")
