@@ -8,7 +8,7 @@ Created on Nov 20, 2017
 from ScopeFoundry.base_app import BaseMicroscopeApp
 import logging
 
-logging.disable(50)
+# logging.disable(50)
 
 
 
@@ -58,8 +58,11 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.Seren.seren_measure import Seren
         self.add_measurement(Seren(self)).start()
         
-        from ScopeFoundryHW.ALD.ALD_recipes.ALD_functions import ALD_routine
-        self.add_measurement(ALD_routine(self))
+#         from ScopeFoundryHW.ALD.ALD_recipes.ALD_functions import ALD_routine
+#         self.add_measurement(ALD_routine(self))
+
+        from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
+        self.add_measurement(ALD_Recipe(self))
         
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_params_measure import ALD_params
         self.add_measurement(ALD_params(self))
