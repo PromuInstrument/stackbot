@@ -76,8 +76,8 @@ class MKS_600_Hardware(HardwareComponent):
     
     def switch_sp(self, choice):
         channel = self.assign[choice]
-        assert channel in range(0,8)
-        if channel in range(0,6):
+        assert channel in range(1,8)
+        if channel in range(1,6):
             self.mks.switch_sp(channel)
         else:
             table = {6: True,
