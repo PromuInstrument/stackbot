@@ -93,15 +93,15 @@ class MKS_600_Interface(object):
             return 0.
         
     def switch_sp(self, ch):
-        assert 0 <= ch <= 5
-        self.ask_cmd("D{}".format(ch))
+        assert 1 <= ch <= 6
+        self.ask_cmd("D{:d}".format(ch))
         
     def write_sp(self, ch, p):
         assert 0. <= p <= 2.
         assert 0 <= ch <= 5
         pct = (p/2.)*100
-        print('cmd:', "S{} {}".format(int(ch), pct))
-        self.ask_cmd("S{} {}".format(int(ch), pct))
+        print('cmd:', "S{:d} {}".format(int(ch), pct))
+        self.ask_cmd("S{:d} {}".format(int(ch), pct))
         
         
     def read_valve(self):
