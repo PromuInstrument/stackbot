@@ -204,7 +204,7 @@ class ALD_params(Measurement):
 
         self.pulse_table = QtWidgets.QTableView()
         self.pulse_table.setMaximumHeight(65)
-        names = ['t1', 't2 (TiCl4 PV)', 't3', 't4 (Shutter)', 't5', 'sum']
+        names = ['t1 Purge', 't2 (TiCl4 PV)', 't3 Purge', 't4 (Shutter)', 't5 Wait', u'\u03a3'+'t'+u'\u1d62']
         self.tableModel = ArrayLQ_QTableModel(self.settings.time, col_names=names)
         self.pulse_table.setModel(self.tableModel)
         self.table_widget.layout().addWidget(self.pulse_table)
