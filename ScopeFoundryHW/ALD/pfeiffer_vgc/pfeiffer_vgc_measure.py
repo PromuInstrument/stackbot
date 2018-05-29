@@ -141,7 +141,7 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.pressure_history = np.zeros((self.NUM_CHANS, 
                 self.HIST_LEN))
         self.time_history = np.zeros((1, self.HIST_LEN), dtype='datetime64[s]')
-        self.debug_mode = True
+        self.debug_mode = False
         
     def read_pressures(self):
         measurements = []
