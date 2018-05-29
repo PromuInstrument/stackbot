@@ -20,6 +20,10 @@ class ALD_Recipe(Measurement):
         self.vgc = self.app.hardware['pfeiffer_vgc_hw']
         self.seren = self.app.hardware['seren_hw']
     
+        self.MFC_valve_states = {'Open': 'O',
+                             'Closed': 'C',
+                             'Manual': 'N'}
+    
         if hasattr(self.app.hardware, 'ald_shutter'):
             self.shutter = self.app.hardware.ald_shutter
         else:
