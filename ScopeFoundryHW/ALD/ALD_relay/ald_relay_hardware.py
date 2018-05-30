@@ -15,32 +15,33 @@ class ALDRelayHW(HardwareComponent):
     name = 'ald_relay_hw'
     
     def setup(self):
+        self.ENABLED_PORTS = 2
         self.settings.New(name='port', initial='COM9', dtype=str, ro=False)
-        for relay in range(1,5,1):
-            self.settings.New(name="relay{}".format(relay), initial=False, dtype=bool, ro=False)
-            self.settings.New(name="pulse{}".format(relay), initial=False, dtype=bool, ro=False)
-            self.settings.New(name="pulse_width{}".format(relay), initial=10, dtype=int, ro=False)
+        self.create_pulse_lq()
     
     def connect(self):
         self.relay = ALDRelayInterface(port=self.settings.port.val, debug=self.settings['debug_mode'])
+        self.enable_pulse()
 
-        self.settings.get_lq('relay1').connect_to_hardware(
-                                    write_func=self.write_relay1)
-        self.settings.get_lq('relay2').connect_to_hardware(
-                                    write_func=self.write_relay2)
-        self.settings.get_lq('relay3').connect_to_hardware(
-                                    write_func=self.write_relay3)
-        self.settings.get_lq('relay4').connect_to_hardware(
-                                    write_func=self.write_relay4) 
+    def create_pulse_lq(self):
+        for relay in range(1,self.ENABLED_PORTS+1,1):
+            self.settings.New(name="pulse{}".format(relay), initial=False, dtype=bool, ro=False)
+            self.settings.New(name="pulse_width{}".format(relay), initial=10, dtype=int, ro=False)
 
-        self.settings.get_lq('pulse1').connect_to_hardware(
-                                    write_func=self.write_pulse1)
-        self.settings.get_lq('pulse2').connect_to_hardware(
-                                    write_func=self.write_pulse2)
-        self.settings.get_lq('pulse3').connect_to_hardware(
-                                    write_func=self.write_pulse3)
-        self.settings.get_lq('pulse4').connect_to_hardware(
-                                    write_func=self.write_pulse4)
+    def enable_pulse(self):
+        for relay in range(1,self.ENABLED_PORTS+1,1):
+            self.settings.get_lq('pulse{}'.format(relay)).connect_to_hardware(
+                                    write_func=getattr(self,'write_pulse{}'.format(relay)))
+
+    def create_toggle_lq(self):
+        for relay in range(1,self.ENABLED_PORTS+1,1):
+            self.settings.New(name="relay{}".format(relay), initial=False, dtype=bool, ro=False)
+        
+    def enable_toggle(self):
+        for relay in range(1,self.ENABLED_PORTS+1,1):
+            self.settings.get_lq('relay{}'.format(relay)).connect_to_hardware(
+                                    write_func=getattr(self, 'write_relay{}'.format(relay)))
+        
 
     def populate(self):
         "Populate logged quantities to reflect changes in self.relay.relay_array"
