@@ -12,7 +12,8 @@ from ScopeFoundry import HardwareComponent
 class LoveboxHW(HardwareComponent):
     
     name = 'lovebox'
-    CTRL_METHODS = ("PID", "Manual")
+    CTRL_METHODS = ("PID", "ON/OFF", "Manual")
+    
     initial_PID_defaults = (30.0, 28, 7)
     desired_PID_profile = (50.0, 30, 10)
 #     CTRL_METHODS = ("PID", "ON/OFF", "Manual", "PID Program Ctrl")
@@ -27,10 +28,14 @@ class LoveboxHW(HardwareComponent):
         self.settings.New(name='sv_setpoint', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
         self.settings.New(name='output1', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
         self.settings.New(name='Proportional_band', initial=self.active_profile[0], dtype=float, spinbox_decimals=1, ro=False, vmin=0.1, vmax=999.9)
-        
         self.settings.New(name='Integral_time', initial=self.active_profile[1], dtype=int, ro=False, vmin=0, vmax=9999)
         self.settings.New(name='Derivative_time', initial=self.active_profile[2], dtype=int, ro=False, vmin=0, vmax=9999)
+        self.settings.New(name='PID_preset', initial=1, dtype=int, ro=False, vmin=0, vmax=4)
+        self.settings.New(name='PID_SV', initial=0.0, dtype=float, ro=False)
         
+#         self.settings.New(name='Run', initial=True, dtype=bool, ro=False)
+#         self.settings.New(name='Run PID', initial=False, dtype=bool, ro=False)
+         
 #         lq.change_ro(True)
         
     def connect(self):
@@ -66,6 +71,23 @@ class LoveboxHW(HardwareComponent):
                                                     write_func=self.lovebox.set_derivative_time,
                                                     read_func=self.lovebox.read_derivative_time)
         
+        self.settings.get_lq('PID_preset').connect_to_hardware(
+                                                    write_func=self.lovebox.set_pid_preset,
+                                                    read_func=self.lovebox.read_pid_preset)
+        
+        self.settings.get_lq('PID_SV').connect_to_hardware(
+                                                    write_func=self.lovebox.set_pid_sv,
+                                                    read_func=self.lovebox.read_pid_sv)
+
+#         self.settings.get_lq('Run').connect_to_hardware(
+#                                                     write_func=self.lovebox.set_ctrl_run,
+#                                                     read_func=self.lovebox.read_ctrl_run)
+#         
+#         self.settings.get_lq('Run PID').connect_to_hardware(
+#                                                     write_func=self.lovebox.set_pid_ctrl_run,
+#                                                     read_func=self.lovebox.read_pid_ctrl_run)
+
+
         self.set_control_method(self.settings['control_method'])
 
                
