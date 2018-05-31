@@ -33,7 +33,9 @@ class MKS_600_Hardware(HardwareComponent):
         self.settings.New(name="sp_channel", initial="Open", dtype=str, ro=False, choices=(('A'), ('B'), ('C'), ('D'), ('E'), ('Open'), ('Close')))
         self.settings.New(name="sp_readout", initial=0.0, spinbox_decimals=4, dtype=float, ro=True)
         self.settings.New(name="sp_set_value", initial=0.0, spinbox_decimals=4, dtype=float, ro=False)
-        self.settings.New(name="valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
+        self.settings.New(name="set_valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
+        self.settings.New(name="read_valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
+
         self.add_operation('Force SP defaults', self.set_sp_defaults)
         self.mks = None
     
@@ -41,7 +43,7 @@ class MKS_600_Hardware(HardwareComponent):
         self.mks = MKS_600_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
         
         self.settings.pressure.connect_to_hardware(read_func=self.read_pressure)
-        self.settings.valve_position.connect_to_hardware(read_func=self.read_valve)
+        self.settings.read_valve_position.connect_to_hardware(read_func=self.read_valve)
 
         self.settings.sp_set_value.connect_to_hardware(write_func=lambda x: self.write_sp(x))
         self.settings.sp_readout.connect_to_hardware(read_func=self.read_sp)
