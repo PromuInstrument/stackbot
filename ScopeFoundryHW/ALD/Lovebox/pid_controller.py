@@ -140,8 +140,35 @@ class PIDController(object):
         self.heat_cool_ctrl_name = self.HEAT_COOL_CTRLS[self.heat_cool_ctrl_i]
 
         return (self.heat_cool_ctrl_i, self.heat_cool_ctrl_name)
-            
     
+    def set_pid_preset(self, pid):
+        assert pid in range(0,5)
+        self.send_analog_write(0x101c, pid)
+        
+    def read_pid_preset(self):
+        pid = self.send_analog_read(0x101c)
+        return pid
+    
+    def set_pid_sv(self, sv):
+        self.send_analog_write(0x101d, 10*sv)
+    
+    def read_pid_sv(self):
+        sv = 0.1 * self.send_analog_read(0x101d)
+        return sv
+    
+    def set_ctrl_run(self, run):
+        self.send_analog_write(0x0814, int(run))
+        
+    def read_ctrl_run(self):
+        run_status = self.send_analog_read(0x0814)
+        return bool(run_status)
+        
+    def set_pid_ctrl_run(self, run):
+        self.send_analog_write(0x0815, not int(run))
+    
+    def read_pid_ctrl_run(self):
+        run_status = self.send_analog_read(0x0815)
+        return not bool(run_status)
         
     def modbus_command(self, command, register, data):
         address = self.address
