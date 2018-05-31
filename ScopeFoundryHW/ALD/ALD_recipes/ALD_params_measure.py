@@ -8,7 +8,7 @@ Created on Apr 11, 2018
 from ScopeFoundry import Measurement
 from ScopeFoundry.ndarray_interactive import ArrayLQ_QTableModel
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.Qt import QVBoxLayout
+from PyQt5.Qt import QVBoxLayout, QWidget
 from ScopeFoundryHW.ALD.ALD_recipes import resources
 import pyqtgraph as pg
 from pyqtgraph.dockarea import DockArea, Dock
@@ -69,6 +69,12 @@ class ALD_params(Measurement):
         
         if hasattr(self.app.hardware, 'mks_146_hw'):
             self.mks146 = self.app.hardware.mks_146_hw
+        
+        if hasattr(self.app.hardware, 'mks_600_hw'):
+            self.mks600 = self.app.hardware.mks_600_hw
+        
+        if hasattr(self.app.hardware, 'pfeiffer_vgc_hw'):
+            self.vgc = self.app.hardware.pfeiffer_vgc_hw
         
         if hasattr(self.app.measurements, 'ALD_Recipe'):
             self.recipe = self.app.measurements.ALD_Recipe
@@ -150,19 +156,20 @@ class ALD_params(Measurement):
         self.left_widget.setLayout(QtWidgets.QVBoxLayout())
         
         self.right_widget = QtWidgets.QGroupBox('Pressures and Flow')
+        self.right_widget.setLayout(QtWidgets.QHBoxLayout())
         
         self.temp_field_panel = QtWidgets.QGroupBox('Temperature Readout Panel')
         self.left_widget.layout().addWidget(self.temp_field_panel)
-        self.plasma_panel = QtWidgets.QGroupBox('Plasma Panel')
-        self.left_widget.layout().addWidget(self.plasma_panel)
         
         self.hardware_widget.layout().addWidget(self.left_widget)
         self.hardware_widget.layout().addWidget(self.right_widget)
         self.setup_plasma_subpanel()
-        
+        self.setup_pressures_subpanel()
     
     def setup_plasma_subpanel(self):
- 
+        self.plasma_panel = QtWidgets.QGroupBox('Plasma Panel')
+        self.left_widget.layout().addWidget(self.plasma_panel)
+
         self.fwd_power_input_label = QtWidgets.QLabel('FWD Power Input')
         self.fwd_power_input = QtWidgets.QDoubleSpinBox()
         self.fwd_power_readout_label = QtWidgets.QLabel('FWD Power Readout')
@@ -194,10 +201,82 @@ class ALD_params(Measurement):
         self.plasma_panel.layout().addWidget(self.plasma_left_panel)
         self.plasma_panel.layout().addWidget(self.plasma_right_panel)
 
-        
+    def setup_pressures_subpanel(self):
+        self.flow_input_group = QtWidgets.QGroupBox('Flow Inputs')
+        self.flow_output_group = QtWidgets.QGroupBox('Flow Outputs')
+        self.pressures_group = QtWidgets.QGroupBox('Pressure Outputs')
 
+        self.right_widget.layout().addWidget(self.flow_input_group)
+        self.right_widget.layout().addWidget(self.flow_output_group)
+        self.right_widget.layout().addWidget(self.pressures_group)
+
+        self.flow_input_group.setStyleSheet(self.cb_stylesheet)
+        self.flow_input_group.setLayout(QtWidgets.QGridLayout())
+        self.flow_output_group.setLayout(QtWidgets.QGridLayout())
+        self.pressures_group.setLayout(QtWidgets.QGridLayout())
+
+        self.MFC1_label = QtWidgets.QLabel('MFC1 Flow')
+        self.set_MFC1_field = QtWidgets.QDoubleSpinBox()
+        
+        self.throttle_pressure_label = QtWidgets.QLabel('Throttle Pressure \n [mTorr]')
+        self.set_throttle_pressure_field = QtWidgets.QDoubleSpinBox()
+        
+        self.throttle_pos_label = QtWidgets.QLabel('Throttle Valve \n Position [%]')
+        self.set_throttle_pos_field = QtWidgets.QDoubleSpinBox()
+        
+        self.shutter_indicator = QtWidgets.QCheckBox()
+        self.shutter_pushbutton = QtWidgets.QPushButton('Shutter Open/Close')
+
+        self.input_spacer = QtWidgets.QSpacerItem(10,30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+
+        self.flow_input_group.layout().addWidget(self.MFC1_label, 0, 0)
+        self.flow_input_group.layout().addWidget(self.set_MFC1_field, 0, 1)
+        self.flow_input_group.layout().addWidget(self.throttle_pressure_label, 1, 0)
+        self.flow_input_group.layout().addWidget(self.set_throttle_pressure_field, 1, 1)        
+        self.flow_input_group.layout().addWidget(self.throttle_pos_label, 2, 0)
+        self.flow_input_group.layout().addWidget(self.set_throttle_pos_field, 2, 1)
+        self.flow_input_group.layout().addWidget(self.shutter_indicator, 3, 0)
+        self.flow_input_group.layout().addWidget(self.shutter_pushbutton, 3, 1)
+        self.flow_input_group.layout().addItem(self.input_spacer, 4, 0)
+        
+        self.read_MFC1_field = QtWidgets.QDoubleSpinBox()
+        self.read_throttle_pressure_field = QtWidgets.QDoubleSpinBox()
+        self.read_throttle_pos_field = QtWidgets.QDoubleSpinBox()
+        self.output_spacer = QtWidgets.QSpacerItem(10,30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        
+        self.flow_output_group.layout().addWidget(self.read_MFC1_field, 0, 0)
+        self.flow_output_group.layout().addWidget(self.read_throttle_pressure_field, 1, 0)
+        self.flow_output_group.layout().addWidget(self.read_throttle_pos_field, 2, 0)
+        self.flow_output_group.layout().addItem(self.output_spacer, 3, 0)
+        
+        self.ch1_readout_field = QtWidgets.QDoubleSpinBox()
+        self.ch1_readout_label = QtWidgets.QLabel('Ch1 Pressure')
+        self.ch2_readout_field = QtWidgets.QDoubleSpinBox()
+        self.ch2_readout_label = QtWidgets.QLabel('Ch2 Pressure')
+        self.ch3_readout_field = QtWidgets.QDoubleSpinBox()
+        self.ch3_readout_label = QtWidgets.QLabel('Ch3 Pressure')
+        
+        self.pressures_group.layout().addWidget(self.ch1_readout_label, 0, 0)
+        self.pressures_group.layout().addWidget(self.ch1_readout_field, 0, 1)
+        self.pressures_group.layout().addWidget(self.ch2_readout_label, 1, 0)
+        self.pressures_group.layout().addWidget(self.ch2_readout_field, 1, 1)
+        self.pressures_group.layout().addWidget(self.ch3_readout_label, 2, 0)
+        self.pressures_group.layout().addWidget(self.ch3_readout_field, 2, 1)
+        self.pressures_group.layout().addItem(self.output_spacer, 3, 0)
+        
+        self.mks146.settings.set_MFC0_SP.connect_to_widget(self.set_MFC1_field)
+        self.mks600.settings.sp_set_value.connect_to_widget(self.set_throttle_pressure_field)
+
+        self.mks146.settings.MFC0_flow.connect_to_widget(self.read_MFC1_field)
+        self.mks600.settings.sp_readout.connect_to_widget(self.read_throttle_pressure_field)
+        self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
+
+        self.vgc.settings.ch1_pressure_scaled.connect_to_widget(self.ch1_readout_field)
+        self.vgc.settings.ch2_pressure_scaled.connect_to_widget(self.ch2_readout_field)
+        self.vgc.settings.ch3_pressure_scaled.connect_to_widget(self.ch3_readout_field)
+        
     def setup_thermal_control_widget(self):
-        self.thermal_widget = QtWidgets.QGroupBox('Thermal Controller Overview')
+        self.thermal_widget = QtWidgets.QGroupBox('Thermal Plot')
         self.thermal_widget.setLayout(QtWidgets.QVBoxLayout())
         self.thermal_channels = 1
         
@@ -220,7 +299,7 @@ class ALD_params(Measurement):
         self.thermal_plot.addItem(self.hLine1)
     
     def setup_rf_flow_widget(self):
-        self.rf_widget = QtWidgets.QGroupBox('RF Settings')
+        self.rf_widget = QtWidgets.QGroupBox('RF Plot')
         self.layout.addWidget(self.rf_widget)
         self.rf_widget.setLayout(QtWidgets.QVBoxLayout())
         
@@ -398,7 +477,7 @@ class ALD_params(Measurement):
         self.hLine1.setPos(lovebox_level)
         
         
-        flow_level = self.mks146.settings['MFC0_SP']
+        flow_level = self.mks146.settings['read_MFC0_SP']
         self.hLine2.setPos(flow_level)
         
 
