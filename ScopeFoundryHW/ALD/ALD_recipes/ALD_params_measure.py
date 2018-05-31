@@ -266,9 +266,10 @@ class ALD_params(Measurement):
         
         self.mks146.settings.set_MFC0_SP.connect_to_widget(self.set_MFC1_field)
         self.mks600.settings.sp_set_value.connect_to_widget(self.set_throttle_pressure_field)
+        self.mks600.settings.set_valve_position.connect_to_widget(self.set_throttle_pos_field)
 
         self.mks146.settings.MFC0_flow.connect_to_widget(self.read_MFC1_field)
-        self.mks600.settings.sp_readout.connect_to_widget(self.read_throttle_pressure_field)
+        self.mks600.settings.pressure.connect_to_widget(self.read_throttle_pressure_field)
         self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
 
         self.vgc.settings.ch1_pressure_scaled.connect_to_widget(self.ch1_readout_field)
