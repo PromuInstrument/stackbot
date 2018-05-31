@@ -18,28 +18,39 @@ class MKS_146_Hardware(HardwareComponent):
         
         self.settings.New(name="port", initial="COM8", dtype=str, ro=False)
         self.settings.New(name="MFC0_flow", fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
+        
 
-        self.settings.New(name="MFC0_valve", initial="C", dtype=str, choices = [
+        self.settings.New(name="set_MFC0_valve", initial="C", dtype=str, choices = [
                                                                 ("Open", "O"),
                                                                 ("Closed", "C"),
-                                                                ("Manual", "N")])
-         
+                                                                ("Manual", "N")], ro=False)
+        
+        self.settings.New(name="read_MFC0_valve", initial="C", dtype=str, choices = [
+                                                                ("Open", "O"),
+                                                                ("Closed", "C"),
+                                                                ("Manual", "N")], ro=True)
          
 
 
-        self.settings.New(name="MFC0_SP", initial=0.0002, fmt="%1.4f", spinbox_decimals=4, dtype=float, vmin=0.0002, vmax=20, ro=False)
+        self.settings.New(name="set_MFC0_SP", initial=0.0002, fmt="%1.4f", spinbox_decimals=4, dtype=float, vmin=0.0002, vmax=20, ro=False)
 
         if self.MFC_count > 1:
             self.settings.New(name="MFC1_flow", fmt="%1.4f", spinbox_decimals=4, dtype=float, ro=True)
-            self.settings.New(name="MFC1_SP", initial=0.0002, fmt="%1.4f", spinbox_decimals=4, dtype=float, vmin=0.0002, vmax=20, ro=False)
-            self.settings.New(name="MFC1_valve", initial="C", dtype=str, choices = [
+            self.settings.New(name="set_MFC1_SP", initial=0.0002, fmt="%1.4f", spinbox_decimals=4, dtype=float, vmin=0.0002, vmax=20, ro=False)
+            
+            self.settings.New(name="set_MFC1_valve", initial="C", dtype=str, choices = [
                                                                     ("Open", "O"),
                                                                     ("Closed", "C"),
-                                                                    ("Cancel", "N")])
-
+                                                                    ("Cancel", "N")], ro=False)
+            self.settings.New(name="read_MFC1_valve", initial="C", dtype=str, choices = [
+                                                                    ("Open", "O"),
+                                                                    ("Closed", "C"),
+                                                                    ("Cancel", "N")], ro=True)
 
                 
         self.mks = None
+        
+        
     def chan_assign(self):            
         skip = True
         slot = 0
@@ -54,21 +65,22 @@ class MKS_146_Hardware(HardwareComponent):
                 setattr(self, 'MFC{}_chan'.format(slot), i)
                 if self.debug_mode:
                     print(getattr(self, 'MFC{}_chan'.format(slot)))
+                
                 self.settings.get_lq('MFC{}_flow'.format(slot)).connect_to_hardware(
                                                     read_func=getattr(self,'MFC{}_read_flow'.format(slot)))
                 if self.debug_mode:
                     print('MFC{}_flow'.format(slot))
-                self.settings.get_lq('MFC{}_valve'.format(slot)).connect_to_hardware(
-                                                    write_func=getattr(self,'MFC{}_write_valve'.format(slot)),
+                
+                self.settings.get_lq('set_MFC{}_valve'.format(slot)).connect_to_hardware(
+                                                    write_func=getattr(self,'MFC{}_write_valve'.format(slot)))
+                self.settings.get_lq('read_MFC{}_valve'.format(slot)).connect_to_hardware(
                                                     read_func=getattr(self, 'MFC{}_read_valve'.format(slot)))
-                if self.debug_mode:
-                    print('MFC{}_valve'.format(slot))
-                self.settings.get_lq('MFC{}_SP'.format(slot)).connect_to_hardware(
-                                                    write_func=getattr(self,'MFC{}_write_SP'.format(slot)),
-                                                    read_func=getattr(self, 'MFC{}_read_SP'.format(slot)))
-                if self.debug_mode:
-                    print('MFC{}_SP'.format(slot))
-                    print('Assigned MFC{} to channel {}'.format(slot, i))
+                    
+                
+                self.settings.get_lq('set_MFC{}_SP'.format(slot)).connect_to_hardware(
+                                                    write_func=getattr(self,'MFC{}_write_SP'.format(slot)))
+                
+
                 slot += 1
                 if self.MFC_count == 1:
                     skip = True
@@ -82,7 +94,7 @@ class MKS_146_Hardware(HardwareComponent):
         
         self.chan_assign()
         
-        self.settings.get_lq('MFC0_valve').update_value('C')
+        self.settings.get_lq('set_MFC0_valve').update_value('C')
         
         self.read_from_hardware()
         
