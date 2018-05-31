@@ -81,19 +81,19 @@ class ALD_Recipe(Measurement):
     def ramp_throttle_open(self):
         print('Ramping down.')
         self.shutdown_ready = False
-        pressure = self.vgc.settings['ch2_pressure_scaled']
-        if pressure < 1e-2:
-            self.mks600.settings['sp_channel'] = 'B'
-            self.mks600.write_sp(0.0002)
-            time.sleep(10)
-            self.mks600.write_sp(0.0001)
-            time.sleep(20)
-            self.mks600.settings['sp_channel']= 'Open'
-            self.shutdown_ready = True
-        else:
-            print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
-            pass
-    
+        while self.shutdown_ready == False:
+            pressure = self.vgc.settings['ch2_pressure_scaled']
+            if pressure < 1e-2:
+                self.mks600.settings['sp_channel'] = 'B'
+                self.mks600.write_sp(0.0002)
+                time.sleep(10)
+                self.mks600.write_sp(0.0001)
+                time.sleep(20)
+                self.mks600.settings['sp_channel']= 'Open'
+                self.shutdown_ready = True
+            else:
+                print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
+        
     def run(self):
         cycles = self.app.measurements.ALD_params.settings['cycles']    
         self.times = self.app.measurements.ALD_params.settings['time']
