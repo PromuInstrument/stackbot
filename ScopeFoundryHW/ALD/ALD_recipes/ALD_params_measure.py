@@ -186,16 +186,23 @@ class ALD_params(Measurement):
         self.plasma_left_panel.layout().addWidget(self.fwd_power_readout_label, 1, 0)
         self.plasma_left_panel.layout().addWidget(self.fwd_power_readout, 1, 1)
         
-        self.rf_status = QtWidgets.QCheckBox()
-        self.rf_button = QtWidgets.QPushButton('RF ON/OFF')
+        self.rf_indicator = QtWidgets.QCheckBox()
+        self.rf_pushbutton = QtWidgets.QPushButton('RF ON/OFF')
+        if hasattr(self, 'shutter'):
+            self.seren.settings.RF_enable.connect_to_widget(self.rf_indicator)
+            self.rf_pushbutton.clicked.connect(self.seren.RF_toggle)
+ 
         self.rev_power_readout_label = QtWidgets.QLabel('REV Power Readout')
         self.rev_power_readout = QtWidgets.QDoubleSpinBox()
-        
-        self.plasma_right_panel.layout().addWidget(self.rf_status, 0, 1)
-        self.plasma_right_panel.layout().addWidget(self.rf_button, 0, 0)
+                
+        self.plasma_right_panel.layout().addWidget(self.rf_indicator, 0, 1)
+        self.plasma_right_panel.layout().addWidget(self.rf_pushbutton, 0, 0)
         self.plasma_right_panel.layout().addWidget(self.rev_power_readout, 1, 0)
         self.plasma_right_panel.layout().addWidget(self.rev_power_readout_label, 1, 1)
         
+        self.seren.settings.set_forward_power.connect_to_widget(self.fwd_power_input)
+        self.seren.settings.forward_power_readout.connect_to_widget(self.fwd_power_readout)
+        self.seren.settings.reflected_power.connect_to_widget(self.rev_power_readout)
         
         self.plasma_panel.setLayout(QtWidgets.QHBoxLayout())
         self.plasma_panel.layout().addWidget(self.plasma_left_panel)
@@ -226,6 +233,9 @@ class ALD_params(Measurement):
         
         self.shutter_indicator = QtWidgets.QCheckBox()
         self.shutter_pushbutton = QtWidgets.QPushButton('Shutter Open/Close')
+        if hasattr(self, 'shutter'):
+            self.shutter.settings.shutter_open.connect_to_widget(self.shutter_indicator)
+            self.shutter_pushbutton.clicked.connect(self.shutter.shutter_toggle)
 
         self.input_spacer = QtWidgets.QSpacerItem(10,30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
 
