@@ -29,8 +29,8 @@ class ALD_params(Measurement):
     def setup(self):
         self.cb_stylesheet = '''
         QCheckBox::indicator {
-            width: 100px;
-            height: 100px;
+            width: 25px;
+            height: 25px;
         }
         QCheckBox::indicator:checked {
             image: url(://icons//green-led-on.png);
@@ -111,15 +111,21 @@ class ALD_params(Measurement):
         self.thermal_dock.addWidget(self.thermal_widget)
         self.ui.addDock(self.thermal_dock, position='right', relativeTo=self.rf_dock)
         
-        self.shutter_dock = Dock('Shutter Controls')
-        self.shutter_dock.addWidget(self.shutter_control_widget)
-        self.ui.addDock(self.shutter_dock, position='bottom')
+#         self.shutter_dock = Dock('Shutter Controls')
+#         self.shutter_dock.addWidget(self.shutter_control_widget)
+#         self.ui.addDock(self.shutter_dock, position='bottom')
         
         self.display_ctrl_dock = Dock('Display Controls')
         self.display_ctrl_dock.addWidget(self.display_control_widget)
-        self.ui.addDock(self.display_ctrl_dock, position='right', relativeTo=self.shutter_dock)
+        self.ui.addDock(self.display_ctrl_dock, position='bottom')
         
-        self.ui.addDock(name="Recipe Controls", position='bottom', widget=self.recipe_control_widget)
+        self.recipe_dock = Dock('Recipe Controls')
+        self.recipe_dock.addWidget(self.recipe_control_widget)
+        self.ui.addDock(self.recipe_dock, position='left', relativeTo=self.rf_dock)
+        
+        self.hardware_dock = Dock('Hardware')
+        self.hardware_dock.addWidget(self.hardware_widget)
+        self.ui.addDock(self.hardware_dock, position='top')
         
         
     def load_ui_defaults(self):
@@ -129,15 +135,69 @@ class ALD_params(Measurement):
         pass
     
     def widget_setup(self):
-        self.setup_shutter_control_widget()
+#         self.setup_shutter_control_widget()
         self.setup_thermal_control_widget()
         self.setup_rf_flow_widget()
         self.setup_recipe_control_widget()
         self.setup_display_controls()
+        self.setup_hardware_widget()
+
+    def setup_hardware_widget(self):
+        self.hardware_widget = QtWidgets.QGroupBox('Hardware Widget')
+        self.hardware_widget.setLayout(QtWidgets.QHBoxLayout())
+
+        self.left_widget = QtWidgets.QWidget()
+        self.left_widget.setLayout(QtWidgets.QVBoxLayout())
+        
+        self.right_widget = QtWidgets.QGroupBox('Pressures and Flow')
+        
+        self.temp_field_panel = QtWidgets.QGroupBox('Temperature Readout Panel')
+        self.left_widget.layout().addWidget(self.temp_field_panel)
+        self.plasma_panel = QtWidgets.QGroupBox('Plasma Panel')
+        self.left_widget.layout().addWidget(self.plasma_panel)
+        
+        self.hardware_widget.layout().addWidget(self.left_widget)
+        self.hardware_widget.layout().addWidget(self.right_widget)
+        self.setup_plasma_subpanel()
+        
+    
+    def setup_plasma_subpanel(self):
+ 
+        self.fwd_power_input_label = QtWidgets.QLabel('FWD Power Input')
+        self.fwd_power_input = QtWidgets.QDoubleSpinBox()
+        self.fwd_power_readout_label = QtWidgets.QLabel('FWD Power Readout')
+        self.fwd_power_readout = QtWidgets.QDoubleSpinBox()
+        
+        self.plasma_left_panel = QtWidgets.QWidget()
+        self.plasma_left_panel.setLayout(QtWidgets.QGridLayout())
+        self.plasma_right_panel = QtWidgets.QWidget()
+        self.plasma_right_panel.setLayout(QtWidgets.QGridLayout())
+        self.plasma_right_panel.setStyleSheet(self.cb_stylesheet)
+        
+        self.plasma_left_panel.layout().addWidget(self.fwd_power_input_label, 0, 0)
+        self.plasma_left_panel.layout().addWidget(self.fwd_power_input, 0, 1)
+        self.plasma_left_panel.layout().addWidget(self.fwd_power_readout_label, 1, 0)
+        self.plasma_left_panel.layout().addWidget(self.fwd_power_readout, 1, 1)
+        
+        self.rf_status = QtWidgets.QCheckBox()
+        self.rf_button = QtWidgets.QPushButton('RF ON/OFF')
+        self.rev_power_readout_label = QtWidgets.QLabel('REV Power Readout')
+        self.rev_power_readout = QtWidgets.QDoubleSpinBox()
+        
+        self.plasma_right_panel.layout().addWidget(self.rf_status, 0, 1)
+        self.plasma_right_panel.layout().addWidget(self.rf_button, 0, 0)
+        self.plasma_right_panel.layout().addWidget(self.rev_power_readout, 1, 0)
+        self.plasma_right_panel.layout().addWidget(self.rev_power_readout_label, 1, 1)
+        
+        
+        self.plasma_panel.setLayout(QtWidgets.QHBoxLayout())
+        self.plasma_panel.layout().addWidget(self.plasma_left_panel)
+        self.plasma_panel.layout().addWidget(self.plasma_right_panel)
+
+        
 
     def setup_thermal_control_widget(self):
         self.thermal_widget = QtWidgets.QGroupBox('Thermal Controller Overview')
-        self.layout.addWidget(self.thermal_widget)
         self.thermal_widget.setLayout(QtWidgets.QVBoxLayout())
         self.thermal_channels = 1
         
@@ -187,8 +247,6 @@ class ALD_params(Measurement):
         self.shutter_control_widget.setLayout(QtWidgets.QGridLayout())
         self.shutter_control_widget.setStyleSheet(self.cb_stylesheet)
 
-        self.layout.addWidget(self.shutter_control_widget)        
-        
         self.shutter_status = QtWidgets.QCheckBox(self.shutter_control_widget)
         self.shutter_control_widget.layout().addWidget(self.shutter_status, 0, 0)
         self.shutter.settings.shutter_open.connect_to_widget(self.shutter_status)
