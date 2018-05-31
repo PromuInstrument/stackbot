@@ -76,7 +76,7 @@ class ALD_Recipe(Measurement):
         self.ramp_throttle_open()
         if self.shutdown_ready:
             state = self.MFC_valve_states['Closed']
-            self.mks146.settings['MFC0_valve'] = state
+            self.mks146.settings['set_MFC0_valve'] = state
     
     def ramp_throttle_open(self):
         print('Ramping down.')
