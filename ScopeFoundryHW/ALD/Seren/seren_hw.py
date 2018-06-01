@@ -26,7 +26,7 @@ class Seren_HW(HardwareComponent):
         
         self.settings.enable_serial.connect_to_hardware(write_func=lambda x: self.serial_toggle(x))
         
-        self.settings.RF_enable.connect_to_hardware(write_func=lambda x: self.RF_toggle(x))
+        self.settings.RF_enable.connect_to_hardware(write_func=lambda x: self.RF_state(x))
         
         self.settings.set_forward_power.connect_to_hardware(write_func=lambda x: self.write_fp(x))
         
@@ -44,11 +44,15 @@ class Seren_HW(HardwareComponent):
         else:
             self.seren.set_front_panel_control()
     
-    def RF_toggle(self, status):
+    def RF_state(self, status):
         if status:
             self.seren.emitter_on()
         else:
             self.seren.emitter_off()
+
+    def RF_toggle(self):
+        self.settings['RF_enable'] = not self.settings['RF_enable']
+
     
     def write_fp(self, power):
         self.seren.write_forward(power)
