@@ -192,7 +192,7 @@ class ALD_params(Measurement):
             self.seren.settings.RF_enable.connect_to_widget(self.rf_indicator)
             self.rf_pushbutton.clicked.connect(self.seren.RF_toggle)
  
-        self.rev_power_readout_label = QtWidgets.QLabel('REV Power Readout')
+        self.rev_power_readout_label = QtWidgets.QLabel('REFL Power Readout')
         self.rev_power_readout = QtWidgets.QDoubleSpinBox()
                 
         self.plasma_right_panel.layout().addWidget(self.rf_indicator, 0, 1)
@@ -365,8 +365,14 @@ class ALD_params(Measurement):
         self.settings_widget.layout().addWidget(self.cycle_label, 0,0)
         self.cycle_field = QtWidgets.QDoubleSpinBox()
         self.settings.cycles.connect_to_widget(self.cycle_field)
-        self.settings_widget.layout().addWidget(self.cycle_field, 1,0)
+        self.settings_widget.layout().addWidget(self.cycle_field, 0,1)
         self.recipe_control_widget.layout().addWidget(self.settings_widget)
+    
+        self.current_cycle_label = QtWidgets.QLabel('Cycles Completed')
+        self.current_cycle_field = QtWidgets.QDoubleSpinBox()
+        self.settings_widget.layout().addWidget(self.current_cycle_label, 0, 2)
+        self.settings_widget.layout().addWidget(self.current_cycle_field, 0, 3)
+        self.recipe.settings.cycles_completed.connect_to_widget(self.current_cycle_field)
     
         ## Table Widget
         self.table_widget = QtWidgets.QWidget()
@@ -488,7 +494,7 @@ class ALD_params(Measurement):
         self.hLine1.setPos(lovebox_level)
         
         
-        flow_level = self.mks146.settings['read_MFC0_SP']
+        flow_level = self.mks146.settings['MFC0_flow']
         self.hLine2.setPos(flow_level)
         
 
