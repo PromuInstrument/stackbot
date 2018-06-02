@@ -28,7 +28,7 @@ class ALD_Recipe(Measurement):
             self.shutter = self.app.hardware.ald_shutter
         else:
             print('Connect ALD shutter HW component first.')
-        self.settings.New('cycles_elapsed', dtype=int, initial=0, ro=True)
+        self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
         
     def load_times(self):
         self.times = self.app.measurements.ALD_params.settings['time']
@@ -46,16 +46,23 @@ class ALD_Recipe(Measurement):
         print('Plasma dose finished.')
         
     def valve_pulse(self, width):
+        print('Valve pulse', width)
+        self.relay.settings['pulse_width1'] = 1e3*width
+        width = self.relay.settings['pulse_width1']
         self.relay.write_pulse1(width)
     
     def purge(self, width):
+        print('Purge', width)
         time.sleep(width)    
     
     def shutter_pulse(self, width):
-        self.shutter['shutter_open'] = True
+        self.shutter.settings['shutter_open'] = True
+        print('Shutter open')
         time.sleep(width)
-        self.shutter['shutter_open'] = False
-
+        self.shutter.settings['shutter_open'] = False
+        print('Shutter closed')
+        
+        
     def routine(self):
         _, t1, t2, t3, t4, _, _  = self.times[0]
         self.valve_pulse(t1)
@@ -65,10 +72,13 @@ class ALD_Recipe(Measurement):
     
     def prepurge(self):
         width = self.times[0][0]
+        print('Prepurge', width)
         time.sleep(width)
     
     def postpurge(self):
-        width = self.times[5][0]
+        print(self.times, self.times[0])
+        width = self.times[0][5]
+        print('Postpurge', width)
         time.sleep(width)
         
     def shutdown(self):
@@ -95,13 +105,14 @@ class ALD_Recipe(Measurement):
                 print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
         
     def run(self):
+        self.settings['cycles_completed'] = 0
         cycles = self.app.measurements.ALD_params.settings['cycles']    
         self.times = self.app.measurements.ALD_params.settings['time']
         while not self.interrupt_measurement_called:
             self.prepurge()
             for i in range(cycles):
                 self.routine()
-                self.settings['cycles_elapsed'] = i
+                self.settings['cycles_completed'] += 1
             self.postpurge()
         else:
             self.shutdown()
