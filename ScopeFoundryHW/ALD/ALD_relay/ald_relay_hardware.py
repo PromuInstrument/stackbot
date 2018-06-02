@@ -66,11 +66,13 @@ class ALDRelayHW(HardwareComponent):
         if value:
             duration = self.settings['pulse_width1']
             self.relay.send_pulse(0, duration)
+            self.settings['pulse1'] = False
 
     def write_pulse2(self, value):
         if value:
             duration = self.settings['pulse_width2']
             self.relay.send_pulse(1, duration)
+            self.settings['pulse2'] = False
 
     def write_pulse3(self, value):
         if value:
