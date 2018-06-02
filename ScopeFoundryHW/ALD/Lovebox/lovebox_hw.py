@@ -15,12 +15,12 @@ class LoveboxHW(HardwareComponent):
     CTRL_METHODS = ("PID", "ON/OFF", "Manual")
     
     initial_PID_defaults = (30.0, 28, 7)
-    desired_PID_profile = (50.0, 30, 10)
+    desired_PID_profile = (7.7, 53, 13)
 #     CTRL_METHODS = ("PID", "ON/OFF", "Manual", "PID Program Ctrl")
 #     HEAT_COOL_CTRLS = ("Heating")
 
     def setup(self):
-        self.active_profile = self.initial_PID_defaults
+        self.active_profile = self.desired_PID_profile
         self.settings.New(name='port', initial='COM4', dtype=str, ro=False)
         self.settings.New(name='control_method', initial='PID', dtype=str, choices=self.CTRL_METHODS, ro=False)
         self.settings.New(name='heat_cool_control', initial='Heating', dtype=str, ro=True)
