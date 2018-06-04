@@ -45,11 +45,16 @@ class ALD_params(Measurement):
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
         self.settings.New('display_window', dtype=int, initial=1e4, vmin=1)
         self.settings.New('cycles', dtype=int, initial=1, ro=False, vmin=1)
-    
         self.settings.New('time', dtype=float, array=True, initial=[[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]], fmt='%1.3f', ro=False)
 
         self.setup_buffers_constants()
+
         self.settings.New('save_path', dtype=str, initial=self.full_file_path, ro=False)
+
+        self.ch1_scaled = self.settings.New(name='ch1_pressure', dtype=float, initial=0.0, fmt='%e', spinbox_decimals=4, ro=True)
+        self.ch2_scaled = self.settings.New(name='ch2_pressure', dtype=float, initial=0.0, fmt='%e', spinbox_decimals=4, ro=True)
+        self.ch3_scaled = self.settings.New(name='ch3_pressure', dtype=float, initial=0.0, fmt='%e', spinbox_decimals=4, ro=True)
+        
 
         
         if hasattr(self.app.hardware, 'seren_hw'):
@@ -87,6 +92,10 @@ class ALD_params(Measurement):
 
         self.settings.time.add_listener(self.sum)
         self.settings.cycles.add_listener(self.sum)
+        
+        self.ch1_scaled.connect_lq_scale(self.vgc.settings.ch1_pressure, (76000/101325))
+        self.ch2_scaled.connect_lq_scale(self.vgc.settings.ch2_pressure, (76000/101325))
+        self.ch3_scaled.connect_lq_scale(self.vgc.settings.ch3_pressure, (76000/101325))
     
     def sum(self):
         prepurge = self.settings['time'][0][0]
@@ -282,9 +291,9 @@ class ALD_params(Measurement):
         self.mks600.settings.pressure.connect_to_widget(self.read_throttle_pressure_field)
         self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
 
-        self.vgc.settings.ch1_pressure_scaled.connect_to_widget(self.ch1_readout_field)
-        self.vgc.settings.ch2_pressure_scaled.connect_to_widget(self.ch2_readout_field)
-        self.vgc.settings.ch3_pressure_scaled.connect_to_widget(self.ch3_readout_field)
+        self.ch1_scaled.connect_to_widget(self.ch1_readout_field)
+        self.ch2_scaled.connect_to_widget(self.ch2_readout_field)
+        self.ch3_scaled.connect_to_widget(self.ch3_readout_field)
         
     def setup_thermal_control_widget(self):
         self.thermal_widget = QtWidgets.QGroupBox('Thermal Plot')
