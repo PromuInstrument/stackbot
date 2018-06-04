@@ -101,6 +101,7 @@ class ALD_Recipe(Measurement):
                 time.sleep(20)
                 self.mks600.settings['sp_channel']= 'Open'
                 self.shutdown_ready = True
+                print('Shutdown ready')
             else:
                 print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
         
