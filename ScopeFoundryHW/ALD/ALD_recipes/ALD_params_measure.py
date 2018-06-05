@@ -10,13 +10,13 @@ from ScopeFoundry.ndarray_interactive import ArrayLQ_QTableModel
 from PyQt5 import QtWidgets, QtGui, QtCore
 from PyQt5.Qt import QVBoxLayout, QWidget
 from ScopeFoundryHW.ALD.ALD_recipes import resources
+from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
 import pyqtgraph as pg
 from pyqtgraph.dockarea import DockArea, Dock
 import numpy as np
 import datetime
 import time
 import os
-from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
 
 
 class ALD_params(Measurement):
@@ -51,9 +51,9 @@ class ALD_params(Measurement):
 
         self.settings.New('save_path', dtype=str, initial=self.full_file_path, ro=False)
 
-        self.ch1_scaled = self.settings.New(name='ch1_pressure', dtype=float, initial=0.0, fmt='%e', spinbox_decimals=4, ro=True)
-        self.ch2_scaled = self.settings.New(name='ch2_pressure', dtype=float, initial=0.0, fmt='%e', spinbox_decimals=4, ro=True)
-        self.ch3_scaled = self.settings.New(name='ch3_pressure', dtype=float, initial=0.0, fmt='%e', spinbox_decimals=4, ro=True)
+        self.ch1_scaled = self.settings.New(name='ch1_pressure', dtype=float, initial=0.0, fmt='%.4e', si=True, spinbox_decimals=6, ro=True)
+        self.ch2_scaled = self.settings.New(name='ch2_pressure', dtype=float, initial=0.0, fmt='%.4e', si=True, spinbox_decimals=6, ro=True)
+        self.ch3_scaled = self.settings.New(name='ch3_pressure', dtype=float, initial=0.0, fmt='%.4e', si=True, spinbox_decimals=6, ro=True)
         
 
         
