@@ -38,6 +38,8 @@ class Seren_HW(HardwareComponent):
 
         self.settings.RF_enable.add_listener(self.read_from_hardware)
 
+        self.serial_toggle(True)
+
     def serial_toggle(self, status):
         if status:
             self.seren.set_serial_control()
