@@ -6,6 +6,7 @@ Created on May 25, 2018
 '''
 
 from ScopeFoundry import Measurement
+import numpy as np
 import time
 
 class ALD_Recipe(Measurement):
@@ -20,6 +21,19 @@ class ALD_Recipe(Measurement):
         self.vgc = self.app.hardware['pfeiffer_vgc_hw']
         self.seren = self.app.hardware['seren_hw']
     
+        self.params = self.app.measurements.ALD_params
+    
+        self.settings.New('cycles', dtype=int, initial=1, ro=False, vmin=1)
+        self.settings.New('time', dtype=float, array=True, initial=[[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]], fmt='%1.3f', ro=False)
+
+        
+        self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter')))
+        self.settings.New('recipe_ready', dtype=bool, initial=False, ro=True)
+        
+        # Sometimes.. :0
+        self.settings.cycles.add_listener(self.sum_times)
+        self.settings.time.add_listener(self.sum_times)
+    
         self.MFC_valve_states = {'Open': 'O',
                              'Closed': 'C',
                              'Manual': 'N'}
@@ -29,9 +43,20 @@ class ALD_Recipe(Measurement):
         else:
             print('Connect ALD shutter HW component first.')
         self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
-        
+    
+    
     def load_times(self):
-        self.times = self.app.measurements.ALD_params.settings['time']
+        self.times = self.settings['time']
+    
+    def sum_times(self):
+        prepurge = self.settings['time'][0][0]
+        cycles = self.settings['cycles']
+        total_loop_time = cycles*np.sum(self.settings['time'][0][1:5])
+        print(total_loop_time)
+        postpurge = self.settings['time'][0][5]
+        sum_value = prepurge + total_loop_time + postpurge
+        self.settings['time'][0][6] = sum_value
+        self.params.update_table()
     
     def plasma_dose(self, width, power):
         """Argument 'width' has units of seconds
@@ -71,7 +96,7 @@ class ALD_Recipe(Measurement):
         _, t1, t2, t3, t4, _, _  = self.times[0]
         self.valve_pulse(1, t1)
         self.purge(t2)
-        mode = self.app.measurements.ALD_params.settings['t3_method'] 
+        mode = self.settings['t3_method'] 
         if mode == 'Shutter':
             self.shutter_pulse(t3)
         elif mode == 'PV':
@@ -115,8 +140,8 @@ class ALD_Recipe(Measurement):
         
     def run(self):
         self.settings['cycles_completed'] = 0
-        cycles = self.app.measurements.ALD_params.settings['cycles']    
-        self.times = self.app.measurements.ALD_params.settings['time']
+        cycles = self.settings['cycles']    
+        self.times = self.settings['time']
         while not self.interrupt_measurement_called:
             self.prepurge()
             for i in range(cycles):
