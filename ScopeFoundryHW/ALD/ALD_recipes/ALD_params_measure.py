@@ -47,6 +47,7 @@ class ALD_params(Measurement):
         self.settings.New('cycles', dtype=int, initial=1, ro=False, vmin=1)
         self.settings.New('time', dtype=float, array=True, initial=[[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]], fmt='%1.3f', ro=False)
 
+        self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter')))
         self.setup_buffers_constants()
 
         self.settings.New('save_path', dtype=str, initial=self.full_file_path, ro=False)
@@ -130,13 +131,15 @@ class ALD_params(Measurement):
 #         self.shutter_dock.addWidget(self.shutter_control_widget)
 #         self.ui.addDock(self.shutter_dock, position='bottom')
         
-        self.display_ctrl_dock = Dock('Display Controls')
-        self.display_ctrl_dock.addWidget(self.display_control_widget)
-        self.ui.addDock(self.display_ctrl_dock, position='bottom')
         
         self.recipe_dock = Dock('Recipe Controls')
         self.recipe_dock.addWidget(self.recipe_control_widget)
-        self.ui.addDock(self.recipe_dock, position='left', relativeTo=self.rf_dock)
+        self.ui.addDock(self.recipe_dock, position='bottom')
+
+        self.display_ctrl_dock = Dock('Display Controls')
+        self.display_ctrl_dock.addWidget(self.display_control_widget)
+        self.ui.addDock(self.display_ctrl_dock, position='bottom', relativeTo=self.recipe_dock)
+
         
         self.hardware_dock = Dock('Hardware')
         self.hardware_dock.addWidget(self.hardware_widget)
@@ -382,17 +385,27 @@ class ALD_params(Measurement):
         self.settings_widget.layout().addWidget(self.current_cycle_label, 0, 2)
         self.settings_widget.layout().addWidget(self.current_cycle_field, 0, 3)
         self.recipe.settings.cycles_completed.connect_to_widget(self.current_cycle_field)
+
+        self.method_select_label = QtWidgets.QLabel('t3 Method')
+        self.method_select_comboBox = QtWidgets.QComboBox()
+        self.settings_widget.layout().addWidget(self.method_select_label, 1, 2)
+        self.settings_widget.layout().addWidget(self.method_select_comboBox, 1, 3)
+        self.settings.t3_method.connect_to_widget(self.method_select_comboBox)
+
+
     
         ## Table Widget
         self.table_widget = QtWidgets.QWidget()
         self.table_widget_layout = QtWidgets.QHBoxLayout()
         self.table_widget.setLayout(self.table_widget_layout)
+        self.table_widget.setMinimumWidth(827)
 
         self.pulse_label = QtWidgets.QLabel('Step Durations [s]')
         self.table_widget.layout().addWidget(self.pulse_label)
 
         self.pulse_table = QtWidgets.QTableView()
         self.pulse_table.setMaximumHeight(65)
+        
         names = ['t'+u'\u2080'+' Pre Purge', 't'+u'\u2081'+' (TiCl'+u'\u2084'+' PV)',\
                   't'+u'\u2082'+' Purge', 't'+u'\u2083'+' (N'+u'\u2082'+'/Shutter)', \
                  't'+u'\u2084'+' Purge', 't'+u'\u2085'+' Post Purge', u'\u03a3'+'t'+u'\u1d62']
@@ -406,7 +419,7 @@ class ALD_params(Measurement):
         self.recipe_panel.setLayout(self.recipe_panel_layout)
         
         self.single_start_button = QtWidgets.QPushButton('Start 1 Recipe')
-        self.single_start_button.clicked.connect(self.load_single_recipe)
+        self.single_start_button.clicked.connect(self.recipe.load_single_recipe)
         self.recipe_panel.layout().addWidget(self.single_start_button, 0, 0)
         
         self.start_button = QtWidgets.QPushButton('Start Recipe')
@@ -419,9 +432,7 @@ class ALD_params(Measurement):
 
         self.recipe_control_widget.layout().addWidget(self.recipe_panel)
 
-    def load_single_recipe(self):
-        self.recipe.load_times()
-        self.recipe.routine()
+
 
         
     def setup_display_controls(self):
