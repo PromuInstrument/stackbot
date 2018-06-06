@@ -44,12 +44,10 @@ class ALD_params(Measurement):
         self.settings.New('history_length', dtype=int, initial=1e6, vmin=1)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
         self.settings.New('display_window', dtype=int, initial=1e4, vmin=1)
-        self.settings.New('cycles', dtype=int, initial=1, ro=False, vmin=1)
-        self.settings.New('time', dtype=float, array=True, initial=[[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]], fmt='%1.3f', ro=False)
 
-        self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter')))
         self.setup_buffers_constants()
-
+        
+        
         self.settings.New('save_path', dtype=str, initial=self.full_file_path, ro=False)
 
         self.ch1_scaled = self.settings.New(name='ch1_pressure', dtype=float, initial=0.0, fmt='%.4e', si=True, spinbox_decimals=6, ro=True)
@@ -91,21 +89,14 @@ class ALD_params(Measurement):
         if self.ui_enabled:
             self.ui_setup()
 
-        self.settings.time.add_listener(self.sum)
-        self.settings.cycles.add_listener(self.sum)
         
         self.ch1_scaled.connect_lq_scale(self.vgc.settings.ch1_pressure, (76000/101325))
         self.ch2_scaled.connect_lq_scale(self.vgc.settings.ch2_pressure, (76000/101325))
         self.ch3_scaled.connect_lq_scale(self.vgc.settings.ch3_pressure, (76000/101325))
     
-    def sum(self):
-        prepurge = self.settings['time'][0][0]
-        cycles = self.settings['cycles']
-        total_loop_time = cycles*np.sum(self.settings['time'][0][1:5])
-        print(total_loop_time)
-        postpurge = self.settings['time'][0][5]
-        sum_value = prepurge + total_loop_time + postpurge
-        self.settings['time'][0][6] = sum_value
+
+        
+    def update_table(self):
         self.tableModel.on_lq_updated_value()
 
     def ui_setup(self):
@@ -376,7 +367,7 @@ class ALD_params(Measurement):
         self.cycle_label = QtWidgets.QLabel('N Cycles')
         self.settings_widget.layout().addWidget(self.cycle_label, 0,0)
         self.cycle_field = QtWidgets.QDoubleSpinBox()
-        self.settings.cycles.connect_to_widget(self.cycle_field)
+        self.recipe.settings.cycles.connect_to_widget(self.cycle_field)
         self.settings_widget.layout().addWidget(self.cycle_field, 0,1)
         self.recipe_control_widget.layout().addWidget(self.settings_widget)
     
@@ -390,7 +381,7 @@ class ALD_params(Measurement):
         self.method_select_comboBox = QtWidgets.QComboBox()
         self.settings_widget.layout().addWidget(self.method_select_label, 1, 2)
         self.settings_widget.layout().addWidget(self.method_select_comboBox, 1, 3)
-        self.settings.t3_method.connect_to_widget(self.method_select_comboBox)
+        self.recipe.t3_method.connect_to_widget(self.method_select_comboBox)
 
 
     
@@ -409,7 +400,7 @@ class ALD_params(Measurement):
         names = ['t'+u'\u2080'+' Pre Purge', 't'+u'\u2081'+' (TiCl'+u'\u2084'+' PV)',\
                   't'+u'\u2082'+' Purge', 't'+u'\u2083'+' (N'+u'\u2082'+'/Shutter)', \
                  't'+u'\u2084'+' Purge', 't'+u'\u2085'+' Post Purge', u'\u03a3'+'t'+u'\u1d62']
-        self.tableModel = ArrayLQ_QTableModel(self.settings.time, col_names=names)
+        self.tableModel = ArrayLQ_QTableModel(self.recipe.settings.time, col_names=names)
         self.pulse_table.setModel(self.tableModel)
         self.table_widget.layout().addWidget(self.pulse_table)
         self.recipe_control_widget.layout().addWidget(self.table_widget)
@@ -417,6 +408,11 @@ class ALD_params(Measurement):
         self.recipe_panel = QtWidgets.QWidget()
         self.recipe_panel_layout = QtWidgets.QGridLayout()
         self.recipe_panel.setLayout(self.recipe_panel_layout)
+        self.recipe_panel.setStyleSheet(self.cb_stylesheet)
+        
+        self.recipe_ready_label = QtWidgets.QLabel('Recipe Ready')
+        self.recipe_ready_indicator = QtWidgets.QCheckBox()
+        self.recipe.settings.recipe_ready.connect_to_widget(self.recipe_ready_indicator)
         
         self.single_start_button = QtWidgets.QPushButton('Start 1 Recipe')
         self.single_start_button.clicked.connect(self.recipe.load_single_recipe)
