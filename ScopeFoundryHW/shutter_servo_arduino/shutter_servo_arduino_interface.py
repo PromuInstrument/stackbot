@@ -21,20 +21,16 @@ class ShutterServoArduino(object):
         
         if self.debug: logger.debug( "ShutterServoArduino init, port=%s" % self.port)
         
-        self.ser = serial.Serial(port=self.port, baudrate=9600, timeout=0.1)
-                                 
-                                #baudrate=9600, 
-                                #bytesize=8, parity='N', stopbits=1, 
-                                #xonxoff=0, rtscts=0, timeout=1.0)
-        self.ser.flush()
+        else:
+            self.ser = serial.Serial(port=self.port, baudrate=9600, timeout=0.1)
+            self.ser.flush()
+        
         time.sleep(0.1)
-        #self.write_posititon(1)
-        #self.read_position()
         self.position=0
         
     def send_cmd(self, cmd):
         if self.debug: logger.debug( "send_cmd:" + repr(cmd))
-        self.ser.write(cmd + b"\n")
+        self.ser.write(cmd + "\r\n")
     
     def ask(self, cmd):
         if self.debug: logger.debug( "ask:" +  repr(cmd) )
@@ -44,15 +40,15 @@ class ShutterServoArduino(object):
         return resp 
     
     
-    def write_posititon(self, pos):
+    def write_position(self, pos):
         pos = int(pos)
         assert 0 <=  pos <= 180
-        self.send_cmd(str(pos).encode())
+        self.send_cmd(str(pos))
         self.position = pos
         return self.position
 
     def read_position(self):
-        resp = self.ask(b"?")
+        resp = self.ask("?")
         self.position = int(resp)
         return self.position
         
@@ -76,4 +72,6 @@ class ShutterServoArduino(object):
             raise ValueError()
         
     def close(self):
-        self.ser.close()        
+        if not self.debug:
+            self.ser.close()
+            del self.ser

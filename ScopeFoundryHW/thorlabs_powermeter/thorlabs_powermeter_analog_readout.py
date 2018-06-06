@@ -39,7 +39,7 @@ class ThorlabsPowerMeterAnalogReadOut(HardwareComponent):
 
     def disconnect(self):
         #disconnect logged quantities from hardware
-        for lq in self.logged_quantities.values():
+        for lq in self.settings.as_dict():
             lq.hardware_read_func = None
             lq.hardware_set_func = None
         
