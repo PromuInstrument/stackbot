@@ -45,11 +45,12 @@ class ALD_Recipe(Measurement):
         self.seren.write_fp(0)
         print('Plasma dose finished.')
         
-    def valve_pulse(self, width):
+    def valve_pulse(self, channel, width):
         print('Valve pulse', width)
-        self.relay.settings['pulse_width1'] = 1e3*width
-        width = self.relay.settings['pulse_width1']
-        self.relay.write_pulse1(width)
+        assert channel in [1,2]
+        self.relay.settings['pulse_width{}'.format(channel)] = 1e3*width
+        width = self.relay.settings['pulse_width{}'.format(channel)]
+        getattr(self.relay, 'write_pulse{}'.format(channel))(width)
     
     def purge(self, width):
         print('Purge', width)
@@ -62,12 +63,19 @@ class ALD_Recipe(Measurement):
         self.shutter.settings['shutter_open'] = False
         print('Shutter closed')
         
-        
+    def load_single_recipe(self):
+        self.load_times()
+        self.routine()
+    
     def routine(self):
         _, t1, t2, t3, t4, _, _  = self.times[0]
-        self.valve_pulse(t1)
+        self.valve_pulse(1, t1)
         self.purge(t2)
-        self.shutter_pulse(t3)
+        mode = self.app.measurements.ALD_params.settings['t3_method'] 
+        if mode == 'Shutter':
+            self.shutter_pulse(t3)
+        elif mode == 'PV':
+            self.valve_pulse(2, t3)
         self.purge(t4)
     
     def prepurge(self):
