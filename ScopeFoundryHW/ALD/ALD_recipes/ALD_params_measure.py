@@ -94,7 +94,7 @@ class ALD_params(Measurement):
         self.ch2_scaled.connect_lq_scale(self.vgc.settings.ch2_pressure, (76000/101325))
         self.ch3_scaled.connect_lq_scale(self.vgc.settings.ch3_pressure, (76000/101325))
     
-
+        self.recipe.load_params_module()
         
     def update_table(self):
         self.tableModel.on_lq_updated_value()
@@ -381,7 +381,7 @@ class ALD_params(Measurement):
         self.method_select_comboBox = QtWidgets.QComboBox()
         self.settings_widget.layout().addWidget(self.method_select_label, 1, 2)
         self.settings_widget.layout().addWidget(self.method_select_comboBox, 1, 3)
-        self.recipe.t3_method.connect_to_widget(self.method_select_comboBox)
+        self.recipe.settings.t3_method.connect_to_widget(self.method_select_comboBox)
 
 
     
@@ -410,9 +410,7 @@ class ALD_params(Measurement):
         self.recipe_panel.setLayout(self.recipe_panel_layout)
         self.recipe_panel.setStyleSheet(self.cb_stylesheet)
         
-        self.recipe_ready_label = QtWidgets.QLabel('Recipe Ready')
-        self.recipe_ready_indicator = QtWidgets.QCheckBox()
-        self.recipe.settings.recipe_ready.connect_to_widget(self.recipe_ready_indicator)
+
         
         self.single_start_button = QtWidgets.QPushButton('Start 1 Recipe')
         self.single_start_button.clicked.connect(self.recipe.load_single_recipe)
@@ -425,6 +423,16 @@ class ALD_params(Measurement):
         self.abort_button = QtWidgets.QPushButton('Abort Recipe')
         self.abort_button.clicked.connect(self.recipe.interrupt)
         self.recipe_panel.layout().addWidget(self.abort_button, 0, 2)
+        
+        
+        self.recipe_complete_subpanel = QtWidgets.QWidget()
+        self.recipe_complete_subpanel.setLayout(QtWidgets.QHBoxLayout())
+        self.recipe_ready_label = QtWidgets.QLabel('Recipe Complete')
+        self.recipe_ready_indicator = QtWidgets.QCheckBox()
+        self.recipe.settings.recipe_completed.connect_to_widget(self.recipe_ready_indicator)
+        self.recipe_complete_subpanel.layout().addWidget(self.recipe_ready_label)
+        self.recipe_complete_subpanel.layout().addWidget(self.recipe_ready_indicator)
+        self.recipe_panel.layout().addWidget(self.recipe_complete_subpanel, 0, 3)
 
         self.recipe_control_widget.layout().addWidget(self.recipe_panel)
 
