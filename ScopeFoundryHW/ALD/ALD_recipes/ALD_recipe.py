@@ -6,6 +6,7 @@ Created on May 25, 2018
 '''
 
 from ScopeFoundry import Measurement
+from ScopeFoundryHW.ALD.ALD_recipes.log.ALD_sqlite import ALD_sqlite
 import numpy as np
 import time
 
@@ -47,6 +48,15 @@ class ALD_Recipe(Measurement):
     
     def load_times(self):
         self.times = self.settings['time']
+    
+    def connect_db(self):
+        self.db = ALD_sqlite()
+        self.db.connect()
+        self.db.setup_table()
+        self.db.setup_index()
+        
+    def db_poll(self):
+        pass 
     
     def sum_times(self):
         prepurge = self.settings['time'][0][0]
@@ -120,6 +130,8 @@ class ALD_Recipe(Measurement):
         if self.shutdown_ready:
             state = self.MFC_valve_states['Closed']
             self.mks146.settings['set_MFC0_valve'] = state
+    
+
     
     def ramp_throttle_open(self):
         print('Ramping down.')
