@@ -28,7 +28,7 @@ class ALD_Recipe(Measurement):
 
         
         self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter')))
-        self.settings.New('recipe_ready', dtype=bool, initial=False, ro=True)
+        self.settings.New('recipe_completed', dtype=bool, initial=False, ro=True)
         
         # Sometimes.. :0
         self.settings.cycles.add_listener(self.sum_times)
@@ -139,6 +139,7 @@ class ALD_Recipe(Measurement):
                 print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
         
     def run(self):
+        self.settings['recipe_completed'] = False
         self.settings['cycles_completed'] = 0
         cycles = self.settings['cycles']    
         self.times = self.settings['time']
@@ -147,6 +148,10 @@ class ALD_Recipe(Measurement):
             for i in range(cycles):
                 self.routine()
                 self.settings['cycles_completed'] += 1
+            
+            self.settings['recipe_completed'] = True
+            # Move me to a place after postpurge once postpurge is debugged!
+            
             self.postpurge()
         else:
             self.shutdown()
