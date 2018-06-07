@@ -22,7 +22,7 @@ class ALD_Recipe(Measurement):
         self.vgc = self.app.hardware['pfeiffer_vgc_hw']
         self.seren = self.app.hardware['seren_hw']
     
-        self.params = self.app.measurements.ALD_params
+
     
         self.settings.New('cycles', dtype=int, initial=1, ro=False, vmin=1)
         self.settings.New('time', dtype=float, array=True, initial=[[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]], fmt='%1.3f', ro=False)
@@ -30,10 +30,7 @@ class ALD_Recipe(Measurement):
         
         self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter')))
         self.settings.New('recipe_completed', dtype=bool, initial=False, ro=True)
-        
-        # Sometimes.. :0
-        self.settings.cycles.add_listener(self.sum_times)
-        self.settings.time.add_listener(self.sum_times)
+        self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
     
         self.MFC_valve_states = {'Open': 'O',
                              'Closed': 'C',
@@ -43,12 +40,14 @@ class ALD_Recipe(Measurement):
             self.shutter = self.app.hardware.ald_shutter
         else:
             print('Connect ALD shutter HW component first.')
-        self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
-    
-    
+
+        self.params_loaded = False
+        
+                    
     def load_times(self):
         self.times = self.settings['time']
     
+<<<<<<< HEAD
     def connect_db(self):
         self.db = ALD_sqlite()
         self.db.connect()
@@ -57,8 +56,21 @@ class ALD_Recipe(Measurement):
         
     def db_poll(self):
         pass 
+=======
+    def load_params_module(self):
+        if hasattr(self.app.measurements, 'ALD_params'):
+            self.params = self.app.measurements.ALD_params
+            self.params_loaded = True
+            print("Params loaded:", self.params_loaded)
+        # Sometimes.. :0
+        self.settings.cycles.add_listener(self.sum_times)
+        self.settings.time.add_listener(self.sum_times)
+>>>>>>> 305f299a31ec7bfcac63679d3087ba46fee1433f
     
     def sum_times(self):
+        if not self.params_loaded:
+            self.load_params_module()
+            
         prepurge = self.settings['time'][0][0]
         cycles = self.settings['cycles']
         total_loop_time = cycles*np.sum(self.settings['time'][0][1:5])
@@ -66,7 +78,8 @@ class ALD_Recipe(Measurement):
         postpurge = self.settings['time'][0][5]
         sum_value = prepurge + total_loop_time + postpurge
         self.settings['time'][0][6] = sum_value
-        self.params.update_table()
+        if self.params_loaded:
+            self.params.update_table()
     
     def plasma_dose(self, width, power):
         """Argument 'width' has units of seconds
