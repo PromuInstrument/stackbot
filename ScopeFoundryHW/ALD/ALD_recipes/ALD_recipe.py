@@ -47,7 +47,7 @@ class ALD_Recipe(Measurement):
     def load_times(self):
         self.times = self.settings['time']
     
-<<<<<<< HEAD
+
     def connect_db(self):
         self.db = ALD_sqlite()
         self.db.connect()
@@ -55,8 +55,8 @@ class ALD_Recipe(Measurement):
         self.db.setup_index()
         
     def db_poll(self):
-        pass 
-=======
+        pass
+    
     def load_params_module(self):
         if hasattr(self.app.measurements, 'ALD_params'):
             self.params = self.app.measurements.ALD_params
@@ -65,7 +65,6 @@ class ALD_Recipe(Measurement):
         # Sometimes.. :0
         self.settings.cycles.add_listener(self.sum_times)
         self.settings.time.add_listener(self.sum_times)
->>>>>>> 305f299a31ec7bfcac63679d3087ba46fee1433f
     
     def sum_times(self):
         if not self.params_loaded:
