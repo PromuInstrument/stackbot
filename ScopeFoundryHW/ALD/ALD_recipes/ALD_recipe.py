@@ -124,6 +124,8 @@ class ALD_Recipe(Measurement):
         elif mode == 'PV':
             self.valve_pulse(2, t3)
         self.purge(t4)
+        if self.interrupt_measurement_called:
+            break
     
     def prepurge(self):
         width = self.times[0][0]
@@ -167,15 +169,16 @@ class ALD_Recipe(Measurement):
         self.settings['cycles_completed'] = 0
         cycles = self.settings['cycles']    
         self.times = self.settings['time']
-        while not self.interrupt_measurement_called:
-            self.prepurge()
-            for i in range(cycles):
-                self.routine()
-                self.settings['cycles_completed'] += 1
+#         while not self.interrupt_measurement_called:
+        self.prepurge()
+        for i in range(cycles):
+            self.routine()
+            self.settings['cycles_completed'] += 1
             
-            self.settings['recipe_completed'] = True
+        self.settings['recipe_completed'] = True
             # Move me to a place after postpurge once postpurge is debugged!
             
-            self.postpurge()
-        else:
-            self.shutdown()
+        self.postpurge()
+#         else:
+#             self.shutdown()
+#             pass
