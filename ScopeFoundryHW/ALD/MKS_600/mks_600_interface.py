@@ -30,6 +30,12 @@ class MKS_600_Interface(object):
     
         #Below variables store values temporarily in order to account for serial timing issues.
     
+        self.channels = {'A': 1, 
+                    'B': 2, 
+                    'C': 3,
+                    'D': 4,
+                    'E': 5}
+    
         self.units = None 
         self.float = None
         self.prtemp = None
@@ -93,7 +99,7 @@ class MKS_600_Interface(object):
             return 0.
         
     def switch_sp(self, ch):
-        assert 1 <= ch <= 6
+        assert 1 <= ch < 6
         self.ask_cmd("D{:d}".format(ch))
         
     def write_sp(self, ch, p):
@@ -102,8 +108,39 @@ class MKS_600_Interface(object):
         pct = (p/2.)*100
         print('cmd:', "S{:d} {}".format(int(ch), pct))
         self.ask_cmd("S{:d} {}".format(int(ch), pct))
-        
-        
+    
+    def enable_position_mode(self, ch):
+        cmd = "T{} 0".format(self.channels[ch])
+        self.ask_cmd(cmd)
+    
+    def enable_pressure_mode(self, ch):
+        cmd = "T{} 1".format(self.channels[ch])
+        self.ask_cmd(cmd)
+
+    
+    def read_control_mode(self, ch):
+        channels = {'A': 26,
+                    'B': 27,
+                    'C': 28,
+                    'D': 29,
+                    'E': 30}
+        cmd = "R{}".format(channels[ch])
+        resp = int(self.ask_cmd(cmd).strip().decode()[-1])
+        return resp
+    
+    def set_position(self, ch, pct):
+        cmd = "S{} {}".format(ch, int(pct))
+        self.ask_cmd(cmd)
+    
+    def read_position(self, ch):
+        channels = {1: 1,
+                     2: 2,
+                     3: 3,
+                     4: 4,
+                     5: 10}
+        resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
+        return resp
+    
     def read_valve(self):
         resp = self.ask_cmd("R6")[2:-2]
         return float(resp)
