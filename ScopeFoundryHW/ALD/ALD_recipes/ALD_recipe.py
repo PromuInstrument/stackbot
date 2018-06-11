@@ -32,6 +32,7 @@ class ALD_Recipe(Measurement):
         self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter')))
         self.settings.New('recipe_completed', dtype=bool, initial=False, ro=True)
         self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
+        self.settings.New('step', dtype=int, initial=0, ro=True)
     
         self.MFC_valve_states = {'Open': 'O',
                              'Closed': 'C',
@@ -56,7 +57,14 @@ class ALD_Recipe(Measurement):
         self.db.setup_index()
         
     def db_poll(self):
-                
+        entries = []
+        entries.append(self.settings['cycles_completed'] + 1)
+        entries.append(self.settings['step'])
+        entries.append(int(self.shutter.settings['shutter_open']))
+        entries.append(self.vgc.settings['ch3_pressure_scaled'])
+        entries.append(self.mks600.settings['pressure'])
+        entries.append(self.seren.settings['forward_power_readout'])
+        entries.append(self.seren.settings['reflected_power'])
         pass
     
     def load_params_module(self):
@@ -165,7 +173,11 @@ class ALD_Recipe(Measurement):
             else:
                 print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
     
+    def interrupt_recipe(self):
+        self.recipe_interrupt = True
+    
     def run_recipe(self):
+        self.recipe_interrupt = False
         self.settings['recipe_completed'] = False
         self.settings['cycles_completed'] = 0
         cycles = self.settings['cycles']    
@@ -174,11 +186,13 @@ class ALD_Recipe(Measurement):
         for _ in range(cycles):
             self.routine()
             self.settings['cycles_completed'] += 1
-            if self.interrupt_measurement_called:
+            if self.recipe_interrupt:
                 break
         self.postpurge()
         self.settings['recipe_completed'] = True
+        self.recipe_interrupt = True
 
     def run(self):
         """LQ logging to db can occur here."""
+        self.db_poll()
         pass
