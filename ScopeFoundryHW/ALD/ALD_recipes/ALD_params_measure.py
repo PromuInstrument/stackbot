@@ -8,7 +8,6 @@ Created on Apr 11, 2018
 from ScopeFoundry import Measurement
 from ScopeFoundry.ndarray_interactive import ArrayLQ_QTableModel
 from PyQt5 import QtWidgets, QtGui, QtCore
-from PyQt5.Qt import QVBoxLayout, QWidget
 from ScopeFoundryHW.ALD.ALD_recipes import resources
 from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
 import pyqtgraph as pg
