@@ -126,6 +126,7 @@ class ALD_Recipe(Measurement):
         elif mode == 'PV':
             self.valve_pulse(2, t3)
         self.purge(t4)
+        
     
     def prepurge(self):
         width = self.times[0][0]
@@ -163,21 +164,21 @@ class ALD_Recipe(Measurement):
                 print('Shutdown ready')
             else:
                 print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
-        
-    def run(self):
+    
+    def run_recipe(self):
         self.settings['recipe_completed'] = False
         self.settings['cycles_completed'] = 0
         cycles = self.settings['cycles']    
         self.times = self.settings['time']
-        while not self.interrupt_measurement_called:
-            self.prepurge()
-            for i in range(cycles):
-                self.routine()
-                self.settings['cycles_completed'] += 1
-            
-            self.settings['recipe_completed'] = True
-            # Move me to a place after postpurge once postpurge is debugged!
-            
-            self.postpurge()
-        else:
-            self.shutdown()
+        self.prepurge()
+        for _ in range(cycles):
+            self.routine()
+            self.settings['cycles_completed'] += 1
+            if self.interrupt_measurement_called:
+                break
+        self.postpurge()
+        self.settings['recipe_completed'] = True
+
+    def run(self):
+        """LQ logging to db can occur here."""
+        pass

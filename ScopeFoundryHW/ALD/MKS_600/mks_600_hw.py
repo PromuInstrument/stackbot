@@ -33,6 +33,7 @@ class MKS_600_Hardware(HardwareComponent):
         self.settings.New(name="sp_channel", initial="Open", dtype=str, ro=False, choices=(('A'), ('B'), ('C'), ('D'), ('E'), ('Open'), ('Close')))
         self.settings.New(name="sp_readout", initial=0.0, spinbox_decimals=4, dtype=float, ro=True)
         self.settings.New(name="sp_set_value", initial=0.0, spinbox_decimals=4, dtype=float, ro=False)
+        self.settings.New(name="control_mode", initial='Pressure', dtype=str, ro=False, choices=(('Pressure'),('Position')))
         self.settings.New(name="set_valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
         self.settings.New(name="read_valve_position", initial=0.0, dtype=float, spinbox_decimals=4, ro=True)
 
@@ -43,12 +44,16 @@ class MKS_600_Hardware(HardwareComponent):
         self.mks = MKS_600_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
         
         self.settings.pressure.connect_to_hardware(read_func=self.read_pressure)
-        self.settings.read_valve_position.connect_to_hardware(read_func=self.read_valve)
 
         self.settings.sp_set_value.connect_to_hardware(write_func=lambda x: self.write_sp(x))
         self.settings.sp_readout.connect_to_hardware(read_func=self.read_sp)
         
+        self.settings.set_valve_position.connect_to_hardware(write_func=lambda x: self.set_position(x))
+        self.settings.read_valve_position.connect_to_hardware(read_func=self.read_position)
+
+        
         self.settings.sp_channel.add_listener(self.switch_sp, str)
+        self.settings.control_mode.add_listener(self.set_control_mode, str)
         
         self.settings['sp_channel'] = 'Open'
         self.set_valve(True)
@@ -59,7 +64,28 @@ class MKS_600_Hardware(HardwareComponent):
             self.switch_sp(channel)
             self.write_sp(value)
         self.settings.sp_channel.update_value('Open')
-        
+    
+    def set_control_mode(self, control):
+        channel = self.settings['sp_channel']
+        if control == 'Pressure':
+            self.mks.enable_pressure_mode(channel)
+            self.settings.get_lq('set_valve_position').change_readonly(ro=True)
+            self.settings.get_lq('sp_set_value').change_readonly(ro=False)
+            print('Pressure')
+        elif control == 'Position':
+            self.mks.enable_position_mode(channel)
+            self.settings.get_lq('set_valve_position').change_readonly(ro=False)    
+            self.settings.get_lq('sp_set_value').change_readonly(ro=True)
+            print('Position')
+            
+    def set_position(self, pct):
+        channel = self.settings['sp_channel']
+        self.mks.set_position(channel, pct)
+    
+    def read_position(self):
+        return self.mks.read_valve()
+    
+    
     def read_pressure(self):
         choice = self.settings['units']
         if choice == 'torr':
@@ -94,8 +120,7 @@ class MKS_600_Hardware(HardwareComponent):
         print(self.mks.read_sp(channel))
     
 
-    def read_valve(self):
-        return self.mks.read_valve()
+
     
     def set_valve(self, valve):
         return self.mks.set_valve(valve)
