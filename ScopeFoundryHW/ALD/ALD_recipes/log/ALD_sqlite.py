@@ -17,12 +17,12 @@ class ALD_sqlite(object):
         self.c = self.conn.cursor()
 
     def setup_table(self):
-        self.c.execute('''CREATE TABLE IF NOT EXISTS ParameterTable
+        self.c.execute('''CREATE TABLE IF NOT EXISTS ParameterTable \
                   (time TIMESTAMP, cycle_no INTEGER, step_no INTEGER, \
-                  step_name TEXT, shutter_on INTEGER, PKR_pressure REAL, \
-                  forward_power INTEGER, reflected_power INTEGER, \
-                  mfc_flow REAL, mano_pressure REAL, valve_position REAL, \
-                  pv_temp REAL, setpoint REAL, p REAL, i INTEGER, d INTEGER)''')
+                  step_name TEXT, shutter_on INTEGER, PKR_pressure REAL, \  
+                mano_pressure REAL, forward_power INTEGER, reflected_power INTEGER, \
+                  mfc_flow REAL,  valve_position REAL, pv_temp REAL, setpoint REAL, \
+                  p REAL, i INTEGER, d INTEGER)''')
 
     def setup_index(self):
         self.c.execute('''CREATE INDEX IF NOT EXISTS TimeEntryIndex ON \
@@ -30,14 +30,12 @@ class ALD_sqlite(object):
     
 
     def data_entry(self, entries):
-        #d1, d2, d3, d4, d5, d6, d7, d8, d9. d10, d11, d12, d13, d14, d15):
         _datetime = datetime.datetime.now()
         assert len(entries) == 15
         self.c.execute("INSERT INTO ParameterTable (time, cycle_no, step_no, \
-        		step_name, shutter_on, PKR_pressure, forward_power, reflected_power,\
-        		mfc_flow, mano_pressure, valve_position, pv_temp, setpoint, \
+        		step_name, shutter_on, PKR_pressure, mano_pressure, forward_power, \
+        		reflected_power, mfc_flow, valve_position, pv_temp, setpoint, \
         		p, i, d) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                  # (_datetime, d1, d2, d3, d4, d5, d6, d7, d8, d9, d10, d11, d12, d13, d14, d15))
                 (_datetime, *entries))
         self.conn.commit()
 
