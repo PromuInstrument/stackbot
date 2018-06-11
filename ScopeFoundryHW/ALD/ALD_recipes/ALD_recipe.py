@@ -16,6 +16,7 @@ class ALD_Recipe(Measurement):
     
     def setup(self):
         self.relay = self.app.hardware['ald_relay_hw']
+        self.shutter = self.app.hardware['ald_shutter']
         self.lovebox = self.app.hardware['lovebox']
         self.mks146 = self.app.hardware['mks_146_hw']
         self.mks600 = self.app.hardware['mks_600_hw']
@@ -55,6 +56,7 @@ class ALD_Recipe(Measurement):
         self.db.setup_index()
         
     def db_poll(self):
+                
         pass
     
     def load_params_module(self):
