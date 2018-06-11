@@ -416,11 +416,11 @@ class ALD_params(Measurement):
         self.recipe_panel.layout().addWidget(self.single_start_button, 0, 0)
         
         self.start_button = QtWidgets.QPushButton('Start Recipe')
-        self.start_button.clicked.connect(self.recipe.start)
+        self.start_button.clicked.connect(self.recipe.run_recipe)
         self.recipe_panel.layout().addWidget(self.start_button, 0, 1)
         
         self.abort_button = QtWidgets.QPushButton('Abort Recipe')
-        self.abort_button.clicked.connect(self.recipe.interrupt)
+        self.abort_button.clicked.connect(self.recipe.interrupt_recipe)
         self.recipe_panel.layout().addWidget(self.abort_button, 0, 2)
         
         
