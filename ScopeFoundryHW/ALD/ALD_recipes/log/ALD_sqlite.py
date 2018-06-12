@@ -12,6 +12,7 @@ class ALD_sqlite(object):
         self.conn = sqlite3.connect('ald_log.db', detect_types=sqlite3.PARSE_DECLTYPES)
         self.c = self.conn.cursor()
 
+
     def connect(self):
         self.conn = sqlite3.connect('ald_log.db', detect_types=sqlite3.PARSE_DECLTYPES)
         self.c = self.conn.cursor()
@@ -31,7 +32,8 @@ class ALD_sqlite(object):
 
     def data_entry(self, entries):
         _datetime = datetime.datetime.now()
-        assert len(entries) == 15
+#         assert len(entries) == 15
+        print(len(entries))
         self.c.execute('''INSERT INTO ParameterTable (time, cycle_no, step_no,
         		step_name, shutter_on, PKR_pressure, mano_pressure, valve_position,
         		forward_power, reflected_power, mfc_flow, pv_temp, setpoint,
