@@ -37,9 +37,9 @@ class ALD_Recipe(Measurement):
         self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
         self.settings.New('step', dtype=int, initial=0, ro=True)
         
-        self.setup_constants()
         
-        self.settings.New('csv_save_path', dtype=str, initial=self.full_file_path, ro=False)
+        self.settings.New('csv_save_path', dtype=str, initial='', ro=False)
+        self.save_path_update()
 
     
         self.MFC_valve_states = {'Open': 'O',
@@ -55,11 +55,12 @@ class ALD_Recipe(Measurement):
         
         self.connect_db()
         
-    def setup_constants(self):
+    def save_path_update(self):
         home = os.path.expanduser("~")
         self.path = home+'\\Desktop\\'
-        filename = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M")+'.csv'
+        filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")+'.csv'
         self.full_file_path = self.path+filename
+        self.settings['csv_save_path'] = self.full_file_path
         self.firstopened = True
                 
     def load_times(self):
@@ -74,8 +75,10 @@ class ALD_Recipe(Measurement):
         
     def db_poll(self):
         entries = []
+        entries.append(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         entries.append(self.settings['cycles_completed'] + 1)
         entries.append(self.settings['step'])
+        entries.append("Placeholder")
         entries.append(int(self.shutter.settings['shutter_open']))
         entries.append(self.vgc.settings['ch3_pressure_scaled'])
         entries.append(self.mks600.settings['pressure'])
@@ -88,14 +91,15 @@ class ALD_Recipe(Measurement):
         entries.append(self.lovebox.settings['Proportional_band'])
         entries.append(self.lovebox.settings['Integral_time'])
         entries.append(self.lovebox.settings['Derivative_time'])
-        self.db.data_entry(entries)
-        if self.firstopened == False:
+#         self.db.data_entry(entries)
+        if self.firstopened == True:
             self.new_csv(entries)
         else:
-            self.add_csv(entries)
+            self.add_to_csv(entries)
 
     
     def new_csv(self, entry):
+        self.save_path_update()
         file = self.settings['csv_save_path']
         with open(file, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
@@ -227,10 +231,12 @@ class ALD_Recipe(Measurement):
         for _ in range(cycles):
             self.routine()
             self.settings['cycles_completed'] += 1
+            print(self.settings['cycles_completed'])
             if self.recipe_interrupt:
                 break
         self.postpurge()
         self.settings['recipe_completed'] = True
+        print('recipe completed')
         self.recipe_interrupt = True
 
     def run(self):
@@ -238,3 +244,4 @@ class ALD_Recipe(Measurement):
         while not self.interrupt_measurement_called:
             time.sleep(0.2)
             self.db_poll()
+
