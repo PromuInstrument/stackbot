@@ -2,6 +2,7 @@ from ScopeFoundry import Measurement
 import pyqtgraph as pg
 import numpy as np
 import time
+from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path
 
 class ToupCamLiveMeasure(Measurement):
     
@@ -12,7 +13,21 @@ class ToupCamLiveMeasure(Measurement):
     
     def setup_figure(self):
         
-        self.ui = self.graph_layout = pg.GraphicsLayoutWidget()
+        self.ui = load_qt_ui_file(sibling_path(__file__,'toupcam_live_measure.ui'))
+        self.graph_layout = pg.GraphicsLayoutWidget()
+        self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
+
+        self.settings.activation.connect_to_widget(self.ui.live_checkBox)        
+        self.settings.auto_level.connect_to_widget(self.ui.auto_level_checkBox)
+
+        tcam = self.app.hardware['toupcam']        
+        tcam.settings.connected.connect_to_widget(self.ui.cam_connect_checkBox)
+        tcam.settings.cam_index.connect_to_widget(self.ui.cam_index_doubleSpinBox)
+        tcam.settings.res_mode.connect_to_widget(self.ui.res_mode_doubleSpinBox)
+        tcam.settings.exposure.connect_to_widget(self.ui.exp_doubleSpinBox)
+        tcam.settings.auto_exposure.connect_to_widget(self.ui.auto_exp_checkBox)
+
+                
         self.plot = self.graph_layout.addPlot()
         self.img_item = pg.ImageItem()
         self.plot.addItem(self.img_item)
@@ -33,7 +48,7 @@ class ToupCamLiveMeasure(Measurement):
     def update_display(self):
         cam = self.app.hardware['toupcam'].cam
         im = np.array(cam.get_image_data())
-        print(im.shape, np.max(im), np.mean(im))
+        #print(im.shape, np.max(im), np.mean(im))
 
         im = self.get_rgb_image()
         self.img_item.setImage(im.swapaxes(0,1), autoLevels=self.settings['auto_level'])
