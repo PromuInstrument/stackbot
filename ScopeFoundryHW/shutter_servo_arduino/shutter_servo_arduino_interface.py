@@ -7,6 +7,7 @@ from __future__ import division, absolute_import, print_function
 import serial
 import time
 import logging
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,8 @@ class ShutterServoArduino(object):
         self.port = port
         self.debug = debug
         
+        self.lock = threading.Lock()
+        
         if self.debug: logger.debug( "ShutterServoArduino init, port=%s" % self.port)
         
         else:
@@ -30,12 +33,15 @@ class ShutterServoArduino(object):
         
     def send_cmd(self, cmd):
         if self.debug: logger.debug( "send_cmd:" + repr(cmd))
-        self.ser.write(cmd + "\r\n")
+        full_cmd = cmd + "\r\n"
+        with self.lock:
+            self.ser.write(full_cmd.encode())
     
     def ask(self, cmd):
         if self.debug: logger.debug( "ask:" +  repr(cmd) )
         self.send_cmd(cmd)
-        resp = self.ser.readline()
+        with self.lock:
+            resp = self.ser.readline().decode()
         if self.debug: self.log.debug( "resp: " + repr(resp) )
         return resp 
     
@@ -54,12 +60,12 @@ class ShutterServoArduino(object):
         
     def move_open(self, open=True):
         if open:
-            self.write_posititon(self.OPEN_POSITION)
+            self.write_position(self.OPEN_POSITION)
         else:
             self.move_close()
 
     def move_close(self):
-        return self.write_posititon(self.CLOSE_POSITION)
+        return self.write_position(self.CLOSE_POSITION)
 
     def read_open(self):
         pos = self.read_position()
