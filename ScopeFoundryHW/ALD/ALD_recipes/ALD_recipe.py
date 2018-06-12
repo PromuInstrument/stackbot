@@ -8,7 +8,10 @@ Created on May 25, 2018
 from ScopeFoundry import Measurement
 from ScopeFoundryHW.ALD.ALD_recipes.log.ALD_sqlite import ALD_sqlite
 import numpy as np
+import datetime
 import time
+import csv
+import os
 
 class ALD_Recipe(Measurement):
     
@@ -33,6 +36,11 @@ class ALD_Recipe(Measurement):
         self.settings.New('recipe_completed', dtype=bool, initial=False, ro=True)
         self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
         self.settings.New('step', dtype=int, initial=0, ro=True)
+        
+        self.setup_constants()
+        
+        self.settings.New('csv_save_path', dtype=str, initial=self.full_file_path, ro=False)
+
     
         self.MFC_valve_states = {'Open': 'O',
                              'Closed': 'C',
@@ -45,7 +53,15 @@ class ALD_Recipe(Measurement):
 
         self.params_loaded = False
         
-                    
+        self.connect_db()
+        
+    def setup_constants(self):
+        home = os.path.expanduser("~")
+        self.path = home+'\\Desktop\\'
+        filename = datetime.datetime.now().strftime("%Y-%m-%d_%H:%M")+'.csv'
+        self.full_file_path = self.path+filename
+        self.firstopened = True
+                
     def load_times(self):
         self.times = self.settings['time']
     
@@ -66,6 +82,7 @@ class ALD_Recipe(Measurement):
         entries.append(self.mks600.settings['read_valve_position'])
         entries.append(self.seren.settings['forward_power_readout'])
         entries.append(self.seren.settings['reflected_power'])
+<<<<<<< HEAD
         entries.append(self.mks146.settings['MFC0_flow'])
         entries.append(self.lovebox.settings['pv_temp'])
         entries.append(self.lovebox.settings['sv_setpoint'])
@@ -74,6 +91,27 @@ class ALD_Recipe(Measurement):
         entries.append(self.lovebox.settings['Derivative_time'])
         self.db.data_entry(entries)
         
+=======
+        if self.firstopened == False:
+            self.new_csv(entries)
+        else:
+            self.add_csv(entries)
+        pass
+    
+    def new_csv(self, entry):
+        file = self.settings['csv_save_path']
+        with open(file, 'w', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            writer.writerow(entry)
+        self.firstopened = False
+    
+    def add_to_csv(self):
+        file = self.settings['csv_save_path']
+        with open(file, 'a', newline='') as csvfile:
+            writer = csv.writer(csvfile, delimiter=',')
+            writer.writerow(entry)
+    
+>>>>>>> cc0ca55ad34e52e45e37e61d4d9591e25a90bebe
     def load_params_module(self):
         if hasattr(self.app.measurements, 'ALD_params'):
             self.params = self.app.measurements.ALD_params
