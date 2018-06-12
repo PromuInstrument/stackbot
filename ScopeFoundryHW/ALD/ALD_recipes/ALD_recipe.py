@@ -63,10 +63,17 @@ class ALD_Recipe(Measurement):
         entries.append(int(self.shutter.settings['shutter_open']))
         entries.append(self.vgc.settings['ch3_pressure_scaled'])
         entries.append(self.mks600.settings['pressure'])
+        entries.append(self.mks600.settings['read_valve_position'])
         entries.append(self.seren.settings['forward_power_readout'])
         entries.append(self.seren.settings['reflected_power'])
-        pass
-    
+        entries.append(self.mks146.settings['MFC0_flow'])
+        entries.append(self.lovebox.settings['pv_temp'])
+        entries.append(self.lovebox.settings['sv_setpoint'])
+        entries.append(self.lovebox.settings['Proportional_band'])
+        entries.append(self.lovebox.settings['Integral_time'])
+        entries.append(self.lovebox.settings['Derivative_time'])
+        self.db.data_entry(entries)
+        
     def load_params_module(self):
         if hasattr(self.app.measurements, 'ALD_params'):
             self.params = self.app.measurements.ALD_params
@@ -147,31 +154,31 @@ class ALD_Recipe(Measurement):
         print('Postpurge', width)
         time.sleep(width)
         
-    def shutdown(self):
-        print('Shutdown initiated.')
-        self.ramp_throttle_open()
-        if self.shutdown_ready:
-            state = self.MFC_valve_states['Closed']
-            self.mks146.settings['set_MFC0_valve'] = state
-    
-
-    
-    def ramp_throttle_open(self):
-        print('Ramping down.')
-        self.shutdown_ready = False
-        while self.shutdown_ready == False:
-            pressure = self.vgc.settings['ch2_pressure_scaled']
-            if pressure < 1e-2:
-                self.mks600.settings['sp_channel'] = 'B'
-                self.mks600.write_sp(0.0002)
-                time.sleep(10)
-                self.mks600.write_sp(0.0001)
-                time.sleep(20)
-                self.mks600.settings['sp_channel']= 'Open'
-                self.shutdown_ready = True
-                print('Shutdown ready')
-            else:
-                print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
+#     def shutdown(self):
+#         print('Shutdown initiated.')
+#         self.ramp_throttle_open()
+#         if self.shutdown_ready:
+#             state = self.MFC_valve_states['Closed']
+#             self.mks146.settings['set_MFC0_valve'] = state
+#     
+# 
+#     
+#     def ramp_throttle_open(self):
+#         print('Ramping down.')
+#         self.shutdown_ready = False
+#         while self.shutdown_ready == False:
+#             pressure = self.vgc.settings['ch2_pressure_scaled']
+#             if pressure < 1e-2:
+#                 self.mks600.settings['sp_channel'] = 'B'
+#                 self.mks600.write_sp(0.0002)
+#                 time.sleep(10)
+#                 self.mks600.write_sp(0.0001)
+#                 time.sleep(20)
+#                 self.mks600.settings['sp_channel']= 'Open'
+#                 self.shutdown_ready = True
+#                 print('Shutdown ready')
+#             else:
+#                 print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
     
     def interrupt_recipe(self):
         self.recipe_interrupt = True
@@ -194,5 +201,6 @@ class ALD_Recipe(Measurement):
 
     def run(self):
         """LQ logging to db can occur here."""
-        self.db_poll()
-        pass
+        while not self.interrupt_measurement_called:
+            time.sleep(0.2)
+            self.db_poll()
