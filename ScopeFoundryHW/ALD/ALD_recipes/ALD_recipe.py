@@ -27,11 +27,12 @@ class ALD_Recipe(Measurement):
         self.vgc = self.app.hardware['pfeiffer_vgc_hw']
         self.seren = self.app.hardware['seren_hw']
     
-
         self.lock = Lock()
     
+        self.PV_default_time = 1.
+        self.default_times = [[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]]
         self.settings.New('cycles', dtype=int, initial=1, ro=False, vmin=1)
-        self.settings.New('time', dtype=float, array=True, initial=[[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]], fmt='%1.3f', ro=False)
+        self.settings.New('time', dtype=float, array=True, initial=self.default_times, fmt='%1.3f', ro=False)
 
         
         self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter')))
@@ -124,8 +125,20 @@ class ALD_Recipe(Measurement):
         # Sometimes.. :0
         self.settings.cycles.add_listener(self.sum_times)
         self.settings.time.add_listener(self.sum_times)
+        self.settings.t3_method.add_listener(self.t3_update)
+        
+    def t3_update(self):
+        method = self.settings['t3_method']
+        if method == 'PV':
+            self.settings['time'][0][3] = self.PV_default_time
+        elif method == 'Shutter':
+            self.settings['time'][0][3] = self.default_times[0][3]
+        if not self.params_loaded:
+            self.load_params_module()
+        self.params.update_table()
     
     def sum_times(self):
+        """Sometimes... :0"""
         if not self.params_loaded:
             self.load_params_module()
             
