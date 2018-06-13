@@ -7,6 +7,7 @@ Created on May 25, 2018
 
 from ScopeFoundry import Measurement
 from ScopeFoundryHW.ALD.ALD_recipes.log.ALD_sqlite import ALD_sqlite
+from threading import Lock
 import numpy as np
 import datetime
 import time
@@ -27,6 +28,7 @@ class ALD_Recipe(Measurement):
         self.seren = self.app.hardware['seren_hw']
     
 
+        self.lock = Lock()
     
         self.settings.New('cycles', dtype=int, initial=1, ro=False, vmin=1)
         self.settings.New('time', dtype=float, array=True, initial=[[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]], fmt='%1.3f', ro=False)
