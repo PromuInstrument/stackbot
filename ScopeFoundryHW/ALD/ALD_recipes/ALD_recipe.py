@@ -170,6 +170,8 @@ class ALD_Recipe(Measurement):
         self.relay.settings['pulse_width{}'.format(channel)] = 1e3*width
         width = self.relay.settings['pulse_width{}'.format(channel)]
         getattr(self.relay, 'write_pulse{}'.format(channel))(width)
+        # wait for width before returning
+        time.sleep(width)
     
     def purge(self, width):
         print('Purge', width)
@@ -178,7 +180,19 @@ class ALD_Recipe(Measurement):
     def shutter_pulse(self, width):
         self.shutter.settings['shutter_open'] = True
         print('Shutter open')
-        time.sleep(width)
+        t0 = time.time()
+        t_lastlog = t0
+        while True:
+            if self.interrupt_measurement_called:
+                self.shutter.settings['shutter_open'] = False
+                break
+            if time.time()-t0 > width:
+                break
+            time.sleep(0.001)
+            if time.time() - t_lastlog > 0.2:
+                # do some logging
+                t_lastlog = time.time()
+            
         self.shutter.settings['shutter_open'] = False
         print('Shutter closed')
         
@@ -189,13 +203,28 @@ class ALD_Recipe(Measurement):
     def routine(self):
         _, t1, t2, t3, t4, _, _  = self.times[0]
         self.valve_pulse(1, t1)
+        if self.interrupt_measurement_called:
+            pass
+            #doo something to finish routine
         self.purge(t2)
+        if self.interrupt_measurement_called:
+            pass
+            #doo something to finish routine
         mode = self.settings['t3_method'] 
         if mode == 'Shutter':
             self.shutter_pulse(t3)
+            if self.interrupt_measurement_called:
+                pass
+                #doo something to finish routine
         elif mode == 'PV':
             self.valve_pulse(2, t3)
+            if self.interrupt_measurement_called:
+                pass
+                #doo something to finish routine
         self.purge(t4)
+        if self.interrupt_measurement_called:
+            pass
+            #doo something to finish routine
         
     
     def prepurge(self):
@@ -245,20 +274,31 @@ class ALD_Recipe(Measurement):
         cycles = self.settings['cycles']    
         self.times = self.settings['time']
         self.prepurge()
+        if self.interrupt_measurement_called:
+            return
+            #doo something to finish recipe
+        
         for _ in range(cycles):
             self.routine()
+            if self.interrupt_measurement_called:
+                break
+                #doo something to finish routine
+            
             self.settings['cycles_completed'] += 1
             print(self.settings['cycles_completed'])
+            if self.interrupt_measurement_called:
+                break
             if self.recipe_interrupt:
                 break
         self.postpurge()
+        if self.interrupt_measurement_called:
+            return
+            #doo something to finish recipe
+        
         self.settings['recipe_completed'] = True
         print('recipe completed')
         self.recipe_interrupt = True
 
     def run(self):
-        """LQ logging to db can occur here."""
-        while not self.interrupt_measurement_called:
-            time.sleep(0.2)
-            self.db_poll()
-
+        self.run_recipe()
+        
