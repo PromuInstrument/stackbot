@@ -8,20 +8,26 @@ Created on Jun 29, 2017
 from ScopeFoundry.measurement import Measurement
 import time
 
-class PowermateMeasure(Measurement):
-    name = 'powermate_measure'
-
-    def setup(self):
-        self.powermate = self.app.hardware['powermate_hw']
-        self.n_devs = 2
-                
-        self.dt = 0.05
-        
-        choices = ['hardware/attocube_xyz_stage/z_target_position',
+choices = ['hardware/attocube_xyz_stage/z_target_position',
                    'hardware/attocube_xyz_stage/x_target_position',
                    'hardware/attocube_xyz_stage/y_target_position',
                    '',
                    ]
+
+class PowermateMeasure(Measurement):
+    name = 'powermate_measure'
+    
+    def __init__(self, app, name=None, n_devs=2, dev_lq_choices=choices):
+        self.n_devs = n_devs
+        self.dev_lq_choices=dev_lq_choices
+        Measurement.__init__(self, app, name=name)
+
+    def setup(self):
+        self.powermate = self.app.hardware['powermate_hw']
+                
+        self.dt = 0.05
+        
+        choices=self.dev_lq_choices
         
         for channel in range(self.n_devs):
             self.settings.New(name='dev_{}_lq_path_moved'.format(channel), dtype=str, 
