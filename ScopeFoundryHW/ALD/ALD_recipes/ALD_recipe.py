@@ -83,15 +83,17 @@ class ALD_Recipe(Measurement):
         entries.append(self.vgc.settings['ch3_pressure_scaled'])
         entries.append(self.mks600.settings['pressure'])
         entries.append(self.mks600.settings['read_valve_position'])
+        entries.append(self.seren.settings['set_forward_power'])
         entries.append(self.seren.settings['forward_power_readout'])
         entries.append(self.seren.settings['reflected_power'])
         entries.append(self.mks146.settings['MFC0_flow'])
-        entries.append(self.lovebox.settings['pv_temp'])
         entries.append(self.lovebox.settings['sv_setpoint'])
+        entries.append(self.lovebox.settings['pv_temp'])
         entries.append(self.lovebox.settings['Proportional_band'])
         entries.append(self.lovebox.settings['Integral_time'])
         entries.append(self.lovebox.settings['Derivative_time'])
-#         self.db.data_entry(entries)
+#         with self.lock:
+#             self.db.data_entry(entries)
         if self.firstopened == True:
             self.new_csv(entries)
         else:
