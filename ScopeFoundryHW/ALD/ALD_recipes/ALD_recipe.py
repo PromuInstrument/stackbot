@@ -171,7 +171,7 @@ class ALD_Recipe(Measurement):
         width = self.relay.settings['pulse_width{}'.format(channel)]
         getattr(self.relay, 'write_pulse{}'.format(channel))(width)
         # wait for width before returning
-        time.sleep(width)
+#         time.sleep(width)
     
     def purge(self, width):
         print('Purge', width)
@@ -204,26 +204,26 @@ class ALD_Recipe(Measurement):
         _, t1, t2, t3, t4, _, _  = self.times[0]
         self.valve_pulse(1, t1)
         if self.interrupt_measurement_called:
-            pass
+            return
             #doo something to finish routine
         self.purge(t2)
         if self.interrupt_measurement_called:
-            pass
+            return
             #doo something to finish routine
         mode = self.settings['t3_method'] 
         if mode == 'Shutter':
             self.shutter_pulse(t3)
             if self.interrupt_measurement_called:
-                pass
+                return
                 #doo something to finish routine
         elif mode == 'PV':
             self.valve_pulse(2, t3)
             if self.interrupt_measurement_called:
-                pass
+                return
                 #doo something to finish routine
         self.purge(t4)
         if self.interrupt_measurement_called:
-            pass
+            return
             #doo something to finish routine
         
     
@@ -264,11 +264,9 @@ class ALD_Recipe(Measurement):
 #             else:
 #                 print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
     
-    def interrupt_recipe(self):
-        self.recipe_interrupt = True
+
     
     def run_recipe(self):
-        self.recipe_interrupt = False
         self.settings['recipe_completed'] = False
         self.settings['cycles_completed'] = 0
         cycles = self.settings['cycles']    
@@ -288,8 +286,7 @@ class ALD_Recipe(Measurement):
             print(self.settings['cycles_completed'])
             if self.interrupt_measurement_called:
                 break
-            if self.recipe_interrupt:
-                break
+
         self.postpurge()
         if self.interrupt_measurement_called:
             return
@@ -297,7 +294,6 @@ class ALD_Recipe(Measurement):
         
         self.settings['recipe_completed'] = True
         print('recipe completed')
-        self.recipe_interrupt = True
 
     def run(self):
         self.run_recipe()
