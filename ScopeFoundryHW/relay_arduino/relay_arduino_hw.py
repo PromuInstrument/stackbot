@@ -20,7 +20,7 @@ class RelayArduinoHW(HardwareComponent):
     name = 'relay_arduino_hw'
     
     def setup(self):
-        self.port = self.settings.New(name="port", initial="COM3", dtype=str, ro=False)
+        self.port = self.settings.New(name="port", initial="COM4", dtype=str, ro=False)
         
         self.relay1 = self.settings.New(name="relay1", initial=0, dtype=bool, ro=False)
         self.relay2 = self.settings.New(name="relay2", initial=0, dtype=bool, ro=False)

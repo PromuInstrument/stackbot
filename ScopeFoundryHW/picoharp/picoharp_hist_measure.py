@@ -72,15 +72,19 @@ class PicoHarpHistogramMeasure(Measurement):
     
         while not self.interrupt_measurement_called:  
             self.ph.start_histogram()
-            while not self.ph.check_done_scanning():
-                self.set_progress( 100*(time.time() - self.t0)/self.ph_hw.settings['Tacq'] )
-                if self.interrupt_measurement_called:
-                    break
-                self.ph.read_histogram_data()
-                self.ph_hw.settings.count_rate0.read_from_hardware()
-                self.ph_hw.settings.count_rate1.read_from_hardware()
-                time.sleep(self.sleep_time)
-    
+            if self.ph.Tacq < 101:
+                time.sleep(self.ph.Tacq*1e-3+5e-3)
+            else:
+                while not self.ph.check_done_scanning():
+                    self.set_progress( 100*(time.time() - self.t0)/self.ph_hw.settings['Tacq'] )
+                    if self.interrupt_measurement_called:
+                        break
+                    self.ph.read_histogram_data()
+                    self.ph_hw.settings.count_rate0.read_from_hardware()
+                    self.ph_hw.settings.count_rate1.read_from_hardware()
+                    time.sleep(self.sleep_time)
+            self.ph_hw.settings.count_rate0.read_from_hardware()
+            self.ph_hw.settings.count_rate1.read_from_hardware()    
             self.ph.stop_histogram()
             self.ph.read_histogram_data()
         

@@ -77,6 +77,23 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.quantum_composer import QuantumComposerHW
         self.add_hardware(QuantumComposerHW(self))
 
+
+        from ScopeFoundryHW.toupcam import ToupCamHW, ToupCamLiveMeasure
+        self.add_hardware_component(ToupCamHW(self))
+        
+        from ScopeFoundryHW.powermate.powermate_hw import PowermateHW
+        self.add_hardware(PowermateHW(self))
+        
+        from ScopeFoundryHW.asi_stage import ASIStageHW, ASIStageControlMeasure
+        self.add_hardware(ASIStageHW(self))
+        self.add_measurement(ASIStageControlMeasure(self))
+        
+
+        from xbox_trpl_measure import XboxControllerTRPLMeasure
+        from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
+        self.add_hardware(XboxControllerHW(self))
+        self.add_measurement(XboxControllerTRPLMeasure(self))
+
     
         ########################## MEASUREMENTS
         print("Adding Measurement Components")
@@ -89,6 +106,16 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
 
         from ScopeFoundryHW.oceanoptics_spec.oo_spec_measure import  OOSpecLive
         self.add_measurement(OOSpecLive(self))
+        
+        self.add_measurement(ToupCamLiveMeasure(self))
+
+        powermate_lq_choices = [
+                    'hardware/asi_stage/x_target',
+                    'hardware/asi_stage/y_target',
+                   '',
+                   ]
+        from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasure
+        self.add_measurement(PowermateMeasure(self, n_devs=2, dev_lq_choices=powermate_lq_choices))
 
 
         # Combined Measurements
@@ -117,6 +144,11 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
             for lq_name in lq_names:
                 master_scan_lq =  apd_scan.settings.get_lq(lq_name)
                 scan.settings.get_lq(lq_name).connect_to_lq(master_scan_lq)     
+                
+        
+        from trpl_microscope.step_and_glue_spec_measure import SpecStepAndGlue
+        self.add_measurement(SpecStepAndGlue(self))
+        
             
                     
         
