@@ -196,9 +196,9 @@ class ALD_Recipe(Measurement):
         self.shutter.settings['shutter_open'] = False
         print('Shutter closed')
         
-    def load_single_recipe(self):
-        self.load_times()
-        self.routine()
+#     def load_single_recipe(self):
+#         self.load_times()
+#         self.routine()
     
     def routine(self):
         _, t1, t2, t3, t4, _, _  = self.times[0]

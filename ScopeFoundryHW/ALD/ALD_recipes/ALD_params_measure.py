@@ -412,8 +412,8 @@ class ALD_params(Measurement):
 
         
         self.single_start_button = QtWidgets.QPushButton('Start 1 Recipe')
-        self.single_start_button.clicked.connect(self.recipe.load_single_recipe)
-        self.recipe_panel.layout().addWidget(self.single_start_button, 0, 0)
+#         self.single_start_button.clicked.connect(self.recipe.load_single_recipe)
+#         self.recipe_panel.layout().addWidget(self.single_start_button, 0, 0)
         
         self.start_button = QtWidgets.QPushButton('Start Recipe')
         self.start_button.clicked.connect(self.recipe.start)
