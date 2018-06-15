@@ -22,7 +22,7 @@ class LoveboxHW(HardwareComponent):
     def setup(self):
         self.active_profile = self.desired_PID_profile
         self.settings.New(name='port', initial='COM4', dtype=str, ro=False)
-        self.settings.New(name='control_method', initial='PID', dtype=str, choices=self.CTRL_METHODS, ro=False)
+        self.settings.New(name='control_method', initial='ON/OFF', dtype=str, choices=self.CTRL_METHODS, ro=False)
         self.settings.New(name='heat_cool_control', initial='Heating', dtype=str, ro=True)
         self.settings.New(name='pv_temp', initial=0.0, dtype=float, spinbox_decimals=1, ro=True)
         self.settings.New(name='sv_setpoint', initial=0.0, dtype=float, spinbox_decimals=1, ro=False)
@@ -89,7 +89,7 @@ class LoveboxHW(HardwareComponent):
 
 
         self.set_control_method(self.settings['control_method'])
-
+        self.settings['PID_SV'] = 0
                
         if self.lovebox.read_ctrl_method()[1] == 'PID':
             '''Force update of LQs since direct update does not work.'''
