@@ -78,11 +78,11 @@ class ALD_Recipe(Measurement):
         self.db.setup_index()
         
         self.header = ['Time', 'Cycles Completed', 'Steps Taken', 'Step Name', 'Shutter Open',\
-                       'CM Gauge', 'Manometer', 'Valve Position', 'Forward Power', 'Reflected Power',\
-                       'MFC0 Flow', 'SV Setpoint', 'PV Temperature', 'Proportional', 'Integral', 'Derivative']
+                       'CM Gauge', 'Manometer', 'Valve Position', 'Set Forward Power', \
+                       'Read Forward Power', 'Reflected Power', 'MFC0 Flow', 'SV Setpoint', \
+                       'PV Temperature', 'Proportional', 'Integral', 'Derivative']
         
     def db_poll(self, step='Placeholder'):
-        
         entries = []
         entries.append(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         entries.append(self.settings['cycles_completed'])
