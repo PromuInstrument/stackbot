@@ -39,6 +39,7 @@ class ALD_Recipe(Measurement):
         self.settings.New('recipe_completed', dtype=bool, initial=False, ro=True)
         self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
         self.settings.New('step', dtype=int, initial=0, ro=True)
+        self.settings.New('steps_taken', dtype=int, initial=0, ro=True)
         
         
         self.settings.New('csv_save_path', dtype=str, initial='', ro=False)
@@ -79,8 +80,8 @@ class ALD_Recipe(Measurement):
     def db_poll(self):
         entries = []
         entries.append(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
-        entries.append(self.settings['cycles_completed'] + 1)
-        entries.append(self.settings['step'])
+        entries.append(self.settings['cycles_completed'])
+        entries.append(self.settings['steps_taken'])
         entries.append("Placeholder")
         entries.append(int(self.shutter.settings['shutter_open']))
         entries.append(self.vgc.settings['ch3_pressure_scaled'])
@@ -166,19 +167,45 @@ class ALD_Recipe(Measurement):
         
     def valve_pulse(self, channel, width):
         print('Valve pulse', width)
+#         self.settings['step'] = 1
         assert channel in [1,2]
         self.relay.settings['pulse_width{}'.format(channel)] = 1e3*width
-        width = self.relay.settings['pulse_width{}'.format(channel)]
         getattr(self.relay, 'write_pulse{}'.format(channel))(width)
-        # wait for width before returning
-#         time.sleep(width)
+        t0 = time.time()
+        t_lastlog = t0
+        while True:
+            if self.interrupt_measurement_called:
+                break
+            if time.time()-t0 > width:
+                break
+            time.sleep(0.001)
+            if time.time() - t_lastlog > 0.005:
+                # do some logging
+                self.db_poll()
+                t_lastlog = time.time()
+        self.settings['steps_taken'] += 1
     
     def purge(self, width):
         print('Purge', width)
-        time.sleep(width)    
+#         self.settings['step'] = 2
+        t0 = time.time()
+        t_lastlog = t0
+        while True:
+            if self.interrupt_measurement_called:
+                break
+            if time.time()-t0 > width:
+                break
+            time.sleep(0.001)
+            if time.time() - t_lastlog > 0.2:
+                # do some logging
+                self.db_poll()
+                t_lastlog = time.time()
+        self.settings['steps_taken'] += 1
     
     def shutter_pulse(self, width):
+#         self.settings['step'] = 3
         self.shutter.settings['shutter_open'] = True
+        self.db_poll()
         print('Shutter open')
         t0 = time.time()
         t_lastlog = t0
@@ -191,9 +218,11 @@ class ALD_Recipe(Measurement):
             time.sleep(0.001)
             if time.time() - t_lastlog > 0.2:
                 # do some logging
+                self.db_poll()
                 t_lastlog = time.time()
             
         self.shutter.settings['shutter_open'] = False
+        self.settings['steps_taken'] += 1
         print('Shutter closed')
         
 #     def load_single_recipe(self):
@@ -230,13 +259,18 @@ class ALD_Recipe(Measurement):
     def prepurge(self):
         width = self.times[0][0]
         print('Prepurge', width)
+        self.db_poll()
         time.sleep(width)
+        self.settings['steps_taken'] += 1
     
     def postpurge(self):
         print(self.times, self.times[0])
+        self.settings['steps_taken'] += 1
         width = self.times[0][5]
         print('Postpurge', width)
+        self.db_poll()
         time.sleep(width)
+        self.settings['steps_taken'] += 1
         
 #     def shutdown(self):
 #         print('Shutdown initiated.')
@@ -267,6 +301,7 @@ class ALD_Recipe(Measurement):
 
     
     def run_recipe(self):
+        self.settings['steps_taken'] = 0
         self.settings['recipe_completed'] = False
         self.settings['cycles_completed'] = 0
         cycles = self.settings['cycles']    
