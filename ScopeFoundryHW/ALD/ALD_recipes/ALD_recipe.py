@@ -77,12 +77,17 @@ class ALD_Recipe(Measurement):
         self.db.setup_table()
         self.db.setup_index()
         
-    def db_poll(self):
+        self.header = ['Time', 'Cycles Completed', 'Steps Taken', 'Step Name', 'Shutter Open',\
+                       'CM Gauge', 'Manometer', 'Valve Position', 'Forward Power', 'Reflected Power',\
+                       'MFC0 Flow', 'SV Setpoint', 'PV Temperature', 'Proportional', 'Integral', 'Derivative']
+        
+    def db_poll(self, step='Placeholder'):
+        
         entries = []
         entries.append(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         entries.append(self.settings['cycles_completed'])
         entries.append(self.settings['steps_taken'])
-        entries.append("Placeholder")
+        entries.append(step)
         entries.append(int(self.shutter.settings['shutter_open']))
         entries.append(self.vgc.settings['ch3_pressure_scaled'])
         entries.append(self.mks600.settings['pressure'])
@@ -109,6 +114,7 @@ class ALD_Recipe(Measurement):
         file = self.settings['csv_save_path']
         with open(file, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
+            writer.writerow(self.header)
             writer.writerow(entry)
         self.firstopened = False
     
@@ -167,7 +173,7 @@ class ALD_Recipe(Measurement):
         
     def valve_pulse(self, channel, width):
         print('Valve pulse', width)
-#         self.settings['step'] = 1
+        step_name = 'Valve Pulse'
         assert channel in [1,2]
         self.relay.settings['pulse_width{}'.format(channel)] = 1e3*width
         getattr(self.relay, 'write_pulse{}'.format(channel))(width)
@@ -181,13 +187,13 @@ class ALD_Recipe(Measurement):
             time.sleep(0.001)
             if time.time() - t_lastlog > 0.005:
                 # do some logging
-                self.db_poll()
+                self.db_poll(step_name)
                 t_lastlog = time.time()
         self.settings['steps_taken'] += 1
     
     def purge(self, width):
         print('Purge', width)
-#         self.settings['step'] = 2
+        step_name = 'Purge'
         t0 = time.time()
         t_lastlog = t0
         while True:
@@ -198,14 +204,15 @@ class ALD_Recipe(Measurement):
             time.sleep(0.001)
             if time.time() - t_lastlog > 0.2:
                 # do some logging
-                self.db_poll()
+                self.db_poll(step_name)
                 t_lastlog = time.time()
         self.settings['steps_taken'] += 1
     
     def shutter_pulse(self, width):
+        step_name = 'Shutter Pulse'
 #         self.settings['step'] = 3
         self.shutter.settings['shutter_open'] = True
-        self.db_poll()
+        self.db_poll(step_name)
         print('Shutter open')
         t0 = time.time()
         t_lastlog = t0
@@ -218,7 +225,7 @@ class ALD_Recipe(Measurement):
             time.sleep(0.001)
             if time.time() - t_lastlog > 0.2:
                 # do some logging
-                self.db_poll()
+                self.db_poll(step_name)
                 t_lastlog = time.time()
             
         self.shutter.settings['shutter_open'] = False
@@ -258,17 +265,18 @@ class ALD_Recipe(Measurement):
     
     def prepurge(self):
         width = self.times[0][0]
+        step_name = 'Pre-purge'
         print('Prepurge', width)
-        self.db_poll()
+        self.db_poll(step_name)
         time.sleep(width)
         self.settings['steps_taken'] += 1
     
     def postpurge(self):
+        step_name = 'Post-purge'
         print(self.times, self.times[0])
-        self.settings['steps_taken'] += 1
         width = self.times[0][5]
         print('Postpurge', width)
-        self.db_poll()
+        self.db_poll(step_name)
         time.sleep(width)
         self.settings['steps_taken'] += 1
         
