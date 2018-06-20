@@ -26,7 +26,7 @@ class ALD_Recipe(Measurement):
         self.mks600 = self.app.hardware['mks_600_hw']
         self.vgc = self.app.hardware['pfeiffer_vgc_hw']
         self.seren = self.app.hardware['seren_hw']
-    
+
         self.lock = Lock()
     
         self.PV_default_time = 1.
@@ -34,6 +34,8 @@ class ALD_Recipe(Measurement):
         self.settings.New('cycles', dtype=int, initial=1, ro=False, vmin=1)
         self.settings.New('time', dtype=float, array=True, initial=self.default_times, fmt='%1.3f', ro=False)
 
+        self.settings.New('PV1', dtype=int, initial=0, ro=True)
+        self.settings.New('PV2', dtype=int, initial=0, ro=True)
         
         self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter')))
         self.settings.New('recipe_completed', dtype=bool, initial=False, ro=True)
@@ -77,10 +79,11 @@ class ALD_Recipe(Measurement):
         self.db.setup_table()
         self.db.setup_index()
         
-        self.header = ['Time', 'Cycles Completed', 'Steps Taken', 'Step Name', 'Shutter Open',\
-                       'CM Gauge', 'Manometer', 'Valve Position', 'Set Forward Power', \
-                       'Read Forward Power', 'Reflected Power', 'MFC0 Flow', 'SV Setpoint', \
-                       'PV Temperature', 'Proportional', 'Integral', 'Derivative']
+        self.header = ['Time', 'Cycles Completed', 'Steps Taken', 'Step Name', 'Shutter Open', \
+                       'PV1', 'PV2', 'CM Gauge (Torr)', 'Pirani Gauge (Torr)', 'Manometer (Torr)', \
+                       'Valve Position (%)', 'Set Forward Power (W)', 'Read Forward Power (W)', \
+                       'Reflected Power (W)', 'MFC Flow Rate (sccm)', 'SV Setpoint (C)', \
+                       'PV Temperature (C)', 'Proportional', 'Integral', 'Derivative']
         
     def db_poll(self, step='Placeholder'):
         entries = []
@@ -89,7 +92,10 @@ class ALD_Recipe(Measurement):
         entries.append(self.settings['steps_taken'])
         entries.append(step)
         entries.append(int(self.shutter.settings['shutter_open']))
+        entries.append(self.settings['PV1'])
+        entries.append(self.settings['PV2'])
         entries.append(self.vgc.settings['ch3_pressure_scaled'])
+        entries.append(self.vgc.settings['ch2_pressure_scaled'])
         entries.append(self.mks600.settings['pressure'])
         entries.append(self.mks600.settings['read_valve_position'])
         entries.append(self.seren.settings['set_forward_power'])
@@ -177,12 +183,15 @@ class ALD_Recipe(Measurement):
         assert channel in [1,2]
         self.relay.settings['pulse_width{}'.format(channel)] = 1e3*width
         getattr(self.relay, 'write_pulse{}'.format(channel))(width)
+        self.settings['PV{}'.format(channel)] = 1
         t0 = time.time()
         t_lastlog = t0
         while True:
             if self.interrupt_measurement_called:
+                self.settings['PV{}'.format(channel)] = 0 
                 break
             if time.time()-t0 > width:
+                self.settings['PV{}'.format(channel)] = 0
                 break
             time.sleep(0.001)
             if time.time() - t_lastlog > 0.005:
