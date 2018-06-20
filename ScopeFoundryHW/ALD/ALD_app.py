@@ -7,6 +7,8 @@ Created on Nov 20, 2017
 
 from ScopeFoundry.base_app import BaseMicroscopeApp
 import logging
+from qtpy import QtCore
+from PyQt5 import QtWidgets
 
 # logging.disable(50)
 
@@ -24,6 +26,9 @@ class ALD_App(BaseMicroscopeApp):
         
         from ScopeFoundryHW.ALD.ALD_shutter.ALD_shutter import ALD_Shutter
         self.add_hardware(ALD_Shutter(self)).settings['connected'] = True
+        
+        from ScopeFoundryHW.ALD.ellipsometer.ellipsometer_hw import Ellipsometer
+        self.add_hardware(Ellipsometer(self))
         
         from ScopeFoundryHW.ALD.Lovebox.lovebox_hw import LoveboxHW
         self.add_hardware(LoveboxHW(self)).settings['connected'] = True
@@ -57,9 +62,6 @@ class ALD_App(BaseMicroscopeApp):
         
         from ScopeFoundryHW.ALD.Seren.seren_measure import Seren
         self.add_measurement(Seren(self)).start()
-        
-#         from ScopeFoundryHW.ALD.ALD_recipes.ALD_functions import ALD_routine
-#         self.add_measurement(ALD_routine(self))
 
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
         self.add_measurement(ALD_Recipe(self))
@@ -67,7 +69,11 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_params_measure import ALD_params
         self.add_measurement(ALD_params(self))
         
-        
+
+
+
+
+
 if __name__ == '__main__':
     import sys
     app = ALD_App(sys.argv)
