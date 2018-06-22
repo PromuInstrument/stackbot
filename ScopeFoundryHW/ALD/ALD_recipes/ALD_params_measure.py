@@ -109,6 +109,7 @@ class ALD_params(Measurement):
         self.dockArea_setup()
 
     def dockArea_setup(self):
+        "Creates dock objects and determines order of placement in UI."
         self.rf_dock = Dock('RF Settings')
         self.rf_dock.addWidget(self.rf_widget)
         self.ui.addDock(self.rf_dock)
@@ -116,11 +117,6 @@ class ALD_params(Measurement):
         self.thermal_dock = Dock('Thermal History')
         self.thermal_dock.addWidget(self.thermal_widget)
         self.ui.addDock(self.thermal_dock, position='right', relativeTo=self.rf_dock)
-        
-#         self.shutter_dock = Dock('Shutter Controls')
-#         self.shutter_dock.addWidget(self.shutter_control_widget)
-#         self.ui.addDock(self.shutter_dock, position='bottom')
-        
         
         self.recipe_dock = Dock('Recipe Controls')
         self.recipe_dock.addWidget(self.recipe_control_widget)
@@ -130,11 +126,19 @@ class ALD_params(Measurement):
         self.display_ctrl_dock.addWidget(self.display_control_widget)
         self.ui.addDock(self.display_ctrl_dock, position='bottom', relativeTo=self.recipe_dock)
 
-        
         self.hardware_dock = Dock('Hardware')
         self.hardware_dock.addWidget(self.hardware_widget)
         self.ui.addDock(self.hardware_dock, position='top')
         
+        self.conditions_dock = Dock('Conditions')
+        self.conditions_dock.addWidget(self.conditions_widget)
+        self.ui.addDock(self.conditions_dock, position='left', relativeTo=self.hardware_dock)
+
+        self.operations_dock = Dock('Operations')
+        self.operations_dock.addWidget(self.operations_widget)
+        self.ui.addDock(self.operations_dock, position='left', relativeTo=self.conditions_dock)
+        
+
         
     def load_ui_defaults(self):
         pass
@@ -143,12 +147,48 @@ class ALD_params(Measurement):
         pass
     
     def widget_setup(self):
-#         self.setup_shutter_control_widget()
+        """Runs collection of widget setup functions each of which creates the widget 
+        and then populates them"""
+        self.setup_operations_widget()
+        self.setup_conditions_widget()
+        
         self.setup_thermal_control_widget()
         self.setup_rf_flow_widget()
         self.setup_recipe_control_widget()
         self.setup_display_controls()
         self.setup_hardware_widget()
+
+    def setup_conditions_widget(self):
+        self.conditions_widget = QtWidgets.QGroupBox('Conditions Widget')
+        self.conditions_widget.setLayout(QtWidgets.QGridLayout())
+        self.conditions_widget.setStyleSheet(self.cb_stylesheet)
+        pass
+    
+    def setup_operations_widget(self):
+        self.operations_widget = QtWidgets.QGroupBox('Operations Widget')
+        self.operations_widget.setLayout(QtWidgets.QGridLayout())
+        self.operations_widget.setStyleSheet(self.cb_stylesheet)
+        
+        self.pump_down_indicator = QtWidgets.QCheckBox()
+        self.pump_down_button = QtWidgets.QPushButton('Pump Down')
+        self.operations_widget.layout().addWidget(self.pump_down_indicator, 0, 0)
+        self.operations_widget.layout().addWidget(self.pump_down_button, 0, 1)
+        
+        self.pre_deposition_indicator = QtWidgets.QCheckBox()
+        self.pre_deposition_button = QtWidgets.QPushButton('Pre-deposition')
+        self.operations_widget.layout().addWidget(self.pre_deposition_indicator, 1, 0)
+        self.operations_widget.layout().addWidget(self.pre_deposition_button, 1, 1)
+        
+        self.deposition_indicator = QtWidgets.QCheckBox()
+        self.deposition_button = QtWidgets.QPushButton('Deposition')
+        self.operations_widget.layout().addWidget(self.deposition_indicator, 2, 0)
+        self.operations_widget.layout().addWidget(self.deposition_button, 2, 1)
+        
+        self.vent_indicator = QtWidgets.QCheckBox()
+        self.vent_button = QtWidgets.QPushButton('Pre-deposition')
+        self.operations_widget.layout().addWidget(self.vent_indicator, 3, 0)
+        self.operations_widget.layout().addWidget(self.vent_button, 3, 1)
+        
 
     def setup_hardware_widget(self):
         self.hardware_widget = QtWidgets.QGroupBox('Hardware Widget')
