@@ -32,10 +32,10 @@ class ALD_params(Measurement):
             height: 25px;
         }
         QCheckBox::indicator:checked {
-            image: url(://icons//green-led-on.png);
+            image: url(://icons//GreenLED.png);
         }
         QCheckBox::indicator:unchecked {
-            image: url(://icons//led-red-on.png);
+            image: url(://icons//RedLED.png);
         }
         '''
 
