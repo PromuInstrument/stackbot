@@ -10,7 +10,7 @@ class Ellipsometer(HardwareComponent):
 		self.choices = ('Thick Oxide, Fast Acq','Thin Oxide, Fast Acq','Polymer Layer, Slow Acq')
 		self.settings.New(name='port', initial='COM1', dtype=str, ro=False)
 		self.settings.New(name='recipe', initial=self.choices[0], dtype=str, choices=self.choices, ro=False)
-		self.add_operation(name='start_recipe', op_func=self.run_recipe)
+		self.add_operation(name='trigger', op_func=self.trigger)		
 		self.settings.New(name='ready', initial=False, dtype=bool, ro=True)
 		self.settings.New(name='filename', initial='', dtype=str, ro=False)
 
@@ -40,6 +40,11 @@ class Ellipsometer(HardwareComponent):
 		cmd = 'RunRecipe({})'.format(arg)
 		resp = self.ellipsometer.write_cmd(cmd)
 		return resp
+
+	def trigger(self):
+		cmd = "Trigger()"
+		self.ellipsometer.write_cmd(cmd)
+	
 
 	def disconnect(self):
 		self.settings.disconnect_all_from_hardware()
