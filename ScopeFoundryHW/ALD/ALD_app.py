@@ -67,7 +67,7 @@ class ALD_App(BaseMicroscopeApp):
         self.add_measurement(ALD_Recipe(self))
         
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_params_measure import ALD_params
-        self.add_measurement(ALD_params(self))
+        self.add_measurement(ALD_params(self)).start()
         
 
 
