@@ -45,7 +45,7 @@ class ALD_params(Measurement):
         self.settings.New('display_window', dtype=int, initial=1e4, vmin=1)
 
         self.setup_buffers_constants()
-        
+        self.resources = resources
         
         self.settings.New('save_path', dtype=str, initial=self.full_file_path, ro=False)
 
@@ -185,7 +185,7 @@ class ALD_params(Measurement):
         self.operations_widget.layout().addWidget(self.deposition_button, 2, 1)
         
         self.vent_indicator = QtWidgets.QCheckBox()
-        self.vent_button = QtWidgets.QPushButton('Pre-deposition')
+        self.vent_button = QtWidgets.QPushButton('Vent')
         self.operations_widget.layout().addWidget(self.vent_indicator, 3, 0)
         self.operations_widget.layout().addWidget(self.vent_button, 3, 1)
         
@@ -324,9 +324,9 @@ class ALD_params(Measurement):
         self.mks600.settings.pressure.connect_to_widget(self.read_throttle_pressure_field)
         self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
 
-        self.ch1_scaled.connect_to_widget(self.ch1_readout_field)
-        self.ch2_scaled.connect_to_widget(self.ch2_readout_field)
-        self.ch3_scaled.connect_to_widget(self.ch3_readout_field)
+        self.vgc.settings.ch1_pressure_scaled.connect_to_widget(self.ch1_readout_field)
+        self.vgc.settings.ch2_pressure_scaled.connect_to_widget(self.ch2_readout_field)
+        self.vgc.settings.ch3_pressure_scaled.connect_to_widget(self.ch3_readout_field)
         
     def setup_thermal_control_widget(self):
         self.thermal_widget = QtWidgets.QGroupBox('Thermal Plot')
@@ -448,13 +448,7 @@ class ALD_params(Measurement):
         self.recipe_panel_layout = QtWidgets.QGridLayout()
         self.recipe_panel.setLayout(self.recipe_panel_layout)
         self.recipe_panel.setStyleSheet(self.cb_stylesheet)
-        
-
-        
-#         self.single_start_button = QtWidgets.QPushButton('Start 1 Recipe')
-#         self.single_start_button.clicked.connect(self.recipe.load_single_recipe)
-#         self.recipe_panel.layout().addWidget(self.single_start_button, 0, 0)
-        
+              
         self.start_button = QtWidgets.QPushButton('Start Recipe')
         self.start_button.clicked.connect(self.recipe.start)
         self.recipe_panel.layout().addWidget(self.start_button, 0, 1)
@@ -519,7 +513,6 @@ class ALD_params(Measurement):
         self.time_history = np.zeros((1, self.HIST_LEN), dtype='datetime64[s]')
         self.debug_mode = False
 
-
     def plot_routine(self):
         if self.debug_mode:
             rf_entry = np.random.rand(3,)
@@ -542,7 +535,7 @@ class ALD_params(Measurement):
         self.thermal_history[:, self.index] = t_entry
         self.time_history[:, self.index] = time_entry
         self.history_i += 1
-    
+        
     def export_to_disk(self):
         path = self.settings['save_path']
         np.save(path+'_temperature.npy', self.thermal_history)
@@ -556,11 +549,8 @@ class ALD_params(Measurement):
         lovebox_level = self.lovebox.settings['sv_setpoint']
         self.hLine1.setPos(lovebox_level)
         
-        
         flow_level = self.mks146.settings['MFC0_flow']
         self.hLine2.setPos(flow_level)
-        
-
         
         lower = self.index-self.WINDOW
 
