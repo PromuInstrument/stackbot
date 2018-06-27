@@ -200,16 +200,31 @@ class ALD_params(Measurement):
         self.right_widget = QtWidgets.QGroupBox('Pressures and Flow')
         self.right_widget.setLayout(QtWidgets.QHBoxLayout())
         
-        self.temp_field_panel = QtWidgets.QGroupBox('Temperature Readout Panel')
-        self.left_widget.layout().addWidget(self.temp_field_panel)
+        self.temp_field_panel = QtWidgets.QGroupBox('Temperature Readout Panel ['+u'\u00b0'+'C]')
+        self.temp_field_panel.setLayout(QtWidgets.QGridLayout())
         
+        self.sp_temp_label = QtWidgets.QLabel('Set Point')
+        self.sp_temp_field = QtWidgets.QDoubleSpinBox()
+        self.lovebox.settings.sv_setpoint.connect_to_widget(self.sp_temp_field)
+        
+        self.pv_temp_label = QtWidgets.QLabel('Process Value')
+        self.pv_temp_field = QtWidgets.QDoubleSpinBox()
+        self.lovebox.settings.pv_temp.connect_to_widget(self.pv_temp_field)
+        
+        self.temp_field_panel.layout().addWidget(self.sp_temp_label, 0, 0)
+        self.temp_field_panel.layout().addWidget(self.sp_temp_field, 0, 1)
+        self.temp_field_panel.layout().addWidget(self.pv_temp_field, 0, 2)
+        self.temp_field_panel.layout().addWidget(self.pv_temp_label, 0, 3)
+        
+        self.left_widget.layout().addWidget(self.temp_field_panel)
+
         self.hardware_widget.layout().addWidget(self.left_widget)
         self.hardware_widget.layout().addWidget(self.right_widget)
         self.setup_plasma_subpanel()
         self.setup_pressures_subpanel()
     
     def setup_plasma_subpanel(self):
-        self.plasma_panel = QtWidgets.QGroupBox('Plasma Panel')
+        self.plasma_panel = QtWidgets.QGroupBox('Plasma Panel [W]')
         self.left_widget.layout().addWidget(self.plasma_panel)
 
         self.fwd_power_input_label = QtWidgets.QLabel('FWD Power Input')
