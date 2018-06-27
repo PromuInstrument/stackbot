@@ -18,6 +18,11 @@ class ALD_Recipe(Measurement):
     
     name = 'ALD_Recipe'
     
+    MFC_valve_states = {'Open': 'O',
+                         'Closed': 'C',
+                         'Manual': 'N'}
+    
+    
     def setup(self):
         self.relay = self.app.hardware['ald_relay_hw']
         self.shutter = self.app.hardware['ald_shutter']
@@ -26,7 +31,11 @@ class ALD_Recipe(Measurement):
         self.mks600 = self.app.hardware['mks_600_hw']
         self.vgc = self.app.hardware['pfeiffer_vgc_hw']
         self.seren = self.app.hardware['seren_hw']
-
+        if hasattr(self.app.hardware, 'ald_shutter'):
+            self.shutter = self.app.hardware.ald_shutter
+        else:
+            print('Connect ALD shutter HW component first.')
+        
         self.lock = Lock()
     
         self.PV_default_time = 1.
@@ -38,29 +47,31 @@ class ALD_Recipe(Measurement):
         self.settings.New('PV2', dtype=int, initial=0, ro=True)
         
         self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter')))
-        self.settings.New('recipe_completed', dtype=bool, initial=False, ro=True)
         self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
         self.settings.New('step', dtype=int, initial=0, ro=True)
         self.settings.New('steps_taken', dtype=int, initial=0, ro=True)
-        
+
+        self.create_indicator_lq_battery()
         
         self.settings.New('csv_save_path', dtype=str, initial='', ro=False)
         self.save_path_update()
 
-    
-        self.MFC_valve_states = {'Open': 'O',
-                             'Closed': 'C',
-                             'Manual': 'N'}
-    
-        if hasattr(self.app.hardware, 'ald_shutter'):
-            self.shutter = self.app.hardware.ald_shutter
-        else:
-            print('Connect ALD shutter HW component first.')
-
         self.params_loaded = False
-        
+
         self.connect_db()
-        
+    
+    def create_indicator_lq_battery(self):
+        self.settings.New('pumping', dtype=bool, initial=False, ro=True)
+        self.settings.New('predeposition', dtype=bool, initial=False, ro=True)
+        self.settings.New('deposition', dtype=bool, initial=False, ro=True)
+        self.settings.New('vent', dtype=bool, initial=False, ro=True)
+        self.settings.New('pumped', dtype=bool, initial=False, ro=True)
+        self.settings.New('gases_ready', dtype=bool, initial=False, ro=True)
+        self.settings.New('substrate_hot', dtype=bool, initial=False, ro=True)
+        self.settings.New('recipe_running', dtype=bool, initial=False, ro=True)
+        self.settings.New('recipe_completed', dtype=bool, initial=False, ro=True)
+     
+    
     def save_path_update(self):
         home = os.path.expanduser("~")
         self.path = home+'\\Desktop\\'
@@ -69,16 +80,7 @@ class ALD_Recipe(Measurement):
         self.settings['csv_save_path'] = self.full_file_path
         self.firstopened = True
                 
-    def load_times(self):
-        self.times = self.settings['time']
-    
-
     def connect_db(self):
-        self.db = ALD_sqlite()
-        self.db.connect()
-        self.db.setup_table()
-        self.db.setup_index()
-        
         self.header = ['Time', 'Cycles Completed', 'Steps Taken', 'Step Name', 'Shutter Open', \
                        'PV1', 'PV2', 'CM Gauge (Torr)', 'Pirani Gauge (Torr)', 'Manometer (Torr)', \
                        'Valve Position (%)', 'Set Forward Power (W)', 'Read Forward Power (W)', \
@@ -107,8 +109,6 @@ class ALD_Recipe(Measurement):
         entries.append(self.lovebox.settings['Proportional_band'])
         entries.append(self.lovebox.settings['Integral_time'])
         entries.append(self.lovebox.settings['Derivative_time'])
-#         with self.lock:
-#             self.db.data_entry(entries)
         if self.firstopened == True:
             self.new_csv(entries)
         else:
@@ -131,14 +131,15 @@ class ALD_Recipe(Measurement):
             writer.writerow(entry)
     
     def load_params_module(self):
+        print('load_params')
         if hasattr(self.app.measurements, 'ALD_params'):
             self.params = self.app.measurements.ALD_params
             self.params_loaded = True
             print("Params loaded:", self.params_loaded)
-        # Sometimes.. :0
-        self.settings.cycles.add_listener(self.sum_times)
-        self.settings.time.add_listener(self.sum_times)
-        self.settings.t3_method.add_listener(self.t3_update)
+            # Sometimes.. :0
+            self.settings.cycles.add_listener(self.sum_times)
+            self.settings.time.add_listener(self.sum_times)
+            self.settings.t3_method.add_listener(self.t3_update)
         
     def t3_update(self):
         method = self.settings['t3_method']
@@ -164,7 +165,18 @@ class ALD_Recipe(Measurement):
         self.settings['time'][0][6] = sum_value
         if self.params_loaded:
             self.params.update_table()
-    
+
+    def run(self):
+        self.run_recipe()
+
+    def set_precursor(self):
+        '''
+            .7 < Argon MFC < 2 sccm
+                    +
+            X=Ar pressure < channel 3 pressure < Y=1
+        '''
+        pass
+
     def plasma_dose(self, width, power):
         """Argument 'width' has units of seconds
         power has units of Watts
@@ -219,7 +231,6 @@ class ALD_Recipe(Measurement):
     
     def shutter_pulse(self, width):
         step_name = 'Shutter Pulse'
-#         self.settings['step'] = 3
         self.shutter.settings['shutter_open'] = True
         self.db_poll(step_name)
         print('Shutter open')
@@ -240,10 +251,7 @@ class ALD_Recipe(Measurement):
         self.shutter.settings['shutter_open'] = False
         self.settings['steps_taken'] += 1
         print('Shutter closed')
-        
-#     def load_single_recipe(self):
-#         self.load_times()
-#         self.routine()
+
     
     def routine(self):
         _, t1, t2, t3, t4, _, _  = self.times[0]
@@ -289,45 +297,8 @@ class ALD_Recipe(Measurement):
         time.sleep(width)
         self.settings['steps_taken'] += 1
         
-#     def shutdown(self):
-#         print('Shutdown initiated.')
-#         self.ramp_throttle_open()
-#         if self.shutdown_ready:
-#             state = self.MFC_valve_states['Closed']
-#             self.mks146.settings['set_MFC0_valve'] = state
-#     
-# 
-#     
-#     def ramp_throttle_open(self):
-#         print('Ramping down.')
-#         self.shutdown_ready = False
-#         while self.shutdown_ready == False:
-#             pressure = self.vgc.settings['ch2_pressure_scaled']
-#             if pressure < 1e-2:
-#                 self.mks600.settings['sp_channel'] = 'B'
-#                 self.mks600.write_sp(0.0002)
-#                 time.sleep(10)
-#                 self.mks600.write_sp(0.0001)
-#                 time.sleep(20)
-#                 self.mks600.settings['sp_channel']= 'Open'
-#                 self.shutdown_ready = True
-#                 print('Shutdown ready')
-#             else:
-#                 print('Disable pump before equalizing chamber pressures. Don\'t dump that pump!')
-    
-
-    
-    def run_recipe(self):
-        self.settings['steps_taken'] = 0
-        self.settings['recipe_completed'] = False
-        self.settings['cycles_completed'] = 0
+    def deposition(self):
         cycles = self.settings['cycles']    
-        self.times = self.settings['time']
-        self.prepurge()
-        if self.interrupt_measurement_called:
-            return
-            #doo something to finish recipe
-        
         for _ in range(cycles):
             self.routine()
             if self.interrupt_measurement_called:
@@ -338,15 +309,29 @@ class ALD_Recipe(Measurement):
             print(self.settings['cycles_completed'])
             if self.interrupt_measurement_called:
                 break
+    
+    
+    def run_recipe(self):
+        self.settings['recipe_running'] = True
+        self.settings['steps_taken'] = 0
+        self.settings['recipe_completed'] = False
+        self.settings['cycles_completed'] = 0
+        self.times = self.settings['time']
+        self.prepurge()
+        if self.interrupt_measurement_called:
+            return
+            #doo something to finish recipe
+
+        self.deposition()
 
         self.postpurge()
         if self.interrupt_measurement_called:
             return
             #doo something to finish recipe
         
+        self.settings['recipe_running'] = False
         self.settings['recipe_completed'] = True
         print('recipe completed')
 
-    def run(self):
-        self.run_recipe()
+
         
