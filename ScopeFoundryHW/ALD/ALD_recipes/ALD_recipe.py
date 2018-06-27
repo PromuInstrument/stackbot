@@ -58,7 +58,12 @@ class ALD_Recipe(Measurement):
 
         self.params_loaded = False
 
+        self.predep_complete = None
+        self.dep_complete = None
         self.connect_db()
+
+
+
     
     def create_indicator_lq_battery(self):
         self.settings.New('pumping', dtype=bool, initial=False, ro=True)
@@ -219,6 +224,7 @@ class ALD_Recipe(Measurement):
         t_lastlog = t0
         while True:
             if self.interrupt_measurement_called:
+                self.settings['recipe_running'] = False
                 break
             if time.time()-t0 > width:
                 break
@@ -252,34 +258,60 @@ class ALD_Recipe(Measurement):
         self.settings['steps_taken'] += 1
         print('Shutter closed')
 
+    def shutoff(self):
+        status = self.mks146.settings['read_MFC0_value']
+        if status == 'N' or status == 'O':
+            self.mks146.settings['set_MFC0_valve'] = 'C'
+            time.sleep(1)
+        self.mks146.settings['set_MFC0_SP'] = 0
+            
     
     def routine(self):
         _, t1, t2, t3, t4, _, _  = self.times[0]
         self.valve_pulse(1, t1)
         if self.interrupt_measurement_called:
+            self.shutoff()
+            self.settings['recipe_running'] = False
             return
             #doo something to finish routine
         self.purge(t2)
         if self.interrupt_measurement_called:
+            self.shutoff()
+            self.settings['recipe_running'] = False
             return
             #doo something to finish routine
         mode = self.settings['t3_method'] 
         if mode == 'Shutter':
             self.shutter_pulse(t3)
             if self.interrupt_measurement_called:
+                self.shutoff()
+                self.settings['recipe_running'] = False
                 return
                 #doo something to finish routine
         elif mode == 'PV':
             self.valve_pulse(2, t3)
             if self.interrupt_measurement_called:
+                self.shutoff()
+                self.settings['recipe_running'] = False
                 return
                 #doo something to finish routine
         self.purge(t4)
         if self.interrupt_measurement_called:
+            self.shutoff()
+            self.settings['recipe_running'] = False
             return
             #doo something to finish routine
         
     
+    def predeposition(self):
+        self.predep_complete = False
+        status = self.mks146.settings['read_MFC0_valve']
+        if status == 'O' or status == 'C':
+            self.mks146.settings['set_MFC0_valve'] = 'N'
+            time.sleep(1)
+        self.mks146.settings['set_MFC0_SP'] = 0.7
+        self.predep_complete = True
+        
     def prepurge(self):
         width = self.times[0][0]
         step_name = 'Pre-purge'
@@ -302,16 +334,21 @@ class ALD_Recipe(Measurement):
         for _ in range(cycles):
             self.routine()
             if self.interrupt_measurement_called:
+                self.shutoff()
+                self.settings['recipe_running'] = False
                 break
                 #doo something to finish routine
             
             self.settings['cycles_completed'] += 1
             print(self.settings['cycles_completed'])
             if self.interrupt_measurement_called:
+                self.shutoff()
+                self.settings['recipe_running'] = False
                 break
-    
+        self.dep_complete = True
     
     def run_recipe(self):
+        self.dep_complete = False
         self.settings['recipe_running'] = True
         self.settings['steps_taken'] = 0
         self.settings['recipe_completed'] = False
@@ -319,6 +356,8 @@ class ALD_Recipe(Measurement):
         self.times = self.settings['time']
         self.prepurge()
         if self.interrupt_measurement_called:
+            self.shutoff()
+            self.settings['recipe_running'] = False
             return
             #doo something to finish recipe
 
@@ -326,6 +365,8 @@ class ALD_Recipe(Measurement):
 
         self.postpurge()
         if self.interrupt_measurement_called:
+            self.shutoff()
+            self.settings['recipe_running'] = False
             return
             #doo something to finish recipe
         
