@@ -259,7 +259,7 @@ class ALD_Recipe(Measurement):
         print('Shutter closed')
 
     def shutoff(self):
-        status = self.mks146.settings['read_MFC0_value']
+        status = self.mks146.settings['read_MFC0_valve']
         if status == 'N' or status == 'O':
             self.mks146.settings['set_MFC0_valve'] = 'C'
             time.sleep(1)
