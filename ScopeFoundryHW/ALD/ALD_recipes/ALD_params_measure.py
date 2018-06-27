@@ -659,7 +659,7 @@ class ALD_params(Measurement):
         self.recipe.settings['pumped'] = (P < Z)
         if self.recipe.settings['pumped']:
             self.pre_deposition_button.setEnabled(True)
-            self.pre_deposition_button.clicked(self.recipe.predeposition)
+            self.pre_deposition_button.clicked.connect(self.recipe.predeposition)
         else:
             self.pre_deposition_button.setEnabled(False)
 
@@ -682,11 +682,11 @@ class ALD_params(Measurement):
     def deposition_check(self):
         condition1 = self.recipe.settings['pumped']
         condition2 = self.recipe.settings['gases_ready']
-        condition3 = self.recipe.settings['plasma_on']
+        condition3 = self.seren.settings['RF_enable']
         condition4 = self.recipe.settings['substrate_hot']
         if condition1 and condition2 and condition3 and condition4:
             self.deposition_button.setEnabled(True)
-            self.deposition_button.clicked(self.recipe.run_recipe)
+            self.deposition_button.clicked.connect(self.recipe.run_recipe)
         else:
             self.deposition_button.setEnabled(False)
 
@@ -694,6 +694,6 @@ class ALD_params(Measurement):
         if self.recipe.dep_complete and \
         (self.recipe.predep_complete == True):
             self.vent_button.setEnabled(True)
-            self.vent_button.clicked(self.recipe.shutoff)
+            self.vent_button.clicked.connect(self.recipe.shutoff)
         else:
             self.vent_button.setEnabled(False)
