@@ -649,17 +649,23 @@ class ALD_params(Measurement):
             self.gases_check()
             self.deposition_check()
             self.substrate_check()
+            self.vent_check()
             time.sleep(dt)
             
     def pumped_check(self):
+        '''Check if ALD system is properly pumped down.'''
         Z = 1e-4
         P = self.vgc.settings['ch3_pressure_scaled']
         self.recipe.settings['pumped'] = (P < Z)
         if self.recipe.settings['pumped']:
             self.pre_deposition_button.setEnabled(True)
-#             self.pre_deposition_button.clicked()
+            self.pre_deposition_button.clicked(self.recipe.predeposition)
+        else:
+            self.pre_deposition_button.setEnabled(False)
 
     def gases_check(self):
+        '''Check if MFC flow and system pressure conditions are ideal
+         for deposition'''
         lower = 0.5
         P = self.vgc.settings['ch3_pressure_scaled']
         flow = self.mks146.settings['MFC0_flow']
@@ -667,10 +673,11 @@ class ALD_params(Measurement):
         self.recipe.settings['gases_ready'] = condition
 
     def substrate_check(self):
+        '''Check if stage is adequately heated.'''
         T = self.lovebox.settings['sv_setpoint']
         pv = self.lovebox.settings['pv_temp']
         self.recipe.settings['substrate_hot'] = (0.9*T <= pv <= 1.1*T)
-    
+
     
     def deposition_check(self):
         condition1 = self.recipe.settings['pumped']
@@ -680,4 +687,13 @@ class ALD_params(Measurement):
         if condition1 and condition2 and condition3 and condition4:
             self.deposition_button.setEnabled(True)
             self.deposition_button.clicked(self.recipe.run_recipe)
-            
+        else:
+            self.deposition_button.setEnabled(False)
+
+    def vent_check(self):
+        if self.recipe.dep_complete and \
+        (self.recipe.predep_complete == True):
+            self.vent_button.setEnabled(True)
+            self.vent_button.clicked(self.recipe.shutoff)
+        else:
+            self.vent_button.setEnabled(False)
