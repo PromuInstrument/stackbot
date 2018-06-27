@@ -151,7 +151,8 @@ class ALD_params(Measurement):
         pass
     
     def ui_initial_defaults(self):
-        self.pre_deposition_button.setEnabled(False)
+        self.pump_down_button.setEnabled(False)
+        self.pre_deposition_button.setEnabled(True)
         self.deposition_button.setEnabled(False)
         self.vent_button.setEnabled(False)
         
@@ -657,11 +658,11 @@ class ALD_params(Measurement):
         Z = 1e-4
         P = self.vgc.settings['ch3_pressure_scaled']
         self.recipe.settings['pumped'] = (P < Z)
-        if self.recipe.settings['pumped']:
-            self.pre_deposition_button.setEnabled(True)
-            self.pre_deposition_button.clicked.connect(self.recipe.predeposition)
-        else:
-            self.pre_deposition_button.setEnabled(False)
+#         if self.recipe.settings['pumped']:
+#             self.pre_deposition_button.setEnabled(True)
+#             self.pre_deposition_button.clicked.connect(self.recipe.predeposition)
+#         else:
+#             self.pre_deposition_button.setEnabled(False)
 
     def gases_check(self):
         '''Check if MFC flow and system pressure conditions are ideal
@@ -676,7 +677,8 @@ class ALD_params(Measurement):
         '''Check if stage is adequately heated.'''
         T = self.lovebox.settings['sv_setpoint']
         pv = self.lovebox.settings['pv_temp']
-        self.recipe.settings['substrate_hot'] = (0.9*T <= pv <= 1.1*T)
+        condition = (0.9*T <= pv <= 1.1*T) and (pv >= 200)
+        self.recipe.settings['substrate_hot'] = condition
 
     
     def deposition_check(self):
