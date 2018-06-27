@@ -7,9 +7,8 @@ Created on Apr 11, 2018
 
 from ScopeFoundry import Measurement
 from ScopeFoundry.ndarray_interactive import ArrayLQ_QTableModel
-from PyQt5 import QtWidgets, QtGui, QtCore
+from PyQt5 import QtWidgets
 from ScopeFoundryHW.ALD.ALD_recipes import resources
-from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
 import pyqtgraph as pg
 from pyqtgraph.dockarea import DockArea, Dock
 import numpy as np
@@ -88,18 +87,25 @@ class ALD_params(Measurement):
         if self.ui_enabled:
             self.ui_setup()
 
-        
-        self.ch1_scaled.connect_lq_scale(self.vgc.settings.ch1_pressure, (76000/101325))
-        self.ch2_scaled.connect_lq_scale(self.vgc.settings.ch2_pressure, (76000/101325))
-        self.ch3_scaled.connect_lq_scale(self.vgc.settings.ch3_pressure, (76000/101325))
-    
         self.recipe.load_params_module()
+        self.connect_indicators()
+    
+    def connect_indicators(self):
+        self.recipe.settings.pumping.connect_to_widget(self.pump_down_indicator)
+        self.recipe.settings.predeposition.connect_to_widget(self.pre_deposition_indicator)
+        self.recipe.settings.deposition.connect_to_widget(self.deposition_indicator)
+        self.recipe.settings.vent.connect_to_widget(self.vent_indicator)
+        self.recipe.settings.pumped.connect_to_widget(self.pumped_indicator)
+        self.recipe.settings.gases_ready.connect_to_widget(self.gases_ready_indicator)
+        self.recipe.settings.substrate_hot.connect_to_widget(self.substrate_indicator)
+        self.recipe.settings.recipe_running.connect_to_widget(self.recipe_running_indicator)
+        self.recipe.settings.recipe_completed.connect_to_widget(self.recipe_ready_indicator)
+        
         
     def update_table(self):
         self.tableModel.on_lq_updated_value()
 
     def ui_setup(self):
-        
         self.ui = DockArea()
         self.layout = QtWidgets.QVBoxLayout()
         self.ui.show()
@@ -138,31 +144,74 @@ class ALD_params(Measurement):
         self.operations_dock.addWidget(self.operations_widget)
         self.ui.addDock(self.operations_dock, position='left', relativeTo=self.conditions_dock)
         
-
-        
     def load_ui_defaults(self):
         pass
     
     def save_ui_defaults(self):
         pass
     
+    def ui_initial_defaults(self):
+        self.pre_deposition_button.setEnabled(False)
+        self.deposition_button.setEnabled(False)
+        self.vent_button.setEnabled(False)
+        
+        self.pumped_button.setEnabled(False)
+        self.gases_ready_button.setEnabled(False)
+        self.plasma_on_button.setEnabled(False)
+        self.substrate_button.setEnabled(False)
+        self.recipe_running_button.setEnabled(False)
+        self.recipe_complete_button.setEnabled(False)
+        
+    
     def widget_setup(self):
         """Runs collection of widget setup functions each of which creates the widget 
         and then populates them"""
         self.setup_operations_widget()
         self.setup_conditions_widget()
-        
         self.setup_thermal_control_widget()
         self.setup_rf_flow_widget()
         self.setup_recipe_control_widget()
         self.setup_display_controls()
         self.setup_hardware_widget()
 
+        self.ui_initial_defaults()
+        
     def setup_conditions_widget(self):
         self.conditions_widget = QtWidgets.QGroupBox('Conditions Widget')
         self.conditions_widget.setLayout(QtWidgets.QGridLayout())
         self.conditions_widget.setStyleSheet(self.cb_stylesheet)
-        pass
+        
+        self.pumped_indicator = QtWidgets.QCheckBox()
+        self.pumped_button = QtWidgets.QPushButton('Pumped')
+        self.conditions_widget.layout().addWidget(self.pumped_indicator, 0, 0)
+        self.conditions_widget.layout().addWidget(self.pumped_button, 0, 1)
+        
+        self.gases_ready_indicator = QtWidgets.QCheckBox()
+        self.gases_ready_button = QtWidgets.QPushButton('Gases Ready')
+        self.conditions_widget.layout().addWidget(self.gases_ready_indicator, 1, 0)
+        self.conditions_widget.layout().addWidget(self.gases_ready_button, 1, 1)
+        
+
+    
+        self.substrate_indicator = QtWidgets.QCheckBox()
+        self.substrate_button = QtWidgets.QPushButton('Substrate Hot')
+        self.conditions_widget.layout().addWidget(self.substrate_indicator, 2, 0)
+        self.conditions_widget.layout().addWidget(self.substrate_button, 2, 1)
+
+        self.recipe_running_indicator = QtWidgets.QCheckBox()
+        self.recipe_running_button = QtWidgets.QPushButton('Recipe Running')
+        self.conditions_widget.layout().addWidget(self.recipe_running_indicator, 3, 0)
+        self.conditions_widget.layout().addWidget(self.recipe_running_button, 3, 1)        
+        
+        self.plasma_on_indicator = QtWidgets.QCheckBox()
+        self.plasma_on_button = QtWidgets.QPushButton('Plasma On')
+        self.conditions_widget.layout().addWidget(self.plasma_on_indicator, 4, 0)
+        self.conditions_widget.layout().addWidget(self.plasma_on_button, 4, 1)
+        
+        self.recipe_complete_indicator = QtWidgets.QCheckBox()
+        self.recipe_complete_button = QtWidgets.QPushButton('Recipe Done')
+        self.conditions_widget.layout().addWidget(self.recipe_complete_indicator, 5, 0)
+        self.conditions_widget.layout().addWidget(self.recipe_complete_button, 5, 1)
     
     def setup_operations_widget(self):
         self.operations_widget = QtWidgets.QGroupBox('Operations Widget')
@@ -592,8 +641,43 @@ class ALD_params(Measurement):
                 self.vLine2.setPos(self.index)
     
     def run(self):
-        dt = 0.2
+        dt = 0.1
         while not self.interrupt_measurement_called:
             self.plot_routine()
             time.sleep(dt)
+            self.pumped_check()
+            self.gases_check()
+            self.deposition_check()
+            self.substrate_check()
+            time.sleep(dt)
+            
+    def pumped_check(self):
+        Z = 1e-4
+        P = self.vgc.settings['ch3_pressure_scaled']
+        self.recipe.settings['pumped'] = (P < Z)
+        if self.recipe.settings['pumped']:
+            self.pre_deposition_button.setEnabled(True)
+#             self.pre_deposition_button.clicked()
+
+    def gases_check(self):
+        lower = 0.5
+        P = self.vgc.settings['ch3_pressure_scaled']
+        flow = self.mks146.settings['MFC0_flow']
+        condition = (0.7 <= flow <= 2) and (lower <= P <= 1)
+        self.recipe.settings['gases_ready'] = condition
+
+    def substrate_check(self):
+        T = self.lovebox.settings['sv_setpoint']
+        pv = self.lovebox.settings['pv_temp']
+        self.recipe.settings['substrate_hot'] = (0.9*T <= pv <= 1.1*T)
+    
+    
+    def deposition_check(self):
+        condition1 = self.recipe.settings['pumped']
+        condition2 = self.recipe.settings['gases_ready']
+        condition3 = self.recipe.settings['plasma_on']
+        condition4 = self.recipe.settings['substrate_hot']
+        if condition1 and condition2 and condition3 and condition4:
+            self.deposition_button.setEnabled(True)
+            self.deposition_button.clicked(self.recipe.run_recipe)
             
