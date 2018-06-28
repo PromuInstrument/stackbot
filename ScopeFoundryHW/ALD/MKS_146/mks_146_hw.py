@@ -20,12 +20,12 @@ class MKS_146_Hardware(HardwareComponent):
         self.settings.New(name="MFC0_flow", fmt="%1.3f", spinbox_decimals=4, dtype=float, ro=True)
         
 
-        self.settings.New(name="set_MFC0_valve", initial="C", dtype=str, choices = [
+        self.settings.New(name="set_MFC0_valve", initial="N", dtype=str, choices = [
                                                                 ("Open", "O"),
                                                                 ("Closed", "C"),
                                                                 ("Manual", "N")], ro=False)
         
-        self.settings.New(name="read_MFC0_valve", initial="C", dtype=str, choices = [
+        self.settings.New(name="read_MFC0_valve", initial="N", dtype=str, choices = [
                                                                 ("Open", "O"),
                                                                 ("Closed", "C"),
                                                                 ("Manual", "N")], ro=True)
@@ -144,8 +144,12 @@ class MKS_146_Hardware(HardwareComponent):
             channel = self.MFC1_chan
             if self.debug_mode:
                 print('MFC1_write_valve_status:', status)
-            return self.mks.MFC_write_valve_status(channel, status)
-        
+            try:
+                resp = self.mks.MFC_write_valve_status(channel, status)
+                return resp
+            except ValueError:
+                print(resp)
+                
     def MFC0_read_valve(self):
         if hasattr(self, 'MFC0_chan'):
             channel = self.MFC0_chan
