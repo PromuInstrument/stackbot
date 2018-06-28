@@ -86,9 +86,11 @@ class ALD_params(Measurement):
         self.ui_enabled = True
         if self.ui_enabled:
             self.ui_setup()
-
+            
         self.recipe.load_params_module()
         self.connect_indicators()
+        self.ui_initial_defaults()
+
     
     def connect_indicators(self):
         self.recipe.settings.pumping.connect_to_widget(self.pump_down_indicator)
@@ -100,6 +102,7 @@ class ALD_params(Measurement):
         self.recipe.settings.substrate_hot.connect_to_widget(self.substrate_indicator)
         self.recipe.settings.recipe_running.connect_to_widget(self.recipe_running_indicator)
         self.recipe.settings.recipe_completed.connect_to_widget(self.recipe_ready_indicator)
+        self.seren.settings.RF_enable.connect_to_widget(self.plasma_on_indicator)
         
         
     def update_table(self):
@@ -151,6 +154,7 @@ class ALD_params(Measurement):
         pass
     
     def ui_initial_defaults(self):
+        
         self.pump_down_button.setEnabled(False)
         self.pre_deposition_button.setEnabled(True)
         self.deposition_button.setEnabled(False)
@@ -162,6 +166,10 @@ class ALD_params(Measurement):
         self.substrate_button.setEnabled(False)
         self.recipe_running_button.setEnabled(False)
         self.recipe_complete_button.setEnabled(False)
+        self.pre_deposition_button.clicked.connect(self.recipe.predeposition)
+        self.deposition_button.clicked.connect(self.recipe.run_recipe)
+        self.vent_button.clicked.connect(self.recipe.shutoff)
+
         
     
     def widget_setup(self):
@@ -667,8 +675,6 @@ class ALD_params(Measurement):
     def gases_check(self):
         '''Check if MFC flow and system pressure conditions are ideal
          for deposition'''
-#         lower = 0.5
-#         P = self.vgc.settings['ch3_pressure_scaled']
         flow = self.mks146.settings['MFC0_flow']
         condition = (0.7 <= flow)
         self.recipe.settings['gases_ready'] = condition
@@ -688,14 +694,12 @@ class ALD_params(Measurement):
         condition4 = self.recipe.settings['substrate_hot']
         if condition1 and condition2 and condition3 and condition4:
             self.deposition_button.setEnabled(True)
-            self.deposition_button.clicked.connect(self.recipe.run_recipe)
         else:
             self.deposition_button.setEnabled(False)
 
     def vent_check(self):
-        if self.recipe.dep_complete and \
-        (self.recipe.predep_complete == True):
+        if self.recipe.dep_complete and self.recipe.predep_complete:
             self.vent_button.setEnabled(True)
-            self.vent_button.clicked.connect(self.recipe.shutoff)
         else:
             self.vent_button.setEnabled(False)
+        pass
