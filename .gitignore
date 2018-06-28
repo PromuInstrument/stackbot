@@ -23,7 +23,6 @@ supra_cl/cl_mirror_positioner/log/
 ScopeFoundryHW/andor_camera/log/
 trpl_microscope/log/
 plimg_microscope/log/
-ScopeFoundryHW/thorlabs_stepper_motors/log/
 ir_microscope/log/
 ScopeFoundryHW/xbox_controller/log/
 ScopeFoundryHW/thorlabs_stepper_motors/log/
@@ -33,3 +32,5 @@ ScopeFoundry/tests/log
 laser_scribe_microscope/log/
 ScopeFoundryHW/asi_stage/log/
 ScopeFoundry/log/
+ScopeFoundryHW/thorlabs_stepper_motors/log/
+ScopeFoundry/tests/log/
