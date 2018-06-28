@@ -195,7 +195,7 @@ class ALD_params(Measurement):
 
     
         self.substrate_indicator = QtWidgets.QCheckBox()
-        self.substrate_button = QtWidgets.QPushButton('Substrate Hot')
+        self.substrate_button = QtWidgets.QPushButton('Stage Temp. Ready')
         self.conditions_widget.layout().addWidget(self.substrate_indicator, 2, 0)
         self.conditions_widget.layout().addWidget(self.substrate_button, 2, 1)
 
@@ -655,7 +655,7 @@ class ALD_params(Measurement):
             
     def pumped_check(self):
         '''Check if ALD system is properly pumped down.'''
-        Z = 1e-4
+        Z = 1e-3
         P = self.vgc.settings['ch3_pressure_scaled']
         self.recipe.settings['pumped'] = (P < Z)
 #         if self.recipe.settings['pumped']:
@@ -667,17 +667,17 @@ class ALD_params(Measurement):
     def gases_check(self):
         '''Check if MFC flow and system pressure conditions are ideal
          for deposition'''
-        lower = 0.5
-        P = self.vgc.settings['ch3_pressure_scaled']
+#         lower = 0.5
+#         P = self.vgc.settings['ch3_pressure_scaled']
         flow = self.mks146.settings['MFC0_flow']
-        condition = (0.7 <= flow <= 2) and (lower <= P <= 1)
+        condition = (0.7 <= flow)
         self.recipe.settings['gases_ready'] = condition
 
     def substrate_check(self):
         '''Check if stage is adequately heated.'''
         T = self.lovebox.settings['sv_setpoint']
         pv = self.lovebox.settings['pv_temp']
-        condition = (0.9*T <= pv <= 1.1*T) and (pv >= 200)
+        condition = (0.9*T <= pv <= 1.1*T)
         self.recipe.settings['substrate_hot'] = condition
 
     
