@@ -56,6 +56,9 @@ class ALD_Recipe(Measurement):
         self.settings.New('csv_save_path', dtype=str, initial='', ro=False)
         self.save_path_update()
 
+        self.predep_complete = None
+        self.dep_complete = None
+
         self.params_loaded = False
 
         self.connect_db()
@@ -303,6 +306,7 @@ class ALD_Recipe(Measurement):
             self.mks146.settings['set_MFC0_valve'] = 'N'
             time.sleep(1)
         self.mks146.settings['set_MFC0_SP'] = 0.7
+        self.predep_complete = True
         
     def prepurge(self):
         width = self.times[0][0]
@@ -322,6 +326,7 @@ class ALD_Recipe(Measurement):
         self.settings['steps_taken'] += 1
         
     def deposition(self):
+        self.dep_complete = False
         cycles = self.settings['cycles']    
         for _ in range(cycles):
             self.routine()
@@ -337,6 +342,7 @@ class ALD_Recipe(Measurement):
                 self.shutoff()
                 self.settings['recipe_running'] = False
                 break
+        self.dep_complete = True
     
     def run_recipe(self):
         self.settings['recipe_running'] = True
