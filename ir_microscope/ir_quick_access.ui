@@ -7,28 +7,13 @@
     <x>0</x>
     <y>0</y>
     <width>372</width>
-    <height>1268</height>
+    <height>1322</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QGroupBox" name="gridGroupBox">
-     <property name="title">
-      <string>Powermate assignment</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_6">
-      <item row="1" column="0">
-       <widget class="QComboBox" name="powermate_1_comboBox"/>
-      </item>
-      <item row="0" column="0">
-       <widget class="QComboBox" name="powermate_0_comboBox"/>
-      </item>
-     </layout>
-    </widget>
-   </item>
    <item>
     <widget class="QGroupBox" name="acton_spectrometer_groupBox">
      <property name="title">
@@ -736,7 +721,7 @@ Continuously</string>
          </font>
         </property>
         <property name="mouseTracking">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
          <string notr="true">0.0000 V</string>
@@ -1263,24 +1248,52 @@ Continuously</string>
   <tabstop>tenma_power_off_pushButton</tabstop>
   <tabstop>tenma_power_on_pushButton</tabstop>
   <tabstop>tenma_power_current_doubleSpinBox</tabstop>
-  <tabstop>tenma_power_voltage_doubleSpinBox</tabstop>
   <tabstop>tenma_power_current_lineEdit</tabstop>
-  <tabstop>tenma_power_voltage_lineEdit</tabstop>
   <tabstop>tenma_power_current_minus_pushButton</tabstop>
   <tabstop>tenma_power_current_plus_pushButton</tabstop>
+  <tabstop>tenma_power_voltage_doubleSpinBox</tabstop>
+  <tabstop>tenma_power_voltage_lineEdit</tabstop>
   <tabstop>tenma_power_voltage_minus_pushButton</tabstop>
   <tabstop>tenma_power_voltage_plus_pushButton</tabstop>
+  <tabstop>h_axis_comboBox</tabstop>
+  <tabstop>v_axis_comboBox</tabstop>
+  <tabstop>h0_doubleSpinBox</tabstop>
+  <tabstop>v0_doubleSpinBox</tabstop>
+  <tabstop>h1_doubleSpinBox</tabstop>
+  <tabstop>v1_doubleSpinBox</tabstop>
+  <tabstop>dh_doubleSpinBox</tabstop>
+  <tabstop>dv_doubleSpinBox</tabstop>
+  <tabstop>Nh_doubleSpinBox</tabstop>
+  <tabstop>Nv_doubleSpinBox</tabstop>
+  <tabstop>h_span_doubleSpinBox</tabstop>
+  <tabstop>v_span_doubleSpinBox</tabstop>
+  <tabstop>h_center_doubleSpinBox</tabstop>
+  <tabstop>v_center_doubleSpinBox</tabstop>
+  <tabstop>copy_current_position_to_2d_scan_center_pushButton</tabstop>
   <tabstop>thorlabs_MFF_comboBox</tabstop>
   <tabstop>shutter_open_checkBox</tabstop>
+  <tabstop>pushButton_2</tabstop>
+  <tabstop>load_position_pushButton</tabstop>
   <tabstop>x_set_lineEdit</tabstop>
   <tabstop>y_set_lineEdit</tabstop>
   <tabstop>z_set_lineEdit</tabstop>
+  <tabstop>stage_live_update_checkBox</tabstop>
+  <tabstop>zero_stage_pushButton</tabstop>
+  <tabstop>stage_wobble_checkBox</tabstop>
+  <tabstop>move_filter_fwd_pushButton</tabstop>
+  <tabstop>move_filter_bkwd_pushButton</tabstop>
+  <tabstop>zero_filter_pushButton</tabstop>
+  <tabstop>current_filter_doubleSpinBox</tabstop>
+  <tabstop>target_filter_lineEdit</tabstop>
   <tabstop>power_wheel_encoder_pos_doubleSpinBox</tabstop>
   <tabstop>powerwheel_move_steps_doubleSpinBox</tabstop>
   <tabstop>powerwheel_move_fwd_pushButton</tabstop>
   <tabstop>powerwheel_move_bkwd_pushButton</tabstop>
   <tabstop>power_meter_wl_doubleSpinBox</tabstop>
   <tabstop>power_meter_acquire_cont_checkBox</tabstop>
+  <tabstop>laser_power_feedback_control_set_voltage_doubleSpinBox</tabstop>
+  <tabstop>laser_power_feedback_control_p_gain_doubleSpinBox</tabstop>
+  <tabstop>laser_power_feedback_control_activation_checkBox</tabstop>
   <tabstop>apd_optimize_startstop_checkBox</tabstop>
   <tabstop>apd_counter_int_doubleSpinBox</tabstop>
  </tabstops>
