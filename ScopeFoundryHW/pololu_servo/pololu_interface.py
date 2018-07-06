@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class PololuDev(object):
+class PololuMaestroDevice(object):
     
     name="pololu_servo_device"
     
@@ -21,11 +21,11 @@ class PololuDev(object):
         self.port = port
         self.debug = debug
         if self.debug:
-            logger.debug("PololuDev.__init__, port={}".format(self.port))
+            logger.debug("PololuMaestroDevice.__init__, port={}".format(self.port))
             
-        self.ser = serial.Serial(port=self.port, timeout=0.5
+        self.ser = serial.Serial(port=self.port, timeout=0.5, baudrate=9600,
                                  )
-        self.polulu_header = chr(0xAA) + chr(device_addr)
+        self.pololu_header = chr(0xAA) + chr(device_addr)
         self.ser.flush()
         time.sleep(0.2)
         
@@ -40,7 +40,7 @@ class PololuDev(object):
         """
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
-        message = self.polulu_header + cmd
+        message = self.pololu_header + cmd
         self.ser.write(bytes(message, 'latin-1'))
         resp = self.ser.readline()
         if self.debug:

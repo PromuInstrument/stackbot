@@ -15,9 +15,9 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-    from ScopeFoundryHW.pololu_servo.pololu_interface import PololuDev
+    from ScopeFoundryHW.pololu_servo.pololu_interface import PololuMaestroDevice
 except Exception as err:
-    logger.error("Cannot load required modules for PololuDev, {}".format(err))
+    logger.error("Cannot load required modules for PololuMaestroDevice, {}".format(err))
 
 class PololuHW(HardwareComponent):
     
@@ -69,7 +69,7 @@ class PololuHW(HardwareComponent):
         Instantiates device class object, sets up read/write signals, sets up listeners which: update software servo limits, 
         and reinstantiates device object, should the port value be updated. Finally, the function reads all values from hardware.
         """
-        self.dev = PololuDev(port=self.settings['port'])
+        self.dev = PololuMaestroDevice(port=self.settings['port'])
         
         for i in range(self.servo_range):
             self.settings.get_lq('servo{}_position'.format(i)).connect_to_hardware(
@@ -112,7 +112,7 @@ class PololuHW(HardwareComponent):
         Upon update of LQ specified port, reinstantiates the device class.
         """
         del self.dev
-        self.dev = PololuDev(port=self.settings['port'])
+        self.dev = PololuMaestroDevice(port=self.settings['port'])
         print('port updated:', self.settings['port'])
  
     

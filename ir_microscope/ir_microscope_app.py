@@ -10,7 +10,6 @@ import numpy as np
 from ScopeFoundry import LQRange
 
 
-
 logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
 #logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
@@ -107,7 +106,12 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(AttoCubeStageControlMeasure(self))
 
         from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasure
-        self.add_measurement(PowermateMeasure(self))
+        choices = ['hardware/attocube_xyz_stage/z_target_position',
+                   'hardware/attocube_xyz_stage/x_target_position',
+                   'hardware/attocube_xyz_stage/y_target_position',
+                   '',
+                   ]
+        self.add_measurement(PowermateMeasure(self, n_devs=3, dev_lq_choices=choices))
         
         from ScopeFoundryHW.attocube_ecc100.attocube_home_axis_measurement import AttoCubeHomeAxisMeasurement
         self.add_measurement(AttoCubeHomeAxisMeasurement(self))
@@ -126,17 +130,17 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(LaserPowerFeedbackControl(self))
         
         
+        from ir_microscope.measurements.position_recipe_control import PositionRecipeControl
+        self.add_measurement(PositionRecipeControl(self))
+        from ir_microscope.measurements.focus_recipe_control import FocusRecipeControl
+        self.add_measurement(FocusRecipeControl(self))
+        
         #from ScopeFoundryHW.xbox_controller.xbox_controller_test_measure import 
         
         ####### Quickbar connections #################################
         
         Q = self.quickbar
         
-        # Powermate
-        pm_measure = self.measurements['powermate_measure'] 
-        pm_measure.settings.dev_0_lq_path_moved.connect_to_widget(Q.powermate_0_comboBox)
-        pm_measure.settings.dev_1_lq_path_moved.connect_to_widget(Q.powermate_1_comboBox)
-
         # LED
         tenmaHW = self.hardware['tenma_powersupply']
         Q.tenma_power_on_pushButton.clicked.connect(lambda: tenmaHW.write_both(V=3.0,I=0.1,impose_connection=True))
