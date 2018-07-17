@@ -43,7 +43,7 @@ class ShutterServoHW(HardwareComponent):
         self.angle.hardware_read_func = \
                 self.shutter_servo.read_position
         self.angle.hardware_set_func = \
-                self.shutter_servo.write_posititon
+                self.shutter_servo.write_position
         
 
         self.shutter_open.hardware_read_func = \
