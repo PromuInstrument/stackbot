@@ -1,29 +1,32 @@
 
-import serial
+import socket
 import time
 from threading import Lock
 
-class Ellipsometer(object):
 
-	name = 'ellipsometer'
+class Ellipsometer_Interface(object):
 
-	def __init__(self, port='COM1', debug=False):
-		self.port = port
+	name = 'ellipsometer_interface'
+
+	def __init__(self, host='192.168.0.1', port=4444, debug=False):
 		self.debug = debug
 		self.lock = Lock()
 
-		self.ser = serial.Serial(port=self.port, baudrate=9600, timeout=0.5, write_timeout=0.5)
-		self.ser.flush()
-		time.sleep(0.5)
+		self.socket = socket
+		self.host = host  #address of computer running CompleteEASE
+		self.port = port  #port number that CompleteEASE is listening on
+		
+		self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.sock.settimeout(5.0)
+		
 
 	def write_cmd(self, cmd):
-		self.ser.flush()
 		message = cmd+'\r\n'
 		with self.lock:
-			self.ser.write(message)
-			resp = self.ser.readline()
-		return resp
+			self.sock.sendall(message.encode())
+			data = self.sock.recv(1024)
+		return data
 
 	def close(self):
-		self.ser.close()
-		del self.ser
+		self.sock.close()
+		del self.sock

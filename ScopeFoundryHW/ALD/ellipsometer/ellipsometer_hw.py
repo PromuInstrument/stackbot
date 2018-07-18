@@ -1,49 +1,51 @@
 from ScopeFoundry.hardware import HardwareComponent
-from ScopeFoundryHW.ALD.ellipsometer.ellipsometer_interface import Ellipsometer
+from ScopeFoundryHW.ALD.ellipsometer.ellipsometer_interface import Ellipsometer_Interface
 import time
 
-class Ellipsometer(HardwareComponent):
+class EllipsometerHW(HardwareComponent):
 
-	name = 'ellipsometer'
+	name = 'ellipsometer_hw'
 
 	def setup(self):
 		self.choices = ('Thick Oxide, Fast Acq','Thin Oxide, Fast Acq','Polymer Layer, Slow Acq')
-		self.settings.New(name='port', initial='COM1', dtype=str, ro=False)
-		self.settings.New(name='recipe', initial=self.choices[0], dtype=str, choices=self.choices, ro=False)
+		self.settings.New(name='host', initial='192.168.0.1', dtype=str, ro=False)
+		self.settings.New(name='port', initial=4444, dtype=int, ro=False)
 		self.add_operation(name='trigger', op_func=self.trigger)		
-		self.settings.New(name='ready', initial=False, dtype=bool, ro=True)
-		self.settings.New(name='filename', initial='', dtype=str, ro=False)
+		self.settings.New(name='acquiring', initial=False, dtype=bool, ro=True)
+		self.settings.New(name='measuring', initial=False, dtype=bool, ro=True)
 
 	def connect(self):
-		self.ellipsometer = Ellipsometer(port=self.settings['port'], debug=self.settings['debug_mode'])
-		self.ready_check()
+		self.ellipsometer = Ellipsometer_Interface(host=self.settings['host'], port=self.settings['port'], debug=self.settings['debug_mode'])
+		try:
+			self.ellipsometer.sock.connect((self.settings['host'], self.settings['port']))
+		except (self.ellipsometer.socket.error, self.ellipsometer.socket.timeout):
+			self.ellipsometer.sock.close()
+			self.ellipsometer.sock = None
+			print('Could not connect to host: ', self.settings['host'])
+		
+		
+			
 
-	def ready_check(self):
-		while not self.settings['ready']:
-			resp = self.ellipsometer.write_cmd('status()')
-			time.sleep(0.5)
-			if resp == 'Waiting to Acquire Data':
-				self.settings['ready'] = True
-				return
-			elif resp == 'Initializing ...':
-				pass
-			else:
-				print(resp)
-
-	def run_recipe(self):
-		recipe = self.settings['recipe']
-		if self.settings['filename'] != '':
-			ext = '/{}'.format(self.settings['filename'])
-			arg = recipe+ext
+	def poll(self):
+		resp = self.ellipsometer.write_cmd('Status()')
+		if resp == (b'Acquiring Data\r\n'):
+			self.settings['measuring'] = True
 		else:
-			arg = recipe
-		cmd = 'RunRecipe({})'.format(arg)
-		resp = self.ellipsometer.write_cmd(cmd)
+			self.settings['measuring'] = False
 		return resp
-
+	
+	def start_acq(self):
+		cmd = "StartAcq()"
+		self.ellipsometer.write_cmd(cmd)
+	
+	def stop_acq(self):
+		cmd = "StopAcq()"
+		self.ellipsometer.write_cmd(cmd)
+	
 	def trigger(self):
 		cmd = "Trigger()"
 		self.ellipsometer.write_cmd(cmd)
+	
 	
 
 	def disconnect(self):
