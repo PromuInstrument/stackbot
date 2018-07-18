@@ -17,9 +17,9 @@ import time
 import os
 
 
-class ALD_params(Measurement):
+class ALD_Display(Measurement):
     
-    name = 'ALD_params'
+    name = 'ALD_display'
     
     def __init__(self, app):
         Measurement.__init__(self, app)        
@@ -87,7 +87,7 @@ class ALD_params(Measurement):
         if self.ui_enabled:
             self.ui_setup()
             
-        self.recipe.load_params_module()
+        self.recipe.load_display_module()
         self.connect_indicators()
         self.ui_initial_defaults()
 

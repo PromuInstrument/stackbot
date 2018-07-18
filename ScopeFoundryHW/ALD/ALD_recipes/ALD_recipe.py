@@ -59,7 +59,7 @@ class ALD_Recipe(Measurement):
         self.predep_complete = None
         self.dep_complete = None
 
-        self.params_loaded = False
+        self.display_loaded = False
 
         self.connect_db()
 
@@ -136,12 +136,12 @@ class ALD_Recipe(Measurement):
             writer = csv.writer(csvfile, delimiter=',')
             writer.writerow(entry)
     
-    def load_params_module(self):
-        print('load_params')
-        if hasattr(self.app.measurements, 'ALD_params'):
-            self.params = self.app.measurements.ALD_params
-            self.params_loaded = True
-            print("Params loaded:", self.params_loaded)
+    def load_display_module(self):
+        print('load_display')
+        if hasattr(self.app.measurements, 'ALD_display'):
+            self.display = self.app.measurements.ALD_display
+            self.display_loaded = True
+            print("Display loaded:", self.display_loaded)
             # Sometimes.. :0
             self.settings.cycles.add_listener(self.sum_times)
             self.settings.time.add_listener(self.sum_times)
@@ -153,14 +153,14 @@ class ALD_Recipe(Measurement):
             self.settings['time'][0][3] = self.PV_default_time
         elif method == 'Shutter':
             self.settings['time'][0][3] = self.default_times[0][3]
-        if not self.params_loaded:
-            self.load_params_module()
-        self.params.update_table()
+        if not self.display_loaded:
+            self.load_display_module()
+        self.display.update_table()
     
     def sum_times(self):
         """Sometimes... :0"""
-        if not self.params_loaded:
-            self.load_params_module()
+        if not self.display_loaded:
+            self.load_display_module()
             
         prepurge = self.settings['time'][0][0]
         cycles = self.settings['cycles']
@@ -169,8 +169,8 @@ class ALD_Recipe(Measurement):
         postpurge = self.settings['time'][0][5]
         sum_value = prepurge + total_loop_time + postpurge
         self.settings['time'][0][6] = sum_value
-        if self.params_loaded:
-            self.params.update_table()
+        if self.display_loaded:
+            self.display.update_table()
 
     def run(self):
         self.run_recipe()
@@ -260,7 +260,7 @@ class ALD_Recipe(Measurement):
         print('Shutter closed')
 
     def shutoff(self):
-        self.params.ui_initial_defaults()
+        self.display.ui_initial_defaults()
     
     def routine(self):
         _, t1, t2, t3, t4, _, _  = self.times[0]
