@@ -167,7 +167,8 @@ class ALD_Recipe(Measurement):
     
     def sum_times(self):
         """Sometimes... :0"""
-        self.settings['time'][0][3] = self.subroutine_sum()
+        if self.settings['t3_method'] == 'PV/Purge':
+            self.settings['time'][0][3] = self.subroutine_sum()
         prepurge = self.settings['time'][0][0]
         cycles = self.settings['cycles']
         total_loop_time = cycles*np.sum(self.settings['time'][0][1:5])
