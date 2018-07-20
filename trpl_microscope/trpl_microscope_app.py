@@ -79,7 +79,6 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.quantum_composer import QuantumComposerHW
         self.add_hardware(QuantumComposerHW(self))
 
-
         from ScopeFoundryHW.toupcam import ToupCamHW, ToupCamLiveMeasure
         self.add_hardware_component(ToupCamHW(self))
         
@@ -90,12 +89,16 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         self.add_hardware(ASIStageHW(self))
         self.add_measurement(ASIStageControlMeasure(self))
         
-
         from xbox_trpl_measure import XboxControllerTRPLMeasure
         from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
         self.add_hardware(XboxControllerHW(self))
         self.add_measurement(XboxControllerTRPLMeasure(self))
 
+        from ScopeFoundryHW.crystaltech_aotf.crystaltech_aotf_hc import CrystalTechAOTF 
+        self.add_hardware(CrystalTechAOTF(self))
+        
+        from ScopeFoundryHW.linkam_thermal_stage.linkam_temperature_controller import LinkamControllerHC
+        self.add_hardware(LinkamControllerHC(self))   
     
         ########################## MEASUREMENTS
         print("Adding Measurement Components")
