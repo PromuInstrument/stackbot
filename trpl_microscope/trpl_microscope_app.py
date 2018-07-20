@@ -60,8 +60,10 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         
         #self.thorlabs_optical_chopper_hc = self.add_hardware_component(ThorlabsOpticalChopperComponent(self))        
         
-        from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
-        self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
+        #from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
+        #self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
+        from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW
+        self.add_hardware(PololuMaestroServoHW(self, name='power_wheel'))
         
         from ScopeFoundryHW.oceanoptics_spec.oceanoptics_spec import OceanOpticsSpectrometerHW
         self.add_hardware_component(OceanOpticsSpectrometerHW(self))
@@ -185,11 +187,12 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         mcl.settings.move_speed.connect_to_widget(Q.nanodrive_move_slow_doubleSpinBox)        
         
         # Power Wheel
-        pw = self.hardware['power_wheel_arduino']
-        pw.settings.encoder_pos.connect_to_widget(Q.power_wheel_encoder_pos_doubleSpinBox)
-        pw.settings.move_steps.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
-        Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.move_fwd)
-        Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.move_bkwd)
+        #pw = self.hardware['power_wheel_arduino']
+        pw = self.hardware['power_wheel']
+        pw.settings.position.connect_to_widget(Q.power_wheel_encoder_pos_doubleSpinBox)
+        pw.settings.jog_step.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
+        Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.jog_fwd)
+        Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.jog_bkwd)
 
         #connect events
         apd = self.hardware['apd_counter']

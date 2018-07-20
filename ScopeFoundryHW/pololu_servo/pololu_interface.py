@@ -54,15 +54,15 @@ class PololuMaestroDevice(object):
         ==============  ==========  ==============  =======================================================
         **Arguments:**  **Type:**   **Range:**      **Description:**
         chan            int         (1,6)           Servo channel/address                                    
-        servo* target   int         (544,2544)      Rotary servo position in units of microseconds or...
-                                    (1008,2000)     Linear servo position in units of microseconds.
+        servo* target   int         (544,2544)      Rotary servo position in units of quarter microseconds or...
+                                    (1008,2000)     Linear servo position in units of quarter microseconds.
         output* target  int         >1500           outputs +5V high if channel is configured to Output 
                                     <1500           outputs 0V  low If channel is configured to Output
         ==============  ==========  ==============  =======================================================
         *each channel can be configured to be of type "servo", "input" or "output" (Pololu Mastro Control)
         :returns: None
         """
-        base_qty = target * 4 
+        base_qty = target 
         cmd_hex = 0x84
         cl_hex = cmd_hex & 0x7F
         lsb = base_qty & 0x7F
@@ -76,7 +76,7 @@ class PololuMaestroDevice(object):
         **Arguments:**  **Type:**   **Range:**      **Description:**
         chan            int         (1,6)           Servo channel/address                                  
         ==============  ==========  ==============  =======================================================
-        :returns: int, Position of selected servo in units of microseconds.
+        :returns: int, Position of selected servo in units of quarter microseconds.
         """
         cmd_hex = 0x10
         cmd = chr(cmd_hex) + chr(chan)
