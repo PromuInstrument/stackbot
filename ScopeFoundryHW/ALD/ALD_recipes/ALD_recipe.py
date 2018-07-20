@@ -21,6 +21,11 @@ class ALD_Recipe(Measurement):
                          'Closed': 'C',
                          'Manual': 'N'}
     
+    header = ['Time', 'Cycles Completed', 'Steps Taken', 'Step Name', 'Shutter Open', \
+                       'PV1', 'PV2', 'CM Gauge (Torr)', 'Pirani Gauge (Torr)', 'Manometer (Torr)', \
+                       'Valve Position (%)', 'Set Forward Power (W)', 'Read Forward Power (W)', \
+                       'Reflected Power (W)', 'MFC Flow Rate (sccm)', 'SV Setpoint (C)', \
+                       'PV Temperature (C)', 'Proportional', 'Integral', 'Derivative']
     
     def setup(self):
         self.relay = self.app.hardware['ald_relay_hw']
@@ -62,10 +67,6 @@ class ALD_Recipe(Measurement):
 
         self.display_loaded = False
 
-        self.connect_db()
-
-
-
     
     def create_indicator_lq_battery(self):
         self.settings.New('pumping', dtype=bool, initial=False, ro=True)
@@ -86,13 +87,7 @@ class ALD_Recipe(Measurement):
         self.full_file_path = self.path+filename
         self.settings['csv_save_path'] = self.full_file_path
         self.firstopened = True
-                
-    def connect_db(self):
-        self.header = ['Time', 'Cycles Completed', 'Steps Taken', 'Step Name', 'Shutter Open', \
-                       'PV1', 'PV2', 'CM Gauge (Torr)', 'Pirani Gauge (Torr)', 'Manometer (Torr)', \
-                       'Valve Position (%)', 'Set Forward Power (W)', 'Read Forward Power (W)', \
-                       'Reflected Power (W)', 'MFC Flow Rate (sccm)', 'SV Setpoint (C)', \
-                       'PV Temperature (C)', 'Proportional', 'Integral', 'Derivative']
+
         
     def db_poll(self, step='Placeholder'):
         entries = []
@@ -166,6 +161,8 @@ class ALD_Recipe(Measurement):
         coeff = int(data[0])
         entries = data[1:]
         self.settings['subroutine'][0][0] = coeff
+        self.display.update_subtable()
+
         return coeff*np.sum(entries)
     
     def sum_times(self):
@@ -239,7 +236,7 @@ class ALD_Recipe(Measurement):
         t_lastlog = t0
         while True:
             if self.interrupt_measurement_called:
-                self.settings['recipe_running'] = False
+                self.shutoff()
                 break
             if time.time()-t0 > width:
                 break
@@ -276,6 +273,7 @@ class ALD_Recipe(Measurement):
 
     def shutoff(self):
         self.display.ui_initial_defaults()
+        self.settings['recipe_running'] = False
 
     
     def predeposition(self):
@@ -307,13 +305,11 @@ class ALD_Recipe(Measurement):
         self.valve_pulse(1, t1)
         if self.interrupt_measurement_called:
             self.shutoff()
-            self.settings['recipe_running'] = False
             return
             #doo something to finish routine
         self.purge(t2)
         if self.interrupt_measurement_called:
             self.shutoff()
-            self.settings['recipe_running'] = False
             return
             #doo something to finish routine
         
@@ -324,14 +320,12 @@ class ALD_Recipe(Measurement):
             self.shutter_pulse(t3)
             if self.interrupt_measurement_called:
                 self.shutoff()
-                self.settings['recipe_running'] = False
                 return
                 #doo something to finish routine
         elif mode == 'PV':
             self.valve_pulse(2, t3)
             if self.interrupt_measurement_called:
                 self.shutoff()
-                self.settings['recipe_running'] = False
                 return
                 #doo something to finish routine
         elif mode == 'PV/Pulse':
@@ -344,7 +338,6 @@ class ALD_Recipe(Measurement):
         self.purge(t4)
         if self.interrupt_measurement_called:
             self.shutoff()
-            self.settings['recipe_running'] = False
             return
             #doo something to finish routine
         
@@ -365,7 +358,6 @@ class ALD_Recipe(Measurement):
             self.routine()
             if self.interrupt_measurement_called:
                 self.shutoff()
-                self.settings['recipe_running'] = False
                 break
                 #doo something to finish routine
             
@@ -373,7 +365,6 @@ class ALD_Recipe(Measurement):
             print(self.settings['cycles_completed'])
             if self.interrupt_measurement_called:
                 self.shutoff()
-                self.settings['recipe_running'] = False
                 break
         self.dep_complete = True
     
@@ -387,7 +378,6 @@ class ALD_Recipe(Measurement):
         self.prepurge()
         if self.interrupt_measurement_called:
             self.shutoff()
-            self.settings['recipe_running'] = False
             return
             #doo something to finish recipe
 
@@ -396,7 +386,6 @@ class ALD_Recipe(Measurement):
         self.postpurge()
         if self.interrupt_measurement_called:
             self.shutoff()
-            self.settings['recipe_running'] = False
             return
             #doo something to finish recipe
         

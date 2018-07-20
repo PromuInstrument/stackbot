@@ -104,7 +104,10 @@ class ALD_Display(Measurement):
         self.recipe.settings.recipe_completed.connect_to_widget(self.recipe_ready_indicator)
         self.seren.settings.RF_enable.connect_to_widget(self.plasma_on_indicator)
         
-        
+    
+    def update_subtable(self):
+        self.subtableModel.on_lq_updated_value()
+
     def update_table(self):
         self.tableModel.on_lq_updated_value()
 
