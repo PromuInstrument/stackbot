@@ -496,12 +496,26 @@ class ALD_Display(Measurement):
         self.recipe.settings.t3_method.connect_to_widget(self.method_select_comboBox)
 
 
-    
+        self.subroutine_table_widget = QtWidgets.QWidget()
+        self.subroutine_layout = QtWidgets.QHBoxLayout()
+        self.subroutine_table_widget.setLayout(self.subroutine_layout)
+        self.subroutine_label = QtWidgets.QLabel('Subroutine [s]')
+        self.subroutine_table_widget.layout().addWidget(self.subroutine_label)
+        
+        self.subroutine_table = QtWidgets.QTableView()
+        self.subroutine_table.setMaximumHeight(65)
+        sub_names = ['Cycles', 't'+u'\u2080'+' PV2', 't'+u'\u2081'+' Purge']
+        self.subtableModel = ArrayLQ_QTableModel(self.recipe.settings.subroutine, col_names=sub_names)
+        self.subroutine_table.setModel(self.subtableModel)
+        self.subroutine_table_widget.layout().addWidget(self.subroutine_table)
+        self.recipe_control_widget.layout().addWidget(self.subroutine_table_widget)
+        
+        
         ## Table Widget
         self.table_widget = QtWidgets.QWidget()
         self.table_widget_layout = QtWidgets.QHBoxLayout()
         self.table_widget.setLayout(self.table_widget_layout)
-        self.table_widget.setMinimumWidth(827)
+#         self.table_widget.setMinimumWidth(827)
 
         self.pulse_label = QtWidgets.QLabel('Step Durations [s]')
         self.table_widget.layout().addWidget(self.pulse_label)
@@ -556,8 +570,8 @@ class ALD_Display(Measurement):
         
         self.export_button = QtWidgets.QPushButton('Export Temperature Data')
         self.save_field = QtWidgets.QLineEdit('Directory')
-        self.save_field.setMinimumWidth(200)
-        self.save_field.setMaximumWidth(600)
+#         self.save_field.setMinimumWidth(200)
+#         self.save_field.setMaximumWidth(600)
 
         self.field_panel.layout().addWidget(self.export_button, 1, 0)
         self.field_panel.layout().addWidget(self.save_field, 1, 1)

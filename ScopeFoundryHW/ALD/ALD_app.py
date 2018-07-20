@@ -67,12 +67,12 @@ class ALD_App(BaseMicroscopeApp):
         self.add_measurement(Seren(self))#.start()
 
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
-        self.add_measurement(ALD_Recipe(self))
+        self.recipe_measure = self.add_measurement(ALD_Recipe(self))
         
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_display import ALD_Display
-        self.add_measurement(ALD_Display(self))#.start()
+        self.display_measure = self.add_measurement(ALD_Display(self))#.start()
         
-
+        self.recipe_measure.load_display_module()
 
 
 
