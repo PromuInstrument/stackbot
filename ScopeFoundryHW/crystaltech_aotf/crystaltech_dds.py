@@ -1,6 +1,10 @@
 import serial
 import subprocess
 import ctypes as ct
+from ctypes import byref
+from ctypes import c_uint
+import time
+import threading
 
 AOTFCMD_PATH = r"C:\Program Files\Crystal Technology\AotfCmd\AotfCmd.exe"
 AOTFLIB_PATH = r"C:\Program Files\Crystal Technology\AotfCmd\AotfLibrary.dll"
@@ -8,7 +12,7 @@ AOTFLIB_PATH = r"C:\Program Files\Crystal Technology\AotfCmd\AotfLibrary.dll"
 
 class CrystalTechDDS(object):
 
-    def __init__(self, comm="serial", port=0, debug=False):
+    def __init__(self, comm="serial", port=0, debug=True):
     
         self.comm = comm
         self.port = port
@@ -19,17 +23,22 @@ class CrystalTechDDS(object):
         self.frequency = [0,0,0,0,0,0,0,0]
         self.amplitude = [0,0,0,0,0,0,0,0]
         
+        self.lock = threading.Lock()
+        
         if self.comm == "serial":
+            print('Opening serial')
             self.ser = serial.Serial(port, 38400, timeout=2,
-                        parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE, xonxoff=False, rtscts=False)
-            
+                        parity=serial.PARITY_NONE, 
+                        stopbits=serial.STOPBITS_ONE, 
+                        xonxoff=False, 
+                        rtscts=False)
             self.ser.flush()
             out = "x"
-            while out != "":
+            while out != b'':
                 out = self.ser.read()
-            self.ser.write("\x04")
+            self.ser.write(b"\x04")
             for i in range(4):
-                print i
+                print(i)
                 self.readline()
         elif self.comm == "aotfcmd":
             self._proc = subprocess.Popen([AOTFCMD_PATH,"-i","dds f 0"], shell=True,
@@ -48,7 +57,8 @@ class CrystalTechDDS(object):
     
     def readline(self):
         if self.comm == 'serial':
-            data = self.ser.readline()
+            with self.lock:
+                data = self.ser.readline()
         elif self.comm == 'aotfcmd':
             data = self._proc.stdout.readline()
         elif self.comm == 'aotflib':
@@ -58,13 +68,14 @@ class CrystalTechDDS(object):
                 retval = AotfRead(self._handle,  len(read_buf), byref(read_buf), byref(bytes_read))
                 assert retval
             else:
-                if self.debug: print "crystaltech_dds readline: no data available"
-        if self.debug: print "crystaltech_dds readline:", data                  
-        return data
+                if self.debug: print("crystaltech_dds readline: no data available")
+        if self.debug: print("crystaltech_dds readline:", data)                  
+        return data.decode()
         
     def read(self): # read one character from buffer
-        data = self.ser.read()
-        if self.debug: print "crystaltech_dds read:", data
+        with self.lock:
+            data = self.ser.read().decode()
+        if self.debug: print("crystaltech_dds read:", data)
         #data = data.lstrip('\n')
 
         #data = data.lstrip('* ')
@@ -72,7 +83,8 @@ class CrystalTechDDS(object):
 
     def write(self, data):
         if self.comm == 'serial':
-            self.ser.write(data  + '\r\n')
+            with self.lock:
+                self.ser.write(('{}\r\n'.format(data)).encode())
         elif self.comm == 'aotfcmd':
             self._proc.stdin.write(data  + '\r\n')
         elif self.comm == 'aotfcmd':
@@ -82,7 +94,7 @@ class CrystalTechDDS(object):
         return
         
     def write_with_echo(self, data):
-        if self.debug: print "crystaltech_dds write_with_echo:", data
+        if self.debug: print("crystaltech_dds write_with_echo:", data)
 
         self.write(data)
         return self.readline()
@@ -167,6 +179,6 @@ if __name__ == '__main__':
 
     cdds = CrystalTechDDS(comm="serial", port="COM1", debug=True)
     
-    print cdds.get_calibration()
+    print(cdds.get_calibration())
     
     cdds.close()

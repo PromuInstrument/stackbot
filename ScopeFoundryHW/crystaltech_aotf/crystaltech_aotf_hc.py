@@ -32,37 +32,53 @@
 
 from ScopeFoundry import HardwareComponent
 try:
-    from equipment.crystaltech_dds import CrystalTechDDS
+    from ScopeFoundryHW.crystaltech_aotf.crystaltech_dds import CrystalTechDDS
 except Exception as err:
-    print "Cannot load required modules for CrystalTech DDS (AOTF):", err
+    print("Cannot load required modules for CrystalTech DDS (AOTF):", err)
 
 class CrystalTechAOTF(HardwareComponent):
     
+    name = 'CrystalTechAOTF_DDS'
+    
     def setup(self):
-        self.name = 'crystaltech_aotf'
         self.debug = True
         
         # Create logged quantities
-        self.modulation_enable = self.add_logged_quantity(
-                                       name="modulation_enable",
-                                       dtype=bool, 
-                                       ro=False)
+        #self.modulation_enable = self.add_logged_quantity(
+        #                               name="modulation_enable",
+        #                               dtype=bool, 
+        #                               ro=False)
        
-        self.freq0 = self.add_logged_quantity(name="freq0", 
-                                        dtype=float, 
-                                        unit= "MHz",
-                                        vmin= 0,
-                                        vmax = 200,
-                                        si = False,
-                                        fmt = '%f')
+        #self.freq0 = self.add_logged_quantity(name="freq0", 
+        #                                dtype=float, 
+        #                                unit= "MHz",
+        #                                vmin= 0,
+        #                                vmax = 200,
+        #                                si = False,
+        #                                fmt = '%f')
 
-        self.pwr0 = self.add_logged_quantity(name="pwr0", 
-                                         dtype=int, 
-                                         vmin=0,
-                                         vmax=1<<16, # 2^16
-                                         si=False
-                                         )
-
+        #self.pwr0 = self.add_logged_quantity(name="pwr0", 
+        #                                 dtype=int, 
+        #                                 vmin=0,
+        #                                 vmax=1<<16, # 2^16
+        #                                 si=False
+        #                                 )
+        
+        self.settings.New('modulation_enable',
+                          dtype=bool,
+                          ro=False)
+        self.settings.New('freq0',
+                          dtype=float,
+                          unit='MHz',
+                          vmin=0,
+                          vmax=200,
+                          si=False,
+                          fmt='%f')
+        self.settings.New('pwr0',
+                          dtype=int,
+                          vmin=0,
+                          vmax=1<<16,
+                          si=False)
 
 
         #connect GUI
@@ -76,31 +92,45 @@ class CrystalTechAOTF(HardwareComponent):
        
     def connect(self):
 
-        #connect to hardware        
-        self.dds = CrystalTechDDS(comm="serial", port="COM1", debug=self.debug)
+        #connect to hardware
+        if self.debug:
+            print('Connecting...')   
+        self.dds = CrystalTechDDS(comm="serial", port="COM24", debug=self.debug)
         
+        if self.debug:
+            print('Complete')
         
         # Connect logged quantities to hardware
-        self.modulation_enable.hardware_set_func = self.dds.set_modulation
+        #self.modulation_enable.hardware_set_func = self.dds.set_modulation
+        self.settings.modulation_enable.connect_to_hardware(
+            write_func = self.dds.set_modulation)
+        
         #self.modulation_enable.hardware_read_func = self.dds.get_ # get_modulation is not defined
 
-        self.freq0.hardware_read_func = self.dds.get_frequency
-        self.freq0.hardware_set_func  = self.dds.set_frequency
+        #self.freq0.hardware_read_func = self.dds.get_frequency
+        #self.freq0.hardware_set_func  = self.dds.set_frequency
+        self.settings.freq0.connect_to_hardware(
+            read_func=self.dds.get_frequency,
+            write_func=self.dds.set_frequency)
         
-        self.pwr0.hardware_read_func = self.dds.get_amplitude
-        self.pwr0.hardware_set_func = self.dds.set_amplitude
+        
+        #self.pwr0.hardware_read_func = self.dds.get_amplitude
+        #self.pwr0.hardware_set_func = self.dds.set_amplitude
+        self.settings.pwr0.connect_to_hardware(
+            read_func=self.dds.get_amplitude,
+            write_func=self.dds.set_amplitude)
+        
 #                                         hardware_read_func=self.dds.get_amplitude,
 #                                        hardware_set_func=self.dds.set_amplitude)
 
     def disconnect(self):
+        self.log.info('disconnect', self.name)
+        
+               
         #disconnect logged quantities from hardware
-        for lq in self.logged_quantities.values():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
+        self.settings.disconnect_all_from_hardware()
         
-        #disconnect hardware
-        self.dds.close()
-        
-        # clean up hardware object
-        del self.dds
-        
+        if hasattr(self, 'dds'):
+            self.dds.close()
+            del self.dds
+                
