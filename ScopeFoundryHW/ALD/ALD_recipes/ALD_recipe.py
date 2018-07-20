@@ -329,7 +329,7 @@ class ALD_Recipe(Measurement):
                 self.shutoff()
                 return
                 #doo something to finish routine
-        elif mode == 'PV/Pulse':
+        elif mode == 'PV/Purge':
             '''Run sub_cyc number of subroutine cycles.
             Subroutine consists of a valve pulse and a purge period.'''
             for _ in range(sub_cyc):
