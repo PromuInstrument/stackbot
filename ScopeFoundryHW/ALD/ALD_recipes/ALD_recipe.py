@@ -6,7 +6,6 @@ Created on May 25, 2018
 '''
 
 from ScopeFoundry import Measurement
-from ScopeFoundryHW.ALD.ALD_recipes.log.ALD_sqlite import ALD_sqlite
 from threading import Lock
 import numpy as np
 import datetime
