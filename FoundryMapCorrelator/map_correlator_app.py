@@ -18,7 +18,9 @@ import numpy as np
 import scipy.ndimage as ndimage
 import h5py
 from kde_map_interpolation import kde_map_interpolation, bilinear_weighted_map
-
+from ir_microscope.data.analysis import shift_time_trace_map, tau_x_calc_map
+from astropy._erfa.core import DTY
+from ScopeFoundry.logged_quantity import MinMaxQSlider
 
 class MapCorrelatorApp(BaseApp):
     
@@ -30,21 +32,35 @@ class MapCorrelatorApp(BaseApp):
     
     def setup(self):
         self.iso_level = self.settings.New('iso_level', initial=0.5)
-        self.delta_x = self.settings.New('delta_h', initial=0, spinbox_decimals=6, vmin=-0.04, vmax=0.12, unit='mm')
-        self.delta_y = self.settings.New('delta_v', initial=0, spinbox_decimals=6, vmin=-0.040, vmax=0.12, unit='mm')
-        self.angle = self.settings.New('angle', initial = 0, unit='deg', vmin=0, vmax=360)
-        self.sm_dh = self.settings.New('sm_dh', initial = 0.015/1024, spinbox_decimals=6, unit='mm/px', )
-        self.sm_dv = self.settings.New('sm_dv', initial = 0.015/1024, spinbox_decimals=6, unit='mm/px', )
+        self.delta_x = self.settings.New('delta_h', initial=0, spinbox_decimals=7, vmin=-0.00, vmax=0.08, unit='mm')
+        self.delta_y = self.settings.New('delta_v', initial=0, spinbox_decimals=7, vmin=-0.00, vmax=0.08, unit='mm')
+        self.angle = self.settings.New('angle', initial = 0, spinbox_decimals=3, unit='deg', vmin=0, vmax=360)
+        
+        self.sm_dh = self.settings.New('sm_dh', initial = 0.015/1024, spinbox_decimals=7, unit='mm/px', )
+        self.sm_dv = self.settings.New('sm_dv', initial = 0.015/1024, spinbox_decimals=7, unit='mm/px', )
         self.flip_sm_x = self.settings.New('flip_sm_x', dtype=bool, initial=False)
         self.flip_sm_y = self.settings.New('flip_sm_y', dtype=bool, initial=False)
+        
+        self.sm_opacity = self.settings.New('sm_opacity', dtype=float, initial=0.8, vmin=0, vmax=1)
+        self.sm_blur = self.settings.New('sm_blur', dtype=float, initial=20, vmin=0, vmax=30)
+        
+        
+        
+        choices = ('integrated_count_map', 'taue_map')
+        self.bm_map_name = self.settings.New('bm_map_name', dtype=str, initial = 'integrated_count_map', choices=choices) 
+        
 
         self.delta_x.add_listener(self.update_figure)
         self.delta_y.add_listener(self.update_figure)
         self.angle.add_listener(self.update_figure)
         self.sm_dh.add_listener(self.update_figure)
         self.sm_dv.add_listener(self.update_figure)
-        self.flip_sm_x.add_listener(self.flip_sm)
-        self.flip_sm_y.add_listener(self.flip_sm)
+        self.flip_sm_x.add_listener(self.filter_sm)
+        self.flip_sm_y.add_listener(self.filter_sm)
+        
+        self.sm_opacity.add_listener(self.update_figure)
+        self.sm_blur.add_listener(self.filter_sm)
+        self.bm_map_name.add_listener(self.set_bm)
 
         #self.mask_exponent = self.settings.New('mask_exponent', dtype=float, initial=-12)
         #self.mask_exponent.add_listener(self.update_correlated_figure)
@@ -62,17 +78,27 @@ class MapCorrelatorApp(BaseApp):
                               widget=self.settings.New_UI())
         
         # sliders and buttons
-        self.delta_x_slider = QtWidgets.QSlider()
+        self.settings_dock.addWidget(QtWidgets.QLabel('small image x,y,alpha,opacity'), )
+        
+        self.delta_x_slider = MinMaxQSlider()
         self.delta_x.connect_to_widget(self.delta_x_slider)
-        self.settings_dock.addWidget(self.delta_x_slider, row=0, col=1)
+        self.settings_dock.addWidget(self.delta_x_slider)
 
-        self.delta_y_slider = QtWidgets.QSlider()
+        self.delta_y_slider = MinMaxQSlider()
         self.delta_y.connect_to_widget(self.delta_y_slider)
-        self.settings_dock.addWidget(self.delta_y_slider, row=0, col=2)
+        self.settings_dock.addWidget(self.delta_y_slider,)
 
-        self.angle_slider = QtWidgets.QSlider()
+        self.angle_slider = MinMaxQSlider()
         self.angle.connect_to_widget(self.angle_slider)
-        self.settings_dock.addWidget(self.angle_slider,   row=0, col=3)
+        self.settings_dock.addWidget(self.angle_slider,  )
+
+        self.sm_opacity_slider = MinMaxQSlider()
+        self.sm_opacity.connect_to_widget(self.sm_opacity_slider)
+        self.settings_dock.addWidget(self.sm_opacity_slider)
+        
+        self.sm_blur_slider = MinMaxQSlider()
+        self.sm_blur.connect_to_widget(self.sm_blur_slider)
+        self.settings_dock.addWidget(self.sm_blur_slider)
         
         self.correlate_pushBotton = QtWidgets.QPushButton()
         self.correlate_pushBotton.setText('correlate (kde interpolate sm to bm)')
@@ -115,15 +141,21 @@ class MapCorrelatorApp(BaseApp):
         # correlator dock
         self.correlator_graph_layout=pg.GraphicsLayoutWidget()
         self.correlator_graph_dock = self.dockarea.addDock(name='correlator', position='bottom', widget=self.correlator_graph_layout)        
+
+        self.correlator_im_plot = self.correlator_graph_layout.addPlot(title='interpolated small map')        
+        self.correlator_im_plot.setAspectLocked(lock=True, ratio=1)
         
         self.sm_kde_img_item = pg.ImageItem()
         self.sm_kde_img_item.setZValue(2)
-        self.correlator_im_plot = self.correlator_graph_layout.addPlot(title='interpolated small map')
         self.correlator_im_plot.addItem(self.sm_kde_img_item)
+        #self.sm_kde_img_lut = pg.HistogramLUTItem(self.sm_kde_img_item)
+        #self.correlator_im_plot.addItem(self.sm_kde_img_lut)
+
         self.bm_img_item_ = pg.ImageItem()
         self.bm_img_item_.setZValue(1)    
         self.correlator_im_plot.addItem(self.bm_img_item_)
-        self.correlator_im_plot.setAspectLocked(lock=True, ratio=1)
+        #self.bm_img_item_lut = pg.HistogramLUTItem(self.bm_img_item_)
+        #self.correlator_im_plot.addItem(self.bm_img_item_lut)
                       
         self.correlator_scatter_plot = pg.ScatterPlotItem()        
         self.correlator_plot = self.correlator_graph_layout.addPlot(title='correlator')
@@ -135,8 +167,9 @@ class MapCorrelatorApp(BaseApp):
         #load data 
         # bm='big map', sm='small map'
         self.load_bm() 
-        self.flip_sm() #also calls load_sm update_figure       
+        self.set_bm()
 
+        self.filter_sm() #also calls load_sm()   
 
     def update_sm_extent(self):
         [x0_,x1_,y0_,y1_] = self.bm_imshow_extent
@@ -153,7 +186,7 @@ class MapCorrelatorApp(BaseApp):
         x0, x1, y0, y1 = self.sm_extent
         #self.sm_isocurve_item.setData(self.sm_show, level=self.threshold.val)
         #self.sm_isocurve_item_rect = QtCore.QRectF(x0, y0, x1-x0, y1-y0)
-        self.sm_img_item.setImage(self.sm)
+        self.sm_img_item.setImage(self.sm, opacity=self.sm_opacity.val )
         self.sm_img_item_rect = QtCore.QRectF(x0, y0, x1-x0, y1-y0)
         self.sm_img_item.setRect(self.sm_img_item_rect)
         self.sm_img_item.rotate(self.angle.val)
@@ -162,31 +195,48 @@ class MapCorrelatorApp(BaseApp):
         self.bm_img_item.setImage(self.bm)
         x0, x1, y0, y1 = self.bm_imshow_extent        
         self.bm_img_item.setRect( QtCore.QRectF(x0, y0, x1-x0, y1-y0) )
-        
-        #update min_max sliders
-        #self.delta_x_slider.setMinimum(-1.1*self.sm_width)
-        #self.delta_x_slider.setMaximum(np.abs(x1-x0)+1.1*self.sm_width)
-        #print(-1.1*self.sm_width,np.abs(x1-x0)+1.1*self.sm_width)
-        #self.delta_x_slider.setRange(0,100)
-        #self.delta_x.setMinimum(0)
-        #self.delta
-        #self.delta_x.change_min_max(vmin=-1.1*self.sm_width,
-        #                            vmax=np.abs(x1-x0)+1.1*self.sm_width)          
-        #  
 
-
+            
     def load_sm(self):
         smfname   = r"G:/My Drive/PVRD_CIGS/CIGS_correlated_microscopy/overlayer/data/loc_(20,0um).png"
+        smfname = r"G:\My Drive\PVRD_CIGS\CIGS_correlated_microscopy\AFM\180618/Image0014_cpd.tif"
+        #smfname = r"G:\My Drive\PVRD_CIGS\CIGS_correlated_microscopy\AFM\correlation.png"
         self.sm = ndimage.imread(smfname).sum(axis=2)
 
     def load_bm(self):
         trplfname = r"G:/My Drive/PVRD_CIGS/CIGS_correlated_microscopy/overlayer/data/180430_204334_trpl_scan.h5"
+        trplfname = r"G:/My Drive\PVRD_CIGS\data_and_analysis/20180621-5904 for correlated microscopy/1a/180621_182210_trpl_2d_scan.h5"
+        trplfname = r"G:\My Drive\PVRD_CIGS\data_and_analysis\20180621-5904 for correlated microscopy\2a/180701_203132_trpl_2d_scan.h5"
         h5_file=h5py.File(trplfname)
-        self.bm = (h5_file['measurement/trpl_scan/integrated_count_map'].value)[0]
-        self.bm_imshow_extent = h5_file['measurement/trpl_scan/imshow_extent'].value
+        try:
+            self.H = h5_file['measurement/trpl_scan/']
+        except:
+            self.H = h5_file['measurement/trpl_2d_scan/']
+        self.time_array = self.H['time_array'].value
+        self.time_trace_map = (self.H['time_trace_map'].value)[0]
+        self.integrate_count_map = (self.H['integrated_count_map'].value)[0]
+            
+        self.bm_imshow_extent = self.H['imshow_extent'].value
         self.bm_dh=h5_file['app/settings'].attrs['dh']
         self.bm_dv=h5_file['app/settings'].attrs['dv']
+        
         h5_file.close()  
+
+
+        
+    def set_bm(self):
+        bm_map_name=self.bm_map_name.val
+        if bm_map_name=='taue_map':
+            taue_map = tau_x_calc_map(self.time_array,self.time_trace_map)
+            self.bm = taue_map
+            print('set bm to taue_map')
+
+        if bm_map_name == 'integrated_count_map':
+            self.bm = self.integrate_count_map             
+        try:
+            self.update_figure()
+        except AttributeError:
+            pass
 
     def flip_sm(self):
         self.load_sm()
@@ -196,8 +246,13 @@ class MapCorrelatorApp(BaseApp):
         if self.flip_sm_y.val:
             sm = np.flip(sm, axis=1)
         self.sm = sm
-        self.update_figure()
         
+        
+    def filter_sm(self):
+        self.flip_sm()
+        if self.sm_blur.val!=0:
+            self.sm = ndimage.filters.gaussian_filter(self.sm, self.sm_blur.val)
+        self.update_figure()
         
     def correlate(self):
         print('correlation started')
@@ -207,7 +262,7 @@ class MapCorrelatorApp(BaseApp):
         
     def kde_interpolate_sm_to_bm(self):
         self.calc_new_sm_pixel_coordinates()
-        
+        self.flip_sm()
         self.sm_kde = kde_map_interpolation( shape = self.bm.shape, 
                                              x = self.sm_x.flatten(),
                                              y = self.sm_y.flatten(),
@@ -228,7 +283,7 @@ class MapCorrelatorApp(BaseApp):
                             np.arange(sm_Nv)*sm_scaled_unit_v)
         
         # rotate
-        alpha = -self.angle.val*np.pi/180
+        alpha = self.angle.val*np.pi/180
         self.sm_x =  XX*np.cos(alpha) + YY*np.sin(alpha)
         self.sm_y = -XX*np.sin(alpha) + YY*np.cos(alpha)
 
@@ -239,8 +294,8 @@ class MapCorrelatorApp(BaseApp):
     def update_correlated_figure(self):
         self.calc_correlated_arrays()
         self.correlator_scatter_plot.setData(x=self.cor_sm_array_masked, y=self.cor_bm_array_masked)
-        self.sm_kde_img_item.setImage(self.sm_kde)
-        self.bm_img_item_.setImage(self.bm)
+        self.sm_kde_img_item.setImage(self.sm_kde, opacity=0.5)
+        self.bm_img_item_.setImage(self.bm, opacity=0.5)
         
     def calc_correlated_arrays(self):
         mask = self.sm_kde>0#10**self.mask_exponent.val
@@ -254,7 +309,7 @@ class MapCorrelatorApp(BaseApp):
         #maps
         #cor_sm_array_masked
         #cor_bm_array_masked
-    
+            
 
 if __name__ == '__main__':
     import sys
