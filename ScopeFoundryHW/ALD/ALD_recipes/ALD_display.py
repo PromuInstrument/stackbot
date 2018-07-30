@@ -19,6 +19,10 @@ import os
 
 class ALD_Display(Measurement):
     
+    '''This module is responsible for generating the user interface layout 
+    as well as creating and updating any plots with data stored in arrays'''
+    
+    
     name = 'ALD_display'
     
     def __init__(self, app):
@@ -86,13 +90,13 @@ class ALD_Display(Measurement):
         self.ui_enabled = True
         if self.ui_enabled:
             self.ui_setup()
-            
-        self.recipe.load_display_module()
+                    
         self.connect_indicators()
         self.ui_initial_defaults()
 
     
     def connect_indicators(self):
+        '''Connects *LoggedQuantities* to UI indicators using :meth:`connect_to_widget`'''
         self.recipe.settings.pumping.connect_to_widget(self.pump_down_indicator)
         self.recipe.settings.predeposition.connect_to_widget(self.pre_deposition_indicator)
         self.recipe.settings.deposition.connect_to_widget(self.deposition_indicator)
@@ -106,12 +110,24 @@ class ALD_Display(Measurement):
         
     
     def update_subtable(self):
+        """
+        Updates subroutine table tableWidget (UI element)
+        Called by :meth:`app.measurements.ALD_recipe.subroutine_sum` after the 
+        subroutine time table summation has been calculated.
+        """
         self.subtableModel.on_lq_updated_value()
 
     def update_table(self):
+        """
+        Updates the main time table tableWidget (UI element)
+        Called by :attr:`app.measurements.ALD_recipe.sum_times` after the 
+        time table summation has been calculated.
+        """
         self.tableModel.on_lq_updated_value()
 
     def ui_setup(self):
+        '''Calls all functions needed to set up UI programmatically.
+        This object is called from :meth:`setup`'''
         self.ui = DockArea()
         self.layout = QtWidgets.QVBoxLayout()
         self.ui.show()
@@ -121,7 +137,12 @@ class ALD_Display(Measurement):
         self.dockArea_setup()
 
     def dockArea_setup(self):
-        "Creates dock objects and determines order of placement in UI."
+        """
+        Creates dock objects and determines order of dockArea widget placement in UI.
+        
+        This function is called from 
+        :meth:`ui_setup`
+        """
         self.rf_dock = Dock('RF Settings')
         self.rf_dock.addWidget(self.rf_widget)
         self.ui.addDock(self.rf_dock)
@@ -157,6 +178,12 @@ class ALD_Display(Measurement):
         pass
     
     def ui_initial_defaults(self):
+        '''Reverts the indicator arrays to their original state after deposition operations 
+        have concluded or have been interrupted.
+        This function is called from 
+        :meth:`widget_setup` and 
+        :meth:`setup`
+        '''
         
         self.pump_down_button.setEnabled(False)
         self.pre_deposition_button.setEnabled(True)
@@ -176,8 +203,11 @@ class ALD_Display(Measurement):
         
     
     def widget_setup(self):
-        """Runs collection of widget setup functions each of which creates the widget 
-        and then populates them"""
+        """
+        Runs collection of widget setup functions each of which creates the widget 
+        and then populates them.
+        This function is called from :meth:`ui_setup`
+        """
         self.setup_operations_widget()
         self.setup_conditions_widget()
         self.setup_thermal_control_widget()
@@ -482,22 +512,26 @@ class ALD_Display(Measurement):
         self.cycle_label = QtWidgets.QLabel('N Cycles')
         self.settings_widget.layout().addWidget(self.cycle_label, 0,0)
         self.cycle_field = QtWidgets.QDoubleSpinBox()
-        self.recipe.settings.cycles.connect_to_widget(self.cycle_field)
         self.settings_widget.layout().addWidget(self.cycle_field, 0,1)
         self.recipe_control_widget.layout().addWidget(self.settings_widget)
+        
+        self.recipe.settings.cycles.connect_to_widget(self.cycle_field)
     
         self.current_cycle_label = QtWidgets.QLabel('Cycles Completed')
         self.current_cycle_field = QtWidgets.QDoubleSpinBox()
         self.settings_widget.layout().addWidget(self.current_cycle_label, 0, 2)
         self.settings_widget.layout().addWidget(self.current_cycle_field, 0, 3)
+        
         self.recipe.settings.cycles_completed.connect_to_widget(self.current_cycle_field)
 
         self.method_select_label = QtWidgets.QLabel('t3 Method')
         self.method_select_comboBox = QtWidgets.QComboBox()
         self.settings_widget.layout().addWidget(self.method_select_label, 1, 2)
         self.settings_widget.layout().addWidget(self.method_select_comboBox, 1, 3)
+        
         self.recipe.settings.t3_method.connect_to_widget(self.method_select_comboBox)
 
+        # Subroutine Table Widget
 
         self.subroutine_table_widget = QtWidgets.QWidget()
         self.subroutine_layout = QtWidgets.QHBoxLayout()
@@ -514,7 +548,7 @@ class ALD_Display(Measurement):
         self.recipe_control_widget.layout().addWidget(self.subroutine_table_widget)
         
         
-        ## Table Widget
+        ## Main Table Widget
         self.table_widget = QtWidgets.QWidget()
         self.table_widget_layout = QtWidgets.QHBoxLayout()
         self.table_widget.setLayout(self.table_widget_layout)
@@ -552,12 +586,13 @@ class ALD_Display(Measurement):
         self.recipe_complete_subpanel.setLayout(QtWidgets.QHBoxLayout())
         self.recipe_ready_label = QtWidgets.QLabel('Recipe Complete')
         self.recipe_ready_indicator = QtWidgets.QCheckBox()
-        self.recipe.settings.recipe_completed.connect_to_widget(self.recipe_ready_indicator)
         self.recipe_complete_subpanel.layout().addWidget(self.recipe_ready_label)
         self.recipe_complete_subpanel.layout().addWidget(self.recipe_ready_indicator)
         self.recipe_panel.layout().addWidget(self.recipe_complete_subpanel, 0, 3)
 
         self.recipe_control_widget.layout().addWidget(self.recipe_panel)
+        
+        self.recipe.settings.recipe_completed.connect_to_widget(self.recipe_ready_indicator)
 
 
 
@@ -587,6 +622,7 @@ class ALD_Display(Measurement):
 
 
     def setup_buffers_constants(self):
+        '''Creates constants and storage arrays to be used in this module.'''
         home = os.path.expanduser("~")
         self.path = home+'\\Desktop\\'
         self.full_file_path = self.path+'np_export'
@@ -604,6 +640,8 @@ class ALD_Display(Measurement):
         self.debug_mode = False
 
     def plot_routine(self):
+        '''This function reads from *LoggedQuantities* and stores them in arrays. 
+        These arrays are then plotted by :meth:`update_display`'''
         if self.debug_mode:
             rf_entry = np.random.rand(3,)
             t_entry = np.random.rand(1,)
@@ -627,11 +665,22 @@ class ALD_Display(Measurement):
         self.history_i += 1
         
     def export_to_disk(self):
+        """
+        Exports numpy data arrays to disk. Writes to :attr:`self.settings.save_path`
+        Function connected to and called by :attr:`self.export_button`
+        
+        """
         path = self.settings['save_path']
         np.save(path+'_temperature.npy', self.thermal_history)
         np.save(path+'_times.npy', self.time_history)
         
     def update_display(self):
+        """
+        Built in ScopeFoundry function is called repeatedly. 
+        Its purpose is to update UI plot objects.
+        This particular function updates plot objects depicting 
+        stage temperature, RF power levels, and the MFC flow rate and setpoint.
+        """
         self.WINDOW = self.settings.display_window.val
         self.vLine1.setPos(self.WINDOW)
         self.vLine2.setPos(self.WINDOW)
@@ -665,19 +714,24 @@ class ALD_Display(Measurement):
                     self.thermal_history[i, :self.index+1])
                 self.vLine1.setPos(self.index)
                 self.vLine2.setPos(self.index)
+
+    def conditions_check(self):
+        """Check ALD system conditions. Conditions that are met appear with 
+        green LED indicators in the Conditions Widget groupBox."""
+        self.pumped_check()
+        self.gases_check()
+        self.deposition_check()
+        self.substrate_check()
+        self.vent_check()
     
     def run(self):
         dt = 0.1
+        self.conditions_check()
         while not self.interrupt_measurement_called:
             self.plot_routine()
             time.sleep(dt)
-            self.pumped_check()
-            self.gases_check()
-            self.deposition_check()
-            self.substrate_check()
-            self.vent_check()
-            time.sleep(dt)
-            
+
+
     def pumped_check(self):
         '''Check if ALD system is properly pumped down.'''
         Z = 1e-3
@@ -705,6 +759,15 @@ class ALD_Display(Measurement):
 
     
     def deposition_check(self):
+        """
+        Checks if deposition conditions are met.
+        
+        Conditions include:
+         * System pumped
+         * Gases ready
+         * RF enabled
+         * Substrate temperature hot.
+        """
         condition1 = self.recipe.settings['pumped']
         condition2 = self.recipe.settings['gases_ready']
         condition3 = self.seren.settings['RF_enable']
@@ -715,6 +778,8 @@ class ALD_Display(Measurement):
             self.deposition_button.setEnabled(False)
 
     def vent_check(self):
+        """Checks whether predeposition and deposition stages have been completed. 
+        If so, its respective LED indicator in the Conditions Widget groupBox will appear green."""
         if self.recipe.dep_complete and self.recipe.predep_complete:
             self.vent_button.setEnabled(True)
         else:
