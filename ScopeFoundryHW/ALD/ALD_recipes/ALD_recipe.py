@@ -28,6 +28,9 @@ class ALD_Recipe(Measurement):
                        'PV Temperature (C)', 'Proportional', 'Integral', 'Derivative']
     
     def setup(self):
+        
+        self.lock = Lock()
+        
         self.relay = self.app.hardware['ald_relay_hw']
         self.shutter = self.app.hardware['ald_shutter']
         self.lovebox = self.app.hardware['lovebox']
@@ -39,8 +42,6 @@ class ALD_Recipe(Measurement):
             self.shutter = self.app.hardware.ald_shutter
         else:
             print('Connect ALD shutter HW component first.')
-        
-        self.lock = Lock()
     
         self.PV_default_time = 1.
         self.default_times = [[0.3, 0.07, 2.5, 5, 0.3, 0.3, 0]]
@@ -60,7 +61,7 @@ class ALD_Recipe(Measurement):
         self.create_indicator_lq_battery()
         
         self.settings.New('csv_save_path', dtype=str, initial='', ro=False)
-        self.save_path_update()
+        self.set_default_save_location()
 
         self.predep_complete = None
         self.dep_complete = None
@@ -80,7 +81,7 @@ class ALD_Recipe(Measurement):
         self.settings.New('recipe_completed', dtype=bool, initial=False, ro=True)
      
     
-    def save_path_update(self):
+    def set_default_save_location(self):
         home = os.path.expanduser("~")
         self.path = home+'\\Desktop\\'
         filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")+'.csv'
@@ -90,6 +91,22 @@ class ALD_Recipe(Measurement):
 
         
     def db_poll(self, step='Placeholder'):
+        """
+        This command reads all relevant data at the time of its call and logs the data to a
+        comma separated value (csv) file.
+        
+        Calling this the first time since application start creates the csv file with the 
+        current time stamp as its filename.
+        
+        Subsequent calls will append data to existing csv log.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        step           str         Name of current step in recipe. Allows user to determine 
+                                   the step in which data was logged.
+        =============  ==========  ==========================================================
+        """
+        
         entries = []
         entries.append(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
         entries.append(self.settings['cycles_completed'])
@@ -118,6 +135,20 @@ class ALD_Recipe(Measurement):
 
     
     def new_csv(self, entry):
+        '''
+        Creates new comma separated value (csv) file, opens it, and writes an array the first row of 
+        csv file.
+        
+        Run this once to create a new file.
+        Run :meth:`add_to_csv` to add new entries.
+        
+        =============  ==========================================================
+        **Arguments**  **Description**
+        entry          List to be written to comma separated value formatted log
+                       List must have same length as :attr:`header`
+                       (Currently input array should have length of 20)
+        =============  ==========================================================
+        '''
         self.save_path_update()
         file = self.settings['csv_save_path']
         with open(file, 'w', newline='') as csvfile:
@@ -127,12 +158,27 @@ class ALD_Recipe(Measurement):
         self.firstopened = False
     
     def add_to_csv(self, entry):
+        
+        '''
+        Once :meth:`new_csv` is run (and a csv file created,) this function appends 
+        entries of another array to a new row in the csv file.
+        
+        
+        =============  ==========================================================
+        **Arguments**  **Description**
+        entry          List to be written to comma separated value formatted log
+                       List must have same length as :attr:`header`
+                       (Currently input array should have length of 20)
+        =============  ==========================================================
+        '''
         file = self.settings['csv_save_path']
         with open(file, 'a', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
             writer.writerow(entry)
     
     def load_display_module(self):
+        '''Adds listener functions to *LoggedQuantities* so that updates to LQs call functions to 
+        recalculate quantities in UI elements and apply updates to LQ arrays'''
         print('load_display')
         if hasattr(self.app.measurements, 'ALD_display'):
             self.display = self.app.measurements.ALD_display
@@ -145,6 +191,21 @@ class ALD_Recipe(Measurement):
             self.settings.t3_method.add_listener(self.t3_update)
         
     def t3_update(self):
+        '''
+        Checks 
+        :meth:`self.settings.t3_method` to ascertain current operating mode. 
+        Loads t3 entry in array 
+        :meth:`self.settings.time` and updates time table 
+        accordingly in user interface. 
+        
+        Time table object can be found as:
+        :attr:`app.measurements.ALD_display.pulse_table`
+        Its QTableModel object is defined as:
+        :attr:`app.measurements.ALD_display.subtableModel`
+        
+        Acts as listener function in 
+        :meth:`load_display_module`
+        '''
         method = self.settings['t3_method']
         if method == 'PV':
             result = self.PV_default_time
@@ -157,6 +218,12 @@ class ALD_Recipe(Measurement):
         self.display.update_table()
     
     def subroutine_sum(self):
+        """Sums values entered into subroutine time table 
+        :attr:`app.measurements.ALD_display.subroutine_table`, 
+        updates said table. 
+        Called by 
+        :meth:`sum_times` when 
+        :attr:`self.settings.t3_method` is set to 'PV/Purge'."""
         data = self.settings['subroutine'][0]
         coeff = int(data[0])
         entries = data[1:]
@@ -166,7 +233,16 @@ class ALD_Recipe(Measurement):
         return coeff*np.sum(entries)
     
     def sum_times(self):
-        """Sometimes... :0"""
+        """
+        Sometimes... :0
+        
+        Performs an estimated time calculation based on values in the main 
+        time table 
+        :attr:`app.measurements.ALD_display.pulse_table` in 
+        :attr:`app.measurements.ALD_display.recipe_control_widget`
+        its QTableModel object is defined as
+        :attr:`app.measurements.ALD_display.subtableModel`
+        """
         if self.settings['t3_method'] == 'PV/Purge':
             self.settings['time'][0][3] = self.subroutine_sum()
         prepurge = self.settings['time'][0][0]
@@ -204,8 +280,14 @@ class ALD_Recipe(Measurement):
         print('Plasma dose finished.')
         
     def valve_pulse(self, channel, width):
-        """Open one of the pulse valves for specified duration of time, 'width'
-        Argument 'width' has units of seconds
+        """
+        Open one of the pulse valves for specified duration of time, 'width'
+        
+        =============  ==========================================================
+        **Arguments**  **Description**
+        width          Valve open time in seconds. Once time width has elapsed, 
+                       pulse valve closes once again.
+        =============  ==========================================================
         """
         print('Valve pulse', width)
         step_name = 'Valve Pulse'
@@ -230,7 +312,18 @@ class ALD_Recipe(Measurement):
         self.settings['steps_taken'] += 1
     
     def purge(self, width):
-        """Duration of time for system to wait in order to allow for the purge of gases"""
+        """
+        This function tells the ALD system to wait 'width' duration of time to 
+        allow gases to be vacated from the chamber by the vacuum pump.
+        
+        This function's timing mechanism is non-blocking.
+        
+        =============  ==========================================================
+        **Arguments**  **Description**
+        width          Duration of time for system to wait in order to allow for 
+                       the purge of gases
+        =============  ==========================================================
+        """
         print('Purge', width)
         step_name = 'Purge'
         t0 = time.time()
@@ -249,7 +342,15 @@ class ALD_Recipe(Measurement):
         self.settings['steps_taken'] += 1
     
     def shutter_pulse(self, width):
-        """Actuate (open, then close) shutter over interval 'width' """
+        """
+        Actuate (open, then close) shutter over interval 'width'
+
+        =============  ==========================================================
+        **Arguments**  **Description**
+        width          Time in which shutter remains in open position. 
+                       Closes after 'width' seconds
+        =============  ==========================================================
+        """
         step_name = 'Shutter Pulse'
         self.shutter.settings['shutter_open'] = True
         self.db_poll(step_name)
@@ -273,12 +374,21 @@ class ALD_Recipe(Measurement):
         print('Shutter closed')
 
     def shutoff(self):
+        '''
+        Restores recipe system of indicators to initial state. 
+        Any abort functions should also be called from within this function.
+        When 
+        :attr:`interrupt_measurement_called` is set to True, this method is called,
+        and the routine loop is interrupted.
+        '''
         self.display.ui_initial_defaults()
         self.settings['recipe_running'] = False
 
     
     def predeposition(self):
-        """Sets MFC to manual open, sets flow to 0.7 sccm"""
+        """Runs pre-deposition stage. 
+        * Sets MFC to manual open
+        * Sets flow to 0.7 sccm"""
         self.predep_complete = False
         status = self.mks146.settings['read_MFC0_valve']
         if status == 'O' or status == 'C':
@@ -288,6 +398,11 @@ class ALD_Recipe(Measurement):
         self.predep_complete = True
         
     def prepurge(self):
+        """
+        Runs pre-purge stage.
+        Waits a certain duration of time to allow the vacuum pumps time to vacate the chamber of gases.
+        Running this function will also factor the waiting time into the time table calculation.
+        """
         width = self.times[0][0]
         step_name = 'Pre-purge'
         print('Prepurge', width)
@@ -296,7 +411,8 @@ class ALD_Recipe(Measurement):
         self.settings['steps_taken'] += 1
     
     def routine(self):
-        """This function carries out the looped part of our ALD routine.
+        """
+        This function carries out the looped part of our ALD routine.
         """
         # Read in time table data
         sub_cyc, sub_t0, sub_t1 = self.sub[0]
@@ -344,8 +460,12 @@ class ALD_Recipe(Measurement):
         
     
     def postpurge(self):
+        """
+        Runs post purge stage. 
+        Waits a certain duration of time to allow the vacuum pumps time to vacate the chamber of gases.
+        Running this function will also factor the waiting time into the time table calculation.
+        """
         step_name = 'Post-purge'
-        print(self.times, self.times[0])
         width = self.times[0][5]
         print('Postpurge', width)
         self.db_poll(step_name)
@@ -353,6 +473,7 @@ class ALD_Recipe(Measurement):
         self.settings['steps_taken'] += 1
         
     def deposition(self):
+        """Full deposition routine."""
         self.dep_complete = False
         cycles = self.settings['cycles']    
         for _ in range(cycles):
@@ -370,6 +491,8 @@ class ALD_Recipe(Measurement):
         self.dep_complete = True
     
     def run_recipe(self):
+        """Runs full recipe. Called when 
+        :meth:`run` is executed."""
         self.settings['recipe_running'] = True
         self.settings['recipe_completed'] = False
         self.settings['steps_taken'] = 0
