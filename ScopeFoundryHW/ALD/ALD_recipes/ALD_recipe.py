@@ -259,9 +259,8 @@ class ALD_Recipe(Measurement):
 
     def set_precursor(self):
         '''
-            .7 < Argon MFC < 2 sccm
-                    +
-            X=Ar pressure < channel 3 pressure < Y=1
+        .7 < Argon MFC < 2 sccm +
+        X=Ar pressure < channel 3 pressure < Y=1
         '''
         pass
 

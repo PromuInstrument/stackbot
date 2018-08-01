@@ -666,9 +666,10 @@ class ALD_Display(Measurement):
         
     def export_to_disk(self):
         """
-        Exports numpy data arrays to disk. Writes to :attr:`self.settings.save_path`
-        Function connected to and called by :attr:`self.export_button`
-        
+        Exports numpy data arrays to disk. Writes to 
+        :attr:`self.settings.save_path`
+        Function connected to and called by 
+        :attr:`self.export_button`
         """
         path = self.settings['save_path']
         np.save(path+'_temperature.npy', self.thermal_history)
