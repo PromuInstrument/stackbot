@@ -31,6 +31,8 @@ class Pfeiffer_VGC_Interface(object):
         time.sleep(1)
         
     def ask_cmd(self, cmd):
+        """Issues correctly formatted commands/inquiries to Pfeiffer VGC.
+        :returns: String response to original inquiry"""
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
         
@@ -53,6 +55,15 @@ class Pfeiffer_VGC_Interface(object):
         
     
     def read_sensor(self, sensor):
+        """
+        Reads pressure from specified sensor/channel number.
+        
+        =============  ===============  =========================================
+        **Arguments**  **Type**         **Description**
+        sensor         int              Channel number assigned to pressure 
+                                        sensor by vacuum gauge controller
+        =============  ===============  =========================================
+        """
         status = {0: "Measurement data okay.",
                   1: "Underrange.",
                   2: "Overrange.",
@@ -74,17 +85,25 @@ class Pfeiffer_VGC_Interface(object):
             return value
         
     def sensor_type(self):
+        """
+        :returns: A list of sensor types detected on each VGC channel.
+        """
         resp = self.ask_cmd("TID")
         sensor_list = resp.strip().decode().split(",")
         return sensor_list
 
 
     def read_units(self):
+        """
+        :returns: Units which are currently displayed on the VGC controller display.
+        """
         resp = self.ask_cmd("UNI")
         return resp
     
     def write_units(self, unit_string):
-        "Writes the units to be shown on controller display. Does not affect RS232 readout."
+        """
+        Writes the units to be shown on controller display. Does not affect RS232 readout.
+        """
         unit_dict = {"mbar": 0,
                      "Torr": 1,
                      "Pascal": 2}
@@ -95,5 +114,8 @@ class Pfeiffer_VGC_Interface(object):
         return resp
     
     def close(self):
+        """
+        Properly closes host serial connection to VGC controller.
+        """
         self.ser.close()
         del self.ser
