@@ -44,6 +44,17 @@ class MKS_600_Interface(object):
         self.error_count = 0
         
     def ask_cmd(self, cmd):
+        """
+        Sends serial command to MKS 600 unit with proper formatting. 
+        Retrieves response from the unit.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        cmd            str         Command or query to be sent to MKS 600 unit.
+        =============  ==========  ==========================================================
+
+        :returns: String containing unit's response to query.
+        """
         with self.lock:
             self.ser.flush()
             message = cmd+'\r\n'
@@ -52,6 +63,11 @@ class MKS_600_Interface(object):
         return resp
     
     def read_sensor_range(self):
+        """
+        Reads range of attached capacitance manometer.
+        
+        :returns: Manometer full range value in Torr as a float
+        """
         resp = self.ask_cmd("R33")[1:-2]
         if resp != b'':
             value = int(resp)
@@ -64,7 +80,7 @@ class MKS_600_Interface(object):
             resp = ranges[value]
             ## Store successfully retrieved value
             self.sensor_range = resp
-            return resp
+            return float(resp)
         else:            
             self.error_count += 1
             ## Read failed, return last stored value
@@ -72,6 +88,12 @@ class MKS_600_Interface(object):
         
 
     def read_pressure(self):
+        """
+        Reads system pressure as detected by the attached capacitance manometer.
+        Queries the full scale range percentage and converts this to a pressure value.
+        
+        :returns: Pressure value as a float
+        """
         resp = self.ask_cmd("R5")[1:-2]
         if resp != b'':
             pct = float(resp)
@@ -87,6 +109,15 @@ class MKS_600_Interface(object):
             return self.prtemp
             
     def read_sp(self, ch):
+        """
+        Reads set point value from target preset channel.
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        ch             int         Preset channel to read set point value from.
+                                   Accepts values in the range (1,6)
+        =============  ==========  ==========================================================
+        :returns: Pressure set point value of selected channel.
+        """
         if ch in range(0,6):
             channels = {1: 1,
                          2: 2,
@@ -99,10 +130,26 @@ class MKS_600_Interface(object):
             return 0.
         
     def switch_sp(self, ch):
+        """Switches preset channels. Each channel has a set point value set by the controller's user.
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        ch             int         Preset channel to mark as active. 
+                                   Accepts values in the range (1,6)
+        =============  ==========  ==========================================================
+        """
         assert 1 <= ch < 6
         self.ask_cmd("D{:d}".format(ch))
         
     def write_sp(self, ch, p):
+        """
+        Writes set point to target preset channel.
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        ch             int         Target preset channel. 
+                                   Accepts values in the range (1,6)
+        p              float       Pressure in Torr
+        =============  ==========  ==========================================================
+        """
         assert 0. <= p <= 2.
         assert 0 <= ch <= 5
         pct = (p/2.)*100
@@ -119,36 +166,77 @@ class MKS_600_Interface(object):
 
     
     def read_control_mode(self, ch):
-        channels = {'A': 26,
-                    'B': 27,
-                    'C': 28,
-                    'D': 29,
-                    'E': 30}
+        """
+        Reads the control mode of selected preset channel
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        ch             int         Preset channel to mark as active. 
+                                   Accepts values in the range (1,6)
+        =============  ==========  ==========================================================
+        :returns: control mode in form of a boolean integer. 
+         * 0 indicates control by position
+         * 1 indicates control by pressure set point
+        """
+        channels = {1: 26,
+                    2: 27,
+                    3: 28,
+                    4: 29,
+                    5: 30}
         cmd = "R{}".format(channels[ch])
         resp = int(self.ask_cmd(cmd).strip().decode()[-1])
         return resp
     
-    def set_position(self, ch, pct):
+    def write_set_point(self, ch, pct):
+        """
+        Writes percentage value to selected preset channel.
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        ch             int         Preset channel to read set point from. 
+                                   Accepts values in the range (1,6)
+        pct            int         Percentage open to write to set point preset
+        =============  ==========  ==========================================================
+        """
         cmd = "S{} {}".format(ch, int(pct))
         self.ask_cmd(cmd)
     
-    def read_position(self, ch):
+    def read_set_point(self, ch):
+        """
+        Reads set point value of selected preset channel.
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        ch             int         Preset channel to read set point from. 
+                                   Accepts values in the range (1,6)
+        =============  ==========  ==========================================================
+        :returns: Set point percentage of selected preset channel as a float
+        """
         channels = {1: 1,
                      2: 2,
                      3: 3,
                      4: 4,
                      5: 10}
         resp = self.ask_cmd("R{}".format(channels[ch]))[3:].strip()
-        return resp
+        return float(resp)
     
     def read_valve(self):
+        """
+        Reads valve position
+        :returns: Valve percentage open as float
+        """
         resp = self.ask_cmd("R6")[2:-2]
         return float(resp)
         
-    def set_valve(self, value):
+    def valve_full_open(self, open_valve):
+        """
+        Fully opens or closes valve.
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        open           bool        Valve opens to 100% if True,
+                                   Closes to 0% if False.
+        =============  ==========  ==========================================================
+        """
         assign = {True: "O",
                   False: "C"}
-        self.ask_cmd(assign[value])
+        self.ask_cmd(assign[open_valve])
     
     def halt_valve(self):
         """Halt valve at current position"""
@@ -156,5 +244,6 @@ class MKS_600_Interface(object):
         
     
     def close(self):
+        """Properly closes serial connection to throttle valve controller."""
         self.ser.close()
         del self.ser
