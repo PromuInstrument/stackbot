@@ -78,12 +78,13 @@ class MKS_600_Hardware(HardwareComponent):
             self.settings.get_lq('sp_set_value').change_readonly(ro=True)
             print('Position')
             
-    def set_position(self, pct):
+    def set_position_sp(self, pct):
         channel = self.settings['sp_channel']
-        self.mks.set_position(channel, pct)
+        self.mks.write_set_point(channel, pct)
     
-    def read_position(self):
-        return self.mks.read_valve()
+    def read_position_sp(self):
+        channel = self.settings['sp_channel']
+        return self.mks.read_set_point(channel)
     
     
     def read_pressure(self):
@@ -96,11 +97,7 @@ class MKS_600_Hardware(HardwareComponent):
             c=1000
         return c*self.mks.read_pressure()
     
-    def read_sp(self):
-        choice = self.settings['sp_channel']
-        channel = self.assign[choice]
-        resp = self.mks.read_sp(channel)
-        return resp 
+
     
     def switch_sp(self, choice):
         channel = self.assign[choice]
@@ -110,22 +107,33 @@ class MKS_600_Hardware(HardwareComponent):
         else:
             table = {6: True,
                      7: False}
-            self.mks.set_valve(table[channel])
+            self.mks.valve_open(table[channel])
+    
+    def read_sp(self):
+        "Reads set point value from active/selected preset channel"
+        choice = self.settings['sp_channel']
+        channel = self.assign[choice]
+        resp = self.mks.read_sp(channel)
+        return resp 
     
     def write_sp(self, p):
+        "Writes set point value to active/selected preset channel"
         choice = self.settings['sp_channel']
         channel = self.assign[choice]
         print(p)
         self.mks.write_sp(channel, p)
         print(self.mks.read_sp(channel))
     
-
-
     
-    def set_valve(self, valve):
-        return self.mks.set_valve(valve)
+    def valve_open(self, valve):
+        """Sets valve to full open/close."""
+        return self.mks.valve_full_open(valve)
 
-
+    def read_valve(self):
+        """
+        Reads valve percentage open.
+        """
+        return self.mks.read_valve()
     
     
     def disconnect(self):
