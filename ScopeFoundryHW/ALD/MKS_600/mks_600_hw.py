@@ -41,6 +41,7 @@ class MKS_600_Hardware(HardwareComponent):
         self.mks = None
     
     def connect(self):
+        """Connects MKS 600 to software suite and opens serial connection."""
         self.mks = MKS_600_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
         
         self.settings.pressure.connect_to_hardware(read_func=self.read_pressure)
@@ -60,12 +61,35 @@ class MKS_600_Hardware(HardwareComponent):
         
     
     def set_sp_defaults(self):
+        """Sets all channel set points to pre-defined defaults in 
+        :attr:`self.sp_defaults`
+        
+        Connected to operation *Force SP defaults*
+        Sets active channel specified in :attr:`self.settings.sp_channel` to 'Open'
+        
+        """
         for channel, value in self.sp_defaults.items():
             self.switch_sp(channel)
             self.write_sp(value)
         self.settings.sp_channel.update_value('Open')
     
     def set_control_mode(self, control):
+        """
+        Switches active channel's control mode. Each preset channel can be set 
+        to either of the following control modes:
+         * Pressure set point
+         * Position
+        Position mode allows the user to manually specify the throttle valve's 
+        percentage open value
+        Pressure set point allows the hardware to act as necessary to adjust the
+        throttle valve to meet a specified pressure.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        control        str         String describing the desired control mode. 
+                                   Can be either 'Pressure' or 'Position'
+        =============  ==========  ========================================================== 
+        """
         channel = self.settings['sp_channel']
         if control == 'Pressure':
             self.mks.enable_pressure_mode(channel)
@@ -79,12 +103,31 @@ class MKS_600_Hardware(HardwareComponent):
             print('Position')
             
     def set_position_sp(self, pct):
+        """
+        Sets set point channel position manually.
+        Checks if channel is set to position mode 
+        before attempting to set throttle valve position.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        pct            int         Position (percentage open) to set on throttle valve.
+        =============  ==========  ========================================================== 
+        """
         channel = self.settings['sp_channel']
-        self.mks.write_set_point(channel, pct)
+        position_mode = not self.mks.read_control_mode(channel)
+        if position_mode:
+            self.mks.write_set_point(channel, pct)
+            pass
+        else:
+            print('Channel not set to position mode.')
     
-    def read_position_sp(self):
-        channel = self.settings['sp_channel']
-        return self.mks.read_set_point(channel)
+    def read_valve_position(self):
+        """
+        Reads valve percentage open.
+        
+        :returns: Valve percentage open as a float
+        """
+        return self.mks.read_valve_position()
     
     
     def read_pressure(self):
@@ -113,16 +156,14 @@ class MKS_600_Hardware(HardwareComponent):
         "Reads set point value from active/selected preset channel"
         choice = self.settings['sp_channel']
         channel = self.assign[choice]
-        resp = self.mks.read_sp(channel)
+        resp = self.mks.read_set_point(channel)
         return resp 
     
-    def write_sp(self, p):
+    def write_sp(self, pct):
         "Writes set point value to active/selected preset channel"
         choice = self.settings['sp_channel']
         channel = self.assign[choice]
-        print(p)
-        self.mks.write_sp(channel, p)
-        print(self.mks.read_sp(channel))
+        self.mks.write_set_point(channel, pct)
     
     
     def valve_open(self, valve):
@@ -137,7 +178,7 @@ class MKS_600_Hardware(HardwareComponent):
     
     
     def disconnect(self):
-        
+        """Disconnects MKS 600 from software suite and closes serial connection."""
         self.settings.disconnect_all_from_hardware()
         if self.mks is not None:
             self.mks.close()
