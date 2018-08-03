@@ -64,7 +64,8 @@ class Pfeiffer_VGC_Measure(Measurement):
         """
         Runs collection of widget setup functions each of which creates the widget 
         and then populates them.
-        This function is called from :meth:`ui_setup`
+        This function is called from 
+        :meth:`ui_setup`
         """
         self.setup_plot_group_widget()
         self.setup_export_widget()
@@ -73,6 +74,9 @@ class Pfeiffer_VGC_Measure(Measurement):
     def setup_export_widget(self):
         """
         Creates export widget in measurement UI
+        
+        Called from 
+        :meth:`widget_setup`
         """
         self.export_widget = QtWidgets.QGroupBox('Pressure Export')
         self.export_widget.setLayout(QtWidgets.QHBoxLayout())
@@ -90,6 +94,9 @@ class Pfeiffer_VGC_Measure(Measurement):
         """
         Creates plot objects in measurement UI. These are updated by 
         :meth:`update_display`
+        
+        Called from 
+        :meth:`widget_setup`
         """
         self.group_widget = QtWidgets.QGroupBox('Pfeiffer VGC Measure')
         self.group_widget.setLayout(QtWidgets.QVBoxLayout())
@@ -144,7 +151,9 @@ class Pfeiffer_VGC_Measure(Measurement):
     def db_connect(self):
         """
         Creates and establishes database object to be utilized in 
-        measurement routine as a method of data transcription
+        measurement routine as a method of data transcription.
+        
+        Currently not in use.
         """
         self.database = SQLite_Wrapper()
         self.server_connected = True
@@ -153,7 +162,10 @@ class Pfeiffer_VGC_Measure(Measurement):
     
     def setup_buffers_constants(self):
         """
-        Creates constants for use in measurement routine
+        Creates constants for use in measurement routine.
+        
+        Called from 
+        :meth:`setup`
         """
         home = os.path.expanduser("~")
         self.path = home+'\\Desktop\\'
@@ -171,6 +183,10 @@ class Pfeiffer_VGC_Measure(Measurement):
     def read_pressures(self):
         """
         Reads data off of *LoggedQuantities* and stores the in numpy array
+        
+        Called from 
+        :meth:`routine`
+        
         :returns: Numpy array of pressure values taken from Pfeiffer Vacuum Gauge controller.
         """
         measurements = []
