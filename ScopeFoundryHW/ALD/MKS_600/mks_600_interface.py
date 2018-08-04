@@ -110,7 +110,8 @@ class MKS_600_Interface(object):
 
         
     def switch_sp(self, ch):
-        """Switches preset channels. Each channel has a set point value set by the controller's user.
+        """
+        Switches preset channels. Each channel has a set point value set by the controller's user.
         
         =============  ==========  ==========================================================
         **Arguments**  **type**    **Description**
@@ -124,10 +125,29 @@ class MKS_600_Interface(object):
 
     
     def enable_position_mode(self, ch):
+        """
+        Enable position mode on targeted preset channel.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        ch             int         Preset channel to mark as active. 
+                                   Accepts values in the range (1,6)
+        =============  ==========  ==========================================================
+        
+        """
         cmd = "T{} 0".format(self.channels[ch])
         self.ask_cmd(cmd)
     
     def enable_pressure_mode(self, ch):
+        """
+        Enable pressure regulation mode on targeted preset channel.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        ch             int         Preset channel to mark as active. 
+                                   Accepts values in the range (1,6)
+        =============  ==========  ==========================================================
+        """
         cmd = "T{} 1".format(self.channels[ch])
         self.ask_cmd(cmd)
 

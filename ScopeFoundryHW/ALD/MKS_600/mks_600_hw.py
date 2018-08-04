@@ -65,7 +65,8 @@ class MKS_600_Hardware(HardwareComponent):
         :attr:`self.sp_defaults`
         
         Connected to operation *Force SP defaults*
-        Sets active channel specified in :attr:`self.settings.sp_channel` to 'Open'
+        Sets active channel specified in 
+        :attr:`self.settings.sp_channel` to 'Open'
         
         """
         for channel, value in self.sp_defaults.items():
@@ -75,12 +76,15 @@ class MKS_600_Hardware(HardwareComponent):
     
     def set_control_mode(self, control):
         """
-        Switches active channel's control mode. Each preset channel can be set 
+        Switches active channel's control mode. Each preset channel can be set
         to either of the following control modes:
+        
          * Pressure set point
          * Position
+        
         Position mode allows the user to manually specify the throttle valve's 
         percentage open value
+        
         Pressure set point allows the hardware to act as necessary to adjust the
         throttle valve to meet a specified pressure.
         
@@ -131,6 +135,12 @@ class MKS_600_Hardware(HardwareComponent):
     
     
     def read_pressure(self):
+        """
+        Reads pressure from MKS 600 manometer and expresses
+        the quantity in the desired units.
+        
+        :returns: Pressure in units specified by *self.settings.units*
+        """
         choice = self.settings['units']
         if choice == 'torr':
             c = 1
@@ -143,6 +153,19 @@ class MKS_600_Hardware(HardwareComponent):
 
     
     def switch_sp(self, choice):
+        """
+        Handles calls to change device set point channels.
+        
+        Possible channels are listed in the keys of
+        :attr:`self.assign`
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        choice         str         Name of channel
+                                    * Open/Close
+                                    * SP Channel (A/B/C/D/E)
+        =============  ==========  ==========================================================
+        """
         channel = self.assign[choice]
         assert channel in range(1,8)
         if channel in range(1,6):
@@ -150,7 +173,7 @@ class MKS_600_Hardware(HardwareComponent):
         else:
             table = {6: True,
                      7: False}
-            self.mks.valve_open(table[channel])
+            self.mks.valve_full_open(table[channel])
     
     def read_sp(self):
         "Reads set point value from active/selected preset channel"
@@ -169,12 +192,6 @@ class MKS_600_Hardware(HardwareComponent):
     def valve_open(self, valve):
         """Sets valve to full open/close."""
         return self.mks.valve_full_open(valve)
-
-    def read_valve(self):
-        """
-        Reads valve percentage open.
-        """
-        return self.mks.read_valve()
     
     
     def disconnect(self):
