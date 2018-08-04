@@ -202,12 +202,12 @@ class Pfeiffer_VGC_Measure(Measurement):
         
         :attr:`self.read_pressures` is called to obtain pressures from Pfeiffer VGC. 
         This includes for following measurements:
-         * Pirani Gauge 
-         * Compact Full Range Gauge 
+        * Pirani Gauge 
+        * Compact Full Range Gauge 
         
         A direct read from logged quantity 
         :attr:`app.hardware.mks_600_hw.settings.pressure`
-        yields a pressure reading from the manometer installed on the MKS600 
+        yields a pressure reading from the manometer installed on the MKS 600 
         pressure regulator.
         """
         if self.debug_mode:
