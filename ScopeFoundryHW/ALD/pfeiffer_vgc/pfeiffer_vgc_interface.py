@@ -32,7 +32,7 @@ class Pfeiffer_VGC_Interface(object):
         
     def ask_cmd(self, cmd):
         """Issues correctly formatted commands/inquiries to Pfeiffer VGC.
-        :returns: String response to original inquiry"""
+        :returns: str. Response to original inquiry."""
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
         
@@ -109,10 +109,8 @@ class Pfeiffer_VGC_Interface(object):
                      "Pascal": 2}
         unit_value = unit_dict[unit_string]
         message = "UNI,"+"{}".format(unit_value)
-        print(message)
-        resp = self.ask_cmd(message)
-        return resp
-    
+        self.ask_cmd(message)
+        
     def close(self):
         """
         Properly closes host serial connection to VGC controller.
