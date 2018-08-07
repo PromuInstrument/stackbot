@@ -43,7 +43,7 @@ class Seren_HW(HardwareComponent):
     def serial_toggle(self, status):
         """Sets serial or front panel control.
         
-        Connected to *LoggedQuantity* 
+        Connected to *LoggedQuantity*   
         :attr:`self.settings.enable_serial`
         
         =============  ==========  ==========================================================
@@ -60,7 +60,7 @@ class Seren_HW(HardwareComponent):
         """
         Enables or disables RF source.
         
-        Connected to *LoggedQuantity*
+        Connected to *LoggedQuantity*   
         :attr:`self.settings.RF_enable`
         
         =============  ==========  ==========================================================
@@ -85,7 +85,7 @@ class Seren_HW(HardwareComponent):
         """
         Writes forward power setting to Seren PSU.
         
-        Connected to *LoggedQuantity*
+        Connected to *LoggedQuantity*   
         :attr:`self.settings.set_forward_power`
         
         =============  ==========  ==========================================================
@@ -99,7 +99,7 @@ class Seren_HW(HardwareComponent):
         """
         Reads set forward power from Seren PSU.
         
-        Connected to *LoggedQuantity*
+        Connected to *LoggedQuantity*   
         :attr:`self.settings.forward_power_readout`
         
         :returns: int. Forward power in Watts.
@@ -110,7 +110,7 @@ class Seren_HW(HardwareComponent):
         """
         Reads reflected power from Seren PSU.
         
-        Connected to *LoggedQuantity*
+        Connected to *LoggedQuantity*   
         :attr:`self.settings.reflected_power`
         
         :returns: int. Reflected power in Watts.

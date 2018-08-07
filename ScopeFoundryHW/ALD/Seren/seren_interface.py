@@ -86,6 +86,7 @@ class Seren_Interface(object):
     def write_forward(self, power):
         """
         Sets the Power Setpoint.
+        
         =============  ==========  ==========================================================
         **Arguments**  **type**    **Description**
         power          int         Setpoint power in Watts
@@ -95,8 +96,7 @@ class Seren_Interface(object):
     
     def read_forward(self):
         """
-        :returns: String. Forward power output, in Watts, 
-        1 to 5 digits, 1-Watt increments.
+        :returns: str. Forward power output, in Watts, 1 to 5 digits, 1-Watt increments.
         """
         resp = self.write_cmd("W?")
         return resp
@@ -104,9 +104,10 @@ class Seren_Interface(object):
     def read_reflected(self):
         """
         Queries Reflected Power
-        :returns: str. Reflected power, where XXXX is the current reflected 
-        power, in Watts; length: 4 characters, fixed. Leading zeros are replaced with 
-        the blank space character.
+        
+        :returns: str. Reflected power, where XXXX is the current reflected \
+        power, in Watts; length: 4 characters, fixed. Leading zeros are \
+        replaced with the blank space character.
         """
         resp = self.write_cmd("R?")
         return resp
