@@ -14,9 +14,15 @@ logger = logging.getLogger(__name__)
 
 
 class Seren_Interface(object):
+    """
+    This interface level module is responsible for \
+    establishing serial communication with the Seren RX01/LX01 \
+    Series Radio Frequency Power Supply, and defining the basic \
+    commands to be sent to the Power Supply Unit.
+    """
     
     name='seren_interface'
-    
+
     def __init__(self, port="COM6", debug=False):
         self.port = port
         self.debug = debug
