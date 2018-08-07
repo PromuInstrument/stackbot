@@ -10,10 +10,10 @@ from ScopeFoundryHW.ALD.Seren.seren_interface import Seren_Interface
 class Seren_HW(HardwareComponent):
     
     """
-    This interface level module is responsible for \
+    This hardware level module is responsible for \
     establishing serial communication with the Seren RX01/LX01 \
-    Series Radio Frequency Power Supply, and defining the basic \
-    commands to be sent to the Power Supply Unit.
+    Series Radio Frequency Power Supply, and defining commands to \
+    be connected to **LoggedQuantities**.
     """
     
     name = 'seren_hw'
