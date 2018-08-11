@@ -89,7 +89,7 @@ class MKS_600_Hardware(HardwareComponent):
         throttle valve to meet a specified pressure.
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         control        str         String describing the desired control mode. 
                                    Can be either 'Pressure' or 'Position'
         =============  ==========  ========================================================== 
@@ -113,7 +113,7 @@ class MKS_600_Hardware(HardwareComponent):
         before attempting to set throttle valve position.
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         pct            int         Position (percentage open) to set on throttle valve.
         =============  ==========  ========================================================== 
         """
@@ -160,7 +160,7 @@ class MKS_600_Hardware(HardwareComponent):
         :attr:`self.assign`
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         choice         str         Name of channel
                                     * Open/Close
                                     * SP Channel (A/B/C/D/E)

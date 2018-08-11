@@ -49,11 +49,11 @@ class MKS_600_Interface(object):
         Retrieves response from the unit.
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         cmd            str         Command or query to be sent to MKS 600 unit.
         =============  ==========  ==========================================================
 
-        :returns: String containing unit's response to query.
+        :returns: str. Unit's response to query.
         """
         with self.lock:
             self.ser.flush()
@@ -66,7 +66,7 @@ class MKS_600_Interface(object):
         """
         Reads range of attached capacitance manometer.
         
-        :returns: Manometer full range value in Torr as a float
+        :returns: float. Manometer full range value in Torr.
         """
         resp = self.ask_cmd("R33")[1:-2]
         if resp != b'':
@@ -92,7 +92,7 @@ class MKS_600_Interface(object):
         Reads system pressure as detected by the attached capacitance manometer.
         Queries the full scale range percentage and converts this to a pressure value.
         
-        :returns: Pressure value as a float
+        :returns: float. Pressure value.
         """
         resp = self.ask_cmd("R5")[1:-2]
         if resp != b'':
@@ -114,7 +114,7 @@ class MKS_600_Interface(object):
         Switches preset channels. Each channel has a set point value set by the controller's user.
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         ch             int         Preset channel to mark as active. 
                                    Accepts values in the range (1,6)
         =============  ==========  ==========================================================
@@ -129,7 +129,7 @@ class MKS_600_Interface(object):
         Enable position mode on targeted preset channel.
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         ch             int         Preset channel to mark as active. 
                                    Accepts values in the range (1,6)
         =============  ==========  ==========================================================
@@ -143,7 +143,7 @@ class MKS_600_Interface(object):
         Enable pressure regulation mode on targeted preset channel.
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         ch             int         Preset channel to mark as active. 
                                    Accepts values in the range (1,6)
         =============  ==========  ==========================================================
@@ -157,12 +157,12 @@ class MKS_600_Interface(object):
         Reads the control mode of selected preset channel
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         ch             int         Preset channel to mark as active. 
                                    Accepts values in the range (1,6)
         =============  ==========  ==========================================================
         
-        :returns: control mode in form of a boolean integer. 
+        :returns: boolean int. Control mode.
         
          * 0 indicates control by position
          * 1 indicates control by pressure set point
@@ -182,7 +182,7 @@ class MKS_600_Interface(object):
         Writes percentage of full scale pressure value or percentage position to selected preset channel.
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         ch             int         Preset channel to read set point from. 
                                    Accepts values in the range (1,6)
         pct            int         Percentage open to write to set point preset
@@ -197,12 +197,12 @@ class MKS_600_Interface(object):
         Reads set point value of selected preset channel.
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         ch             int         Preset channel to read set point from. 
                                    Accepts values in the range (1,6)
         =============  ==========  ==========================================================
         
-        :returns: Percentage of full scale pressure value or position percentage of selected preset channel as a float
+        :returns: float. Percentage of full scale pressure value or position percentage of selected preset channel.
         """
         channels = {1: 1,
                      2: 2,
@@ -215,7 +215,8 @@ class MKS_600_Interface(object):
     def read_valve_position(self):
         """
         Reads valve position
-        :returns: Valve percentage open as float
+        
+        :returns: float. Valve percentage open.
         """
         resp = self.ask_cmd("R6")[2:-2]
         return float(resp)
@@ -225,7 +226,7 @@ class MKS_600_Interface(object):
         Fully opens or closes valve.
         
         =============  ==========  ==========================================================
-        **Arguments**  **type**    **Description**
+        **Arguments**  **Type**    **Description**
         open           bool        Valve opens to 100% if True,
                                    Closes to 0% if False.
         =============  ==========  ==========================================================
