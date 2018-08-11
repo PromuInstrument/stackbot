@@ -31,8 +31,17 @@ class Pfeiffer_VGC_Interface(object):
         time.sleep(1)
         
     def ask_cmd(self, cmd):
-        """Issues correctly formatted commands/inquiries to Pfeiffer VGC.
-        :returns: str. Response to original inquiry."""
+        """
+        Issues correctly formatted commands/inquiries to Pfeiffer VGC.
+        
+        =============  ===============  =========================================
+        **Arguments**  **Type**         **Description**
+        cmd            str              ASCII string to be sent to the vacuum 
+                                        gauge controller
+        =============  ===============  =========================================
+        
+        :returns: str. Response to original inquiry.
+        """
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
         

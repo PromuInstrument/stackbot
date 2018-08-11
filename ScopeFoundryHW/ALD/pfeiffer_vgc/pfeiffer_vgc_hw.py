@@ -55,30 +55,64 @@ class Pfeiffer_VGC_Hardware(HardwareComponent):
         self.settings.ch3_sensor_type.read_from_hardware()
         
     def read_ch1_pressure(self):
+        """
+        Reads pressure value off sensor installed on 
+        pressure gauge controller's channel 1.
+        
+        :returns: float. Pressure value in units of bar.
+        """
         sensor = self.ch1_index + 1
         return self.vgc.read_sensor(sensor)
     
     def read_ch1_sensor_type(self):
+        """
+        :returns: string. Sensor code representing the type of sensor \
+        installed on pressure gauge controller's channel 1.
+        """
         channel = self.ch1_index
         return self.vgc.sensor_type()[channel]
     
     def read_ch2_pressure(self):
+        """
+        Reads pressure value off sensor installed on 
+        pressure gauge controller's channel 2.
+        
+        :returns: float. Pressure value in units of bar.
+        """
         sensor = self.ch2_index + 1
         return self.vgc.read_sensor(sensor)
     
     def read_ch2_sensor_type(self):
+        """
+        :returns: string. Sensor code representing the type of sensor \
+        installed on pressure gauge controller's channel 2.
+        """
         channel = self.ch2_index
         return self.vgc.sensor_type()[channel]
     
     def read_ch3_pressure(self):
+        """
+        Reads pressure value off sensor installed on 
+        pressure gauge controller's channel 3.
+        
+        :returns: float. Pressure value in units of bar.
+        """
         sensor = self.ch3_index + 1
         return self.vgc.read_sensor(sensor)
         
     def read_ch3_sensor_type(self):
+        """
+        :returns: string. Sensor code representing the type of sensor \
+        installed on pressure gauge controller's channel 3.
+        """
         channel = self.ch3_index
         return self.vgc.sensor_type()[channel]
     
     def disconnect(self):
+        """
+        * Disconnects hardware module connections. 
+        * Closes interface level serial connection.
+        """
         self.settings.disconnect_all_from_hardware()
         if self.vgc is not None:
             self.vgc.close()
