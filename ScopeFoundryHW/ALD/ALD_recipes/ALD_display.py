@@ -717,7 +717,7 @@ class ALD_Display(Measurement):
                 self.vLine2.setPos(self.index)
 
     def conditions_check(self):
-        """Check ALD system conditions. Conditions that are met appear with 
+        """Checks ALD system conditions. Conditions that are met appear with 
         green LED indicators in the Conditions Widget groupBox."""
         self.pumped_check()
         self.gases_check()
@@ -734,7 +734,7 @@ class ALD_Display(Measurement):
 
 
     def pumped_check(self):
-        '''Check if ALD system is properly pumped down.'''
+        '''Checks if ALD system is properly pumped down.'''
         Z = 1e-3
         P = self.vgc.settings['ch3_pressure_scaled']
         self.recipe.settings['pumped'] = (P < Z)
@@ -752,7 +752,7 @@ class ALD_Display(Measurement):
         self.recipe.settings['gases_ready'] = condition
 
     def substrate_check(self):
-        '''Check if stage is adequately heated.'''
+        '''Checks if stage is adequately heated.'''
         T = self.lovebox.settings['sv_setpoint']
         pv = self.lovebox.settings['pv_temp']
         condition = (0.9*T <= pv <= 1.1*T)
