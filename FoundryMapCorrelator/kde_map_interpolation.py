@@ -19,15 +19,18 @@ def bilinear_weighted_map(shape, x,y,z):
     A=np.zeros(shape, dtype='float')
 
     for n in range(len(x)):
-        i=int(np.floor(x[n]))
-        j=int(np.floor(y[n]))
-        dx=x[n]-i
-        dy=y[n]-j
-        A[j,i]+=(1-dx)*(1-dy)*z[n]
-        A[j+1,i]+=(1-dx)*dy*z[n]
-        A[j,i+1]+=(dx*(1-dy))*z[n]
-        A[j+1,i+1]+=dx*dy*z[n]
-
+        try:
+            i=int(np.floor(x[n]))
+            j=int(np.floor(y[n]))
+            dx=x[n]-i
+            dy=y[n]-j
+            A[j,i]+=(1-dx)*(1-dy)*z[n]
+            A[j+1,i]+=(1-dx)*dy*z[n]
+            A[j,i+1]+=(dx*(1-dy))*z[n]
+            A[j+1,i+1]+=dx*dy*z[n]
+        except IndexError:
+            pass
+            
     return A
 
 def kde_map_interpolation(shape, x,y,z, sigma, r_threshold=1e-6):

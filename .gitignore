@@ -13,7 +13,6 @@ image_window.ui.oA7156
 *.h5
 log.out
 build
-dist
 *.autosave
 *.mat
 ScopeFoundry/ScopeFoundry.egg-info
