@@ -124,7 +124,7 @@ class CrystalTechAOTF(HardwareComponent):
 #                                        hardware_set_func=self.dds.set_amplitude)
 
     def disconnect(self):
-        self.log.info('disconnect', self.name)
+        self.log.info('disconnect ' + self.name)
         
                
         #disconnect logged quantities from hardware
