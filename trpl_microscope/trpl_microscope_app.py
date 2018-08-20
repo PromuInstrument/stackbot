@@ -60,8 +60,10 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         
         #self.thorlabs_optical_chopper_hc = self.add_hardware_component(ThorlabsOpticalChopperComponent(self))        
         
-        from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
-        self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
+        #from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
+        #self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
+        from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW
+        self.add_hardware(PololuMaestroServoHW(self, name='power_wheel'))
         
         from ScopeFoundryHW.oceanoptics_spec.oceanoptics_spec import OceanOpticsSpectrometerHW
         self.add_hardware_component(OceanOpticsSpectrometerHW(self))
@@ -77,6 +79,23 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.quantum_composer import QuantumComposerHW
         self.add_hardware(QuantumComposerHW(self))
 
+
+        from ScopeFoundryHW.toupcam import ToupCamHW, ToupCamLiveMeasure
+        self.add_hardware_component(ToupCamHW(self))
+        
+        from ScopeFoundryHW.powermate.powermate_hw import PowermateHW
+        self.add_hardware(PowermateHW(self))
+        
+        from ScopeFoundryHW.asi_stage import ASIStageHW, ASIStageControlMeasure
+        self.add_hardware(ASIStageHW(self))
+        self.add_measurement(ASIStageControlMeasure(self))
+        
+
+        from xbox_trpl_measure import XboxControllerTRPLMeasure
+        from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
+        self.add_hardware(XboxControllerHW(self))
+        self.add_measurement(XboxControllerTRPLMeasure(self))
+
     
         ########################## MEASUREMENTS
         print("Adding Measurement Components")
@@ -89,6 +108,16 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
 
         from ScopeFoundryHW.oceanoptics_spec.oo_spec_measure import  OOSpecLive
         self.add_measurement(OOSpecLive(self))
+        
+        self.add_measurement(ToupCamLiveMeasure(self))
+
+        powermate_lq_choices = [
+                    'hardware/asi_stage/x_target',
+                    'hardware/asi_stage/y_target',
+                   '',
+                   ]
+        from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasure
+        self.add_measurement(PowermateMeasure(self, n_devs=2, dev_lq_choices=powermate_lq_choices))
 
 
         # Combined Measurements
@@ -117,6 +146,11 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
             for lq_name in lq_names:
                 master_scan_lq =  apd_scan.settings.get_lq(lq_name)
                 scan.settings.get_lq(lq_name).connect_to_lq(master_scan_lq)     
+                
+        
+        from trpl_microscope.step_and_glue_spec_measure import SpecStepAndGlue
+        self.add_measurement(SpecStepAndGlue(self))
+        
             
                     
         
@@ -153,11 +187,12 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         mcl.settings.move_speed.connect_to_widget(Q.nanodrive_move_slow_doubleSpinBox)        
         
         # Power Wheel
-        pw = self.hardware['power_wheel_arduino']
-        pw.settings.encoder_pos.connect_to_widget(Q.power_wheel_encoder_pos_doubleSpinBox)
-        pw.settings.move_steps.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
-        Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.move_fwd)
-        Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.move_bkwd)
+        #pw = self.hardware['power_wheel_arduino']
+        pw = self.hardware['power_wheel']
+        pw.settings.position.connect_to_widget(Q.power_wheel_encoder_pos_doubleSpinBox)
+        pw.settings.jog_step.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
+        Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.jog_fwd)
+        Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.jog_bkwd)
 
         #connect events
         apd = self.hardware['apd_counter']
