@@ -9,6 +9,13 @@ from ScopeFoundryHW.ALD.Seren.seren_interface import Seren_Interface
 
 class Seren_HW(HardwareComponent):
     
+    """
+    This hardware level module is responsible for \
+    establishing serial communication with the Seren RX01/LX01 \
+    Series Radio Frequency Power Supply, and defining commands to \
+    be connected to **LoggedQuantities**.
+    """
+    
     name = 'seren_hw'
     
     def setup(self):
@@ -26,7 +33,7 @@ class Seren_HW(HardwareComponent):
         
         self.settings.enable_serial.connect_to_hardware(write_func=lambda x: self.serial_toggle(x))
         
-        self.settings.RF_enable.connect_to_hardware(write_func=lambda x: self.RF_toggle(x))
+        self.settings.RF_enable.connect_to_hardware(write_func=lambda x: self.RF_state(x))
         
         self.settings.set_forward_power.connect_to_hardware(write_func=lambda x: self.write_fp(x))
         
@@ -38,30 +45,91 @@ class Seren_HW(HardwareComponent):
 
         self.settings.RF_enable.add_listener(self.read_from_hardware)
 
+        self.serial_toggle(True)
+
     def serial_toggle(self, status):
+        """Sets serial or front panel control.
+        
+        Connected to *LoggedQuantity*   
+        :attr:`self.settings.enable_serial`
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        status         bool        Serial enabled/disabled
+        =============  ==========  ==========================================================
+        """
         if status:
             self.seren.set_serial_control()
         else:
             self.seren.set_front_panel_control()
     
-    def RF_toggle(self, status):
+    def RF_state(self, status):
+        """
+        Enables or disables RF source.
+        
+        Connected to *LoggedQuantity*   
+        :attr:`self.settings.RF_enable`
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        status         bool        RF emitter enabled/disbaled
+        =============  ==========  ==========================================================
+        """
         if status:
             self.seren.emitter_on()
         else:
             self.seren.emitter_off()
+
+    def RF_toggle(self):
+        """Toggles RF enable with each call by negating the value of
+        *LoggedQuantity*
+        :attr:`self.settings.RF_enable`
+        """
+        self.settings['RF_enable'] = not self.settings['RF_enable']
+
     
     def write_fp(self, power):
-        self.seren.write_forward(power)
-        self.read_from_hardware()
+        """
+        Writes forward power setting to Seren PSU.
+        
+        Connected to *LoggedQuantity*   
+        :attr:`self.settings.set_forward_power`
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **type**    **Description**
+        power          int         RF power setpoint in Watts
+        =============  ==========  ==========================================================
+        """
+        self.seren.write_forward(int(power))
         
     def read_fp(self):
+        """
+        Reads set forward power from Seren PSU.
+        
+        Connected to *LoggedQuantity*   
+        :attr:`self.settings.forward_power_readout`
+        
+        :returns: int. Forward power in Watts.
+        """
         return self.seren.read_forward()
     
     def read_rp(self):
+        """
+        Reads reflected power from Seren PSU.
+        
+        Connected to *LoggedQuantity*   
+        :attr:`self.settings.reflected_power`
+        
+        :returns: int. Reflected power in Watts.
+        """
         resp = self.seren.read_reflected()
         return resp
     
     def disconnect(self):
+        """
+        Properly disconnects logged quantities from module functions.
+        Closes serial connection to Seren PSU.
+        """
         self.settings.disconnect_all_from_hardware()
         if self.seren is not None:
             self.seren.close()

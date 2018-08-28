@@ -7,8 +7,10 @@ Created on Nov 20, 2017
 
 from ScopeFoundry.base_app import BaseMicroscopeApp
 import logging
+from qtpy import QtCore
+from PyQt5 import QtWidgets
 
-logging.disable(50)
+# logging.disable(50)
 
 
 
@@ -24,6 +26,9 @@ class ALD_App(BaseMicroscopeApp):
         
         from ScopeFoundryHW.ALD.ALD_shutter.ALD_shutter import ALD_Shutter
         self.add_hardware(ALD_Shutter(self)).settings['connected'] = True
+        
+        from ScopeFoundryHW.ALD.ellipsometer.ellipsometer_hw import EllipsometerHW
+        self.add_hardware(EllipsometerHW(self)).settings['connected'] = True
         
         from ScopeFoundryHW.ALD.Lovebox.lovebox_hw import LoveboxHW
         self.add_hardware(LoveboxHW(self)).settings['connected'] = True
@@ -42,6 +47,9 @@ class ALD_App(BaseMicroscopeApp):
         
         from ScopeFoundryHW.ALD.ALD_relay.ald_relay_measure import ALDRelayMeasure
         self.add_measurement(ALDRelayMeasure(self)).start()
+        
+        from ScopeFoundryHW.ALD.ellipsometer.ellipsometer_measure import Ellipsometer_Measure
+        self.add_measurement(Ellipsometer_Measure(self)).start()
           
         from ScopeFoundryHW.ALD.Lovebox.lovebox_measure import LoveboxMeasure
         self.add_measurement(LoveboxMeasure(self)).start()
@@ -57,14 +65,18 @@ class ALD_App(BaseMicroscopeApp):
         
         from ScopeFoundryHW.ALD.Seren.seren_measure import Seren
         self.add_measurement(Seren(self)).start()
+
+        from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
+        self.recipe_measure = self.add_measurement(ALD_Recipe(self))
         
-        from ScopeFoundryHW.ALD.ALD_recipes.ALD_functions import ALD_routine
-        self.add_measurement(ALD_routine(self))
+        from ScopeFoundryHW.ALD.ALD_recipes.ALD_display import ALD_Display
+        self.display_measure = self.add_measurement(ALD_Display(self)).start()
         
-        from ScopeFoundryHW.ALD.ALD_recipes.ALD_params_measure import ALD_params
-        self.add_measurement(ALD_params(self))
-        
-        
+        self.recipe_measure.load_display_module()
+
+
+
+
 if __name__ == '__main__':
     import sys
     app = ALD_App(sys.argv)
