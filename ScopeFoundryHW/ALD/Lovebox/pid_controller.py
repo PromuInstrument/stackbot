@@ -45,10 +45,19 @@ class PIDController(object):
         self.software_version = self.send_analog_read(0x102F) 
     
     def read_temp(self):
+        """
+        Reads Process Value from temperature controller.
+        :returns: Process Value in Celsius.
+        """
         self.temp = 0.1 * self.send_analog_read(0x1000)
         return self.temp
     
     def read_setpoint(self):
+        """
+        Reads stored Set Point Value from temperature controller
+
+        :returns: Stored Set Point Value in Celsius.
+        """
         self.setp = 0.1 * self.send_analog_read(0x1001)
         return self.setp
     
@@ -57,20 +66,47 @@ class PIDController(object):
         self.send_analog_write(0x0813, int(status))
     
     def set_setpoint(self, setp):
+        """
+        Stores Set Point Value to temperature controller
+
+        =============  ==========  ==========================================================
+        **Arguments**  **Type**    **Description**
+        setp           str         Desired set point value in units of Celsius.
+        =============  ==========  ==========================================================
+
+        :returns: Stored Set Point value written to the temperature controller.
+        """
         self.send_analog_write(0x1001, int(setp*10) )
         self.setp = setp
         return self.setp
     
     def read_output1(self):
+        """
+        :returns: Output 1 percentage value in units of 0.1 %.
+        """
         self.outp1 = 0.1 * self.send_analog_read(0x1012)
         return self.outp1
         
     def read_output2(self):
+        """
+        :returns: Output 2 percentage value in units of 0.1 %.
+        """
         self.outp2 = 0.1 * self.send_analog_read(0x1013)
         return self.outp2
         
     def set_output1(self, outp1):
-        "set output in percent, only in manual control"
+        """
+        Set output percentage in units of 0.1%
+        Write operation valid only in manual tuning mode.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **Type**    **Description**
+        outp1          str         Desired
+        =============  ==========  ==========================================================
+        :returns: Output 1 percentage value in units of 0.1 %.
+
+        """
+        
         self.send_analog_write(0x1012, int(outp1*10) )
         self.outp1 = outp1
         return self.outp1
