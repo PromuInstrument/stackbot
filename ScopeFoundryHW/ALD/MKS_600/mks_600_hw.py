@@ -139,7 +139,8 @@ class MKS_600_Hardware(HardwareComponent):
         Reads pressure from MKS 600 manometer and expresses
         the quantity in the desired units.
         
-        :returns: Pressure in units specified by *self.settings.units*
+        :returns: Pressure in units specified by *self.settings.units*. \
+        Original read quantity is scaled by unit conversions contained in this function.
         """
         choice = self.settings['units']
         if choice == 'torr':
@@ -183,16 +184,18 @@ class MKS_600_Hardware(HardwareComponent):
         return resp 
     
     def write_sp(self, pct):
-        "Writes set point value to active/selected preset channel"
+        """
+        Writes set point value to active/selected preset channel.
+        Writes percentage of full scale pressure value or percentage position to selected preset channel.
+
+        =============  ==========  ==========================================================
+        **Arguments**  **Type**    **Description**
+        pct            int         Position (percentage open) to set on throttle valve.
+        =============  ==========  ========================================================== 
+        """
         choice = self.settings['sp_channel']
         channel = self.assign[choice]
         self.mks.write_set_point(channel, pct)
-    
-    
-    def valve_open(self, valve):
-        """Sets valve to full open/close."""
-        return self.mks.valve_full_open(valve)
-    
     
     def disconnect(self):
         """Disconnects MKS 600 from software suite and closes serial connection."""
