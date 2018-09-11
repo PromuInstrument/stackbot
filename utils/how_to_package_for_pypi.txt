@@ -1,0 +1,38 @@
+how to package for PyPI:
+
+edit version number in setup.py
+Update CHANGELOG
+clean up untracked files with git
+
+$ cd ScopeFoundry
+$ python setup.py sdist
+
+(creates a tar.gz file in dist/ScopeFoundry-x.x.x.tar.gz)
+
+Testing:
+conda env create -n test_env
+source activate test_env
+
+ pip uninstall ScopeFoundry
+
+mkdir ~/test
+cp dist/ScopeFoundr-x.x.x.tar.gz ~/test
+cd ~/test
+tar zxvf ScopeFoundr-x.x.x.tar.gz
+cd ScopeFoundry-x.x.x
+
+python setup.py build
+python setup.py install
+
+(Upload to PyPI)
+(note you can’t upload the same named file more than once, so test locally first!)
+conda install twine
+twine upload dist/ScopeFoundry-1.0.0.0.tar.gz
+
+Commit Final changes to repo
+tag foundry_scope repo “ScopeFoundry_v1.x.x”
+Push foundry_scope repo
+subtree push ScopeFoundry
+tag ScopeFoundry repo “v1.x.x.”
+Create a “release” on GitHub including a copy of tar.gz dist file
+
