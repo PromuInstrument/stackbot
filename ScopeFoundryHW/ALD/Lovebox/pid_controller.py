@@ -103,8 +103,8 @@ class PIDController(object):
         **Arguments**  **Type**    **Description**
         outp1          str         Desired
         =============  ==========  ==========================================================
+        
         :returns: Output 1 percentage value in units of 0.1 %.
-
         """
         
         self.send_analog_write(0x1012, int(outp1*10) )
@@ -112,32 +112,74 @@ class PIDController(object):
         return self.outp1
         
     def set_output2(self, outp2):
-        "set output in percent, only in manual control"
+        """Set output percentage in units of 0.1%
+        Write operation valid only in manual tuning mode.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **Type**    **Description**
+        outp2          str         Desired
+        =============  ==========  ==========================================================
+        
+        :returns: Output 2 percentage value in units of 0.1 %."""
         self.send_analog_write(0x1012, int(outp2*10) )
         self.outp2 = outp2
         return self.outp2
 
     def read_prop_band(self):
+        """
+        :returns: PID Proportional term value.
+        """
         prop = 0.1*self.send_analog_read(0x1009)
         return prop
 
     def set_prop_band(self, p):
+        """
+        =============  ==========  =======================  ===================================
+        **Arguments**  **Type**    **Description**          **Valid Range**
+        p              float       Proportional term value  (0.1, 999.9)
+        =============  ==========  =======================  ===================================
+        
+        """
         assert 0. <= p <= 999.9
         self.send_analog_write(0x1009, int(10*p))
     
     def read_integral_time(self):
+        """
+        :returns: PID Integral term value.
+        """
         integral_t = self.send_analog_read(0x100A)
         return integral_t
     
     def set_integral_time(self, integral_t):
+        """
+        Sets PID Integral term value.
+        
+        =============  ==========  =======================  ===================================
+        **Arguments**  **Type**    **Description**          **Valid Range**
+        integral_t     int         Integral term value      (0, 9999)
+        =============  ==========  =======================  ===================================
+        
+        """
         assert 0 <= int(integral_t) <= 9999
         self.send_analog_write(0x100A, int(integral_t))
     
     def read_derivative_time(self):
+        """
+        :returns: PID Derivative term value.
+        """
         derivative_t = self.send_analog_read(0x100B)
         return derivative_t
         
     def set_derivative_time(self, derivative_t):
+        """
+        Sets PID Derivative term value.
+        
+        =============  ==========  =======================  ===================================
+        **Arguments**  **Type**    **Description**          **Valid Range**
+        derivative_t   int         Derivative term value    (0, 9999)
+        =============  ==========  =======================  ===================================
+        
+        """
         assert 0 <= int(derivative_t) <= 9999
         self.send_analog_write(0x100B, derivative_t)
 
