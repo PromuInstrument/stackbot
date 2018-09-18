@@ -93,7 +93,7 @@ class NI_MFC(HardwareComponent):
 
             
     def write_digital_lines(self, x=None):
-        """Writes boolean values to digital in/out channels. """
+        """Writes boolean values to digital in/out channels."""
         self.writeArray = np.zeros(8, dtype=mx.c_uint8)
         for line_name, pin in self.line_pins.items():
             pin_bool = int(self.settings[line_name])
@@ -105,8 +105,11 @@ class NI_MFC(HardwareComponent):
 
         
     def read_adc_single(self):
-        """Reads voltage off analog to digital converter. In the case of this module, 
-        this channel reads the value of our MFC's Flow Signal Output."""
+        """
+        Reads voltage off analog to digital converter. In the case of this module, 
+        this channel reads the value of our MFC's Flow Signal Output.
+        :returns: (float) Analog In voltage.
+        """
         resp = self.adc_task.get()
         if self.debug_mode.val:
             self.log.debug('read_adc_single resp: {}'.format(resp))
