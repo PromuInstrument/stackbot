@@ -43,13 +43,15 @@ class KeithleySourceMeterComponent(HardwareComponent): #object-->HardwareCompone
     def disconnect(self):
 
         # disconnect logged quantities from hardware
-        # ///\
+        # ///
+        self.settings.disconnect_all_from_hardware()
     
         #disconnect hardware
-        self.keithley.close()
+        if hasattr(self, 'keithley'):
+            self.keithley.close()
         
-        # clean up hardware object
-        del self.keithley
+            # clean up hardware object
+            del self.keithley
         
         print('disconnected ',self.name)
         
