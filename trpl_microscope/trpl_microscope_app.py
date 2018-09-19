@@ -248,6 +248,13 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         
         self.hardware['flip_mirror'].settings.mirror_position.connect_to_widget(Q.flip_mirror_checkBox)
         
+        
+        # AOTF
+        aotf_hw = self.hardware['CrystalTechAOTF_DDS']
+        aotf_hw.settings.freq0.connect_to_widget(Q.atof_freq_doubleSpinBox)
+        aotf_hw.settings.pwr0.connect_to_widget(Q.aotf_power_doubleSpinBox)
+        aotf_hw.settings.modulation_enable.connect_to_widget(Q.aotf_mod_enable_checkBox)        
+        
         ################# Shared Settings for Map Measurements ########################
         
         
