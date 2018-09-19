@@ -46,6 +46,10 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
         self.add_hardware_component(PowerWheelArduinoHW(self))
         
+        from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW
+        self.add_hardware(PololuMaestroServoHW(self, name='power_wheel'))
+        
+        
         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW
         self.add_hardware_component(ThorlabsPowerMeterHW(self))
 
