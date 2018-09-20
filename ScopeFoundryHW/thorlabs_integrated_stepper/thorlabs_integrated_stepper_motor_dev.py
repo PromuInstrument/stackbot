@@ -245,11 +245,11 @@ if __name__=='__main__':
 
     #12288000/90. # steps / deg
     print("1. position is ", A.read_position(), sep='')
-    A.move_and_wait(0,100 )# moves to 0 deg with a timeout of 100 sec
+    A.move_and_wait(0,100  )# moves to 0 deg with a timeout of 100 sec
     print("2. position is ", A.read_position(), sep='')
     A.move_and_wait(12288000, 100) # moves to 90 deg with a timeout of 100 sec
     print("3. position is ", A.read_position(), sep='')
-    A.close()
+    A.close_device()
     
     
     

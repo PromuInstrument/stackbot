@@ -34,7 +34,7 @@ class ThorlabsIntegratedStepperMottorHW(HardwareComponent):
         
     def disconnect(self):
         if hasattr(self, 'dev'):
-            self.dev.close()
+            self.dev.close_device()
             del self.dev
         
         
