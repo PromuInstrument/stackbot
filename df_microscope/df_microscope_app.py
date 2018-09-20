@@ -32,6 +32,9 @@ class DFMicroscopeApp(BaseMicroscopeApp):
 
         from ScopeFoundryHW.thorlabs_integrated_stepper.thorlabs_integrated_stepper_motor_hw import ThorlabsIntegratedStepperMottorHW
         self.add_hardware(ThorlabsIntegratedStepperMottorHW(self))
+        
+        from ScopeFoundryHW.shutter_servo_arduino.shutter_servo_arduino_hc import ShutterServoHW
+        self.add_hardware(ShutterServoHW(self))
 
         print("Adding Measurement Components")
         
