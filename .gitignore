@@ -21,3 +21,5 @@ ScopeFoundry/__pycache__/
 trpl_microscope/log/
 plimg_microscope/log/
 ir_microscope/log/
+.metadata/
+df_microscope/log/

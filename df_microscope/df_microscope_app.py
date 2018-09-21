@@ -31,20 +31,13 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
         
         from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
-<<<<<<< HEAD
         self.add_hardware(ESP300AxisHW(self))
-=======
-        self.add_hardware_component(ESP300AxisHW(self))
         
         from ScopeFoundryHW.shutter_servo_arduino.shutter_servo_arduino_hc import ShutterServoHW
         self.add_hardware(ShutterServoHW(self))
->>>>>>> 3269a3f30183440a661464efb00014e4d3e940a9
 
         from ScopeFoundryHW.thorlabs_integrated_stepper.thorlabs_integrated_stepper_motor_hw import ThorlabsIntegratedStepperMottorHW
         self.add_hardware(ThorlabsIntegratedStepperMottorHW(self))
-        
-        from ScopeFoundryHW.shutter_servo_arduino.shutter_servo_arduino_hc import ShutterServoHW
-        self.add_hardware(ShutterServoHW(self))
 
         print("Adding Measurement Components")
         
