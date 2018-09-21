@@ -9,8 +9,11 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         
         print("Adding Hardware Components")
         
-        from ScopeFoundryHW.apd_counter import APDCounterHW
-        self.add_hardware_component(APDCounterHW(self))
+        #from ScopeFoundryHW.apd_counter import APDCounterHW
+        #self.add_hardware_component(APDCounterHW(self))
+        from ScopeFoundryHW.ni_daq.hw.ni_freq_counter_callback import NI_FreqCounterCallBackHW
+        self.add_hardware(NI_FreqCounterCallBackHW(self, name='apd_counter'))
+
 
         from ScopeFoundryHW.mcl_stage.mcl_xyz_stage import MclXYZStageHW
         self.add_hardware_component(MclXYZStageHW(self))
@@ -28,7 +31,14 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
         
         from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
+<<<<<<< HEAD
         self.add_hardware(ESP300AxisHW(self))
+=======
+        self.add_hardware_component(ESP300AxisHW(self))
+        
+        from ScopeFoundryHW.shutter_servo_arduino.shutter_servo_arduino_hc import ShutterServoHW
+        self.add_hardware(ShutterServoHW(self))
+>>>>>>> 3269a3f30183440a661464efb00014e4d3e940a9
 
         from ScopeFoundryHW.thorlabs_integrated_stepper.thorlabs_integrated_stepper_motor_hw import ThorlabsIntegratedStepperMottorHW
         self.add_hardware(ThorlabsIntegratedStepperMottorHW(self))
@@ -39,8 +49,11 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         print("Adding Measurement Components")
         
         # hardware specific measurements
-        from ScopeFoundryHW.apd_counter import APDOptimizerMeasure
-        self.add_measurement_component(APDOptimizerMeasure(self))
+        #from ScopeFoundryHW.apd_counter import APDOptimizerMeasure
+        #self.add_measurement_component(APDOptimizerMeasure(self))
+        from confocal_measure.apd_optimizer_cb import APDOptimizerCBMeasurement
+        self.add_measurement_component(APDOptimizerCBMeasurement(self))
+
         
         from ScopeFoundryHW.winspec_remote import WinSpecRemoteReadoutMeasure
         self.add_measurement_component(WinSpecRemoteReadoutMeasure(self))
