@@ -14,7 +14,19 @@ logger = logging.getLogger(__name__)
 
 
 class MKS_600_Interface(object):
-        
+
+    """
+    Communications library for the MKS 600 series pressure/throttle valve controller.
+    Please refer to the manual for your MKS 600 series device for details regarding the 
+    device's operation.
+    
+    **IMPORTANT:** For the commands in this module to work over the unit's RS232 connection, 
+    The key included with the unit must be turned to "Remote" as opposed to "Local"
+    
+    On the front of the controller are 5 set point channels as well as open and close 
+    mode listed. In the corner of each of these buttons are green LEDs which indicate which 
+    of the 7 possible modes are active.
+    """
     name = 'mks_600_interface'
     
     def __init__(self, port="COM5", debug=False):
@@ -53,7 +65,7 @@ class MKS_600_Interface(object):
         cmd            str         Command or query to be sent to MKS 600 unit.
         =============  ==========  ==========================================================
 
-        :returns: str. Unit's response to query.
+        :returns: (str) Unit's response to query.
         """
         with self.lock:
             self.ser.flush()
@@ -92,7 +104,9 @@ class MKS_600_Interface(object):
         Reads system pressure as detected by the attached capacitance manometer.
         Queries the full scale range percentage and converts this to a pressure value.
         
-        :returns: float. Pressure value.
+        Local variable
+        :attr:`fs` is the full scale range and reads full range off of attached manometer.
+        :returns: (float) Pressure value as measured by attached manometer.
         """
         resp = self.ask_cmd("R5")[1:-2]
         if resp != b'':
@@ -113,26 +127,25 @@ class MKS_600_Interface(object):
         """
         Switches preset channels. Each channel has a set point value set by the controller's user.
         
-        =============  ==========  ==========================================================
-        **Arguments**  **Type**    **Description**
-        ch             int         Preset channel to mark as active. 
-                                   Accepts values in the range (1,6)
-        =============  ==========  ==========================================================
+        =============  ==========  =================================  =========================
+        **Arguments**  **Type**    **Description**                    **Valid Range**
+        ch             int         Preset channel to mark as active.  (1, 6)
+        =============  ==========  =================================  =========================
         
         """
         assert 1 <= ch < 6
         self.ask_cmd("D{:d}".format(ch))
 
-    
+
     def enable_position_mode(self, ch):
         """
         Enable position mode on targeted preset channel.
         
-        =============  ==========  ==========================================================
-        **Arguments**  **Type**    **Description**
-        ch             int         Preset channel to mark as active. 
-                                   Accepts values in the range (1,6)
-        =============  ==========  ==========================================================
+        =============  ==========  =================================  =========================
+        **Arguments**  **Type**    **Description**                    **Valid Range**
+        ch             int         Preset channel on which position   (1, 6)
+                                   mode is to be enabled.
+        =============  ==========  =================================  =========================
         
         """
         cmd = "T{} 0".format(self.channels[ch])
@@ -140,13 +153,14 @@ class MKS_600_Interface(object):
     
     def enable_pressure_mode(self, ch):
         """
-        Enable pressure regulation mode on targeted preset channel.
+        Enable pressure regulation mode on active preset channel.
         
-        =============  ==========  ==========================================================
-        **Arguments**  **Type**    **Description**
-        ch             int         Preset channel to mark as active. 
-                                   Accepts values in the range (1,6)
-        =============  ==========  ==========================================================
+        =============  ==========  =================================  =========================
+        **Arguments**  **Type**    **Description**                    **Valid Range**
+        ch             int         Preset channel on which pressure   (1, 6)
+                                   mode is to be enabled.
+        =============  ==========  =================================  =========================
+        
         """
         cmd = "T{} 1".format(self.channels[ch])
         self.ask_cmd(cmd)
@@ -154,15 +168,15 @@ class MKS_600_Interface(object):
     
     def read_control_mode(self, ch):
         """
-        Reads the control mode of selected preset channel
+        Reads the control mode of specified preset channel
         
-        =============  ==========  ==========================================================
-        **Arguments**  **Type**    **Description**
-        ch             int         Preset channel to mark as active. 
-                                   Accepts values in the range (1,6)
-        =============  ==========  ==========================================================
+        =============  ==========  =================================  =========================
+        **Arguments**  **Type**    **Description**                    **Valid Range**
+        ch             int         Preset channel to read control     (1, 6)
+                                   mode from.
+        =============  ==========  =================================  =========================
         
-        :returns: boolean int. Control mode.
+        :returns: (boolean int) value representing which control mode is active.
         
          * 0 indicates control by position
          * 1 indicates control by pressure set point
@@ -181,12 +195,11 @@ class MKS_600_Interface(object):
         Writes set point value of selected preset channel.
         Writes percentage of full scale pressure value or percentage position to selected preset channel.
         
-        =============  ==========  ==========================================================
-        **Arguments**  **Type**    **Description**
-        ch             int         Preset channel to read set point from. 
-                                   Accepts values in the range (1,6)
-        pct            int         Percentage open to write to set point preset
-        =============  ==========  ==========================================================
+        =============  ==========  ===============================================  ================
+        **Arguments**  **Type**    **Description**                                  **Valid Range**
+        ch             int         Preset channel to read set point from.           (1, 6)
+        pct            int         Percentage open to write to preset channel       (0, 100)
+        =============  ==========  ===============================================  ================
         
         """
         cmd = "S{} {}".format(ch, int(pct))
@@ -194,15 +207,14 @@ class MKS_600_Interface(object):
     
     def read_set_point(self, ch):
         """
-        Reads set point value of selected preset channel.
+        Reads set point value of active preset channel.
         
-        =============  ==========  ==========================================================
-        **Arguments**  **Type**    **Description**
-        ch             int         Preset channel to read set point from. 
-                                   Accepts values in the range (1,6)
-        =============  ==========  ==========================================================
+        =============  ==========  ===========================================  ===============
+        **Arguments**  **Type**    **Description**                              **Valid Range**
+        ch             int         Preset channel to read set point from.       (1,6)
+        =============  ==========  ===========================================  ===============
         
-        :returns: float. Percentage of full scale pressure value or position percentage of selected preset channel.
+        :returns: (float) Percentage value of full scale pressure value or position percentage of active preset channel.
         """
         channels = {1: 1,
                      2: 2,
@@ -216,7 +228,7 @@ class MKS_600_Interface(object):
         """
         Reads valve position
         
-        :returns: float. Valve percentage open.
+        :returns: (float) Valve percentage open on active preset channel.
         """
         resp = self.ask_cmd("R6")[2:-2]
         return float(resp)

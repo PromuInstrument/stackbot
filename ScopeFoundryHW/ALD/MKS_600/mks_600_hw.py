@@ -93,6 +93,7 @@ class MKS_600_Hardware(HardwareComponent):
         control        str         String describing the desired control mode. 
                                    Can be either 'Pressure' or 'Position'
         =============  ==========  ========================================================== 
+        
         """
         channel = self.settings['sp_channel']
         if control == 'Pressure':
@@ -112,10 +113,11 @@ class MKS_600_Hardware(HardwareComponent):
         Checks if channel is set to position mode 
         before attempting to set throttle valve position.
         
-        =============  ==========  ==========================================================
-        **Arguments**  **Type**    **Description**
-        pct            int         Position (percentage open) to set on throttle valve.
-        =============  ==========  ========================================================== 
+        =============  ==========  =====================================================  ===============
+        **Arguments**  **Type**    **Description**                                        **Valid Range**
+        pct            int         Position (percentage open) to set on throttle valve.   (0, 1)
+        =============  ==========  =====================================================  ===============
+        
         """
         channel = self.settings['sp_channel']
         position_mode = not self.mks.read_control_mode(channel)
@@ -166,6 +168,7 @@ class MKS_600_Hardware(HardwareComponent):
                                     * Open/Close
                                     * SP Channel (A/B/C/D/E)
         =============  ==========  ==========================================================
+        
         """
         channel = self.assign[choice]
         assert channel in range(1,8)
