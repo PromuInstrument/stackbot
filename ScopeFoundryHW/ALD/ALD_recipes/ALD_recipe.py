@@ -14,7 +14,25 @@ import csv
 import os
 
 class ALD_Recipe(Measurement):
+    """
+    This module contains functions which regulate the behavior of the equipment used 
+    during the deposition routine. The instruction sets contained here and the user set
+    parameters are called a "Recipe."
     
+    The run function in this module runs the recipe according to user set parameters. 
+    If interrupted, the recipe is interrupted, and the system is allowed time to pump 
+    down to initial levels.
+    
+    This Measurement module and the 
+    :class:`ALD_Display` module are co-dependent and make calls to functions in the other module.
+    These modules should be loaded by 
+    :class:`ALD_App`
+    in the following order:
+    
+    1. :class:`ALD_Recipe`
+    2. :class:`ALD_Display`
+    
+    """
     name = 'ALD_Recipe'
     
     MFC_valve_states = {'Open': 'O',
@@ -70,6 +88,10 @@ class ALD_Recipe(Measurement):
 
     
     def create_indicator_lq_battery(self):
+        """
+        Creates process indicator *LoggedQuantities* which indicate the 
+        progression of the deposition process.
+        """
         self.settings.New('pumping', dtype=bool, initial=False, ro=True)
         self.settings.New('predeposition', dtype=bool, initial=False, ro=True)
         self.settings.New('deposition', dtype=bool, initial=False, ro=True)
@@ -82,6 +104,10 @@ class ALD_Recipe(Measurement):
      
     
     def set_default_save_location(self):
+        """
+        Sets default save location and stores it to *Logged Quantity*
+        :attr:`self.settings.csv_save_path`
+        """
         home = os.path.expanduser("~")
         self.path = home+'\\Desktop\\'
         filename = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M")+'.csv'
@@ -266,9 +292,14 @@ class ALD_Recipe(Measurement):
 
     def plasma_dose(self, width, power):
         """
-        Turn on RF source for duration of time, 'width'
-        Argument 'width' has units of seconds
-        power has units of Watts
+        Turn on RF source for duration of time.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **Type**    **Description**
+        width          int         Duration RF source is active in seconds.
+        power          int         RF forward power rating in Watts.
+        =============  ==========  ========================================================== 
+
         """
         print('Start plasma dose.')
         self.seren.write_fp(power)
@@ -385,9 +416,14 @@ class ALD_Recipe(Measurement):
 
     
     def predeposition(self):
-        """Runs pre-deposition stage. 
+        """
+        Runs pre-deposition stage. 
         * Sets MFC to manual open
-        * Sets flow to 0.7 sccm"""
+        * Sets flow to 0.7 sccm
+        
+        Called by parent function
+        :meth:`routine`
+        """
         self.predep_complete = False
         status = self.mks146.settings['read_MFC0_valve']
         if status == 'O' or status == 'C':
@@ -399,8 +435,11 @@ class ALD_Recipe(Measurement):
     def prepurge(self):
         """
         Runs pre-purge stage.
-        Waits a certain duration of time to allow the vacuum pumps time to vacate the chamber of gases.
-        Running this function will also factor the waiting time into the time table calculation.
+        Waits a certain duration of time to allow the vacuum pumps 
+        time to vacate the chamber of gases.
+        
+        Called by parent function
+        :meth:`routine`
         """
         width = self.times[0][0]
         step_name = 'Pre-purge'
@@ -412,6 +451,9 @@ class ALD_Recipe(Measurement):
     def routine(self):
         """
         This function carries out the looped part of our ALD routine.
+        
+        Called by parent function
+        :meth:`deposition`
         """
         # Read in time table data
         sub_cyc, sub_t0, sub_t1 = self.sub[0]
@@ -422,13 +464,12 @@ class ALD_Recipe(Measurement):
         if self.interrupt_measurement_called:
             self.shutoff()
             return
-            #doo something to finish routine
+            
         self.purge(t2)
         if self.interrupt_measurement_called:
             self.shutoff()
             return
-            #doo something to finish routine
-        
+            
         ## Check selected method for t3 in main recipe table,
         ## Carry out an operation based on the selection
         mode = self.settings['t3_method'] 
@@ -437,13 +478,13 @@ class ALD_Recipe(Measurement):
             if self.interrupt_measurement_called:
                 self.shutoff()
                 return
-                #doo something to finish routine
+            
         elif mode == 'PV':
             self.valve_pulse(2, t3)
             if self.interrupt_measurement_called:
                 self.shutoff()
                 return
-                #doo something to finish routine
+            
         elif mode == 'PV/Purge':
             '''Run sub_cyc number of subroutine cycles.
             Subroutine consists of a valve pulse and a purge period.'''
@@ -455,14 +496,16 @@ class ALD_Recipe(Measurement):
         if self.interrupt_measurement_called:
             self.shutoff()
             return
-            #doo something to finish routine
-        
+            
     
     def postpurge(self):
         """
         Runs post purge stage. 
-        Waits a certain duration of time to allow the vacuum pumps time to vacate the chamber of gases.
-        Running this function will also factor the waiting time into the time table calculation.
+        Waits a certain duration of time to allow the vacuum pumps time to vacate 
+        the chamber of gases.
+        
+        Called by parent function
+        :meth:`routine`
         """
         step_name = 'Post-purge'
         width = self.times[0][5]
@@ -472,7 +515,10 @@ class ALD_Recipe(Measurement):
         self.settings['steps_taken'] += 1
         
     def deposition(self):
-        """Full deposition routine."""
+        """
+        This function runs the full deposition routine. This is the parent function of 
+        :meth:`routine`
+        """
         self.dep_complete = False
         cycles = self.settings['cycles']    
         for _ in range(cycles):
@@ -480,7 +526,6 @@ class ALD_Recipe(Measurement):
             if self.interrupt_measurement_called:
                 self.shutoff()
                 break
-                #doo something to finish routine
             
             self.settings['cycles_completed'] += 1
             print(self.settings['cycles_completed'])
@@ -502,16 +547,14 @@ class ALD_Recipe(Measurement):
         if self.interrupt_measurement_called:
             self.shutoff()
             return
-            #doo something to finish recipe
-
+            
         self.deposition()
 
         self.postpurge()
         if self.interrupt_measurement_called:
             self.shutoff()
             return
-            #doo something to finish recipe
-        
+            
         self.settings['recipe_running'] = False
         self.settings['recipe_completed'] = True
         print('recipe completed')
