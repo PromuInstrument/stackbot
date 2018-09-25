@@ -75,7 +75,14 @@ class NI_MFC(HardwareComponent):
         Converts user supplied flow value and scales it to a voltage 
         read by the MFC analog interface.
         Our particular MFC has a flow rate of 20 sccm, which corresponds to a signal of +5V.
+        
+        =============  ==========  =========================  ====================
+        **Arguments**  **type**    **Description**            **Valid Range**
+        flow           float       Desired flow rate in MFC.  (0.0, 20.0)
+        =============  ==========  =========================  ====================
+        
         """
+        assert 0.0 <= flow <= 20.0
         voltage = (1/4)*flow
 #         voltage = 1*flow
         self.dac_task.set(voltage)
@@ -84,6 +91,7 @@ class NI_MFC(HardwareComponent):
         """
         Reads voltage from MFC analog interface. Scales voltage to flow value.
         Our particular MFC has a flow rate of 20 sccm, which corresponds to a signal of +5V.
+        
         :returns: (float) Flow rate detected in MFC in units of sccm.
         """
         voltage = self.read_adc_single()
@@ -108,6 +116,7 @@ class NI_MFC(HardwareComponent):
         """
         Reads voltage off analog to digital converter. In the case of this module, 
         this channel reads the value of our MFC's Flow Signal Output.
+        
         :returns: (float) Analog In voltage.
         """
         resp = self.adc_task.get()
