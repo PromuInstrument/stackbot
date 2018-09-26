@@ -19,6 +19,8 @@ class PolarizedHyperspecScanMeasure(MCLStage2DSlowScan):
         MCLStage2DSlowScan.pre_run(self)
                 
     def pre_scan_setup(self):
+        S = self.settings
+        self.theta_target_positions = np.linspace(S['theta_min'],S['theta_max'],S['theta_num'],endpoint=True, dtype=float)
                 
         self.winspec_readout.interrupt()
         print('Doing a quick dummy measurement')
@@ -47,8 +49,6 @@ class PolarizedHyperspecScanMeasure(MCLStage2DSlowScan):
         self.theta_recorded_h5 = self.h5_meas_group.create_dataset(
                             'theta_recorded_on_last_pixel', self.theta_target_positions.shape, dtype=np.float)# creating data set saving link
 
-        S = self.settings
-        self.theta_target_positions = np.linspace(S['theta_min'],S['theta_max'],S['theta_num'],endpoint=True, dtype=float)
         self.h5_meas_group.create_dataset('theta_target_positions', data=self.theta_target_positions)
         self.h5_file.flush()  
 
