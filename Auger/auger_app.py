@@ -57,7 +57,7 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         from Auger.hardware.auger_electron_analyzer_hw import AugerElectronAnalyzerHW
         self.add_hardware(AugerElectronAnalyzerHW(self))
         
-        from Auger.hardware.remcon32_hw import Auger_Remcon_HW
+        from ScopeFoundryHW.zeiss_sem.remcon32_hw import Auger_Remcon_HW
         self.add_hardware(Auger_Remcon_HW(self))
 
         ########## Measurements
@@ -97,10 +97,13 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(SEMAlignMeasure)
 
         from Auger.auger_quad_scan import AugerQuadSlowScan
-        self.add_measurement_component(AugerQuadSlowScan(self))
+        self.add_measurement(AugerQuadSlowScan(self))
         
         from Auger.sem_auto_focus import SEMAutoFocus
-        self.add_measurement_component(SEMAutoFocus(self))
+        self.add_measurement(SEMAutoFocus(self))
+        
+        from Auger.sem_auto_stig_measure import SEMAutoStigMeasure
+        self.add_measurement(SEMAutoStigMeasure(self))
         
 
 

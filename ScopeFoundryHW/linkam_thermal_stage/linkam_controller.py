@@ -17,39 +17,43 @@ class LinkamController(object):
         self.port = port
         
         if not self.dummy:
-
-            #NOTE: Linkam controller uses rtscts flow control, but pySerial does not seem 
-            #to properly support it.  When it is enabled, the port just locks up and the
-            #computer needs to be restarted.  Eveyrthing seems to work fine with it turned 
-            #off, though.
-            self.ser = ser = serial.Serial(port=self.port, baudrate=19200, 
-                                           bytesize=serial.EIGHTBITS,
-                                           parity=serial.PARITY_NONE, 
-                                           stopbits=serial.STOPBITS_ONE, 
-                                           xonxoff=False, 
-                                           timeout=1.0,
-                                           rtscts=False)
-            
-            ser.flush()
-            
-            # Initialize the controller with default settings
-            self.write_pump_mode(False)
-            self.write_rate(10)
-            self.write_pump_speed(0)
-            self.write_limit(25)
-            self.update_status()
+            try:
+                #NOTE: Linkam controller uses rtscts flow control, but pySerial does not seem 
+                #to properly support it.  When it is enabled, the port just locks up and the
+                #computer needs to be restarted.  Eveyrthing seems to work fine with it turned 
+                #off, though.
+                self.ser = ser = serial.Serial(port=self.port, baudrate=19200, 
+                                               bytesize=serial.EIGHTBITS,
+                                               parity=serial.PARITY_NONE, 
+                                               stopbits=serial.STOPBITS_ONE, 
+                                               xonxoff=False, 
+                                               timeout=1.0,
+                                               rtscts=False)
+                
+                ser.flush()
+                
+                # Initialize the controller with default settings
+                self.write_pump_mode(False)
+                self.write_rate(10)
+                self.write_pump_speed(0)
+                self.write_limit(25)
+                self.update_status()
+            except Exception as err:
+                print('Error connecting: ', err)
+                self.close()
             
     def close(self):
         self.ser.close()
 
     def write_cmd(self, cmd):
-        self.ser.write(cmd+"\r")
+        #self.ser.write(cmd+"\r")
+        self.ser.write(('{}\r'.format(cmd)).encode())
         if self.debug:
             print ('write:', cmd)
         response = self._readline()
         if self.debug:
             print ('response:', repr(response))
-        if 'Error' in response:
+        if 'Error'.encode() in response:
             raise IOError('Linkam Controller command error: ' + repr(response))
         return response.strip()
 
@@ -59,9 +63,11 @@ class LinkamController(object):
             print(len(res))
         
         # First byte is the status
-        status_val = res[0]
+        status_val = res[0:1]
         if self.debug:
             print(type(status_val), status_val)
+            print('res', type(res[0]), res[0])
+            
         if status_val == b"\x01":
             self.status = "Stopped"
         elif status_val == b"\x10":
@@ -75,10 +81,10 @@ class LinkamController(object):
         elif status_val == b"\x50":
             self.status = "Holding the current temperature"
         else:            
-            self.status = "unknown: " + hex(struct.unpack('>B', res[0])[0])
+            self.status = "unknown: " + hex(struct.unpack('>B', res[0].encode())[0])
 
         # Second byte is the error byte
-        eb = struct.unpack('>B', res[1])[0]
+        eb = struct.unpack('>B', res[1:2])[0]
         self.error = ""
         if eb & 0x01:
             self.error += 'Cooling rate too fast;'
@@ -98,7 +104,7 @@ class LinkamController(object):
         # Pump speed
         #  < 128: pump speed
         # == 128: pump off
-        self.pump_speed = struct.unpack('>B', res[2])[0] - 128
+        self.pump_speed = struct.unpack('>B', res[2:3])[0] - 128
         if self.debug:
             print('pump speed:', self.pump_speed)
         # in auto mode, the speed is offset by 64...must be an extra bit is set;
@@ -106,7 +112,7 @@ class LinkamController(object):
         if self.pump_speed >= 64:
             self.pump_speed = self.pump_speed-64
         
-        self.general_status = res[3]
+        self.general_status = res[3:4]
         
         # Temperature
         temp_string = res[6:10].decode("utf-8")

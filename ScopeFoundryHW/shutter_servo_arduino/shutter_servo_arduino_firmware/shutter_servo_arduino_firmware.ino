@@ -19,7 +19,7 @@ char inputNumberBuffer[INPUTBUFFER_LENGTH];
 void setup() {
   // put your setup code here, to run once:
     Serial.begin(9600);             // set up Serial library at 57600 bps
-    myservo.attach(9);  // attaches the servo on pin 9 to the servo object 
+    myservo.attach(8);  // attaches the servo on pin 9 to the servo object 
 
 }
 

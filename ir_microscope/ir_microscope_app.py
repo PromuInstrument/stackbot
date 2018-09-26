@@ -4,9 +4,10 @@ from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 import logging
 from ScopeFoundryHW import attocube_ecc100
 import ScopeFoundryHW
-from ir_microscope.measurements import apd_scan, hyperspectral_scan,\
-    picoharp_attocube_slow_scans
+from ir_microscope.measurements import apd_scan, hyperspectral_scan, trpl_scan
 from ir_microscope import measurements
+import numpy as np
+from ScopeFoundry import LQRange
 
 
 logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
@@ -15,6 +16,7 @@ logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
 logging.getLogger('PyQt5').setLevel(logging.WARNING)
 logging.getLogger('LoggedQuantity').setLevel(logging.WARNING)
+logging.getLogger('pyvisa').setLevel(logging.WARNING)
 
 
 class IRMicroscopeApp(BaseMicroscopeApp):
@@ -22,8 +24,6 @@ class IRMicroscopeApp(BaseMicroscopeApp):
     name = 'ir_microscope'
     
     def setup(self):
-        
-        
         
         self.add_quickbar(load_qt_ui_file(sibling_path(__file__, 'ir_quick_access.ui')))
 
@@ -55,6 +55,9 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW
         self.add_hardware_component(ThorlabsPowerMeterHW(self))
+        
+        from ScopeFoundryHW.thorlabs_powermeter.thorlabs_powermeter_analog_readout import ThorlabsPowerMeterAnalogReadOut
+        self.add_hardware(ThorlabsPowerMeterAnalogReadOut(self))
 
         from ScopeFoundryHW.dli_powerswitch import DLIPowerSwitchHW
         self.add_hardware(DLIPowerSwitchHW(self))
@@ -74,31 +77,41 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
         self.add_hardware(XboxControllerHW(self))
         
+        from ScopeFoundryHW.filter_wheel_arduino.filter_wheel_arduino_hw import FilterWheelArduinoHW
+        self.add_hardware(FilterWheelArduinoHW(self))
+        
+        from ScopeFoundryHW.arduino_tc4.arduino_tc4_hw import ArduinoTc4HW
+        self.add_hardware(ArduinoTc4HW(self))
         
                         
         print("Adding Measurement Components")
 
         self.add_measurement(ph.PicoHarpChannelOptimizer(self))
         self.add_measurement(ph.PicoHarpHistogramMeasure(self))
-        self.add_measurement(picoharp_attocube_slow_scans.Picoharp_AttoCube_2DSlowScan(self))
+        self.add_measurement(trpl_scan.TRPL2DScan(self))
         
         from ScopeFoundryHW.winspec_remote import WinSpecRemoteReadoutMeasure
-        self.add_measurement_component(WinSpecRemoteReadoutMeasure(self))
-        self.add_measurement(hyperspectral_scan.M4Hyperspectral2DScan(self))
+        self.add_measurement(WinSpecRemoteReadoutMeasure(self))
+        self.add_measurement(hyperspectral_scan.Hyperspectral2DScan(self))
         
         #self.add_measurement(apd_scan.M4APDScanPhMeasure(self))
         
         from confocal_measure.power_scan import PowerScanMeasure
-        self.add_measurement_component(PowerScanMeasure(self))
+        self.add_measurement(PowerScanMeasure(self))
         
         from ScopeFoundryHW.thorlabs_powermeter import PowerMeterOptimizerMeasure
-        self.add_measurement_component(PowerMeterOptimizerMeasure(self))    
+        self.add_measurement(PowerMeterOptimizerMeasure(self))    
  
         from ScopeFoundryHW.attocube_ecc100.attocube_stage_control import AttoCubeStageControlMeasure
         self.add_measurement(AttoCubeStageControlMeasure(self))
 
         from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasure
-        self.add_measurement(PowermateMeasure(self))
+        choices = ['hardware/attocube_xyz_stage/z_target_position',
+                   'hardware/attocube_xyz_stage/x_target_position',
+                   'hardware/attocube_xyz_stage/y_target_position',
+                   '',
+                   ]
+        self.add_measurement(PowermateMeasure(self, n_devs=3, dev_lq_choices=choices))
         
         from ScopeFoundryHW.attocube_ecc100.attocube_home_axis_measurement import AttoCubeHomeAxisMeasurement
         self.add_measurement(AttoCubeHomeAxisMeasurement(self))
@@ -109,6 +122,18 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         from measurements.xbox_controller_measure import XboxControllerMeasure
         self.add_measurement(XboxControllerMeasure(self))
         
+        from measurements.laser_line_writer import LaserLineWriter
+        self.add_measurement(LaserLineWriter(self))
+        
+        
+        from measurements.laser_power_feedback_control import LaserPowerFeedbackControl
+        self.add_measurement(LaserPowerFeedbackControl(self))
+        
+        
+        from ir_microscope.measurements.position_recipe_control import PositionRecipeControl
+        self.add_measurement(PositionRecipeControl(self))
+        from ir_microscope.measurements.focus_recipe_control import FocusRecipeControl
+        self.add_measurement(FocusRecipeControl(self))
         
         #from ScopeFoundryHW.xbox_controller.xbox_controller_test_measure import 
         
@@ -116,11 +141,6 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         Q = self.quickbar
         
-        # Powermate
-        pm_measure = self.measurements['powermate_measure'] 
-        pm_measure.settings.dev_0_lq_path_moved.connect_to_widget(Q.powermate_0_comboBox)
-        pm_measure.settings.dev_1_lq_path_moved.connect_to_widget(Q.powermate_1_comboBox)
-
         # LED
         tenmaHW = self.hardware['tenma_powersupply']
         Q.tenma_power_on_pushButton.clicked.connect(lambda: tenmaHW.write_both(V=3.0,I=0.1,impose_connection=True))
@@ -153,7 +173,9 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         Q.z_set_lineEdit.returnPressed.connect(stage.settings.z_target_position.update_value)
         Q.z_set_lineEdit.returnPressed.connect(lambda: Q.z_set_lineEdit.setText(""))
 
-        self.measurements['AttoCubeStageControlMeasure'].settings.activation.connect_to_widget(Q.stage_live_update_checkBox)
+        self.measurements['attocube_stage_control_measure'].settings.activation.connect_to_widget(Q.stage_live_update_checkBox)
+        self.measurements['attocube_stage_control_measure'].settings.wobble.connect_to_widget(Q.stage_wobble_checkBox)
+        
         #stage.settings.move_speed.connect_to_widget(Q.nanodrive_move_slow_doubleSpinBox)   
         
         #acton spectrometer
@@ -181,6 +203,14 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         pm_opt = self.measurements['powermeter_optimizer']
         pm_opt.settings.activation.connect_to_widget(Q.power_meter_acquire_cont_checkBox)
         
+        # power meter analog readout
+        pma = self.hardware['thorlabs_powermeter_analog_readout']
+        pma.settings.voltage.connect_to_widget(Q.power_meter_analog_readout_label)
+        lpfc = self.measurements['laser_power_feedback_control']
+        lpfc.settings.set_voltage.connect_to_widget(Q.laser_power_feedback_control_set_voltage_doubleSpinBox)
+        lpfc.settings.p_gain.connect_to_widget(Q.laser_power_feedback_control_p_gain_doubleSpinBox)
+        lpfc.settings.activation.connect_to_widget(Q.laser_power_feedback_control_activation_checkBox)
+        
         # Power Wheel
         pw = self.hardware['power_wheel_arduino']
         pw.settings.encoder_pos.connect_to_widget(Q.power_wheel_encoder_pos_doubleSpinBox)
@@ -188,7 +218,16 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.move_fwd)
         Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.move_bkwd)
 
+        # Filter Wheel
+        fw = self.hardware['filter_wheel']
+        fw.settings.current_filter.connect_to_widget(Q.current_filter_doubleSpinBox)
+        Q.target_filter_lineEdit.returnPressed.connect(fw.settings.target_filter.update_value)
+        Q.target_filter_lineEdit.returnPressed.connect(lambda: Q.target_filter_lineEdit.setText(""))
 
+        #Q.move_filter_fwd_pushButton.clicked.connect(fw.increase_target_filter)
+        #Q.move_filter_bkwd_pushButton.clicked.connect(fw.decrease_target_filter)
+        Q.zero_filter_pushButton.clicked.connect(fw.zero_filter)
+        
         # Thorlabs Flip Mirror
         MFF = self.hardware['thorlabs_MFF']
         MFF.settings.pos.connect_to_widget(Q.thorlabs_MFF_comboBox)
@@ -231,28 +270,79 @@ class IRMicroscopeApp(BaseMicroscopeApp):
 
         ##########
         # app level logged quantities
-        for lq_name in ["h_axis","v_axis"]:
-            self.settings.New(lq_name, dtype=str, choices=("x", "y", "z"))
-            getattr(self.settings, lq_name).connect_to_widget(\
+        # 2d scan
+
+        
+        _2D_scans = ['trpl_2d_scan', 'hyperspectral_2d_scan']
+        
+        #Create and connect logged quantities to widget and equivalent lqs measurements
+        S = self.settings        
+        for ii,lq_name in enumerate(["h_axis","v_axis"]):
+            S.New(lq_name, dtype=str, initial='xy'[ii], choices=("x", "y", "z"), ro=False)
+            getattr(S, lq_name).connect_to_widget(\
                                     getattr(Q, lq_name+'_comboBox'))
-            getattr(self.settings, lq_name).connect_to_lq( \
-                                    getattr(self.measurements['trpl_scan'].settings,lq_name) )
-            getattr(self.settings, lq_name).connect_to_lq(\
-                                    getattr(self.measurements['hyperspectral_2d_scan'].settings,lq_name) )
-                      
+            for m in _2D_scans:
+                getattr(S, lq_name).connect_to_lq( \
+                                    getattr(self.measurements[m].settings,lq_name) )
 
         for lq_name in ['h0','h1','v0','v1','dh','dv']:
-            self.settings.New(lq_name, dtype=float, unit='um')
-            getattr(self.settings, lq_name).connect_to_widget(\
+            S.New(lq_name, dtype=float, unit='mm', ro=False, spinbox_decimals=6, spinbox_step=0.001,)
+            getattr(S, lq_name).connect_to_widget(\
                                     getattr(Q, lq_name+'_doubleSpinBox'))
-            getattr(self.settings, lq_name).connect_lq_scale( \
-                                    getattr(self.measurements['trpl_scan'].settings,lq_name), 1000)
-            getattr(self.settings, lq_name).connect_lq_scale( \
-                                    getattr(self.measurements['hyperspectral_2d_scan'].settings,lq_name), 1000)
+            for m in _2D_scans:
+                getattr(S, lq_name).connect_to_lq( \
+                                        getattr(self.measurements[m].settings,lq_name))
+                    
+        
+        for lq_name in ['Nh', 'Nv']:
+            S.New(lq_name, dtype=int, ro=False, vmin=2, initial=11)
+            getattr(S, lq_name).connect_to_widget(\
+                                    getattr(Q, lq_name+'_doubleSpinBox'))
+            for m in _2D_scans:
+                getattr(S, lq_name).connect_to_lq( \
+                                        getattr(self.measurements[m].settings,lq_name))
+
+        for lq_name in ['h_center', 'v_center', 'h_span', 'v_span']:
+            S.New(lq_name, dtype=float, unit='mm', initial=0.005, ro=False, spinbox_decimals=6, spinbox_step=0.001,)
+            getattr(S, lq_name).connect_to_widget(\
+                                                    getattr(Q, lq_name+'_doubleSpinBox'))
+            for m in _2D_scans:
+                getattr(S, lq_name).connect_to_lq( \
+                                        getattr(self.measurements[m].settings,lq_name))
+
+        
+                
+        #make connected ranges
+        self.h_range=LQRange(S.get_lq('h0'),S.get_lq('h1'),S.get_lq('dh'),S.get_lq('Nh'),
+                             S.get_lq('h_center'), S.get_lq('h_span'))
+        self.v_range=LQRange(S.get_lq('v0'),S.get_lq('v1'),S.get_lq('dv'),S.get_lq('Nv'),
+                             S.get_lq('v_center'), S.get_lq('v_span'))
+
+        self.coppy_current_position_to_2d_scan_center()
+                
+        Q.copy_current_position_to_2d_scan_center_pushButton.clicked.connect(
+            lambda:self.coppy_current_position_to_2d_scan_center(decimal_places=3.0))
+    
+
         ##########
         self.settings_load_ini('ir_microscope_defaults.ini')                        
         
+    def coppy_current_position_to_2d_scan_center(self, decimal_places=3.0):
+        S_stage = self.hardware['attocube_xyz_stage'].settings
+        current_postions = {'x':S_stage['x_position'],
+                            'y':S_stage['y_position'],
+                            'z':S_stage['z_position']}
+        if decimal_places >= 0:
+            for ax in 'xyz':
+                val = np.ceil(current_postions[ax]*10**decimal_places)/(10.0**decimal_places)
+                current_postions[ax] = val
+        
+        S = self.settings
+        S['h_center'] = current_postions[S['h_axis']]
+        S['v_center'] = current_postions[S['v_axis']]
 
+        
+        
 
 if __name__ == '__main__':
     import sys

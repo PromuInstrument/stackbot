@@ -8,6 +8,7 @@ from __future__ import division, absolute_import, print_function
 import serial
 import time
 import logging
+from threading import Lock
 
 logger = logging.getLogger(__name__)
 
@@ -15,13 +16,15 @@ class RelayArduinoInterface(object):
     
     name="relay_arduino_interface"
     
-    def __init__(self, port="COM3", debug = False):
+    def __init__(self, port="COM4", debug = False):
         self.port = port
         self.debug = debug
+        self.lock = Lock()
         if self.debug:
             logger.debug("RelayArduino.__init__, port={}".format(self.port))
             
-        self.ser = serial.Serial(port=self.port, baudrate=9600, timeout = 0.1)
+        self.ser = serial.Serial(port=self.port, baudrate=9600, timeout = 0.5, write_timeout=1)
+        
         # Store relay values
         self.ser.flush()
         time.sleep(1.7)
@@ -30,20 +33,24 @@ class RelayArduinoInterface(object):
         self.poll()
         
     def ask_cmd(self, cmd):
+        self.ser.flush()
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
         message = cmd+b'\n'
-        self.ser.write(message)
-        resp = self.ser.readline()
+        with self.lock:
+            self.ser.write(message)
+            resp = self.ser.readline()
         if self.debug:
             logger.debug("readout: {}".format(cmd))
         return resp
     
     def send_cmd(self, cmd):
+        self.ser.flush()
         if self.debug:
             logger.debug("send: {}".format(cmd))
         message = cmd+b'\n'
-        self.ser.write(message)
+        with self.lock:
+            self.ser.write(message)
         if self.debug:
             logger.debug("message: {}".format(message))
         
@@ -71,3 +78,4 @@ class RelayArduinoInterface(object):
            
     def close(self):
         self.ser.close()
+        del self.ser

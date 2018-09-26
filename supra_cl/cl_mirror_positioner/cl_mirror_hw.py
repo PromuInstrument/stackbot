@@ -50,7 +50,9 @@ class CLMirrorHW(HardwareComponent):
                                lambda ref, pos: 1000*(pos - ref))
             lq = self.settings.New("delta_" + ax_name +"_target_position", dtype=float, spinbox_decimals=4, ro=True, unit=unit)
             lq.connect_lq_math([S.get_lq('ref_'+ax_name), S.get_lq(ax_name + "_target_position")],
-                               lambda ref, pos: 1000*(pos - ref))
+                               func = lambda ref, pos: 1000*(pos - ref),
+                               reverse_func = lambda new_delta, old_lq_vals: [old_lq_vals[0], old_lq_vals[0]+0.001*new_delta]                   
+                               )
 
 
         parked = self.settings.New('parked', dtype=bool, initial=False, ro=True)
