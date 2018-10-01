@@ -29,6 +29,9 @@ class PowerScanMeasure(Measurement):
         self.collect_lifetime = self.add_logged_quantity("collect_lifetime", dtype=bool, initial=True)
         self.collect_ascom_img = self.add_logged_quantity('collect_ascom_img', dtype=bool, initial=False)
         
+        self.open_shutter_on_start = self.settings.New('open_shutter_on_start', dtype=bool, initial=True) # adding an object that can have a call back func
+        self.close_shutter_on_finish = self.settings.New('close_shutter_on_finish', dtype=bool, initial=True) # adding an object that can have a call back func
+        
         self.settings.New("x_axis", dtype=str, initial='power_wheel', choices=('power_wheel', 'pm_power'))
     
     
@@ -48,6 +51,10 @@ class PowerScanMeasure(Measurement):
         self.collect_spectrum.connect_to_widget(self.ui.collect_spectrum_checkBox)
         self.collect_lifetime.connect_to_widget(self.ui.collect_picoharp_checkBox)
         self.collect_ascom_img.connect_to_widget(self.ui.collect_ascom_img_checkBox)
+        
+        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
+        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+
         
         
         
@@ -117,6 +124,11 @@ class PowerScanMeasure(Measurement):
         # hardware and delegate measurements
         self.power_wheel_hw = self.app.hardware.power_wheel_arduino
         self.power_wheel_dev = self.power_wheel_hw.power_wheel_dev
+        shutter_servo_hw = self.app.hardware.shutter_servo
+        
+        
+        if self.settings['open_shutter_on_start'] == True:
+            shutter_servo_hw.settings['shutter_open'] = True
         
         if self.settings['collect_apd']:
             self.apd_counter_hw = self.app.hardware.apd_counter
@@ -127,6 +139,7 @@ class PowerScanMeasure(Measurement):
 
         if self.settings['collect_spectrum']:
             self.winspec_readout = self.app.measurements['winspec_readout']
+            self.winspec_readout.settings['save_h5'] = False
                    
         if self.settings['collect_ascom_img']:
             self.ascom_camera_capture = self.app.measurements.ascom_camera_capture
@@ -213,7 +226,6 @@ class PowerScanMeasure(Measurement):
                 self.spectra.append( spec )
                 self.integrated_spectra.append(spec.sum())
             if self.settings['collect_ascom_img']:
-                self.ascom_camera_capture.interrupt_measurement_called = False
                 self.ascom_camera_capture.run()
                 img = self.ascom_camera_capture.img.copy()
                 self.ascom_img_stack.append(img)
@@ -261,7 +273,14 @@ class PowerScanMeasure(Measurement):
         finally:
             self.log.info("data saved "+self.h5_file.filename)
             self.h5_file.close()
-        
+            
+
+
+        if self.settings['collect_spectrum']:
+            self.winspec_readout.settings['save_h5'] = True     
+
+        if self.settings['close_shutter_on_finish'] == True:
+            shutter_servo_hw.settings['shutter_open'] = False        
 
 
     def move_to_min_pos(self):
