@@ -34,3 +34,5 @@ ScopeFoundry/log/
 ScopeFoundryHW/thorlabs_stepper_motors/log/
 ScopeFoundry/tests/log/
 ScopeFoundryHW/pololu_servo/log/
+ScopeFoundryHW/alicat_eip/log/
+ScopeFoundryHW/pico_tc08/log/
