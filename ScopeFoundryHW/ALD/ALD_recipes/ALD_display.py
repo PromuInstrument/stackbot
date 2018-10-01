@@ -19,8 +19,10 @@ import os
 
 class ALD_Display(Measurement):
     
-    '''This module is responsible for generating the user interface layout 
-    as well as creating and updating any plots with data stored in arrays'''
+    '''
+    This module is responsible for generating the user interface layout 
+    as well as creating and updating any plots with data stored in arrays
+    '''
     
     
     name = 'ALD_display'

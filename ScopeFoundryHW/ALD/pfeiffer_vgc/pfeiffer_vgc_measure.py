@@ -5,7 +5,7 @@ Created on Nov 20, 2017
                       <alanbuckley@lbl.gov>
 '''
 
-from ScopeFoundryHW.ALD.pfeiffer_vgc.vgc_sqlite_core import SQLite_Wrapper
+# from ScopeFoundryHW.ALD.pfeiffer_vgc.vgc_sqlite_core import SQLite_Wrapper
 from ScopeFoundry import Measurement
 from PyQt5 import QtWidgets
 import pyqtgraph as pg

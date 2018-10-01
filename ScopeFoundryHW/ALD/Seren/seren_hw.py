@@ -81,9 +81,12 @@ class Seren_HW(HardwareComponent):
             self.seren.emitter_off()
 
     def RF_toggle(self):
-        """Toggles RF enable with each call by negating the value of
+        """
+        Toggles RF enable with each call by negating the value of
         *LoggedQuantity*
+        
         :attr:`self.settings.RF_enable`
+        
         """
         self.settings['RF_enable'] = not self.settings['RF_enable']
 
@@ -99,6 +102,7 @@ class Seren_HW(HardwareComponent):
         **Arguments**  **type**    **Description**
         power          int         RF power setpoint in Watts
         =============  ==========  ==========================================================
+        
         """
         self.seren.write_forward(int(power))
         
@@ -109,7 +113,7 @@ class Seren_HW(HardwareComponent):
         Connected to *LoggedQuantity*   
         :attr:`self.settings.forward_power_readout`
         
-        :returns: int. Forward power in Watts.
+        :returns: (int) Forward power in Watts.
         """
         return self.seren.read_forward()
     
@@ -120,7 +124,7 @@ class Seren_HW(HardwareComponent):
         Connected to *LoggedQuantity*   
         :attr:`self.settings.reflected_power`
         
-        :returns: int. Reflected power in Watts.
+        :returns: (int) Reflected power in Watts.
         """
         resp = self.seren.read_reflected()
         return resp

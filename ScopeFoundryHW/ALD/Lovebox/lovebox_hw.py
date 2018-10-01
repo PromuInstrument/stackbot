@@ -10,14 +10,19 @@ from ScopeFoundryHW.ALD.Lovebox.pid_controller import PIDController
 from ScopeFoundry import HardwareComponent
 
 class LoveboxHW(HardwareComponent):
-    
+    """
+    Hardware component wrapper for use with Dwyer Love Controls Series 4B 
+    PID Temperature controller.
+    In theory, this hardware component should be compatible with other 
+    commonly available temperature controllers such as the Omega Engineering CN7500 
+    since they use the same command library.
+    """
     name = 'lovebox'
-    CTRL_METHODS = ("PID", "ON/OFF", "Manual")
+    CTRL_METHODS = ("PID", "ON/OFF", "Manual", "PID_Program")
+    HEAT_COOL_CTRLS = ("Heating")
     
     initial_PID_defaults = (30.0, 28, 7)
     desired_PID_profile = (7.7, 53, 13)
-#     CTRL_METHODS = ("PID", "ON/OFF", "Manual", "PID Program Ctrl")
-#     HEAT_COOL_CTRLS = ("Heating")
 
     def setup(self):
         self.active_profile = self.desired_PID_profile
@@ -33,10 +38,6 @@ class LoveboxHW(HardwareComponent):
         self.settings.New(name='PID_preset', initial=1, dtype=int, ro=False, vmin=0, vmax=4)
         self.settings.New(name='PID_SV', initial=0.0, dtype=float, ro=False)
         
-#         self.settings.New(name='Run', initial=True, dtype=bool, ro=False)
-#         self.settings.New(name='Run PID', initial=False, dtype=bool, ro=False)
-         
-#         lq.change_ro(True)
         
     def connect(self):
         self.lovebox = PIDController(port=self.settings.port.val, debug=self.settings['debug_mode'])
@@ -75,9 +76,9 @@ class LoveboxHW(HardwareComponent):
                                                     write_func=self.lovebox.set_pid_preset,
                                                     read_func=self.lovebox.read_pid_preset)
         
-        self.settings.get_lq('PID_SV').connect_to_hardware(
-                                                    write_func=self.lovebox.set_pid_sv,
-                                                    read_func=self.lovebox.read_pid_sv)
+#         self.settings.get_lq('PID_SV').connect_to_hardware(
+#                                                     write_func=self.lovebox.set_pid_sv,
+#                                                     read_func=self.lovebox.read_pid_sv)
 
 #         self.settings.get_lq('Run').connect_to_hardware(
 #                                                     write_func=self.lovebox.set_ctrl_run,
@@ -101,10 +102,40 @@ class LoveboxHW(HardwareComponent):
             
 
     def set_control_method(self, control):
+        """
+        Sets currently active control mode.
+        
+        =============  ==========  ==========================
+        **Arguments**  **Type**    **Description**        
+        control        str         Temperature Control Method
+                                    (see table below)
+        =============  ==========  ========================== 
+        
+        ====================  ===================
+        **Control Method**    **String Entry**
+        PID                   "PID"
+        ON/OFF                "ON/OFF"
+        Manual tuning         "Manual"
+        PID program control   "PID_Program"
+        ====================  ===================
+        
+        """
         select = self.CTRL_METHODS.index(control)
         self.lovebox.set_ctrl_method(select)
         
     def set_heat_cool_control(self, control):
+        """
+        ================  ==========  ================================
+        **Arguments**     **Type**    **Description**                 
+        control           str         Heating control mode. Other 
+                                      modes are currently disabled.
+        ================  ==========  ================================        
+        
+        ==================  ==================
+        **Control Method**  **String Entry**
+        Heating             "Heating"
+        ==================  ==================  
+        """
         select = self.HEAT_COOL_CTRLS.index(control)
         self.lovebox.set_heat_cool_ctrl(select)
         

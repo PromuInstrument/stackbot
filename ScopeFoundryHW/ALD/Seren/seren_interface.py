@@ -46,7 +46,7 @@ class Seren_Interface(object):
         is called by 
         :meth:`write_cmd`
         
-        :returns: str. Decoded byte string ending in carriage return
+        :returns: (str) Decoded byte string ending in carriage return
         """
         eol = b'\r'
         leneol = len(eol)
@@ -69,7 +69,7 @@ class Seren_Interface(object):
         cmd            str         Command to be sent to the power supply over serial
         =============  ==========  ==========================================================
         
-        :returns: str. Response from the Seren PSU (Power Supply Unit).
+        :returns: (str) Response from the Seren PSU (Power Supply Unit).
         """
         message = str(cmd)+'\r'
         with self.lock:
@@ -82,11 +82,15 @@ class Seren_Interface(object):
             print("write resp: ",_resp)
         
     def emitter_on(self):
-        """Enables the RF Output."""
+        """
+        Enables the RF Output.
+        """
         self.write_cmd("G")
         
     def emitter_off(self):
-        """Disables the RF Output."""
+        """
+        Disables the RF Output.
+        """
         self.write_cmd("S")
     
     def write_forward(self, power):
@@ -97,12 +101,15 @@ class Seren_Interface(object):
         **Arguments**  **type**    **Description**
         power          int         Setpoint power in Watts
         =============  ==========  ==========================================================
+        
         """
         self.write_cmd("{} W".format(int(power))) 
     
     def read_forward(self):
         """
-        :returns: str. Forward power output, in Watts, 1 to 5 digits, 1-Watt increments.
+        Queries Forward Power.
+        
+        :returns: (str) Forward power output, in Watts, 1 to 5 digits, 1-Watt increments.
         """
         resp = self.write_cmd("W?")
         return resp
@@ -111,7 +118,7 @@ class Seren_Interface(object):
         """
         Queries Reflected Power
         
-        :returns: str. Reflected power, where XXXX is the current reflected \
+        :returns: (str) Reflected power, where XXXX is the current reflected \
         power, in Watts; length: 4 characters, fixed. Leading zeros are \
         replaced with the blank space character.
         """
@@ -133,8 +140,7 @@ class Seren_Interface(object):
     def set_analog_control(self):
         """
         Allows PSU to accept commands via its analog interface.
-        
-        """ 
+        """
         self.write_cmd("ANALOG")
 
     def close(self):
