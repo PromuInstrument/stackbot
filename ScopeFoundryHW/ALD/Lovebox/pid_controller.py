@@ -436,7 +436,7 @@ class PIDController(object):
         
     def set_pid_ctrl_run(self, run):
         """
-        Set PID program control status.
+        Sets PID program control status.
         
         ================  ==========  ================================  ===============
         **Arguments**     **Type**    **Description**                   **Valid Range**
@@ -448,8 +448,8 @@ class PIDController(object):
         
         =============  ===============
         **Argument**   **Description**
-        True           Run            
-        False          Stop           
+        True (1)       Run            
+        False (0)      Stop           
         =============  ===============
         
         """
@@ -457,7 +457,7 @@ class PIDController(object):
     
     def read_pid_ctrl_run(self):
         """
-        PID program control status.
+        Reads PID program control status.
         
         =========  ===============  ===================
         **Value**  **Description**  **Returned Value**
