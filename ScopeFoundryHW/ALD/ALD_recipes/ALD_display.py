@@ -806,14 +806,22 @@ class ALD_Display(Measurement):
 #             self.pre_deposition_button.setEnabled(False)
 
     def gases_check(self):
-        '''Check if MFC flow and system pressure conditions are ideal
-         for deposition'''
+        '''Checks if MFC flow and system pressure conditions are ideal
+        for deposition. 
+
+        Should its conditions be satisfied, its *LoggedQuantity* is updated
+        and its respective LED indicator in the Conditions Widget groupBox will appear green.'''
         flow = self.mks146.settings['MFC0_flow']
         condition = (0.7 <= flow)
         self.recipe.settings['gases_ready'] = condition
 
     def substrate_check(self):
-        '''Checks if stage is adequately heated.'''
+        '''
+        Checks if stage is adequately heated.
+        
+        Should its condition be satisfied, its *LoggedQuantity* is updated 
+        and its respective LED indicator in the Conditions Widget groupBox will appear green.
+        '''
         T = self.lovebox.settings['sv_setpoint']
         pv = self.lovebox.settings['pv_temp']
         condition = (0.9*T <= pv <= 1.1*T)
@@ -829,6 +837,9 @@ class ALD_Display(Measurement):
          * Gases ready
          * RF enabled
          * Substrate temperature hot.
+         
+        Button which initiates deposition is enabled only upon the 
+        satisfaction of the above 4 requirements.
         """
         condition1 = self.recipe.settings['pumped']
         condition2 = self.recipe.settings['gases_ready']
@@ -840,8 +851,12 @@ class ALD_Display(Measurement):
             self.deposition_button.setEnabled(False)
 
     def vent_check(self):
-        """Checks whether predeposition and deposition stages have been completed. 
-        If so, its respective LED indicator in the Conditions Widget groupBox will appear green."""
+        """
+        Checks whether predeposition and deposition stages have been completed. 
+        
+        Should its conditions be satisfied, its *LoggedQuantity* is updated 
+        and its respective LED indicator in the Conditions Widget groupBox will appear green.
+        """
         if self.recipe.dep_complete and self.recipe.predep_complete:
             self.vent_button.setEnabled(True)
         else:

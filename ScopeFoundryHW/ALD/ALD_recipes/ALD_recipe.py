@@ -91,8 +91,8 @@ class ALD_Recipe(Measurement):
     
     def create_indicator_lq_battery(self):
         """
-        Creates process indicator *LoggedQuantities* which indicate the 
-        progression of the deposition process.
+        Creates indicator *LoggedQuantities* which indicate the steps completed 
+        towards the completion of the deposition process.
         """
         self.settings.New('pumping', dtype=bool, initial=False, ro=True)
         self.settings.New('predeposition', dtype=bool, initial=False, ro=True)
@@ -379,7 +379,7 @@ class ALD_Recipe(Measurement):
     
     def shutter_pulse(self, width):
         """
-        Actuate (open, then close) shutter over interval 'width'
+        Actuate (open, then close) shutter over interval, 'width'
 
         =============  ==========================================================
         **Arguments**  **Description**
@@ -522,7 +522,12 @@ class ALD_Recipe(Measurement):
         
     def deposition(self):
         """
-        This function runs the full deposition routine. This is the parent function of 
+        This function runs the full deposition routine. 
+        Deposition routine is preceded by pre-purge step and succeeded by post-purge.
+        See
+        :meth:`run_recipe` for the full recipe when measurement loop is started.
+        
+        This is the parent function of 
         :meth:`routine`
         """
         self.dep_complete = False
