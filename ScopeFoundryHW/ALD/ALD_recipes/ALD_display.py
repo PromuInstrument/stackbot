@@ -20,8 +20,16 @@ import os
 class ALD_Display(Measurement):
     
     '''
-    This module is responsible for generating the user interface layout 
-    as well as creating and updating any plots with data stored in arrays
+    - Generates the user interface layout including user input fields and \
+    output fields displaying ALD sensor data
+    - Creates and updates any plots with data stored in arrays.
+    - This module also checks whether certain conditions in the ALD system environment are met.
+    
+    *LoggedQuantities* in \
+    :class:`ALD_Recipe` are connected to indicators defined here within 
+    :meth:`setup_conditions_widget`.
+    
+
     '''
     
     
@@ -45,7 +53,7 @@ class ALD_Display(Measurement):
         '''
 
         self.settings.New('RF_pulse_duration', dtype=int, initial=1)
-        self.settings.New('history_length', dtype=int, initial=1e6, vmin=1)
+        self.settings.New('history_length', dtype=int, initial=1e6, vmin=1, ro=True)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
         self.settings.New('display_window', dtype=int, initial=1e4, vmin=1)
 
@@ -221,6 +229,12 @@ class ALD_Display(Measurement):
         self.ui_initial_defaults()
         
     def setup_conditions_widget(self):
+        """
+        Creates conditions widget which is meant to provide end user with an 
+        array of LED indicators (and greyed out pushbuttons serving as labels.)
+        which serve as indicators of desired conditions within the ALD recipe process.
+        """
+        
         self.conditions_widget = QtWidgets.QGroupBox('Conditions Widget')
         self.conditions_widget.setLayout(QtWidgets.QGridLayout())
         self.conditions_widget.setStyleSheet(self.cb_stylesheet)
@@ -234,8 +248,6 @@ class ALD_Display(Measurement):
         self.gases_ready_button = QtWidgets.QPushButton('Gases Ready')
         self.conditions_widget.layout().addWidget(self.gases_ready_indicator, 1, 0)
         self.conditions_widget.layout().addWidget(self.gases_ready_button, 1, 1)
-        
-
     
         self.substrate_indicator = QtWidgets.QCheckBox()
         self.substrate_button = QtWidgets.QPushButton('Stage Temp. Ready')
@@ -258,6 +270,8 @@ class ALD_Display(Measurement):
         self.conditions_widget.layout().addWidget(self.recipe_complete_button, 5, 1)
     
     def setup_operations_widget(self):
+        """Creates operations widget which is meant to provide end user with push buttons 
+        which initiate specific subroutines of the ALD recipe process."""
         self.operations_widget = QtWidgets.QGroupBox('Operations Widget')
         self.operations_widget.setLayout(QtWidgets.QGridLayout())
         self.operations_widget.setStyleSheet(self.cb_stylesheet)
@@ -284,6 +298,12 @@ class ALD_Display(Measurement):
         
 
     def setup_hardware_widget(self):
+        """
+        Creates Hardware widget which contains the Plasma and Temperature readout subpanels 
+        and the Pressures and Flow subpanel. 
+        This enclosing widget was created solely for the purpose of organizing subpanel 
+        arrangement in UI.
+        """
         self.hardware_widget = QtWidgets.QGroupBox('Hardware Widget')
         self.hardware_widget.setLayout(QtWidgets.QHBoxLayout())
 
@@ -317,6 +337,15 @@ class ALD_Display(Measurement):
         self.setup_pressures_subpanel()
     
     def setup_plasma_subpanel(self):
+        """
+        Creates plasma subpanel which displays information relevant to the 
+        connected RF power supply. Subpanel also includes fields allowing for 
+        user defined setpoints to be sent to the power supply software side.
+
+        Creates UI elements related to the ALD RF power supply,
+        establishes signals and slots, as well as connections between UI elements 
+        and their associated *LoggedQuantities*.
+        """
         self.plasma_panel = QtWidgets.QGroupBox('Plasma Panel [W]')
         self.left_widget.layout().addWidget(self.plasma_panel)
 
@@ -359,6 +388,14 @@ class ALD_Display(Measurement):
         self.plasma_panel.layout().addWidget(self.plasma_right_panel)
 
     def setup_pressures_subpanel(self):
+        """Creates pressures subpanel which display pressure sensor measurements. 
+        Subpanel includes measurement value fields and input fields which allow for 
+        user defined setpoints to be sent to pressure controllers. 
+        
+        Creates UI elements related to ALD pressure controllers,
+        establishes signals and slots, as well as connections between UI elements 
+        and their associated *LoggedQuantities*.
+        """
         self.flow_input_group = QtWidgets.QGroupBox('Flow Inputs')
         self.flow_output_group = QtWidgets.QGroupBox('Flow Outputs')
         self.pressures_group = QtWidgets.QGroupBox('Pressure Outputs')
@@ -437,6 +474,8 @@ class ALD_Display(Measurement):
         self.vgc.settings.ch3_pressure_scaled.connect_to_widget(self.ch3_readout_field)
         
     def setup_thermal_control_widget(self):
+        """Creates temperature plotting widget, UI elements meant to allow the user to monitor
+        ALD system conditions, specifically temperature, through the use of live plots."""
         self.thermal_widget = QtWidgets.QGroupBox('Thermal Plot')
         self.thermal_widget.setLayout(QtWidgets.QVBoxLayout())
         self.thermal_channels = 1
@@ -460,6 +499,8 @@ class ALD_Display(Measurement):
         self.thermal_plot.addItem(self.hLine1)
     
     def setup_rf_flow_widget(self):
+        """Creates RF/MFC plotting widget. UI elements are created, which are meant to 
+        allow the user to monitor ALD system conditions through the use of live plots."""
         self.rf_widget = QtWidgets.QGroupBox('RF Plot')
         self.layout.addWidget(self.rf_widget)
         self.rf_widget.setLayout(QtWidgets.QVBoxLayout())
@@ -483,6 +524,11 @@ class ALD_Display(Measurement):
         
         
     def setup_shutter_control_widget(self):
+        """
+        Creates shutter control widget, UI elements related to ALD shutter controls,
+        establishes signals and slots, as well as connections between UI elements 
+        and their associated *LoggedQuantities*
+        """
         self.shutter_control_widget = QtWidgets.QGroupBox('Shutter Controls')
         self.shutter_control_widget.setLayout(QtWidgets.QGridLayout())
         self.shutter_control_widget.setStyleSheet(self.cb_stylesheet)
@@ -501,6 +547,11 @@ class ALD_Display(Measurement):
             self.shaul_shutter_toggle.clicked.connect(self.shutter.shutter_toggle)
 
     def setup_recipe_control_widget(self):
+        """
+        Creates recipe control widget, UI elements related to ALD recipe settings,
+        establishes signals and slots, as well as connections between UI elements 
+        and their associated *LoggedQuantities*
+        """
         self.recipe_control_widget = QtWidgets.QGroupBox('Recipe Controls')
         self.recLayout = QtWidgets.QVBoxLayout()
         self.recipe_control_widget.setLayout(self.recLayout)
@@ -600,6 +651,12 @@ class ALD_Display(Measurement):
 
         
     def setup_display_controls(self):
+        """
+        Creates a dockArea widget containing other parameters to be set by the 
+        end user, including the length of plot time history and temperature data 
+        export path.
+        """
+        
         self.display_control_widget = QtWidgets.QGroupBox('Display Control Panel')
         self.display_control_widget.setLayout(QtWidgets.QVBoxLayout())
         
@@ -679,6 +736,8 @@ class ALD_Display(Measurement):
         
     def update_display(self):
         """
+        **IMPORTANT:** *Do not call this function. The core framework already does so.*
+        
         Built in ScopeFoundry function is called repeatedly. 
         Its purpose is to update UI plot objects.
         This particular function updates plot objects depicting 
@@ -729,8 +788,8 @@ class ALD_Display(Measurement):
     
     def run(self):
         dt = 0.1
-        self.conditions_check()
         while not self.interrupt_measurement_called:
+            self.conditions_check()
             self.plot_routine()
             time.sleep(dt)
 

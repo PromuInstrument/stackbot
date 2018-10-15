@@ -6,15 +6,94 @@ Created on Nov 20, 2017
 '''
 
 from ScopeFoundry.base_app import BaseMicroscopeApp
-import logging
-from qtpy import QtCore
-from PyQt5 import QtWidgets
 
 # logging.disable(50)
 
 
 
 class ALD_App(BaseMicroscopeApp):
+    
+    """
+    This ALD app was written to control a custom Atomic Layer Deposition system. 
+    Individual modules were written completely independently of one another and 
+    can be swapped out with other ScopeFoundry modules, depending on what the 
+    user may need for their setup.
+    
+    *IMPORTANT:* :class:`ALD_Recipe` must be loaded before :class:`ALD_Display`
+    because the classes are mutually independent and all resources must be loaded 
+    in the correct order for successful application loading.
+    
+    
+    +-------------------+----------------------------+------------------------------------+
+    | Module Type       | Physical Device Name       |    Description                     |
+    +===================+============================+====================================+
+    | Hardware          | Seeed Relay Shield         | Relay controlling pulse valve      |
+    |                   | + Arduino Uno              | actuation                          |
+    |                   +----------------------------+------------------------------------+
+    |                   | J.A. Woollam Ellipsometer  | Ellipsometer                       |
+    |                   +----------------------------+------------------------------------+
+    |                   | Love Controls 4B (Dwyer)   | Temperature controller             |
+    |                   +----------------------------+------------------------------------+
+    |                   | MKS 146                    | Multi-purpose Controller           |
+    |                   |                            | (Used for Mass Flow Controller)    |
+    |                   +----------------------------+------------------------------------+
+    |                   | MKS 600                    | Throttle valve pressure            |
+    |                   |                            | controller                         |
+    |                   +----------------------------+------------------------------------+
+    |                   | Pfeiffer MaxiGauge         | Compact Gauge measurement and      |
+    |                   | TPG 256 A                  | control unit                       |
+    +-------------------+----------------------------+------------------------------------+
+    | Measurement       | Seeed Relay Shield         | Relay controlling pulse valve      |
+    |                   | + Arduino Uno              | actuation                          |
+    |                   +----------------------------+------------------------------------+
+    |                   | J.A. Woollam Ellipsometer  | Ellipsometer                       |
+    |                   +----------------------------+------------------------------------+
+    |                   | Love Controls 4B (Dwyer)   | Temperature controller             |
+    |                   +----------------------------+------------------------------------+
+    |                   | MKS 146                    | Multi-purpose Controller           |
+    |                   |                            | (Used for Mass Flow Controller)    |
+    |                   +----------------------------+------------------------------------+
+    |                   | MKS 600                    | Throttle valve pressure            |
+    |                   |                            | controller                         |
+    |                   +----------------------------+------------------------------------+
+    |                   | Pfeiffer MaxiGauge         | Compact Gauge measurement and      |
+    |                   | TPG 256 A                  | control unit                       |
+    +-------------------+----------------------------+------------------------------------+
+    
+    +-------------------+----------------------------+------------------------------------+
+    | Module Type       | Module Name                | Description                        |
+    +===================+============================+====================================+
+    | Measurement       | ALD Display                | Renders app UI. Plots sensor time  |
+    |                   |                            | histories.                         |
+    |                   +----------------------------+------------------------------------+
+    |                   | ALD Recipe                 | Carries out Atomic Layer Deposition|
+    |                   |                            | procedure.                         |
+    +-------------------+----------------------------+------------------------------------+
+    
+    **Important:** Proper loading of :class:`ALD Recipe` and :class:`ALD Display` procedure at app level. Modules must be loaded in this order since modules 
+    are co-dependent and were written separately for the sake of organization.
+    
+    .. highlight:: python
+    .. code-block:: python
+
+        from ScopeFoundry.base_app import BaseMicroscopeApp
+
+        class ALD_App(BaseMicroscopeApp):
+    
+            from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
+            self.recipe_measure = self.add_measurement(ALD_Recipe(self))
+            
+            from ScopeFoundryHW.ALD.ALD_recipes.ALD_display import ALD_Display
+            self.display_measure = self.add_measurement(ALD_Display(self)).start()
+            
+            self.recipe_measure.load_display_module()
+
+        if __name__ == '__main__':
+        import sys
+        app = ALD_App(sys.argv)
+        sys.exit(app.exec_()) 
+    
+    """
     
     name="ald_app"
     

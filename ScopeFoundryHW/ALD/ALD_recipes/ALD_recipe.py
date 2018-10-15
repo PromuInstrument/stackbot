@@ -32,6 +32,8 @@ class ALD_Recipe(Measurement):
     1. :class:`ALD_Recipe`
     2. :class:`ALD_Display`
     
+
+
     """
     name = 'ALD_Recipe'
     
@@ -247,6 +249,7 @@ class ALD_Recipe(Measurement):
         """Sums values entered into subroutine time table 
         :attr:`app.measurements.ALD_display.subroutine_table`, 
         updates said table. 
+        
         Called by 
         :meth:`sum_times` when 
         :attr:`self.settings.t3_method` is set to 'PV/Purge'."""
@@ -264,9 +267,12 @@ class ALD_Recipe(Measurement):
         
         Performs an estimated time calculation based on values in the main 
         time table 
-        :attr:`app.measurements.ALD_display.pulse_table` in 
+        :attr:`app.measurements.ALD_display.pulse_table`
+        :attr:`pulse_table` can be found in
         :attr:`app.measurements.ALD_display.recipe_control_widget`
-        its QTableModel object is defined as
+        
+        
+        its *QTableModel* object is defined as
         :attr:`app.measurements.ALD_display.subtableModel`
         """
         if self.settings['t3_method'] == 'PV/Purge':
