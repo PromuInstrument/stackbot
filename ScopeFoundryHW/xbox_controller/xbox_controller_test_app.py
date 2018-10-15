@@ -9,8 +9,28 @@ import logging
 logging.basicConfig(level='DEBUG')
 
 class XboxApp(BaseMicroscopeApp):
-	"""This class loads ScopeFoundry modules into the ScopeFoundry app related to
-	Xbox hardware and measurement modules."""
+	"""
+	This class loads ScopeFoundry modules into the ScopeFoundry app related to
+	Xbox hardware and measurement modules.
+	
+	+-------------------+----------------------------+-----------------------------------------------+
+    | Module Type       | Module Name                | Description                        			 |
+    +===================+============================+===============================================+
+    | Device			| XboxControllerDevice		 | Creates initializes pygame objects needed to  |
+	|					|							 | interface with hardware and autodetects 	 	 |
+	|					|							 | hardware characteristics such as the number   |
+	|					|							 | of buttons, hats, or sticks.				 	 |
+	+-------------------+----------------------------+-----------------------------------------------+
+    | Hardware 			| XboxControllerHW			 | Defines button maps and *LoggedQuantities*	 |
+    |					|							 | used to interpret signals received by 		 |
+	|    				|							 | pygame module from controller.				 |
+    |					|							 |									  			 |
+    +-------------------+----------------------------+-----------------------------------------------+
+    | Measurement		| XboxControllerTestMeasure  | Description						  			 |
+    |					|							 |									  			 |
+    +-------------------+----------------------------+-----------------------------------------------+
+
+	"""
 	def setup(self):
 		"""Setup function attempts to load desired modules into ScopeFoundry app
 		and activates its respective graphical user interface."""
