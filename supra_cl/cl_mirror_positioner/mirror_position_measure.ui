@@ -119,9 +119,12 @@
     </widget>
    </item>
    <item row="2" column="0" colspan="2">
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="joystick_groupBox">
      <property name="title">
       <string>Step</string>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_13">
       <item row="1" column="0">
@@ -388,6 +391,12 @@ v</string>
     <widget class="QGroupBox" name="advanced_groupBox">
      <property name="title">
       <string>Advanced</string>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
+     </property>
+     <property name="checkable">
+      <bool>true</bool>
      </property>
      <layout class="QGridLayout" name="gridLayout_5">
       <item row="2" column="0">

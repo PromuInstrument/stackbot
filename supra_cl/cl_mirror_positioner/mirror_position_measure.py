@@ -1,6 +1,6 @@
 from ScopeFoundry import Measurement
-from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
-
+from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file,\
+    groupbox_show_contents
 
 class MirrorPositionMeasure(Measurement):
     
@@ -90,7 +90,7 @@ class MirrorPositionMeasure(Measurement):
         adv_ctrl.connect_to_widget(self.ui.enable_advanced_controls_checkBox)
         adv_ctrl.add_listener(self.on_adv_ctrl)
         
-        ############### Remote Control
+        ############### Remote Control / Joystick
         self.settings.New("xy_step", dtype=str, initial='10um', choices=('1um', '10um', '100um', 'Step'))
         self.settings.New("z_step",  dtype=str, initial='10um', choices=('1um', '10um', '100um', 'Step'))
         
@@ -103,7 +103,8 @@ class MirrorPositionMeasure(Measurement):
         
         for ax in ['x', 'y','z', 'pitch', 'yaw']:
             widget = getattr(self.ui, ax + "_pos_doubleSpinBox")
-            hw_cl_mirror.settings.get_lq(ax + "_position").connect_to_widget(widget)
+            hw_cl_mirror.settings.get_lq("delta_" + ax + "_position").connect_to_widget(widget)
+            widget.setDecimals(2)
             
         
         self.settings.xy_step.connect_to_widget(self.ui.xy_step_comboBox)
@@ -116,6 +117,17 @@ class MirrorPositionMeasure(Measurement):
                 button = getattr(self.ui, "{}_{}_pushButton".format(ax, direction))
                 button.released.connect(lambda ax=ax, direction=direction: self.step_axis(ax, direction))
         
+        
+        #### Hideable sections
+        self.ui.advanced_groupBox.toggled.connect(
+            lambda show, gb=self.ui.advanced_groupBox:
+                groupbox_show_contents(gb, show))
+
+        self.ui.joystick_groupBox.toggled.connect(
+            lambda show, gb=self.ui.joystick_groupBox:
+                groupbox_show_contents(gb, show))
+
+
         
         
         
@@ -155,7 +167,9 @@ class MirrorPositionMeasure(Measurement):
         
         step = self.settings['xy_step']
         
-        int_dir = {'up':+1, 'down':-1}[direction]
+        # NOTE FLIPPED so that arrows match with SEM picture at 90deg scan rotation
+        # Changed 2018-10-15
+        int_dir = {'up':-1, 'down':+1}[direction] 
         
         
         if step == "Step":
@@ -200,6 +214,5 @@ class MirrorPositionMeasure(Measurement):
             self.hw_angle.settings[ax + "_target_position"] += int_dir*deg_step
         
 
-            
         
         
