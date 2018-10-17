@@ -118,7 +118,7 @@ class MirrorPositionMeasure(Measurement):
                 button.released.connect(lambda ax=ax, direction=direction: self.step_axis(ax, direction))
         
         
-        #### Hideable sections
+        #### Hideable sections        
         self.ui.advanced_groupBox.toggled.connect(
             lambda show, gb=self.ui.advanced_groupBox:
                 groupbox_show_contents(gb, show))
@@ -127,7 +127,14 @@ class MirrorPositionMeasure(Measurement):
             lambda show, gb=self.ui.joystick_groupBox:
                 groupbox_show_contents(gb, show))
 
-
+        self.ui.recipes_groupBox.toggled.connect(
+            lambda show, gb=self.ui.recipes_groupBox:
+                groupbox_show_contents(gb, show))
+        
+        
+        self.ui.advanced_groupBox.setChecked(False)
+        self.ui.joystick_groupBox.setChecked(True)
+        self.ui.recipes_groupBox.setChecked(True)
         
         
         
