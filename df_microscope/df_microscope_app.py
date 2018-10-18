@@ -31,8 +31,8 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         #from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
         #self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
         
-        from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW # imports the power wheel
-        self.add_hardware_component(PololuMaestroServoHW(self))# adds the power wheel
+        #from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW # imports the power wheel
+        #self.add_hardware_component(PololuMaestroServoHW(self))# adds the power wheel
         
         from ScopeFoundryHW.newport_esp300 import ESP300AxisHW
         self.add_hardware(ESP300AxisHW(self))
@@ -43,9 +43,13 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_integrated_stepper.thorlabs_integrated_stepper_motor_hw import ThorlabsIntegratedStepperMottorHW
         self.add_hardware(ThorlabsIntegratedStepperMottorHW(self))
         
-        from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW
-        self.add_hardware(PololuMaestroServoHW(self, name='power_wheel'))
+#         from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW
+#         self.add_hardware(PololuMaestroServoHW(self, name='power_wheel'))
 
+
+        from ScopeFoundryHW.pololu_servo.multi_servo_hw import PololuMaestroHW
+        self.add_hardware(PololuMaestroHW(self, servo_names=[(1, "power_wheel"), 
+                                                             (2, "polarizer")]))
 
         print("Adding Measurement Components")
         
@@ -106,11 +110,19 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         #mcl.settings.move_speed.connect_to_widget(Q.nanodrive_move_slow_doubleSpinBox)        
         
         # Power Wheel
-        pw = self.hardware['power_wheel']
-        pw.settings.position.connect_to_widget(Q.powerwheel_encoder_pos_doubleSpinBox)
-        pw.settings.jog_step.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
-        Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.jog_fwd)
-        Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.jog_bkwd)
+#         pw = self.hardware['power_wheel']
+#         pw.settings.position.connect_to_widget(Q.powerwheel_encoder_pos_doubleSpinBox)
+#         pw.settings.jog_step.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
+#         Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.jog_fwd)
+#         Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.jog_bkwd)
+        p = self.hardware['pololu_maestro']
+        p.settings.power_wheel_position.connect_to_widget(Q.powerwheel_encoder_pos_doubleSpinBox)
+        p.settings.power_wheel_jog_step.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
+        Q.powerwheel_move_fwd_pushButton.clicked.connect(lambda: p.jog_fwd('power_wheel'))
+        Q.powerwheel_move_bkwd_pushButton.clicked.connect(lambda: p.jog_bkwd('power_wheel'))
+
+        #
+        p.settings.polarizer_position.connect_to_widget(Q.polarizer_pos_doubleSpinBox)
 
         #connect events
         apd = self.hardware['apd_counter']
