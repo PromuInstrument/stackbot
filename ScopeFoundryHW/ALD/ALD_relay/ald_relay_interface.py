@@ -102,7 +102,9 @@ class ALDRelayInterface(object):
         self.write_cmd(cmd)
         
     def send_pulse(self, pin, duration):
-        """Order a relay to send a pulse.
+        """
+        Order a relay to send a pulse.
+        
         =============  ==========  ==================================================  =================
         **Arguments**  **Type**    **Description**                                     **Valid Range**
         pin            int         Relay channel to actuate                            (1,4)
