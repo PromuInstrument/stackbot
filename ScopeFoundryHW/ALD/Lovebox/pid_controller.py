@@ -16,6 +16,7 @@ class PIDController(object):
     
     Communications library works with PID controllers including but not 
     limited to the following models:
+    
     * Omega CN7500
     * Dwyer Love Controls 4B
     
