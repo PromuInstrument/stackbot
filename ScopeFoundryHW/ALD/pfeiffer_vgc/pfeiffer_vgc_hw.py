@@ -36,6 +36,11 @@ class Pfeiffer_VGC_Hardware(HardwareComponent):
         self.ch1_index, self.ch2_index, self.ch3_index = (0,1,2)
         
     def connect(self):
+        """
+        Establishes connections between *LoggedQuantities* and their readout functions.
+        
+        Automatically updates *LoggedQuantities* once to reflect system state at time of established connection.
+        """
         self.vgc = Pfeiffer_VGC_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
 
         self.settings.ch1_pressure.connect_to_hardware(read_func=getattr(self,'read_ch1_pressure'))
