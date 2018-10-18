@@ -24,42 +24,75 @@ class ALDRelayHW(HardwareComponent):
         self.enable_pulse()
 
     def create_pulse_lq(self):
+        """
+        Generates *LoggedQuantities* responsible for issuing or reading pulse signals.
+        """
         for relay in range(1,self.ENABLED_PORTS+1,1):
             self.settings.New(name="pulse{}".format(relay), initial=False, dtype=bool, ro=False)
             self.settings.New(name="pulse_width{}".format(relay), initial=10, dtype=int, ro=False)
 
     def enable_pulse(self):
+        """
+        Establishes Hardware--:class:`LoggedQuantity` connection for relay pulse signals.
+        """
         for relay in range(1,self.ENABLED_PORTS+1,1):
             self.settings.get_lq('pulse{}'.format(relay)).connect_to_hardware(
                                     write_func=getattr(self,'write_pulse{}'.format(relay)))
 
     def create_toggle_lq(self):
+        """
+        Generates *LoggedQuantities* responsible for issuing or reading pulse signals.
+        """
         for relay in range(1,self.ENABLED_PORTS+1,1):
             self.settings.New(name="relay{}".format(relay), initial=False, dtype=bool, ro=False)
         
     def enable_toggle(self):
+        """Establishes Hardware--:class:`LoggedQuantity` connection for relay toggle signals."""
         for relay in range(1,self.ENABLED_PORTS+1,1):
             self.settings.get_lq('relay{}'.format(relay)).connect_to_hardware(
                                     write_func=getattr(self, 'write_relay{}'.format(relay)))
         
 
     def populate(self):
-        "Populate logged quantities to reflect changes in self.relay.relay_array"
+        """
+        Populate *LoggedQuantities* to reflect changes in 
+        :attr:`self.relay.relay_array`
+        """
         for i in range(1,5,1):
             self.settings['pulse{}'.format(i)] = self.relay.relay_array[:,self.relay.pulse_running][i-1]
 
     
     
     def write_relay1(self, value):
+        """
+        Writes relay toggle signal to relay hardware, specifically Relay 1.
+        Wraps lower level function contained in 
+        :class:`ALDRelayInterface`
+        """
         self.relay.write_state(0, value)
         
     def write_relay2(self, value):
+        """
+        Writes relay toggle signal to relay hardware, specifically Relay 2.
+        Wraps lower level function contained in 
+        :class:`ALDRelayInterface`
+        """
         self.relay.write_state(1, value)
     
     def write_relay3(self, value):
+        """
+        Writes relay toggle signal to relay hardware, specifically Relay 3.
+        Wraps lower level function contained in 
+        :class:`ALDRelayInterface`
+        """
         self.relay.write_state(2, value)
         
     def write_relay4(self, value):
+        """
+        Writes relay toggle signal to relay hardware, specifically Relay 4.
+        Wraps lower level function contained in 
+        :class:`ALDRelayInterface`
+        """
         self.relay.write_state(3, value)                       
 
     def write_pulse1(self, value):
