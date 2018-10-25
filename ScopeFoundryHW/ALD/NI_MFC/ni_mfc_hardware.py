@@ -37,7 +37,8 @@ class NI_MFC(HardwareComponent):
                 continue
             self.line_pins[line_name] = pin_i
             self.settings.New(name=line_name, dtype=bool)
-        
+            self.settings.get_lq(line_name).add_listener(self.override)
+            
         self.settings.New(name='write_flow', dtype=float, initial=0.0, vmin=0.0, vmax = 20.0, ro=False)
         self.settings.New(name='read_flow', dtype=float, initial=0.0, ro=False)
 
@@ -69,6 +70,21 @@ class NI_MFC(HardwareComponent):
                                             write_func=self.write_flow)
         self.settings.get_lq('read_flow').connect_to_hardware(
                                             read_func=self.read_flow)
+
+    def override(self):
+        """
+        Function ensures that both overrides are unable \
+        to be simultaneously activated.
+        
+        This function is set as the listener function for 
+        :attr:`self.settings.valve_open` and :attr:`self.settings.valve_closed`
+        """
+        if self.settings['valve_open']:
+            self.settings['valve_close'] = False
+        elif self.settings['valve_close']:
+            self.settings['valve_open'] = False
+        else:
+            pass
 
     def write_flow(self, flow):
         """
