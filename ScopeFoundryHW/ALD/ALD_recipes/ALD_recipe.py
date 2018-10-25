@@ -24,7 +24,7 @@ class ALD_Recipe(Measurement):
     down to initial levels.
     
     This Measurement module and the 
-    :class:`ALD_Display` module are co-dependent and make calls to functions in the other module.
+    :class:`ALD_Display` module are interdependent and make calls to functions in the other module.
     These modules should be loaded by 
     :class:`ALD_App`
     in the following order:
@@ -266,14 +266,59 @@ class ALD_Recipe(Measurement):
         Sometimes... :0
         
         Performs an estimated time calculation based on values in the main 
-        time table 
-        :attr:`app.measurements.ALD_display.pulse_table`
-        :attr:`pulse_table` can be found in
-        :attr:`app.measurements.ALD_display.recipe_control_widget`
+        time table. Every time the user updates data in the table, this function is called 
+        to recalculate estimated recipe time requirements
         
         
-        its *QTableModel* object is defined as
-        :attr:`app.measurements.ALD_display.subtableModel`
+        
+        The table widget consists of a hierarchy of PyQt5 classes.
+        The structure of the table widget assumes the following form:
+        
+        * :class:`QWidget`
+            * :class:`QTableView`
+                * :class:`QTableModel`
+        
+        More specific to the case of the subroutine table:
+        
+        * :class:`QWidget` (:attr:`subroutine_table_widget`)
+            * :class:`QTableView` (:attr:`subroutine_table`)
+                * :class:`QTableModel` (:attr:`subtableModel`)
+                
+        And in the case of the main recipe table:
+        
+        * :class:`QWidget` (:attr:`table_widget`)
+            * :class:`QTableView` (:attr:`pulse_table`)
+                * :class:`QTableModel` (:attr:`tableModel`)
+                
+        See \
+        :meth:`ALD.ALD_recipes.ALD_display.setup_recipe_control_widget` \
+        for details.
+        
+        
+        **Example of table creation using PyQt5 and ScopeFoundry:**
+        
+        .. highlight:: python
+        .. code-block:: python
+        
+            self.table_widget = QtWidgets.QWidget()
+            self.table_widget_layout = QtWidgets.QHBoxLayout()
+            self.table_widget.setLayout(self.table_widget_layout)
+    
+            self.table_label = QtWidgets.QLabel('Table Label')
+            self.table_widget.layout().addWidget(self.table_label)
+    
+            self.table = QtWidgets.QTableView()
+            ## Optional height constraint.
+            self.table.setMaximumHeight(65)
+            
+            names = ['List', 'of', 'column', 'labels']
+            
+            self.tableModel = ArrayLQ_QTableModel(self.displayed_array, col_names=names)
+            self.table.setModel(self.tableModel)
+            self.table_widget.layout().addWidget(self.table)
+            
+            ### Add widget to enclosing outer widget
+            self.containing_widget.layout().addWidget(self.table_widget)
         """
         if self.settings['t3_method'] == 'PV/Purge':
             self.settings['time'][0][3] = self.subroutine_sum()
