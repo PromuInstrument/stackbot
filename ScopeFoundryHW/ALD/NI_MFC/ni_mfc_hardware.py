@@ -21,7 +21,13 @@ class NI_MFC(HardwareComponent):
         self.line_names = ['valve_close', 'valve_open']
         HardwareComponent.__init__(self, app, debug)
         
-    def setup(self):        
+    def setup(self):
+        """
+        * Defines I/O port addresses. 
+        * Establishes *LoggedQuantities*
+        * Establishes :attr:`dict` relating pin numbers \
+            and the labels used to refer to said pins.
+        """        
         self.dio_port = 'Dev1/port0/line0:7'
         
         self.set_voltage_channel = '/Dev1/ao0'
@@ -47,6 +53,11 @@ class NI_MFC(HardwareComponent):
         """
         Creates and instantiates NI task objects thereby creating a connection to the NI ADC/DAC controller
         Connects logged quantities to their respective functions.
+        
+        :attr:`self.settings.valve_open` and :attr:`self.settings.valve_closed` serve as override functions.
+        If neither are active, the Mass Flow Controller opens to a degree defined by the setpoint.
+
+        
         """
         self.dio_task = mx.Task()
         self.dio_task.CreateDOChan(self.dio_port, "", mx.DAQmx_Val_ChanForAllLines)
