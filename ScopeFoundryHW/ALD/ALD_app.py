@@ -19,58 +19,58 @@ class ALD_App(BaseMicroscopeApp):
     can be swapped out with other ScopeFoundry modules, depending on what the 
     user may need for their setup.
     
-    *IMPORTANT:* :class:`ALD_Recipe` must be loaded before :class:`ALD_Display`
-    because the classes are mutually independent and all resources must be loaded 
+    *IMPORTANT:* :class:`ALD_Recipe <ALD.ALD_recipes.ALD_recipe>` must be loaded before :class:`ALD_Display <ALD.ALD_recipes.ALD_display>`
+    because the classes are interdependent and all resources must be loaded 
     in the correct order for successful application loading.
     
     
-    +-------------------+----------------------------+------------------------------------+
-    | Module Type       | Physical Device Name       |    Description                     |
-    +===================+============================+====================================+
-    | Hardware          | Seeed Relay Shield         | Relay controlling pulse valve      |
-    |                   | + Arduino Uno              | actuation                          |
-    |                   +----------------------------+------------------------------------+
-    |                   | J.A. Woollam Ellipsometer  | Ellipsometer                       |
-    |                   +----------------------------+------------------------------------+
-    |                   | Love Controls 4B (Dwyer)   | Temperature controller             |
-    |                   +----------------------------+------------------------------------+
-    |                   | MKS 146                    | Multi-purpose Controller           |
-    |                   |                            | (Used for Mass Flow Controller)    |
-    |                   +----------------------------+------------------------------------+
-    |                   | MKS 600                    | Throttle valve pressure            |
-    |                   |                            | controller                         |
-    |                   +----------------------------+------------------------------------+
-    |                   | Pfeiffer MaxiGauge         | Compact Gauge measurement and      |
-    |                   | TPG 256 A                  | control unit                       |
-    +-------------------+----------------------------+------------------------------------+
-    | Measurement       | Seeed Relay Shield         | Relay controlling pulse valve      |
-    |                   | + Arduino Uno              | actuation                          |
-    |                   +----------------------------+------------------------------------+
-    |                   | J.A. Woollam Ellipsometer  | Ellipsometer                       |
-    |                   +----------------------------+------------------------------------+
-    |                   | Love Controls 4B (Dwyer)   | Temperature controller             |
-    |                   +----------------------------+------------------------------------+
-    |                   | MKS 146                    | Multi-purpose Controller           |
-    |                   |                            | (Used for Mass Flow Controller)    |
-    |                   +----------------------------+------------------------------------+
-    |                   | MKS 600                    | Throttle valve pressure            |
-    |                   |                            | controller                         |
-    |                   +----------------------------+------------------------------------+
-    |                   | Pfeiffer MaxiGauge         | Compact Gauge measurement and      |
-    |                   | TPG 256 A                  | control unit                       |
-    +-------------------+----------------------------+------------------------------------+
+    +-------------------+--------------------------------------------------------------------------------------+------------------------------------+
+    | Module Type       | Physical Device Name                                                                 |    Description                     |
+    +===================+======================================================================================+====================================+
+    | Hardware          | :class:`Arduino Uno + Seeed Relay Shield <ALD.ALD_relay.ald_relay_hardware>`         | Relay controlling pulse valve      |
+    |                   |                                                                                      | actuation                          |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`J.A. Woollam Ellipsometer <ALD.ellipsometer.ellipsometer_hw>`                | Ellipsometer                       |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`Love Controls 4B (Dwyer) <ALD.Lovebox.lovebox_hw>`                           | Temperature controller             |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`MKS 146 <ALD.MKS_146.mks_146_hw>`                                            | Multi-purpose Controller           |
+    |                   |                                                                                      | (Used for Mass Flow Controller)    |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`MKS 600 <ALD.MKS_600.mks_600_hw>`                                            | Throttle valve pressure            |
+    |                   |                                                                                      | controller                         |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`Pfeiffer MaxiGauge TPG 256 A <ALD.pfeiffer_vgc.pfeiffer_vgc_hw>`             | Compact Gauge measurement and      |
+    |                   |                                                                                      | control unit                       |
+    +-------------------+--------------------------------------------------------------------------------------+------------------------------------+
+    | Measurement       | :class:`Arduino Uno + Seeed Relay Shield <ALD.ALD_relay.ald_relay_measure>`          | Relay controlling pulse valve      |
+    |                   |                                                                                      | actuation                          |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`J.A. Woollam Ellipsometer <ALD.ellipsometer.ellipsometer_measure>`           | Ellipsometer                       |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`Love Controls 4B (Dwyer) <ALD.Lovebox.lovebox_measure>`                      | Temperature controller             |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`MKS 146 <ALD.MKS_146.mks_146_measure>`                                       | Multi-purpose Controller           |
+    |                   |                                                                                      | (Used for Mass Flow Controller)    |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`MKS 600 <ALD.MKS_600.mks_600_measure>`                                       | Throttle valve pressure            |
+    |                   |                                                                                      | controller                         |
+    |                   +--------------------------------------------------------------------------------------+------------------------------------+
+    |                   | :class:`Pfeiffer MaxiGauge TPG 256 A <ALD.pfeiffer_vgc.pfeiffer_vgc_measure>`        | Compact Gauge measurement and      |
+    |                   |                                                                                      | control unit                       |
+    +-------------------+--------------------------------------------------------------------------------------+------------------------------------+
     
-    +-------------------+----------------------------+------------------------------------+
-    | Module Type       | Module Name                | Description                        |
-    +===================+============================+====================================+
-    | Measurement       | ALD Display                | Renders app UI. Plots sensor time  |
-    |                   |                            | histories.                         |
-    |                   +----------------------------+------------------------------------+
-    |                   | ALD Recipe                 | Carries out Atomic Layer Deposition|
-    |                   |                            | procedure.                         |
-    +-------------------+----------------------------+------------------------------------+
+    +-------------------+-------------------------------------------------------+------------------------------------+
+    | Module Type       | Module Name                                           | Description                        |
+    +===================+=======================================================+====================================+
+    | Measurement       | :class:`ALD_Display <ALD.ALD_recipes.ALD_display>`    | Renders app UI. Plots sensor time  |
+    |                   |                                                       | histories.                         |
+    |                   +-------------------------------------------------------+------------------------------------+
+    |                   | :class:`ALD_Recipe <ALD.ALD_recipes.ALD_recipe>`      | Carries out Atomic Layer Deposition|
+    |                   |                                                       | procedure.                         |
+    +-------------------+----------------------------+--------------------------+------------------------------------+
     
-    **Important:** Proper loading of :class:`ALD Recipe` and :class:`ALD Display` procedure at app level. Modules must be loaded in this order since modules 
+    **Important:** Proper loading of :class:`ALD_Recipe <ALD.ALD_recipes.ALD_recipe>` and :class:`ALD_Display <ALD.ALD_recipes.ALD_display>` procedure at app level. Modules must be loaded in this order since modules 
     are co-dependent and were written separately for the sake of organization.
     
     .. highlight:: python
@@ -89,9 +89,9 @@ class ALD_App(BaseMicroscopeApp):
             self.recipe_measure.load_display_module()
 
         if __name__ == '__main__':
-        import sys
-        app = ALD_App(sys.argv)
-        sys.exit(app.exec_()) 
+            import sys
+            app = ALD_App(sys.argv)
+            sys.exit(app.exec_()) 
     
     """
     
