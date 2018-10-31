@@ -16,9 +16,9 @@ class PowerScanMeasure(Measurement):
     def setup(self):
         
         self.power_wheel_min = self.add_logged_quantity("power_wheel_min", 
-                                                          dtype=int, unit='', initial=0, vmin=-3200, vmax=+3200, ro=False)
+                                                          dtype=float, unit='', initial=0, vmin=-3200, vmax=+3200, ro=False)
         self.power_wheel_max = self.add_logged_quantity("power_wheel_max", 
-                                                          dtype=int, unit='', initial=1000, vmin=-3200, vmax=+3200, ro=False)
+                                                          dtype=float, unit='', initial=280, vmin=-3200, vmax=+3200, ro=False)
         self.power_wheel_ndatapoints = self.add_logged_quantity("power_wheel_ndatapoints", 
                                                           dtype=int, unit='', initial=100, vmin=1, vmax=3200, ro=False)
         
@@ -115,8 +115,9 @@ class PowerScanMeasure(Measurement):
 
     def run(self):
         # hardware and delegate measurements
-        self.power_wheel_hw = self.app.hardware.power_wheel_arduino
-        self.power_wheel_dev = self.power_wheel_hw.power_wheel_dev
+        #self.power_wheel_hw = self.app.hardware.power_wheel_arduino
+        #self.power_wheel_dev = self.power_wheel_hw.power_wheel_dev
+        self.power_wheel_hw = self.app.hardware['power_wheel']
         
         if self.settings['collect_apd']:
             self.apd_counter_hw = self.app.hardware.apd_counter
@@ -136,19 +137,25 @@ class PowerScanMeasure(Measurement):
         
         #####
         self.Np = Np = self.power_wheel_ndatapoints.val
-        self.step_size = int( (self.power_wheel_max.val-self.power_wheel_min.val)/Np )
+#        self.step_size = int( (self.power_wheel_max.val-self.power_wheel_min.val)/Np )
         
+        self.power_wheel_position = np.linspace(self.settings['power_wheel_min'], self.settings['power_wheel_max'], self.Np)
+        self.step_size = self.power_wheel_position[1] - self.power_wheel_position[0]
     
         if self.settings['up_and_down_sweep']:
             self.direction = np.ones(Np*2) # step up
             self.direction[Np] = 0 # don't step at the top!
             self.direction[Np+1:] = -1 # step down
             Np = self.Np = 2*Np
+            
+            self.power_wheel_position = np.concatenate([self.power_wheel_position, self.power_wheel_position[::-1]])
+            
         else:
             self.direction = np.ones(Np)
     
         # Create Data Arrays    
-        self.power_wheel_position = np.zeros(Np)      
+        #self.power_wheel_position = np.zeros(Np, dtype=float)      
+
         
         self.pm_powers = np.zeros(Np, dtype=float)
         self.pm_powers_after = np.zeros(Np, dtype=float)
@@ -183,15 +190,22 @@ class PowerScanMeasure(Measurement):
                 break
             
             # record power wheel position
-            self.power_wheel_position[ii] = self.power_wheel_hw.encoder_pos.read_from_hardware()
+            #self.power_wheel_position[ii] = self.power_wheel_hw.encoder_pos.read_from_hardware()
+            #self.power_wheel_hw.settings.raw_position.read_from_hardware()
+            self.power_wheel_hw.settings['position'] = self.power_wheel_position[ii]
+            print("moving power wheel", "now at ", self.power_wheel_hw.settings['position'])
+            time.sleep(0.050)
+
             
             # collect power meter value
             self.pm_powers[ii]=self.collect_pm_power_data()
             
             # read detectors
             if self.settings['collect_apd']:
+                time.sleep(self.apd_counter_hw.settings['int_time'])
                 self.apd_count_rates[ii] = \
-                    self.apd_counter_hc.apd_count_rate.read_from_hardware()
+                    self.apd_counter_hw.settings.count_rate.read_from_hardware()
+                
             if self.settings['collect_lifetime']:
                 ph = self.ph_hw.picoharp
                 ph.start_histogram()
@@ -213,6 +227,7 @@ class PowerScanMeasure(Measurement):
                 self.spectra.append( spec )
                 self.integrated_spectra.append(spec.sum())
             if self.settings['collect_ascom_img']:
+                self.ascom_camera_capture.interrupt_measurement_called = False
                 self.ascom_camera_capture.run()
                 img = self.ascom_camera_capture.img.copy()
                 self.ascom_img_stack.append(img)
@@ -223,10 +238,15 @@ class PowerScanMeasure(Measurement):
             self.pm_powers_after[ii]=self.collect_pm_power_data()
 
             # move to new power wheel position
-            self.power_wheel_dev.write_steps_and_wait(self.step_size*self.direction[ii])
-            time.sleep(0.5)
-            self.power_wheel_hw.encoder_pos.read_from_hardware()
-
+            #self.power_wheel_dev.write_steps_and_wait(self.step_size*self.direction[ii])
+            #time.sleep(0.5)
+            #self.power_wheel_hw.encoder_pos.read_from_hardware()
+            #delta = self.step_size*self.direction[ii]
+            #print("moving power wheel", delta)
+            #self.power_wheel_hw.settings['position'] += delta
+            #print("moving power wheel", delta, "now at ", self.power_wheel_hw.settings['position'])
+            
+            
         # write data to h5 file on disk
         
         self.t0 = time.time()
@@ -258,12 +278,12 @@ class PowerScanMeasure(Measurement):
             H['power_wheel_position'] = self.power_wheel_position
             H['direction'] = self.direction
         finally:
+            self.log.info("data saved "+self.h5_file.filename)
             self.h5_file.close()
         
-        print(self.name, 'data saved', self.fname)
 
 
-    def move_to_min_pos(self):
+        """    def move_to_min_pos(self):
         self.power_wheel_dev.read_status()
         
         delta_steps = self.power_wheel_min.val - self.power_wheel_hw.encoder_pos.read_from_hardware()
@@ -271,7 +291,10 @@ class PowerScanMeasure(Measurement):
             #print 'moving to min pos'
             self.power_wheel_dev.write_steps_and_wait(delta_steps)
             #print 'done moving to min pos'
-
+"""
+    def move_to_min_pos(self):
+        self.power_wheel_hw.settings['position'] = self.settings['power_wheel_min']
+        time.sleep(2.0)
     
     def collect_pm_power_data(self):
         PM_SAMPLE_NUMBER = 10

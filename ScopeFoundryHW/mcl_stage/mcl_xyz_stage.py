@@ -21,6 +21,7 @@ class MclXYZStageHW(HardwareComponent):
         # Created logged quantities
         lq_params = dict(  dtype=float, ro=True,
                            initial = -1,
+                           spinbox_decimals=3,
                            vmin=-1,
                            vmax=100,
                            si = False,
@@ -31,6 +32,7 @@ class MclXYZStageHW(HardwareComponent):
         
         lq_params = dict(  dtype=float, ro=False,
                            initial = -1,
+                           spinbox_decimals=3,
                            vmin=-1,
                            vmax=100,
                            unit='um')
@@ -39,7 +41,9 @@ class MclXYZStageHW(HardwareComponent):
         self.z_target = self.add_logged_quantity("z_target", **lq_params)        
         
         
-        lq_params = dict(unit="um", dtype=float, ro=True, initial=100, si=False)
+        lq_params = dict(unit="um", dtype=float, ro=True, initial=100, 
+                         spinbox_decimals=3,
+                         si=False)
         self.x_max = self.add_logged_quantity("x_max", **lq_params)
         self.y_max = self.add_logged_quantity("y_max", **lq_params)
         self.z_max = self.add_logged_quantity("z_max", **lq_params)
@@ -54,37 +58,12 @@ class MclXYZStageHW(HardwareComponent):
         
         
         self.move_speed = self.add_logged_quantity(name='move_speed',
-                                                             initial = 1.0,
+                                                             initial = 100.0,
                                                              unit = "um/s",
                                                              vmin = 1e-4,
                                                              vmax = 1000,
                                                              si = False,
                                                              dtype=float)        
-        
-        # connect GUI
-        if hasattr(self.app.ui, "cx_doubleSpinBox"):
-            self.x_position.connect_bidir_to_widget(self.app.ui.cx_doubleSpinBox)
-            self.app.ui.x_set_lineEdit.returnPressed.connect(self.x_target.update_value)
-            self.app.ui.x_set_lineEdit.returnPressed.connect(lambda: self.app.ui.x_set_lineEdit.setText(""))
-
-        if hasattr(self.app.ui, "cy_doubleSpinBox"):
-            self.y_position.connect_bidir_to_widget(self.app.ui.cy_doubleSpinBox)
-            self.app.ui.y_set_lineEdit.returnPressed.connect(self.y_target.update_value)
-            self.app.ui.y_set_lineEdit.returnPressed.connect(lambda: self.app.ui.y_set_lineEdit.setText(""))
-
-        if hasattr(self.app.ui, "cz_doubleSpinBox"):
-            self.z_position.connect_bidir_to_widget(self.app.ui.cz_doubleSpinBox)
-            self.app.ui.z_set_lineEdit.returnPressed.connect(self.z_target.update_value)
-            self.app.ui.z_set_lineEdit.returnPressed.connect(lambda: self.app.ui.z_set_lineEdit.setText(""))
-
-        if hasattr(self.app.ui, "nanodrive_move_slow_doubleSpinBox"):
-            self.move_speed.connect_bidir_to_widget(
-                                  self.app.ui.nanodrive_move_slow_doubleSpinBox)
-        
-        if hasattr(self.app.ui, "h_axis_comboBox"):
-            self.h_axis.connect_bidir_to_widget(self.app.ui.h_axis_comboBox)
-        if hasattr(self.app.ui, "v_axis_comboBox"):
-            self.v_axis.connect_bidir_to_widget(self.app.ui.v_axis_comboBox)
         
         # connect logged quantities together
         self.x_target.updated_value[()].connect(self.read_pos)
@@ -104,6 +83,8 @@ class MclXYZStageHW(HardwareComponent):
         new_pos[self.MCL_AXIS_ID['X']-1] = x
         new_pos[self.MCL_AXIS_ID['Y']-1] = y
         new_pos[self.MCL_AXIS_ID['Z']-1] = z
+        if self.nanodrive.num_axes < 3:
+            new_pos[2] = None
         self.nanodrive.set_pos_slow(*new_pos)
 
         self.read_pos()
@@ -113,12 +94,14 @@ class MclXYZStageHW(HardwareComponent):
         new_pos[self.MCL_AXIS_ID['X']-1] = x
         new_pos[self.MCL_AXIS_ID['Y']-1] = y
         new_pos[self.MCL_AXIS_ID['Z']-1] = z
+        if self.nanodrive.num_axes < 3:
+            new_pos[2] = None
         self.nanodrive.set_pos(*new_pos)
 
     
     @QtCore.Slot()
     def read_pos(self):
-        self.log.debug("read_pos")
+        if self.settings['debug_mode']: self.log.debug("read_pos")
         if self.settings['connected']:
             self.x_position.read_from_hardware()
             self.y_position.read_from_hardware()
@@ -159,19 +142,17 @@ class MclXYZStageHW(HardwareComponent):
         
         self.move_speed.hardware_read_func = self.nanodrive.get_max_speed
         self.move_speed.hardware_set_func =  self.nanodrive.set_max_speed
+        self.move_speed.write_to_hardware()
         
         self.read_from_hardware()
 
     def disconnect(self):
         #disconnect logged quantities from hardware
-        for lq in self.settings.as_dict().values():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
-        
+        self.settings.disconnect_all_from_hardware()
+
         #disconnect hardware
         if hasattr(self, 'nanodrive'):
             self.nanodrive.close()
-        
             # clean up hardware object
             del self.nanodrive
         

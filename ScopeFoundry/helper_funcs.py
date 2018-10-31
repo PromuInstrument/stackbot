@@ -4,6 +4,7 @@ from collections import OrderedDict
 import os
 import logging
 import pyqtgraph as pg
+import threading
 
 class OrderedAttrDict(object):
 
@@ -61,6 +62,14 @@ def load_qt_ui_file(ui_filename):
         #ui_file.close()
     ### qtpy / PyQt version
     ui = uic.loadUi(ui_filename)
+    return ui
+
+def load_qt_ui_from_pkg(package, filename):
+    import pkgutil
+    from io import StringIO
+    ui_data = pkgutil.get_data(package, filename).decode() 
+    ui_io = StringIO(ui_data)
+    ui = uic.loadUi(ui_io)
     return ui
 
 def confirm_on_close(widget, 
@@ -215,3 +224,47 @@ def get_logger_from_class(obj):
 
 def str2bool(v):
     return v.lower() in ("yes", "true", "t", "1")
+
+
+class QLock(QtCore.QMutex):
+    def acquire(self):
+        self.lock()
+    def release(self):
+        self.unlock()
+    def __enter__(self):
+        self.acquire()
+        return self
+    def __exit__(self, *args):
+        self.release()
+
+
+# https://stackoverflow.com/questions/5327614/logging-lock-acquire-and-release-calls-in-multi-threaded-application
+class LogLock(object):
+    def __init__(self, name):
+        self.name = str(name)
+        self.lock = threading.Lock()
+        self.log = logging.getLogger('LogLock')
+
+
+    def acquire(self, blocking=True):
+        self.log.debug("{0:x} Trying to acquire {1} lock".format(
+            id(self), self.name))
+        ret = self.lock.acquire(blocking)
+        if ret == True:
+            self.log.debug("{0:x} Acquired {1} lock".format(
+                id(self), self.name))
+        else:
+            self.log.debug("{0:x} Non-blocking aquire of {1} lock failed".format(
+                id(self), self.name))
+        return ret
+
+    def release(self):
+        self.log.debug("{0:x} Releasing {1} lock".format(id(self), self.name))
+        self.lock.release()
+
+    def __enter__(self):
+        self.acquire()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.release()
+        return False    # Do not swallow exceptions

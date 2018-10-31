@@ -13,7 +13,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-class PololuDev(object):
+class PololuMaestroDevice(object):
     
     name="pololu_servo_device"
     
@@ -21,11 +21,11 @@ class PololuDev(object):
         self.port = port
         self.debug = debug
         if self.debug:
-            logger.debug("PololuDev.__init__, port={}".format(self.port))
+            logger.debug("PololuMaestroDevice.__init__, port={}".format(self.port))
             
-        self.ser = serial.Serial(port=self.port, timeout=0.5
+        self.ser = serial.Serial(port=self.port, timeout=0.5, baudrate=9600,
                                  )
-        self.polulu_header = chr(0xAA) + chr(device_addr)
+        self.pololu_header = chr(0xAA) + chr(device_addr)
         self.ser.flush()
         time.sleep(0.2)
         
@@ -40,7 +40,7 @@ class PololuDev(object):
         """
         if self.debug: 
             logger.debug("ask_cmd: {}".format(cmd))
-        message = self.polulu_header + cmd
+        message = self.pololu_header + cmd
         self.ser.write(bytes(message, 'latin-1'))
         resp = self.ser.readline()
         if self.debug:
@@ -54,12 +54,15 @@ class PololuDev(object):
         ==============  ==========  ==============  =======================================================
         **Arguments:**  **Type:**   **Range:**      **Description:**
         chan            int         (1,6)           Servo channel/address                                    
-        target          int         (544,2544)      Rotary servo position in units of microseconds or...
-                                    (1008,2000)     Linear servo position in units of microseconds.
+        servo* target   int         (544,2544)      Rotary servo position in units of quarter microseconds or...
+                                    (1008,2000)     Linear servo position in units of quarter microseconds.
+        output* target  int         >1500           outputs +5V high if channel is configured to Output 
+                                    <1500           outputs 0V  low If channel is configured to Output
         ==============  ==========  ==============  =======================================================
+        *each channel can be configured to be of type "servo", "input" or "output" (Pololu Mastro Control)
         :returns: None
         """
-        base_qty = target * 4 
+        base_qty = target 
         cmd_hex = 0x84
         cl_hex = cmd_hex & 0x7F
         lsb = base_qty & 0x7F
@@ -73,7 +76,7 @@ class PololuDev(object):
         **Arguments:**  **Type:**   **Range:**      **Description:**
         chan            int         (1,6)           Servo channel/address                                  
         ==============  ==========  ==============  =======================================================
-        :returns: int, Position of selected servo in units of microseconds.
+        :returns: int, Position of selected servo in units of quarter microseconds.
         """
         cmd_hex = 0x10
         cmd = chr(cmd_hex) + chr(chan)

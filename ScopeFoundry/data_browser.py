@@ -1,6 +1,7 @@
 from __future__ import division, print_function, absolute_import
 from ScopeFoundry import BaseApp
-from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path
+from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path,\
+    load_qt_ui_from_pkg
 from collections import OrderedDict
 import os
 from qtpy import QtCore, QtWidgets
@@ -21,7 +22,8 @@ class DataBrowser(BaseApp):
     
     def setup(self):
 
-        self.ui = load_qt_ui_file(sibling_path(__file__, "data_browser.ui"))
+        #self.ui = load_qt_ui_file(sibling_path(__file__, "data_browser.ui"))
+        self.ui = load_qt_ui_from_pkg('ScopeFoundry', 'data_browser.ui')
         self.ui.show()
         self.ui.raise_()
         
@@ -75,7 +77,9 @@ class DataBrowser(BaseApp):
         
         #self.console_widget.show()
         self.ui.console_pushButton.clicked.connect(self.console_widget.show)
+        self.ui.log_pushButton.clicked.connect(self.logging_widget.show)
         self.ui.show()
+        
 
         
     def load_view(self, new_view):
@@ -113,6 +117,8 @@ class DataBrowser(BaseApp):
     def on_change_browse_dir(self):
         self.log.debug("on_change_browse_dir")
         self.ui.treeView.setRootIndex(self.fs_model.index(self.settings['browse_dir']))
+        self.fs_model.setRootPath(self.settings['browse_dir'])
+
     
     def on_change_file_filter(self):
         self.log.debug("on_change_file_filter")

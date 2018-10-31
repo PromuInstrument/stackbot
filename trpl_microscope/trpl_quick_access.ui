@@ -325,8 +325,18 @@
         </property>
        </widget>
       </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Freq</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="2" colspan="2">
        <widget class="QLineEdit" name="aotf_freq_set_lineEdit">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="focusPolicy">
          <enum>Qt::NoFocus</enum>
         </property>
@@ -336,34 +346,6 @@
        <widget class="QLabel" name="label_6">
         <property name="text">
          <string>Power</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Freq</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="3">
-       <widget class="QLabel" name="label_19">
-        <property name="text">
-         <string>step</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="1">
-       <widget class="QLabel" name="label_18">
-        <property name="text">
-         <string>Start</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="2">
-       <widget class="QLabel" name="label_20">
-        <property name="text">
-         <string>Stop</string>
         </property>
        </widget>
       </item>
@@ -378,13 +360,6 @@
        <widget class="QLabel" name="label_3">
         <property name="text">
          <string>nm</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_17">
-        <property name="text">
-         <string>Freq Sweep</string>
         </property>
        </widget>
       </item>
@@ -407,96 +382,6 @@
         </property>
        </widget>
       </item>
-      <item row="3" column="2">
-       <widget class="QDoubleSpinBox" name="aotf_freq_stop_doubleSpinBox">
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-        <property name="minimum">
-         <double>10.000000000000000</double>
-        </property>
-        <property name="maximum">
-         <double>1000.000000000000000</double>
-        </property>
-        <property name="value">
-         <double>150.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QDoubleSpinBox" name="aotf_freq_start_doubleSpinBox">
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-        <property name="minimum">
-         <double>10.000000000000000</double>
-        </property>
-        <property name="maximum">
-         <double>1000.000000000000000</double>
-        </property>
-        <property name="value">
-         <double>50.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="3" colspan="2">
-       <widget class="QDoubleSpinBox" name="aotf_freq_step_doubleSpinBox">
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-        <property name="maximum">
-         <double>999.000000000000000</double>
-        </property>
-        <property name="value">
-         <double>1.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox_4">
-     <property name="title">
-      <string>Ocean Optics Spectrometer</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_8">
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_27">
-        <property name="text">
-         <string>Integration Time</string>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QDoubleSpinBox" name="oo_spec_int_time_doubleSpinBox">
-        <property name="alignment">
-         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-        </property>
-        <property name="suffix">
-         <string> sec</string>
-        </property>
-        <property name="decimals">
-         <number>4</number>
-        </property>
-        <property name="minimum">
-         <double>0.000000000000000</double>
-        </property>
-        <property name="value">
-         <double>0.100000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QCheckBox" name="oo_spec_acquire_cont_checkBox">
-        <property name="text">
-         <string>Acquire Continuously</string>
-        </property>
-       </widget>
-      </item>
      </layout>
     </widget>
    </item>
@@ -506,6 +391,13 @@
       <string>Andor CCD</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
+      <item row="4" column="0">
+       <widget class="QLabel" name="label_23">
+        <property name="text">
+         <string>Center WL (nm)</string>
+        </property>
+       </widget>
+      </item>
       <item row="4" column="1">
        <widget class="QDoubleSpinBox" name="acton_spec_center_wl_doubleSpinBox">
         <property name="enabled">
@@ -534,44 +426,6 @@
         </property>
        </widget>
       </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_23">
-        <property name="text">
-         <string>Center WL (nm)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_21">
-        <property name="text">
-         <string>EM Gain</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label_24">
-        <property name="text">
-         <string>Grating</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_22">
-        <property name="text">
-         <string>Temperature</string>
-        </property>
-       </widget>
-      </item>
-      <item row="7" column="1">
-       <widget class="QCheckBox" name="andor_ccd_shutter_open_checkBox">
-        <property name="text">
-         <string>Shutter Open</string>
-        </property>
-        <property name="tristate">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
       <item row="1" column="1">
        <widget class="QDoubleSpinBox" name="andor_ccd_int_time_doubleSpinBox">
         <property name="keyboardTracking">
@@ -594,6 +448,16 @@
         </property>
        </widget>
       </item>
+      <item row="7" column="1">
+       <widget class="QCheckBox" name="andor_ccd_shutter_open_checkBox">
+        <property name="text">
+         <string>Shutter Open</string>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
       <item row="1" column="0">
        <widget class="QLabel" name="label">
         <property name="text">
@@ -601,18 +465,17 @@
         </property>
        </widget>
       </item>
-      <item row="7" column="2">
-       <widget class="QCheckBox" name="andor_ccd_acquire_cont_checkBox">
+      <item row="5" column="0">
+       <widget class="QLabel" name="label_24">
         <property name="text">
-         <string>Acquire 
-Continuously</string>
+         <string>Grating</string>
         </property>
        </widget>
       </item>
-      <item row="5" column="1" colspan="2">
-       <widget class="QLineEdit" name="acton_spec_grating_lineEdit">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_22">
+        <property name="text">
+         <string>Temperature</string>
         </property>
        </widget>
       </item>
@@ -673,6 +536,37 @@ Continuously</string>
         </property>
        </widget>
       </item>
+      <item row="7" column="2">
+       <widget class="QCheckBox" name="andor_ccd_acquire_cont_checkBox">
+        <property name="text">
+         <string>Acquire 
+Continuously</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1" colspan="2">
+       <widget class="QLineEdit" name="acton_spec_grating_lineEdit">
+        <property name="focusPolicy">
+         <enum>Qt::NoFocus</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="7" column="0">
+       <widget class="QPushButton" name="andor_ccd_read_single_pushButton">
+        <property name="text">
+         <string>read single</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="2">
+       <widget class="QComboBox" name="acton_spec_exitmirror_comboBox">
+        <item>
+         <property name="text">
+          <string>EXIT MIRROR</string>
+         </property>
+        </item>
+       </widget>
+      </item>
       <item row="8" column="2">
        <widget class="QCheckBox" name="andor_ccd_bgsub_checkBox">
         <property name="text">
@@ -694,21 +588,8 @@ Continuously</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="0">
-       <widget class="QPushButton" name="andor_ccd_read_single_pushButton">
-        <property name="text">
-         <string>read single</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="2">
-       <widget class="QComboBox" name="acton_spec_exitmirror_comboBox">
-        <item>
-         <property name="text">
-          <string>EXIT MIRROR</string>
-         </property>
-        </item>
-       </widget>
+      <item row="2" column="0">
+       <widget class="QComboBox" name="andor_ccd_output_amp_comboBox"/>
       </item>
      </layout>
     </widget>
@@ -1334,7 +1215,7 @@ Continuously</string>
          <bool>false</bool>
         </property>
         <property name="text">
-         <string>Slow Display Timer</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -1349,6 +1230,95 @@ Continuously</string>
        <widget class="QCheckBox" name="flip_mirror_checkBox">
         <property name="text">
          <string>APD / Spec</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="dli_power_groupBox">
+     <property name="title">
+      <string>Power</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="outlet_1_checkBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="outlet_1_label">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QCheckBox" name="outlet_2_checkBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="outlet_2_label">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QCheckBox" name="outlet_3_checkBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <widget class="QLabel" name="outlet_3_label">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="6">
+       <widget class="QCheckBox" name="outlet_4_checkBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="7">
+       <widget class="QLabel" name="outlet_4_label">
+        <property name="text">
+         <string>TextLabel</string>
         </property>
        </widget>
       </item>

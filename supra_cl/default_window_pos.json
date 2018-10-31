@@ -1,0 +1,147 @@
+{
+    "main": {
+        "geometry": [
+            1025,
+            31,
+            2803,
+            2088
+        ],
+        "maximized": false,
+        "minimized": false,
+        "col_splitter_sizes": [
+            0,
+            423,
+            2342
+        ]
+    },
+    "log": {
+        "geometry": [
+            -1,
+            1854,
+            847,
+            150
+        ],
+        "maximized": false,
+        "minimized": false
+    },
+    "console": {
+        "geometry": [
+            -3,
+            1754,
+            847,
+            124
+        ],
+        "maximized": false,
+        "minimized": false
+    },
+    "measurement/sem_recipe_control": {
+        "geometry": [
+            -1,
+            0,
+            841,
+            506
+        ],
+        "maximized": false,
+        "minimized": false
+    },
+    "measurement/sem_stage_delta": {
+        "geometry": [
+            -2,
+            504,
+            842,
+            493
+        ],
+        "maximized": false,
+        "minimized": false
+    },
+    "measurement/attocube_cl_xyz": {
+        "geometry": [
+            0,
+            2002,
+            160,
+            27
+        ],
+        "maximized": false,
+        "minimized": true
+    },
+    "measurement/attocube_cl_angle": {
+        "geometry": [
+            160,
+            2002,
+            160,
+            27
+        ],
+        "maximized": false,
+        "minimized": true
+    },
+    "measurement/mirror_position": {
+        "geometry": [
+            4,
+            995,
+            841,
+            760
+        ],
+        "maximized": false,
+        "minimized": false
+    },
+    "measurement/sync_raster_scan": {
+        "geometry": [
+            320,
+            2002,
+            160,
+            27
+        ],
+        "maximized": false,
+        "minimized": true
+    },
+    "measurement/andor_ccd_readout": {
+        "geometry": [
+            480,
+            2002,
+            160,
+            27
+        ],
+        "maximized": false,
+        "minimized": true
+    },
+    "measurement/andor_ccd_kinetic": {
+        "geometry": [
+            640,
+            2002,
+            160,
+            27
+        ],
+        "maximized": false,
+        "minimized": true
+    },
+    "measurement/hyperspec_cl": {
+        "geometry": [
+            800,
+            2002,
+            160,
+            27
+        ],
+        "maximized": false,
+        "minimized": true
+    },
+    "measurement/hyperspec_cl_quad_view": {
+        "geometry": [
+            845,
+            957,
+            1490,
+            1067
+        ],
+        "maximized": false,
+        "minimized": false
+    },
+    "measurement/cl_quad_view": {
+        "geometry": [
+            841,
+            5,
+            1512,
+            951
+        ],
+        "maximized": false,
+        "minimized": false
+    }
+}

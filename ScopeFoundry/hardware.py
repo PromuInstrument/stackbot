@@ -4,7 +4,8 @@ from ScopeFoundry.logged_quantity import LQCollection#, LoggedQuantity
 from collections import OrderedDict
 import pyqtgraph as pg
 import warnings
-from ScopeFoundry.helper_funcs import get_logger_from_class
+from ScopeFoundry.helper_funcs import get_logger_from_class, QLock
+import time
 
 class HardwareComponent(QtCore.QObject):
     """
@@ -15,6 +16,10 @@ class HardwareComponent(QtCore.QObject):
     to subclass, implement :meth:`setup`, :meth:`connect` and :meth:`disconnect`
     
     """
+    connection_succeeded = QtCore.Signal()
+    connection_failed = QtCore.Signal()
+    
+    
 
     def add_logged_quantity(self, name, **kwargs):
         #lq = LoggedQuantity(name=name, **kwargs)
@@ -40,11 +45,21 @@ class HardwareComponent(QtCore.QObject):
         """
         create new HardwareComponent attached to *app*
         """
+        QtCore.QObject.__init__(self)
+
+        if not hasattr(self, 'name'):
+            self.name = self.__class__.__name__
+
         if name is not None:
             self.name = name
-        
-        QtCore.QObject.__init__(self)
+            
+                    
         self.log = get_logger_from_class(self)
+
+        # threading lock
+        #self.lock = threading.Lock()
+        #self.lock = DummyLock()
+        self.lock = QLock(mode=1) # mode 0 is non-reentrant lock
 
         self.app = app
 
@@ -60,12 +75,19 @@ class HardwareComponent(QtCore.QObject):
         
         self.debug_mode = self.add_logged_quantity("debug_mode", dtype=bool, initial=debug)
         
-        self.setup()
+        self.auto_thread_lock = True
         
+        self.setup()
+
+        if self.auto_thread_lock:        
+            self.thread_lock_all_lq()
 
         self.has_been_connected_once = False
         
         self.is_connected = False
+        
+        self.connection_failed.connect(self.on_connection_failed)
+        self.connection_succeeded.connect(self.on_connection_succeeded)
         
     def setup(self):
         """
@@ -108,7 +130,7 @@ class HardwareComponent(QtCore.QObject):
         self.op_buttons = OrderedDict()
         for op_name, op_func in self.operations.items(): 
             op_button = QtWidgets.QPushButton(op_name)
-            op_button.clicked.connect(op_func)
+            op_button.clicked.connect(lambda checked, f=op_func: f())
             self.controls_formLayout.addRow(op_name, op_button)
         
         self.read_from_hardware_button = QtWidgets.QPushButton("Read From Hardware")
@@ -135,7 +157,7 @@ class HardwareComponent(QtCore.QObject):
         self.op_buttons = OrderedDict()
         for op_name, op_func in self.operations.items(): 
             op_button = QtWidgets.QPushButton(op_name)
-            op_button.clicked.connect(op_func)
+            op_button.clicked.connect(lambda checked, f=op_func: f())
             self.op_buttons[op_name] = op_button
             #self.controls_formLayout.addRow(op_name, op_button)
             op_tree_item = QtWidgets.QTreeWidgetItem(self.tree_item, [op_name, ""])
@@ -178,18 +200,37 @@ class HardwareComponent(QtCore.QObject):
     @QtCore.Slot(bool)
     def enable_connection(self, enable=True):
         if enable:
-            self.connect_success = False
-            self.connect()
-            self.connect_success = True
-            self.tree_item.setText(1,'O')
-            self.tree_item.setForeground(1, QtGui.QColor('green'))
+            try:
+                self.connect()
+                self.connection_succeeded.emit()
+            except Exception as err:
+                self.connection_failed.emit()
+                raise err
         else:
-            self.connect_success = False
-            self.tree_item.setText(1,'X')
-            self.tree_item.setForeground(1, QtGui.QColor('red'))
-            self.disconnect()
+            print("disabling connection")
+            try:
+                self.disconnect()
+                self.tree_item.setText(1,'X')
+                self.tree_item.setForeground(1, QtGui.QColor('red'))          
+            except Exception as err:
+                # disconnect failed
+                self.tree_item.setText(1,'?')
+                self.tree_item.setForeground(1, QtGui.QColor('red'))        
+                raise err
             
+    def on_connection_succeeded(self):
+        print(self.name, "connection succeeded!")
+        self.tree_item.setText(1,'O')
+        self.tree_item.setForeground(1, QtGui.QColor('green'))
+
             
+    def on_connection_failed(self):
+        print(self.name, "connection failed!")        
+        self.settings.connected.update_value(False)
+        self.tree_item.setText(1,'!')
+        self.tree_item.setForeground(1, QtGui.QColor('red'))   
+          
+
     @property
     def gui(self):
         warnings.warn("Hardware.gui is deprecated, use Hardware.app", DeprecationWarning)
@@ -197,3 +238,13 @@ class HardwareComponent(QtCore.QObject):
     
     def web_ui(self):
         return "Hardware {}".format(self.name)
+    
+    
+    def thread_lock_lq(self, lq):
+        lq.old_lock = lq.lock
+        lq.lock = self.lock
+        
+    def thread_lock_all_lq(self):
+        for lq in self.settings.as_list():
+            lq.old_lock = lq.lock
+            lq.lock = self.lock

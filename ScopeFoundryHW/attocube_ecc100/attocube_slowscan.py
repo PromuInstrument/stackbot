@@ -4,27 +4,40 @@ from ScopeFoundry.scanning import BaseRaster2DSlowScan
 from ScopeFoundry import Measurement, LQRange
 import time
 
+
+
 class AttoCube2DSlowScan(BaseRaster2DSlowScan):
     
     name = "AttoCube2DSlowScan"
     
-    def __init__(self, app):
-        BaseRaster2DSlowScan.__init__(self, app, h_limits=(-10e3,10e3), v_limits=(-10e3,10e3), h_unit="um", v_unit="um")        
+    def __init__(self, app, use_external_range_sync=False):
+        BaseRaster2DSlowScan.__init__(self, app, h_limits=(-12.5,12.5), v_limits=(-12.5,12.5), h_unit="mm", v_unit="mm", 
+                                      use_external_range_sync=use_external_range_sync)        
     
     def setup(self):
         BaseRaster2DSlowScan.setup(self)
         #Hardware
         self.stage = self.app.hardware['attocube_xyz_stage']
-        self.target_range = 0.050 # um
+        self.target_range = 0.050e-3 # um
         self.slow_move_timeout = 10. # sec
 
-    def move_position_start(self, x,y):
-        self.move_position_slow(x,y, 0, 0, timeout=30)
+        self.settings.New("h_axis", initial="x", dtype=str, choices=("x", "y", "z"))
+        self.settings.New("v_axis", initial="y", dtype=str, choices=("x", "y", "z"))
+        #self.ax_map = dict(x=0, y=1, z=2)
+        
+
+    def collect_pixel(self, pixel_num, k, j, i):
+        raise NotImplementedError
+        pass
+
+    def move_position_start(self, h,v):
+        self.move_position_slow(h,v, 0, 0, timeout=30)
     
-    def move_position_slow(self, x,y, dx,dy, timeout=10):
+    def move_position_slow(self, h,v, dh,dv, timeout=10):
         # update target position
-        self.stage.settings.x_target_position.update_value(x)
-        self.stage.settings.y_target_position.update_value(y)
+        S = self.settings 
+        self.stage.settings[S['h_axis'] + "_target_position"] = h
+        self.stage.settings[S['v_axis'] + "_target_position"] = v
         
         t0 = time.time()
         
@@ -32,6 +45,7 @@ class AttoCube2DSlowScan(BaseRaster2DSlowScan):
         while True:
             self.stage.settings.x_position.read_from_hardware()
             self.stage.settings.y_position.read_from_hardware()
+            self.stage.settings.z_position.read_from_hardware()
             if self.distance_from_target() < self.target_range:
                 #print("settle time {}".format(time.time() - t0))
                 break
@@ -39,8 +53,8 @@ class AttoCube2DSlowScan(BaseRaster2DSlowScan):
                 raise IOError("AttoCube ECC100 took too long to reach position")
             time.sleep(0.005)
 
-    def move_position_fast(self, x,y, dx,dy):
-        self.move_position_slow(x, y, dx, dy)
+    def move_position_fast(self,  h,v, dh,dv):
+        self.move_position_slow( h,v, dh,dv)
         #settle time even on small steps seems to be 30ms,
         #so we should always wait until settle
         """# update target position, but don't wait to settle to target
@@ -51,5 +65,6 @@ class AttoCube2DSlowScan(BaseRaster2DSlowScan):
         """
     def distance_from_target(self):
         S = self.stage.settings
-        return (  (S['x_position'] - S['x_target_position'])**2 
-                + (S['y_position'] - S['y_target_position'])**2)
+        return np.sqrt(    (S['x_position'] - S['x_target_position'])**2 
+                         + (S['y_position'] - S['y_target_position'])**2
+                         + (S['z_position'] - S['z_target_position'])**2)

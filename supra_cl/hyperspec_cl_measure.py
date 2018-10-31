@@ -9,7 +9,8 @@ class HyperSpecCLMeasure(SyncRasterScan):
     def setup(self):
         SyncRasterScan.setup(self)
         self.settings['adc_oversample'] = 2500
-        self.settings.adc_oversample.change_min_max(2500, 25e6)        
+        self.settings.adc_oversample.change_min_max(100, 25e6)
+        self.settings['adc_rate'] = 200e3
         # set reasonable limits for oversample rate (max pixel rate 275Hz) for mode
         # Tested up to 2.9+0.7ms per pixel on andor newton
         
@@ -24,36 +25,41 @@ class HyperSpecCLMeasure(SyncRasterScan):
         
         # ability to set exposure time shorter than pixel time
         
-        
-        
-        
-        
-        
+                
     def pre_scan_setup(self):
         # hardware
-        
+               
         self.app.hardware['sem_remcon'].read_from_hardware()
         
         sync_raster_daq = self.app.hardware['sync_raster_daq']
         self.andor_ccd = ccd = self.app.hardware['andor_ccd']
         ccd.settings['acq_mode'] = 'run_till_abort'
         ccd.settings['trigger_mode'] = 'external'
-        ccd.settings['readout_mode'] = 0 # FVB
-        ccd.settings['num_kin'] = self.Npixels
-        ccd.settings['exposure_time'] = (1.0 / sync_raster_daq.settings['dac_rate']) - 3.0e-3
-        ccd.settings['kin_time'] = (1.0 / sync_raster_daq.settings['dac_rate'])
+        ccd.settings['readout_mode'] = 'FullVerticalBinning' # FVB
+        #ccd.settings['num_kin'] = self.Npixels
+        ccd.settings['exposure_time'] = (1.0 / sync_raster_daq.settings['dac_rate']) - 6.0e-3
+        
+        #ccd.settings['kin_time'] = (1.0 / sync_raster_daq.settings['dac_rate'])
         # Other useful defaults
-        ccd.settings['output_amp'] = 0
-        ccd.settings['ad_chan'] = 1
+        #ccd.settings['output_amp'] = 0
+        #ccd.settings['ad_chan'] = 1
         #ccd.settings['hs_speed_em'] = 0
-        ccd.settings['vertical_shift_speed'] = 0
+        #ccd.settings['vertical_shift_speed'] = 0
         
         ccd.set_readout()
+        
+        print("get_acquisition_timings: exp {:e} acc {:e} kin {:e}".format( *ccd.ccd_dev.get_acquisition_timings()))
         
         ccd_Ny, ccd_Nx = ccd.settings['readout_shape']
     
         assert ccd_Ny == 1
-    
+
+
+        hbin = ccd.ccd_dev.get_current_hbin()
+        px_index = np.arange(ccd_Nx)
+        spec_hw = self.app.hardware['acton_spectrometer']
+        self.wls = spec_hw.get_wl_calibration(px_index, hbin)
+
         # create data buffer
         self.spec_buffer = np.zeros(shape=(self.Npixels, ccd_Nx), dtype=np.int32) # buffer for spectra (for one spatial frame)
         self.spec_map = np.zeros( shape=self.scan_shape + (ccd_Nx,), dtype=np.int32) # spatial hyperspec data cube
@@ -64,7 +70,7 @@ class HyperSpecCLMeasure(SyncRasterScan):
         self.andor_ccd_total_i = 0
         if self.settings['save_h5']:
             self.spec_map_h5 = self.create_h5_framed_dataset('spec_map', self.spec_map, compression=None, chunks=(1, 1, 1, Ni, ccd_Nx))
-            #self.h5_m['wls'] = 
+            self.h5_m['wls'] = self.wls
 
         # start ccd camera, wait for trigger
         ccd.ccd_dev.start_acquisition()

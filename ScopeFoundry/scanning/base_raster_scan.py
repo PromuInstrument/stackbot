@@ -5,14 +5,12 @@ Created on Feb 4, 2016
 '''
 
 from ScopeFoundry import Measurement
-from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
+from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file,replace_widget_in_layout
 import numpy as np
 import pyqtgraph as pg
 import time
-from ScopeFoundry import h5_io
-from qtpy import QtCore, QtWidgets
+from qtpy import QtCore
 from ScopeFoundry import LQRange
-import os
 
 def ijk_zigzag_generator(dims, axis_order=(0,1,2)):
     """3D zig-zag scan pattern generator with arbitrary fast axis order"""
@@ -34,13 +32,24 @@ def ijk_zigzag_generator(dims, axis_order=(0,1,2)):
     return
 
 class BaseRaster2DScan(Measurement):
-    name = "base_raster_2Dscan"
     
-    def __init__(self, app, h_limits=(-1,1), v_limits=(-1,1), h_unit='', v_unit=''):
+    name = "base_raster_2D_scan"
+    
+    def __init__(self, app, 
+                 h_limits=(-1,1),        v_limits=(-1,1), 
+                 h_unit='',              v_unit='', 
+                 h_spinbox_decimals=6,   v_spinbox_decimals=6,
+                 h_spinbox_step=0.1,     v_spinbox_step=0.1,
+                 use_external_range_sync=False):        
+        self.h_spinbox_decimals = h_spinbox_decimals
+        self.v_spinbox_decimals = v_spinbox_decimals
+        self.h_spinbox_step = h_spinbox_step
+        self.v_spinbox_step = v_spinbox_step
         self.h_limits = h_limits
         self.v_limits = v_limits
         self.h_unit = h_unit
         self.v_unit = v_unit
+        self.use_external_range_sync = use_external_range_sync
         Measurement.__init__(self, app)
         
     def setup(self):
@@ -54,25 +63,36 @@ class BaseRaster2DScan(Measurement):
         #connect events        
 
         # local logged quantities
-        lq_params = dict(dtype=float, vmin=self.h_limits[0],vmax=self.h_limits[1], ro=False, unit=self.h_unit )
-        self.h0 = self.settings.New('h0',  initial=self.h_limits[0], **lq_params  )
-        self.h1 = self.settings.New('h1',  initial=self.h_limits[1], **lq_params  )
-        lq_params = dict(dtype=float, vmin=self.v_limits[0],vmax=self.v_limits[1], ro=False, unit=self.h_unit )
-        self.v0 = self.settings.New('v0',  initial=self.v_limits[0], **lq_params  )
-        self.v1 = self.settings.New('v1',  initial=self.v_limits[1], **lq_params  )
+        h_lq_params = dict(vmin=self.h_limits[0], vmax=self.h_limits[1], unit=self.h_unit, 
+                                spinbox_decimals=self.h_spinbox_decimals, spinbox_step=self.h_spinbox_step,
+                                dtype=float,ro=False)
+        h_range = self.h_limits[1] - self.h_limits[0]
+        self.h0 = self.settings.New('h0',  initial=self.h_limits[0]+h_range*0.25, **h_lq_params  )
+        self.h1 = self.settings.New('h1',  initial=self.h_limits[0]+h_range*0.75, **h_lq_params  )
+        v_lq_params = dict(vmin=self.v_limits[0], vmax=self.v_limits[1], unit=self.v_unit, 
+                                spinbox_decimals=self.v_spinbox_decimals, spinbox_step=self.v_spinbox_step,
+                                dtype=float,ro=False)
+        v_range = self.v_limits[1]-self.v_limits[0]
+        self.v0 = self.settings.New('v0',  initial=self.v_limits[0] + v_range*0.25, **v_lq_params  )
+        self.v1 = self.settings.New('v1',  initial=self.v_limits[0] + v_range*0.75, **v_lq_params  )
 
-        lq_params = dict(dtype=float, vmin=1e-9, vmax=abs(self.h_limits[1]-self.h_limits[0]), ro=False, unit=self.h_unit )
-        self.dh = self.settings.New('dh', initial=0.1, **lq_params)
-        self.dh.spinbox_decimals = 3
-        lq_params = dict(dtype=float, vmin=1e-9, vmax=abs(self.v_limits[1]-self.v_limits[0]), ro=False, unit=self.v_unit )
-        self.dv = self.settings.New('dv', initial=0.1, **lq_params)
-        self.dv.spinbox_decimals = 3
+        lq_params = dict(dtype=float, vmin=1e-9, vmax=abs(h_range), ro=False, unit=self.h_unit )
+        self.dh = self.settings.New('dh', initial=self.h_spinbox_step, **lq_params)
+        self.dh.spinbox_decimals = self.h_spinbox_decimals
+        lq_params = dict(dtype=float, vmin=1e-9, vmax=abs(v_range), ro=False, unit=self.v_unit )
+        self.dv = self.settings.New('dv', initial=self.v_spinbox_step, **lq_params)
+        self.dv.spinbox_decimals = self.v_spinbox_decimals
         
         self.Nh = self.settings.New('Nh', initial=11, vmin=1, dtype=int, ro=False)
         self.Nv = self.settings.New('Nv', initial=11, vmin=1, dtype=int, ro=False)
         
-        self.Npixels = self.Nh.val*self.Nv.val
+        self.h_center = self.settings.New('h_center', dtype=float, ro=False)
+        self.v_center = self.settings.New('v_center', dtype=float, ro=False)
+
+        self.h_span = self.settings.New('h_span', dtype=float, ro=False)
+        self.v_span = self.settings.New('v_span', dtype=float, ro=False)
         
+        self.Npixels = self.Nh.val*self.Nv.val
         
         self.scan_type = self.settings.New('scan_type', dtype=str, initial='raster',
                                                   choices=('raster', 'serpentine', 'trace_retrace', 
@@ -96,14 +116,12 @@ class BaseRaster2DScan(Measurement):
             
         self.compute_times()
         
-        #update Nh, Nv and other scan parameters when changes to inputs are made 
-        #for lqname in 'h0 h1 v0 v1 dh dv'.split():
-        #    self.logged_quantities[lqname].updated_value.connect(self.compute_scan_params)
-        self.h_range = LQRange(self.h0, self.h1, self.dh, self.Nh)
-        self.h_range.updated_range.connect(self.compute_scan_params)
+        if not self.use_external_range_sync:
+            self.h_range = LQRange(self.h0, self.h1, self.dh, self.Nh, self.h_center, self.h_span)    
+            self.v_range = LQRange(self.v0, self.v1, self.dv, self.Nv, self.v_center, self.v_span)
 
-        self.v_range = LQRange(self.v0, self.v1, self.dv, self.Nv)
-        self.v_range.updated_range.connect(self.compute_scan_params) #update other scan parameters when changes to inputs are made
+        for s in 'h0 h1 dh v0 v1 dv'.split():
+            self.settings.get_lq(s).add_listener(self.compute_scan_params)
 
         self.scan_type.updated_value.connect(self.compute_scan_params)
         
@@ -111,17 +129,17 @@ class BaseRaster2DScan(Measurement):
         self.ui.start_pushButton.clicked.connect(self.start)
         self.ui.interrupt_pushButton.clicked.connect(self.interrupt)
 
-        self.h0.connect_bidir_to_widget(self.ui.h0_doubleSpinBox)
-        self.h1.connect_bidir_to_widget(self.ui.h1_doubleSpinBox)
-        self.v0.connect_bidir_to_widget(self.ui.v0_doubleSpinBox)
-        self.v1.connect_bidir_to_widget(self.ui.v1_doubleSpinBox)
-        self.dh.connect_bidir_to_widget(self.ui.dh_doubleSpinBox)
-        self.dv.connect_bidir_to_widget(self.ui.dv_doubleSpinBox)
-        self.Nh.connect_bidir_to_widget(self.ui.Nh_doubleSpinBox)
-        self.Nv.connect_bidir_to_widget(self.ui.Nv_doubleSpinBox)
-        self.scan_type.connect_bidir_to_widget(self.ui.scan_type_comboBox)
+        self.h0.connect_to_widget(self.ui.h0_doubleSpinBox)
+        self.h1.connect_to_widget(self.ui.h1_doubleSpinBox)
+        self.v0.connect_to_widget(self.ui.v0_doubleSpinBox)
+        self.v1.connect_to_widget(self.ui.v1_doubleSpinBox)
+        self.dh.connect_to_widget(self.ui.dh_doubleSpinBox)
+        self.dv.connect_to_widget(self.ui.dv_doubleSpinBox)
+        self.Nh.connect_to_widget(self.ui.Nh_doubleSpinBox)
+        self.Nv.connect_to_widget(self.ui.Nv_doubleSpinBox)
+        self.scan_type.connect_to_widget(self.ui.scan_type_comboBox)
         
-        self.progress.connect_bidir_to_widget(self.ui.progress_doubleSpinBox)
+        self.progress.connect_to_widget(self.ui.progress_doubleSpinBox)
         #self.progress.updated_value[str].connect(self.ui.xy_scan_progressBar.setValue)
         #self.progress.updated_value.connect(self.tree_progressBar.setValue)
 
@@ -134,7 +152,6 @@ class BaseRaster2DScan(Measurement):
             self.ui.show_previous_scans_checkBox)
 
         self.initial_scan_setup_plotting = False
-        self.display_image_map = np.zeros(self.scan_shape, dtype=float)
         self.scan_specific_setup()
         
 
@@ -142,6 +159,25 @@ class BaseRaster2DScan(Measurement):
 
         self.ui.clear_previous_scans_pushButton.clicked.connect(
             self.clear_previous_scans)
+        
+        self.compute_scan_params()
+        
+    def set_details_widget(self, widget = None, ui_filename=None):
+        #print('LOADING DETAIL UI')
+        if ui_filename is not None:
+            details_ui = load_qt_ui_file(ui_filename)
+        if widget is not None:
+            details_ui = widget
+        if hasattr(self, 'details_ui'):
+            if self.details_ui is not None:
+                self.details_ui.deleteLater()
+                self.ui.details_groupBox.layout().removeWidget(self.details_ui)
+                #self.details_ui.hide()
+                del self.details_ui
+        self.details_ui = details_ui
+        #return replace_widget_in_layout(self.ui.details_groupBox,details_ui)
+        self.ui.details_groupBox.layout().addWidget(self.details_ui)
+        return self.details_ui
         
     def set_h_limits(self, vmin, vmax, set_scan_to_max=False):
         self.settings.h0.change_min_max(vmin, vmax)
@@ -201,10 +237,9 @@ class BaseRaster2DScan(Measurement):
         # set all logged quantities read only
         for lqname in "h0 h1 v0 v1 dh dv Nh Nv".split():
             self.settings.as_dict()[lqname].change_readonly(True)
-    
-    
-    
-    
+            
+        self.compute_scan_params()
+
     
     def post_run(self):
             # set all logged quantities writable
@@ -305,11 +340,10 @@ class BaseRaster2DScan(Measurement):
     def mouse_update_scan_roi(self):
         x0,y0 =  self.scan_roi.pos()
         w, h =  self.scan_roi.size()
-        #print x0,y0, w, h
-        self.h0.update_value(x0+self.dh.val)
-        self.h1.update_value(x0+w-self.dh.val)
-        self.v0.update_value(y0+self.dv.val)
-        self.v1.update_value(y0+h-self.dv.val)
+        self.h_center.update_value(x0 + w/2)
+        self.v_center.update_value(y0 + h/2)
+        self.h_span.update_value(w-self.dh.val)
+        self.v_span.update_value(h-self.dv.val)
         self.compute_scan_params()
         self.update_scan_roi()
         
@@ -350,14 +384,17 @@ class BaseRaster2DScan(Measurement):
             #if self.settings.scan_type.val in ['raster']
             kk, jj, ii = self.current_scan_index
             self.disp_img = self.display_image_map[kk,:,:].T
-            self.img_item.setImage(self.disp_img, autoRange=False, autoLevels=False)
+            self.img_item.setImage(self.disp_img, autoRange=False, autoLevels=True)
             self.img_item.setRect(self.img_item_rect) # Important to set rectangle after setImage for non-square pixels
             self.update_LUT()
             
     def update_LUT(self):
         ''' override this function to control display LUT scaling'''
         self.hist_lut.imageChanged(autoLevel=False)
-        self.hist_lut.setLevels(*np.percentile(self.disp_img,(1,99)))
+        # DISABLE below because of crashing
+#         non_zero_index = np.nonzero(self.disp_img)
+#         if len(non_zero_index[0]) > 0:
+#             self.hist_lut.setLevels(*np.percentile(self.disp_img[non_zero_index],(1,99)))
                
     def clear_previous_scans(self):
         #current_img = img_items.pop()
@@ -387,10 +424,10 @@ class BaseRaster2DScan(Measurement):
         pass
         #self.stage = self.app.hardware.dummy_xy_stage
         
-        #self.app.hardware_components['dummy_xy_stage'].x_position.connect_bidir_to_widget(self.ui.x_doubleSpinBox)
-        #self.app.hardware_components['dummy_xy_stage'].y_position.connect_bidir_to_widget(self.ui.y_doubleSpinBox)
+        #self.app.hardware_components['dummy_xy_stage'].x_position.connect_to_widget(self.ui.x_doubleSpinBox)
+        #self.app.hardware_components['dummy_xy_stage'].y_position.connect_to_widget(self.ui.y_doubleSpinBox)
         
-        #self.app.hardware_components['apd_counter'].int_time.connect_bidir_to_widget(self.ui.int_time_doubleSpinBox)
+        #self.app.hardware_components['apd_counter'].int_time.connect_to_widget(self.ui.int_time_doubleSpinBox)
        
        
        
@@ -422,10 +459,12 @@ class BaseRaster2DScan(Measurement):
     @property
     def h_array(self):
         return self.h_range.array
+        #return np.linspace(self.h0.val, self.h1.val, self.Nh.val)
 
     @property
     def v_array(self):
         return self.v_range.array
+        #return np.linspace(self.v0.val, self.v1.val, self.Nv.val)
 
     def compute_times(self):
         #self.settings['pixel_time'] = 1.0/self.scanDAQ.settings['dac_rate']
@@ -461,6 +500,8 @@ class BaseRaster2DScan(Measurement):
             H, V = np.meshgrid(self.h_array, self.v_array)
             self.scan_h_positions[:] = H.flat
             self.scan_v_positions[:] = V.flat
+            
+            self.scan_slow_move[::self.Nh.val] = True
             
             II,JJ = np.meshgrid(np.arange(self.Nh.val), np.arange(self.Nv.val))
             self.scan_index_array[:,1] = JJ.flat

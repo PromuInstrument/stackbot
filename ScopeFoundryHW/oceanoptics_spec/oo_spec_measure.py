@@ -1,5 +1,7 @@
 import numpy as np
 from ScopeFoundry import Measurement
+import pyqtgraph as pg
+from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 
 class OOSpecLive(Measurement):
 
@@ -8,32 +10,40 @@ class OOSpecLive(Measurement):
     def setup(self):
         
         self.display_update_period = 0.050 #seconds
-
-        #connect events
-        self.gui.ui.oo_spec_acquire_cont_checkBox.stateChanged.connect(self.start_stop)
+        self.hw = self.app.hardware['ocean_optics_spec']
         
     def setup_figure(self):
+               
+        self.ui = load_qt_ui_file(sibling_path(__file__, 'oo_spec_live.ui'))
         
-        self.fig = self.gui.add_figure('oo_spec', self.gui.ui.oo_spec_plot_widget)
         
-        ax = self.oo_spec_ax = self.fig.add_subplot(111)
-        self.oo_spec_plotline, = ax.plot([1],[1])
-        ax.set_xlabel("wavelengths (nm)")
-        ax.set_ylabel("Laser Spectrum (counts)")        
+        ### Plot
+        self.plot = pg.PlotWidget()
+        self.ui.plot_groupBox.layout().addWidget(self.plot)
+
+        self.plotline = self.plot.plot()
         
-    def _run(self):
-        self.oo_spec = self.gui.oceanoptics_spec_hc.oo_spectrometer
+        #ax.set_xlabel("wavelengths (nm)")
+        #ax.set_ylabel("Laser Spectrum (counts)")
+        
+        
+        ### Controls
+        self.hw.settings.int_time.connect_to_widget(self.ui.int_time_doubleSpinBox)
+        self.hw.settings.connected.connect_to_widget(self.ui.hw_connect_checkBox)
+        self.settings.activation.connect_to_widget(self.ui.run_checkBox)
+        
+    def run(self):
+        self.oo_spec_dev = self.hw.oo_spectrometer
         while not self.interrupt_measurement_called:    
-            self.oo_spec.acquire_spectrum()
+            self.oo_spec_dev.acquire_spectrum()
         
     
     def update_display(self):
-        ax = self.oo_spec_ax
-        self.oo_spec.spectrum[:10]=np.nan
-        self.oo_spec.spectrum[-10:]=np.nan
-        self.oo_spec_plotline.set_data(
-                                   self.oo_spec.wavelengths,
-                                   self.oo_spec.spectrum)
-        ax.relim()
-        ax.autoscale_view(scalex=True, scaley=True)
-        self.fig.canvas.draw()       
+        self.oo_spec_dev.spectrum[:10]=np.nan
+        self.oo_spec_dev.spectrum[-10:]=np.nan
+        self.plotline.setData(
+                                   self.oo_spec_dev.wavelengths[10:-10],
+                                   self.oo_spec_dev.spectrum[10:-10])
+        #ax.relim()
+        #ax.autoscale_view(scalex=True, scaley=True)
+        #self.fig.canvas.draw()       

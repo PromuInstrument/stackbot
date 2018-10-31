@@ -10,11 +10,16 @@ from ScopeFoundry.scanning import BaseRaster2DScan
 from ScopeFoundry import h5_io
 import numpy as np
 import time
-from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path
+from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path,\
+    replace_spinbox_in_layout
 from ctypes import c_int32, c_uint32, c_uint64, byref
 import PyDAQmx as mx
 from .drift_correction import register_translation_hybrid
 from ScopeFoundry.logged_quantity import LoggedQuantity, LQCollection
+from collections import OrderedDict, namedtuple
+
+AvailChan = namedtuple('AvailChan', ['type_', 'index', 'phys_chan', 'chan_name', 'term'])
+
 
 class SyncRasterScan(BaseRaster2DScan):
 
@@ -30,6 +35,7 @@ class SyncRasterScan(BaseRaster2DScan):
                 
         self.display_update_period = 0.050 #seconds
         
+        self.settings.New('adc_rate', dtype=float,initial = 500e3, unit='Hz')
         self.settings.New("adc_oversample", dtype=int, 
                             initial=1, 
                             vmin=1, vmax=1e10,
@@ -46,6 +52,7 @@ class SyncRasterScan(BaseRaster2DScan):
         
         self.scanDAQ = self.app.hardware['sync_raster_daq']        
         self.scan_on=False
+        self.read_from_hardware=True #Disabling allows fast repeated "single scans"
         
         self.details_ui = load_qt_ui_file(sibling_path(__file__, 'sync_raster_details.ui'))
         self.ui.details_groupBox.layout().addWidget(self.details_ui) # comment out?
@@ -54,15 +61,40 @@ class SyncRasterScan(BaseRaster2DScan):
         
         self.settings.n_frames.connect_to_widget(self.details_ui.n_frames_doubleSpinBox)
         self.settings.adc_oversample.connect_to_widget(self.details_ui.adc_oversample_doubleSpinBox)
+        #self.settings.adc_rate.connect_to_widget(self.details_ui.adc_rate_doubleSpinBox)
+        self.details_ui.adc_rate_pgSpinBox = \
+            replace_spinbox_in_layout(self.details_ui.adc_rate_doubleSpinBox)
+        self.settings.adc_rate.connect_to_widget(
+            self.details_ui.adc_rate_pgSpinBox)
         self.settings.display_chan.connect_to_widget(self.details_ui.display_chan_comboBox)
+        
+        self.details_ui.pixel_time_pgSpinBox = \
+            replace_spinbox_in_layout(self.details_ui.pixel_time_doubleSpinBox)
+        self.settings.pixel_time.connect_to_widget(
+            self.details_ui.pixel_time_pgSpinBox)
+        
+        self.details_ui.line_time_pgSpinBox = \
+            replace_spinbox_in_layout(self.details_ui.line_time_doubleSpinBox)
+        self.settings.line_time.connect_to_widget(
+            self.details_ui.line_time_pgSpinBox)
+        
+        self.details_ui.frame_time_pgSpinBox = \
+            replace_spinbox_in_layout(self.details_ui.frame_time_doubleSpinBox)
+        self.settings.frame_time.connect_to_widget(
+            self.details_ui.frame_time_pgSpinBox)
+
         
         self.scanDAQ.settings.dac_rate.add_listener(self.compute_times)
         self.settings.Nh.add_listener(self.compute_times)
         self.settings.Nv.add_listener(self.compute_times)
         
+        
         if hasattr(self.app,'sem_remcon'):#FIX re-implement later
             self.sem_remcon=self.app.sem_remcon
         
+        S = self.settings
+        self.settings.pixel_time.connect_lq_math([S.adc_rate,S.adc_oversample],
+                                                 lambda rate, oversample: oversample/rate)
         
 #     def dock_config(self):
 #         
@@ -77,26 +109,36 @@ class SyncRasterScan(BaseRaster2DScan):
 #         
 # 
 #     WIP
+
+    def pre_run(self):
+        self.scanDAQ = self.app.hardware['sync_raster_daq']        
+        self.scanDAQ.settings['adc_rate'] = self.settings['adc_rate']
+        self.scanDAQ.settings['adc_oversample'] = self.settings['adc_oversample']
+        self.scanDAQ.compute_dac_rate()
+
     
     def run(self):
+        
+        self.frame_time_i = time.time()
         
         self.on_start_of_run()
         
         self.adc_poll_period = 0.050
         
         # if hardware is not connected, connect it
-        time.sleep(0.5)
+        #time.sleep(0.5)
         if not self.scanDAQ.settings['connected']:
             self.scanDAQ.settings['connected'] = True
             # we need to wait while the task is created before 
             # measurement thread continues
-            time.sleep(0.2)
+            time.sleep(0.1)
             
-        self.scanDAQ.settings['adc_oversample'] = self.settings['adc_oversample']
         
+
             # READ FROM HARDWARE BEFORE SCANNING -- Drift correction depends on accurate numbers
             # also disable beam blank, enable ext scan
-        self.app.hardware['sem_remcon'].read_from_hardware()
+        if self.read_from_hardware:
+            self.app.hardware['sem_remcon'].read_from_hardware()
         self.app.hardware['sem_remcon'].settings['external_scan'] = 1
         self.app.hardware['sem_remcon'].settings['beam_blanking'] = 0
        
@@ -209,23 +251,27 @@ class SyncRasterScan(BaseRaster2DScan):
             
                         
             ##### register callbacks
-            self.scanDAQ.set_n_pixel_callback_adc(
-                num_pixels_per_block, 
-                self.every_n_callback_func_adc)
-            
-            self.scanDAQ.set_n_pixel_callback_dac(
-                self.num_pixels_per_dac_block,
-                self.every_n_callback_func_dac)
-            
-            self.scanDAQ.sync_analog_io.adc.set_done_callback(
-                self.done_callback_func_adc )
-            
-            self.dac_i = 0
-            
-            for ctr_i in range(self.scanDAQ.num_ctrs):
-                self.scanDAQ.set_ctr_n_pixel_callback( ctr_i,
-                        num_pixels_per_block, lambda i=ctr_i: self.every_n_callback_func_ctr(i))
-            
+            if hasattr(self.scanDAQ.sync_analog_io, 'sync_raster_scan_callbacks'):
+                print("callbacks already defined")
+            else:
+                self.scanDAQ.set_n_pixel_callback_adc(
+                    num_pixels_per_block, 
+                    self.every_n_callback_func_adc)
+                
+                self.scanDAQ.set_n_pixel_callback_dac(
+                    self.num_pixels_per_dac_block,
+                    self.every_n_callback_func_dac)
+                
+                self.scanDAQ.sync_analog_io.adc.set_done_callback(
+                    self.done_callback_func_adc )
+                
+                self.dac_i = 0
+                
+                for ctr_i in range(self.scanDAQ.num_ctrs):
+                    self.scanDAQ.set_ctr_n_pixel_callback( ctr_i,
+                            num_pixels_per_block, lambda i=ctr_i: self.every_n_callback_func_ctr(i))
+
+                self.scanDAQ.sync_analog_io.sync_raster_scan_callbacks = True
             
             self.pre_scan_setup()
 
@@ -248,7 +294,11 @@ class SyncRasterScan(BaseRaster2DScan):
                 self.log.info('data saved to {}'.format(self.h5_file.filename))
                 self.h5_file.close()            
             self.scanDAQ.stop()
+            
+            ##### TODO unregister callbacks
             self.scanDAQ.settings['connected']=False
+            
+            
             # TODO disconnect callback
             #self.scanDAQ.
             #print("Npixels", self.Npixels, 'block size', self.num_pixels_per_block, 'num_blocks', num_blocks)
@@ -265,6 +315,8 @@ class SyncRasterScan(BaseRaster2DScan):
                 self.settings['v1'] -= self.dac_offsets[-1][1]
             
             self.post_scan_cleanup()
+            
+            print(self.name, "done")
 
         
     
@@ -344,11 +396,11 @@ class SyncRasterScan(BaseRaster2DScan):
         finally:
             self.in_dac_callback = False
             self.dac_callback_elapsed = time.time() - self.dac_callback_elapsed
-            print("DAQ elapsed time {:.3g} ms {}% frame write pos {:d} space {:d} samples {:d}"\
-                  .format(self.dac_callback_elapsed*1e3, self.dac_percent_frame,\
-                          self.write_pos.value,\
-                          self.space_available.value,\
-                          self.samples_generated.value))
+#             print("DAQ elapsed time {:.3g} ms {}% frame write pos {:d} space {:d} samples {:d}"\
+#                   .format(self.dac_callback_elapsed*1e3, self.dac_percent_frame,\
+#                           self.write_pos.value,\
+#                           self.space_available.value,\
+#                           self.samples_generated.value))
 
         return 0
     
@@ -361,7 +413,7 @@ class SyncRasterScan(BaseRaster2DScan):
             
     def done_callback_func_adc(self, status):
         self.task_done = True
-        print("done", status)
+        #print("done", status)
         return 0
     
     def handle_new_data(self):
@@ -428,6 +480,9 @@ class SyncRasterScan(BaseRaster2DScan):
         pass
     
     def on_end_frame(self, frame_i):
+        if hasattr(self, "frame_time_i"):
+            print("sync_raster_scan frame_time", time.time() - self.frame_time_i)
+        self.frame_time_i = time.time()
         
         if self.settings['correct_drift']:
             frame_num = frame_i
@@ -494,6 +549,11 @@ class SyncRasterScan(BaseRaster2DScan):
         self.ctr_pixel_index[ctr_i] += dii
         self.ctr_total_pixel_index[ctr_i] += dii
         self.ctr_pixel_index[ctr_i] %= self.Npixels
+        
+        # copy pixel 1 to pixel 0 to avoid large count number 
+        # from free-running counter between measurements
+        if ii == 0 and dii > 1:
+            new_data[0] = new_data[1]
         
         # copy data to image shaped map
         x = self.scan_index_array[ii:ii+dii,:].T
@@ -588,9 +648,22 @@ class SyncRasterScan(BaseRaster2DScan):
                 return False
         else:
             return False
+    
+#     def compute_times(self):
+#         #if hasattr(self, 'scanDAQ'):
+#         dac_rate = self.settings['adc_rate']*self.settings['adc_oversample']
+#         self.settings['pixel_time'] = 1.0/dac_rate
+#         BaseRaster2DScan.compute_times(self)
+
+    def update_available_channels(self):
+        self.available_chan_dict = OrderedDict()
                 
-    def compute_times(self):
-        if hasattr(self, 'scanDAQ'):
-            self.settings['pixel_time'] = 1.0/self.scanDAQ.settings['dac_rate']
-        BaseRaster2DScan.compute_times(self)
+        for i, phys_chan in enumerate(self.scanDAQ.settings['adc_channels']):
+            self.available_chan_dict[phys_chan] = AvailChan(
+                # type, index, physical_chan, channel_name, terminal
+                'ai', i, phys_chan, self.scanDAQ.settings['adc_chan_names'][i], phys_chan)
+        for i, phys_chan in enumerate(self.scanDAQ.settings['ctr_channels']):
+            self.available_chan_dict[phys_chan] = AvailChan(
+                # type, index, physical_chan, channel_name, terminal
+                'ctr', i, phys_chan, self.scanDAQ.settings['ctr_chan_names'][i], self.scanDAQ.settings['ctr_chan_terms'][i])
 
