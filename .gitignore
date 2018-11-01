@@ -23,6 +23,8 @@ ScopeFoundryHW/andor_camera/log/
 trpl_microscope/log/
 plimg_microscope/log/
 ir_microscope/log/
+.metadata/
+df_microscope/log/
 ScopeFoundryHW/xbox_controller/log/
 ScopeFoundryHW/thorlabs_stepper_motors/log/
 ScopeFoundryHW/princeton_omaV/OMAV InGaAs System Manual.pdf
