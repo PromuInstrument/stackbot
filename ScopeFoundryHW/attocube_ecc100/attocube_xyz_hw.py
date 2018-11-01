@@ -209,6 +209,18 @@ class AttoCubeXYZStageHW(HardwareComponent):
                 elif actor_type in ['ECC_actorGonio', 'ECC_actorRot']:
                     self.settings.get_lq(axis_name + "_position").change_unit("deg")
                     self.settings.get_lq(axis_name + "_target_position").change_unit("deg")
+                    
+        # find axes with step voltage too small due to weird firmware issues
+        for axis_num, axis_name in enumerate(self.ax_names):
+            if axis_name != "_":
+                step_volt = self.settings.get_lq(axis_name + "_step_voltage")
+                if step_volt.val < 5:
+                    step_volt.update_value(30)
+                step_freq = self.settings.get_lq(axis_name + "_frequency")
+                if step_freq.val < 5:
+                    step_freq.update_value(1000)
+
+                
 
     def disconnect(self):
         
