@@ -3,7 +3,7 @@ from ScopeFoundry import BaseMicroscopeApp
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 import logging
 
-logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
+logging.basicConfig(level='WARNING')#, filename='m3_log.txt')
 #logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
@@ -154,7 +154,19 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from trpl_microscope.step_and_glue_spec_measure import SpecStepAndGlue
         self.add_measurement(SpecStepAndGlue(self))
         
-            
+        from confocal_measure.apd_asi_2dslowscan import APD_ASI_2DSlowScan
+        apd_asi = self.add_measurement(APD_ASI_2DSlowScan(self))
+        
+        from confocal_measure.asi_hyperspec_scan import AndorHyperSpecASIScan
+        hyperspec_asi = self.add_measurement(AndorHyperSpecASIScan(self))
+        
+        # connect mapping measurement settings        
+        lq_names =  ['h0', 'h1', 'v0', 'v1',  'Nh', 'Nv']
+        
+        for scan in [apd_asi, hyperspec_asi]:
+            for lq_name in lq_names:
+                master_scan_lq =  apd_asi.settings.get_lq(lq_name)
+                scan.settings.get_lq(lq_name).connect_to_lq(master_scan_lq)         
                     
         
         ####### Quickbar connections #################################

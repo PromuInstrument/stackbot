@@ -4,6 +4,7 @@ import time
 from ScopeFoundry import h5_io
 from ScopeFoundry.helper_funcs import sibling_path
 import pyqtgraph as pg
+from ScopeFoundryHW import shutter_servo_arduino
 
 class PowerScanMeasure(Measurement):
     
@@ -15,19 +16,19 @@ class PowerScanMeasure(Measurement):
         
     def setup(self):
         
-        self.power_wheel_min = self.add_logged_quantity("power_wheel_min", 
-                                                          dtype=float, unit='', initial=0, vmin=-3200, vmax=+3200, ro=False)
-        self.power_wheel_max = self.add_logged_quantity("power_wheel_max", 
-                                                          dtype=float, unit='', initial=280, vmin=-3200, vmax=+3200, ro=False)
-        self.power_wheel_ndatapoints = self.add_logged_quantity("power_wheel_ndatapoints", 
-                                                          dtype=int, unit='', initial=100, vmin=1, vmax=3200, ro=False)
+        self.power_wheel_min = self.settings.New("power_wheel_min", dtype=float, unit='', initial=0, vmin=0, vmax=280, ro=False)
+        self.power_wheel_max = self.settings.New("power_wheel_max", dtype=float, unit='', initial=280, vmin=0, vmax=+280, ro=False)
+        self.power_wheel_ndatapoints = self.settings.New("power_wheel_ndatapoints", dtype=int, unit='', initial=100, vmin=1, vmax=3200, ro=False)
         
-        self.up_and_down_sweep    = self.add_logged_quantity("up_and_down_sweep",dtype=bool, initial=True)
+        self.up_and_down_sweep    = self.settings.New("up_and_down_sweep",dtype=bool, initial=True)
 
-        self.collect_apd      = self.add_logged_quantity("collect_apd",      dtype=bool, initial=True)
-        self.collect_spectrum = self.add_logged_quantity("collect_spectrum", dtype=bool, initial=False)
-        self.collect_lifetime = self.add_logged_quantity("collect_lifetime", dtype=bool, initial=True)
-        self.collect_ascom_img = self.add_logged_quantity('collect_ascom_img', dtype=bool, initial=False)
+        self.collect_apd      = self.settings.New("collect_apd",      dtype=bool, initial=True)
+        self.collect_spectrum = self.settings.New("collect_spectrum", dtype=bool, initial=False)
+        self.collect_lifetime = self.settings.New("collect_lifetime", dtype=bool, initial=True)
+        self.collect_ascom_img = self.settings.New('collect_ascom_img', dtype=bool, initial=False)
+        
+        self.open_shutter_on_start = self.settings.New('open_shutter_on_start', dtype=bool, initial=True) # adding an object that can have a call back func
+        self.close_shutter_on_finish = self.settings.New('close_shutter_on_finish', dtype=bool, initial=True) # adding an object that can have a call back func
         
         self.settings.New("x_axis", dtype=str, initial='power_wheel', choices=('power_wheel', 'pm_power'))
     
@@ -49,6 +50,35 @@ class PowerScanMeasure(Measurement):
         self.collect_lifetime.connect_to_widget(self.ui.collect_picoharp_checkBox)
         self.collect_ascom_img.connect_to_widget(self.ui.collect_ascom_img_checkBox)
         
+        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
+        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+
+        
+        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+        
+        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
+        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+
+        
+        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
+        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+
+        
+        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
+        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+
+        
+        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
+        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+
+        
+        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
+        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+
+        
+        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
+        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+
         
         
         # Hardware connections
@@ -115,9 +145,11 @@ class PowerScanMeasure(Measurement):
 
     def run(self):
         # hardware and delegate measurements
-        #self.power_wheel_hw = self.app.hardware.power_wheel_arduino
-        #self.power_wheel_dev = self.power_wheel_hw.power_wheel_dev
-        self.power_wheel_hw = self.app.hardware['power_wheel']
+        self.power_wheel_hw = self.app.hardware['pololu_maestro_servo']
+        shutter_servo_hw = self.app.hardware['shutter_servo']
+        
+        if self.settings['open_shutter_on_start']:
+            shutter_servo_hw.settings['shutter_open'] = True
         
         if self.settings['collect_apd']:
             self.apd_counter_hw = self.app.hardware.apd_counter
@@ -128,6 +160,7 @@ class PowerScanMeasure(Measurement):
 
         if self.settings['collect_spectrum']:
             self.winspec_readout = self.app.measurements['winspec_readout']
+            self.winspec_readout.settings['save_h5'] = False
                    
         if self.settings['collect_ascom_img']:
             self.ascom_camera_capture = self.app.measurements.ascom_camera_capture
@@ -222,6 +255,7 @@ class PowerScanMeasure(Measurement):
                 self.picoharp_time_array =  ph.time_array[0:Nt]
                 self.picoharp_elapsed_time[ii] = ph.read_elapsed_meas_time()
             if self.settings['collect_spectrum']:
+                self.winspec_readout.interrupt_measurement_called = False
                 self.winspec_readout.run()
                 spec = np.array(self.winspec_readout.data)
                 self.spectra.append( spec )
