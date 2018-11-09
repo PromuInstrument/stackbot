@@ -29,6 +29,14 @@ class ALD_Display(Measurement):
     :class:`ALD_Recipe` are connected to indicators defined here within 
     :meth:`setup_conditions_widget`.
     
+    This Measurement module and the 
+    :class:`ALD_Display` module are interdependent and make calls to functions in the other module.
+    These modules should be loaded by 
+    :class:`ALD_App`
+    in the following order:
+    
+    1. :class:`ALD_Recipe <ALD.ALD_recipes.ALD_recipe>`
+    2. :class:`ALD_Display <ALD.ALD_recipes.ALD_display>`
 
     '''
     
@@ -551,6 +559,58 @@ class ALD_Display(Measurement):
         Creates recipe control widget, UI elements related to ALD recipe settings,
         establishes signals and slots, as well as connections between UI elements 
         and their associated *LoggedQuantities*
+        
+        The table widget consists of a hierarchy of PyQt5 classes.
+        The structure of the table widget assumes the following form:
+        
+        * :class:`QWidget`
+            * :class:`QTableView`
+                * :class:`QTableModel`
+        
+        More specific to the case of the subroutine table:
+        
+        * :class:`QWidget` (:attr:`subroutine_table_widget`)
+            * :class:`QTableView` (:attr:`subroutine_table`)
+                * :class:`QTableModel` (:attr:`subtableModel`)
+                
+        And in the case of the main recipe table:
+        
+        * :class:`QWidget` (:attr:`table_widget`)
+            * :class:`QTableView` (:attr:`pulse_table`)
+                * :class:`QTableModel` (:attr:`tableModel`)
+                
+        See \
+        :meth:`ALD.ALD_recipes.ALD_display.setup_recipe_control_widget` \
+        for details.
+        
+        
+        **Example of table creation using PyQt5 and ScopeFoundry:**
+        
+        .. highlight:: python
+        .. code-block:: python
+        
+            self.table_widget = QtWidgets.QWidget()
+            self.table_widget_layout = QtWidgets.QHBoxLayout()
+            self.table_widget.setLayout(self.table_widget_layout)
+    
+            self.table_label = QtWidgets.QLabel('Table Label')
+            self.table_widget.layout().addWidget(self.table_label)
+    
+            self.table = QtWidgets.QTableView()
+            ## Optional height constraint.
+            self.table.setMaximumHeight(65)
+            
+            names = ['List', 'of', 'column', 'labels']
+            
+            self.tableModel = ArrayLQ_QTableModel(self.displayed_array, col_names=names)
+            self.table.setModel(self.tableModel)
+            self.table_widget.layout().addWidget(self.table)
+            
+            ### Add widget to enclosing outer widget
+            self.containing_widget.layout().addWidget(self.table_widget)
+        
+        Note that :class:`ArrayLQ_QTableModel` is a ScopeFoundry function containing PyQt5 code.
+        For simplicity, it has been included in ScopeFoundry's core framework under ndarray_interactive.
         """
         self.recipe_control_widget = QtWidgets.QGroupBox('Recipe Controls')
         self.recLayout = QtWidgets.QVBoxLayout()

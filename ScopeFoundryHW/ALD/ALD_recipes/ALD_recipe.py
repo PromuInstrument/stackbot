@@ -29,8 +29,8 @@ class ALD_Recipe(Measurement):
     :class:`ALD_App`
     in the following order:
     
-    1. :class:`ALD_Recipe`
-    2. :class:`ALD_Display`
+    1. :class:`ALD_Recipe <ALD.ALD_recipes.ALD_recipe>`
+    2. :class:`ALD_Display <ALD.ALD_recipes.ALD_display>`
     
 
 
@@ -319,6 +319,9 @@ class ALD_Recipe(Measurement):
             
             ### Add widget to enclosing outer widget
             self.containing_widget.layout().addWidget(self.table_widget)
+        
+        Note that :class:`ArrayLQ_QTableModel` is a ScopeFoundry function containing PyQt5 code.
+        For simplicity, it has been included in ScopeFoundry's core framework under ndarray_interactive.
         """
         if self.settings['t3_method'] == 'PV/Purge':
             self.settings['time'][0][3] = self.subroutine_sum()
