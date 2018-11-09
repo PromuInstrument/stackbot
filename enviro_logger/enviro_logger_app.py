@@ -25,6 +25,7 @@ class EnviroLoggerApp(BaseMicroscopeApp):
         
         accel.settings['log_freq_max'] = 4e3
         accel.settings['view_freq_max'] = 2e3
+        accel.settings['view_show_dc'] = False
         
         
         #from magnetometer_logger import MagnetometerLogger
