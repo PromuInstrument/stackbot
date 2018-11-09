@@ -17,13 +17,22 @@ import os
 
 class Pfeiffer_VGC_Measure(Measurement):
     
+    """
+    This class creates a measurement tab in the ScopeFoundry MDI interface 
+    a widget contained in which, contains live plotting features and export features. 
+    
+    This allows the user to not only monitor the pressure history with respect to time, 
+    but also dump the recorded arrays, :attr:`self.pressure_history` and :attr:`self.time_history` 
+    to export .npy files.
+    """
+    
     name = "pfeiffer_vgc_measure"
     
     def __init__(self, app):
         Measurement.__init__(self, app)
         
     def setup(self):
-
+        """Establishes *LoggedQuantities* and their initial values."""
         self.settings.New('display_window', dtype=int, initial=1e4, vmin=200)
         self.settings.New('history_length', dtype=int, initial=1e6, vmin=1000)
         self.setup_buffers_constants()
@@ -162,9 +171,19 @@ class Pfeiffer_VGC_Measure(Measurement):
     
     def setup_buffers_constants(self):
         """
-        Creates constants for use in measurement routine.
+        Creates constants for use in live plotting features.
         
-        Called from 
+        This function reads from the following logged quantities and their initial values 
+        to create initial arrays.
+        
+        ==================  ==========  ==========================================================
+        **LoggedQuantity**  **Type**    **Description**
+        history_length      int         Length of data array to record pressure values over time.
+
+        display_window      int         Section of data array to be displayed in live plot.
+        ==================  ==========  ==========================================================
+
+        Called once from 
         :meth:`setup`
         """
         home = os.path.expanduser("~")
@@ -202,6 +221,7 @@ class Pfeiffer_VGC_Measure(Measurement):
         
         :attr:`self.read_pressures` is called to obtain pressures from Pfeiffer VGC. 
         This includes for following measurements:
+        
         * Pirani Gauge 
         * Compact Full Range Gauge 
         

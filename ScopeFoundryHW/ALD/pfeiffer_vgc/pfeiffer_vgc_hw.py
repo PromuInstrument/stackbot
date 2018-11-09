@@ -10,6 +10,15 @@ from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_interface import Pfeiffer_VGC_
 
 class Pfeiffer_VGC_Hardware(HardwareComponent):
     
+    """
+    This hardware component module establishes a connection with the Pfeiffer MaxiGauge TPG 256A 
+    and connects its *LoggedQuantities* to their respective functions.
+    
+    **IMPORTANT:** Call functions defined in this Hardware module to retrieve data 
+    as opposed to calling lower level functions. These functions account for the way data is structured
+    when returned at the lower level.
+    """
+    
     name = "pfeiffer_vgc_hw"
     
     def setup(self):
