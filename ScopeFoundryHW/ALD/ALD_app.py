@@ -68,7 +68,7 @@ class ALD_App(BaseMicroscopeApp):
     |                   +-------------------------------------------------------+------------------------------------+
     |                   | :class:`ALD_Recipe <ALD.ALD_recipes.ALD_recipe>`      | Carries out Atomic Layer Deposition|
     |                   |                                                       | procedure.                         |
-    +-------------------+----------------------------+--------------------------+------------------------------------+
+    +-------------------+-------------------------------------------------------+------------------------------------+
     
     **Important:** Proper loading of :class:`ALD_Recipe <ALD.ALD_recipes.ALD_recipe>` and :class:`ALD_Display <ALD.ALD_recipes.ALD_display>` procedure at app level. Modules must be loaded in this order since modules 
     are co-dependent and were written separately for the sake of organization.
