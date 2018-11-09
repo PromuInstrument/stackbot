@@ -12,7 +12,6 @@ image_window.ui.oA7156
 .idea/
 *.h5
 log.out
-build
 *.autosave
 *.mat
 ScopeFoundry/ScopeFoundry.egg-info
@@ -34,3 +33,4 @@ ScopeFoundry/log/
 ScopeFoundryHW/thorlabs_stepper_motors/log/
 ScopeFoundry/tests/log/
 ScopeFoundryHW/pololu_servo/log/
+FoundryDataBrowser/build/foundry_data_browser_win32/
