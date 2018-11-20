@@ -4,6 +4,7 @@ from ScopeFoundry import BaseMicroscopeApp
 
 import logging
 from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path
+from collections import OrderedDict
 
 logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
 #logging.getLogger('').setLevel(logging.WARNING)
@@ -45,6 +46,10 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
         self.add_hardware_component(PowerWheelArduinoHW(self))
         
+        from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW
+        self.add_hardware(PololuMaestroServoHW(self, name='power_wheel'))
+        
+        
         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW
         self.add_hardware_component(ThorlabsPowerMeterHW(self))
 
@@ -60,12 +65,14 @@ class M3MicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.ni_daq.hw.ni_digital_out import NIDigitalOutHW
         self.add_hardware(NIDigitalOutHW(self, name='flip_mirrors', line_names=['apd_flip', '_', '_', '_', '_', '_', '_', '_']))
         
-        from ScopeFoundryHW.shutter_servo_arduino.shutter_servo_arduino_hc import ShutterServoHW
-        self.add_hardware(ShutterServoHW(self))
+        #from ScopeFoundryHW.shutter_servo_arduino.shutter_servo_arduino_hc import ShutterServoHW
+        #self.add_hardware(ShutterServoHW(self))
         
         from ScopeFoundryHW.thorlabs_elliptec.elliptec_hw import ThorlabsElliptecSingleHW
-        self.add_hardware(ThorlabsElliptecSingleHW(self, name='collection_filter'))
-        self.add_hardware(ThorlabsElliptecSingleHW(self, name='laser_in_shutter'))
+        self.add_hardware(ThorlabsElliptecSingleHW(self, name='collection_filter',
+                                                   named_positions=OrderedDict( (('PL',0.0),('Laser', 31.0), ('C_open', 62.), ('D_open', 93.) ))))
+        self.add_hardware(ThorlabsElliptecSingleHW(self, name='laser_in_shutter', 
+                                                   named_positions=OrderedDict( (('closed',1.0),('open', 24.0)))))
         
         #Add measurement components
         print("Create Measurement objects")

@@ -3,7 +3,7 @@ from ScopeFoundry import BaseMicroscopeApp
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 import logging
 
-logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
+logging.basicConfig(level='WARNING')#, filename='m3_log.txt')
 #logging.getLogger('').setLevel(logging.WARNING)
 logging.getLogger("ipykernel").setLevel(logging.WARNING)
 logging.getLogger('PyQt4').setLevel(logging.WARNING)
@@ -79,7 +79,6 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.quantum_composer import QuantumComposerHW
         self.add_hardware(QuantumComposerHW(self))
 
-
         from ScopeFoundryHW.toupcam import ToupCamHW, ToupCamLiveMeasure
         self.add_hardware_component(ToupCamHW(self))
         
@@ -90,12 +89,16 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         self.add_hardware(ASIStageHW(self))
         self.add_measurement(ASIStageControlMeasure(self))
         
-
         from xbox_trpl_measure import XboxControllerTRPLMeasure
         from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
         self.add_hardware(XboxControllerHW(self))
         self.add_measurement(XboxControllerTRPLMeasure(self))
 
+        from ScopeFoundryHW.crystaltech_aotf.crystaltech_aotf_hc import CrystalTechAOTF 
+        self.add_hardware(CrystalTechAOTF(self))
+        
+        from ScopeFoundryHW.linkam_thermal_stage.linkam_temperature_controller import LinkamControllerHC
+        self.add_hardware(LinkamControllerHC(self))   
     
         ########################## MEASUREMENTS
         print("Adding Measurement Components")
@@ -151,7 +154,19 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from trpl_microscope.step_and_glue_spec_measure import SpecStepAndGlue
         self.add_measurement(SpecStepAndGlue(self))
         
-            
+        from confocal_measure.apd_asi_2dslowscan import APD_ASI_2DSlowScan
+        apd_asi = self.add_measurement(APD_ASI_2DSlowScan(self))
+        
+        from confocal_measure.asi_hyperspec_scan import AndorHyperSpecASIScan
+        hyperspec_asi = self.add_measurement(AndorHyperSpecASIScan(self))
+        
+        # connect mapping measurement settings        
+        lq_names =  ['h0', 'h1', 'v0', 'v1',  'Nh', 'Nv']
+        
+        for scan in [apd_asi, hyperspec_asi]:
+            for lq_name in lq_names:
+                master_scan_lq =  apd_asi.settings.get_lq(lq_name)
+                scan.settings.get_lq(lq_name).connect_to_lq(master_scan_lq)         
                     
         
         ####### Quickbar connections #################################
@@ -244,6 +259,13 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         shutter.settings.shutter_open.connect_to_widget(Q.shutter_open_checkBox)
         
         self.hardware['flip_mirror'].settings.mirror_position.connect_to_widget(Q.flip_mirror_checkBox)
+        
+        
+        # AOTF
+        aotf_hw = self.hardware['CrystalTechAOTF_DDS']
+        aotf_hw.settings.freq0.connect_to_widget(Q.atof_freq_doubleSpinBox)
+        aotf_hw.settings.pwr0.connect_to_widget(Q.aotf_power_doubleSpinBox)
+        aotf_hw.settings.modulation_enable.connect_to_widget(Q.aotf_mod_enable_checkBox)        
         
         ################# Shared Settings for Map Measurements ########################
         

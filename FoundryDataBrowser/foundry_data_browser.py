@@ -67,6 +67,9 @@ from viewers.APD_MCL_2DSlowScanView import APD_MCL_2DSlowScanView, APD_MCL_3DSlo
 app.load_view(APD_MCL_2DSlowScanView(app))
 app.load_view(APD_MCL_3DSlowScanView(app))
 
+from viewers.APD_ASI_2DSlowScanView import APD_ASI_2DSlowScanView
+app.load_view(APD_ASI_2DSlowScanView(app))
+
 from viewers.WinSpecMCL2DSlowScanView import WinSpecMCL2DSlowScanView
 app.load_view(WinSpecMCL2DSlowScanView(app))
 
@@ -97,10 +100,10 @@ app.load_view(AndorCCDReadout(app))
 from viewers.hyperspec_cl_h5 import HyperSpecCLH5View
 app.load_view(HyperSpecCLH5View(app))
 
-from FoundryDataBrowser.viewers.hyperspec_h5 import HyperSpecH5View
+from viewers.hyperspec_h5 import HyperSpecH5View
 app.load_view(HyperSpecH5View(app))
 
-from FoundryDataBrowser.viewers.trpl_h5 import TRPLH5View
+from viewers.trpl_h5 import TRPLH5View
 app.load_view(TRPLH5View(app))
 
 sys.exit(app.exec_())
