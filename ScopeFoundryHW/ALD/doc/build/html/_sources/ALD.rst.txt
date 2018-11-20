@@ -15,7 +15,7 @@ Subpackages
     ALD.Seren
     ALD.ellipsometer
     ALD.pfeiffer_vgc
-    custom/poop
+    custom/ni_mfc_pinout
 
 Submodules
 ----------

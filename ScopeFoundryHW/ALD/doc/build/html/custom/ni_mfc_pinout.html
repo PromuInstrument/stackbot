@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-    <title>Arctest Example &#8212; scopefoundry  documentation</title>
+    <title>NI USB-6001 Pin Assignment &#8212; scopefoundry  documentation</title>
     <link rel="stylesheet" href="../_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
@@ -38,7 +38,7 @@
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
-      <li><a href="../_sources/custom/poop.rst.txt"
+      <li><a href="../_sources/custom/ni_mfc_pinout.rst.txt"
             rel="nofollow">Show Source</a></li>
     </ul>
    </div>
@@ -62,15 +62,65 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="arctest-example">
-<h1>Arctest Example<a class="headerlink" href="#arctest-example" title="Permalink to this headline">¶</a></h1>
-<p>Description</p>
-<p><code class="xref py py-class docutils literal notranslate"><span class="pre">Poop</span></code></p>
-<img alt="gallery/lines_bars_and_markers/images/sphx_glr_arctest_001.png" class="sphx-glr-single-img" src="gallery/lines_bars_and_markers/images/sphx_glr_arctest_001.png" />
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-</pre></div>
-</div>
+  <div class="section" id="ni-usb-6001-pin-assignment">
+<h1>NI USB-6001 Pin Assignment<a class="headerlink" href="#ni-usb-6001-pin-assignment" title="Permalink to this headline">¶</a></h1>
+<table border="1" class="docutils">
+<colgroup>
+<col width="17%" />
+<col width="26%" />
+<col width="24%" />
+<col width="33%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Pin Number</th>
+<th class="head">Wire Color</th>
+<th class="head">Assigned DIO Port</th>
+<th class="head">Signal</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>2</td>
+<td>Green</td>
+<td>AI 0 (0+)</td>
+<td>Flow Signal Output (0 to +5VDC)</td>
+</tr>
+<tr class="row-odd"><td>3</td>
+<td>Blue-White</td>
+<td>DIO P0.0</td>
+<td>Valve Close (TTL Low)</td>
+</tr>
+<tr class="row-even"><td>4</td>
+<td>Blue</td>
+<td>DIO P0.1</td>
+<td>Valve Open (TTL Low)</td>
+</tr>
+<tr class="row-odd"><td>6</td>
+<td>Brown-White</td>
+<td>-15 VDC</td>
+<td>-15 VDC (Unit Power)</td>
+</tr>
+<tr class="row-even"><td>7</td>
+<td>Brown</td>
+<td>+15 VDC</td>
+<td>+15 VDC (Unit Power)</td>
+</tr>
+<tr class="row-odd"><td>8</td>
+<td>Orange</td>
+<td>AO 0</td>
+<td>Set Point Input (0 to +5VDC)</td>
+</tr>
+<tr class="row-even"><td>11</td>
+<td>Green-White</td>
+<td>AI 4 (0-)</td>
+<td>Signal Common</td>
+</tr>
+<tr class="row-odd"><td>12</td>
+<td>Orange-White</td>
+<td>AO GND</td>
+<td>Signal Common</td>
+</tr>
+</tbody>
+</table>
 </div>
 
 
