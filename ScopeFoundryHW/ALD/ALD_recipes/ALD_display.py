@@ -47,19 +47,6 @@ class ALD_Display(Measurement):
         Measurement.__init__(self, app)        
         
     def setup(self):
-        self.cb_stylesheet = '''
-        QCheckBox::indicator {
-            width: 25px;
-            height: 25px;
-        }
-        QCheckBox::indicator:checked {
-            image: url(://icons//GreenLED.png);
-        }
-        QCheckBox::indicator:unchecked {
-            image: url(://icons//RedLED.png);
-        }
-        '''
-
         self.settings.New('RF_pulse_duration', dtype=int, initial=1)
         self.settings.New('history_length', dtype=int, initial=1e6, vmin=1, ro=True)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
@@ -226,6 +213,18 @@ class ALD_Display(Measurement):
         and then populates them.
         This function is called from :meth:`ui_setup`
         """
+        self.cb_stylesheet = '''
+        QCheckBox::indicator {
+            width: 25px;
+            height: 25px;
+        }
+        QCheckBox::indicator:checked {
+            image: url(://icons//GreenLED.png);
+        }
+        QCheckBox::indicator:unchecked {
+            image: url(://icons//RedLED.png);
+        }
+        '''
         self.setup_operations_widget()
         self.setup_conditions_widget()
         self.setup_thermal_control_widget()
@@ -242,7 +241,7 @@ class ALD_Display(Measurement):
         array of LED indicators (and greyed out pushbuttons serving as labels.)
         which serve as indicators of desired conditions within the ALD recipe process.
         """
-        
+
         self.conditions_widget = QtWidgets.QGroupBox('Conditions Widget')
         self.conditions_widget.setLayout(QtWidgets.QGridLayout())
         self.conditions_widget.setStyleSheet(self.cb_stylesheet)
