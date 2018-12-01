@@ -235,8 +235,11 @@ class Pfeiffer_VGC_Measure(Measurement):
             man_readout = np.random.rand(1,)
         else:
             readout = self.read_pressures()
-            man_readout = np.array(self.app.hardware['mks_600_hw'].settings['pressure'])
-        
+            if hasattr(self.app.hardware, 'mks_600_hw'):
+                man_readout = np.array(self.app.hardware['mks_600_hw'].settings['pressure'])
+            else:
+                man_readout = np.array(0)
+                
         time_entry = datetime.datetime.now()
         if self.history_i < self.HIST_LEN-1:
             self.index = self.history_i % self.HIST_LEN
