@@ -504,7 +504,7 @@ class PIDController(object):
         assert 1 <= length <= 8
 
         with self.lock:
-            self.ser.write(self.analog_read_command(register, length).decode())
+            self.ser.write(self.analog_read_command(register, length))#.decode())
             output = self.ser.readline() # is \r\n included !? Yes.
             """:01030200EA10"""
 
@@ -547,7 +547,7 @@ class PIDController(object):
         """
         cmd = self.analog_write_command(register, data)
         with self.lock:
-            self.ser.write(cmd.decode())
+            self.ser.write(cmd)#.decode())
             output = self.ser.readline()
 
     def close(self):
