@@ -49,7 +49,8 @@ class ALDRelayInterface(object):
         self.ser.flush()
         message = cmd+'\n'
         with self.lock:
-            self.ser.write(message)
+#             self.ser.write(message)
+            self.ser.write(message.encode())
             resp = self.ser.readline().decode()
         return resp
     
