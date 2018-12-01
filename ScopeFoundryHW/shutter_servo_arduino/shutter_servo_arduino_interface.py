@@ -35,7 +35,8 @@ class ShutterServoArduino(object):
         if self.debug: logger.debug( "send_cmd:" + repr(cmd))
         full_cmd = cmd + "\r\n"
         with self.lock:
-            self.ser.write(full_cmd)
+#             self.ser.write(full_cmd)
+            self.ser.write(full_cmd.encode())
     
     def ask(self, cmd):
         if self.debug: logger.debug( "ask:" +  repr(cmd) )
