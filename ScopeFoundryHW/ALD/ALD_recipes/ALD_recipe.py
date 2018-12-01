@@ -85,7 +85,7 @@ class ALD_Recipe(Measurement):
         self.settings.New('csv_save_path', dtype=str, initial='', ro=False)
         self.set_default_save_location()
 
-        self.predep_complete = None
+#         self.predep_complete = None
         self.dep_complete = None
 
         self.display_loaded = False
@@ -482,13 +482,14 @@ class ALD_Recipe(Measurement):
         Called by parent function
         :meth:`routine`
         """
-        self.predep_complete = False
+#         self.predep_complete = False
         status = self.mks146.settings['read_MFC0_valve']
         if status == 'O' or status == 'C':
             self.mks146.settings['set_MFC0_valve'] = 'N'
             time.sleep(1)
         self.mks146.settings['set_MFC0_SP'] = 0.7
-        self.predep_complete = True
+#         self.predep_complete = True
+        self.settings['predeposition'] = True
         
     def prepurge(self):
         """
@@ -582,7 +583,7 @@ class ALD_Recipe(Measurement):
         This is the parent function of 
         :meth:`routine`
         """
-        self.dep_complete = False
+#         self.dep_complete = False
         cycles = self.settings['cycles']    
         for _ in range(cycles):
             self.routine()
@@ -595,7 +596,8 @@ class ALD_Recipe(Measurement):
             if self.interrupt_measurement_called:
                 self.shutoff()
                 break
-        self.dep_complete = True
+#         self.dep_complete = True
+        self.settings['deposition'] = True
     
     def run_recipe(self):
         """Runs full recipe. Called when 
