@@ -93,6 +93,9 @@ class ALD_Display(Measurement):
         
         if hasattr(self.app.hardware, 'mks_146_hw'):
             self.mks146 = self.app.hardware.mks_146_hw
+ 
+        if hasattr(self.app.hardware, 'ni_mfc'):
+            self.ni_mfc0 = self.app.hardware.ni_mfc
         
         if hasattr(self.app.hardware, 'mks_600_hw'):
             self.mks600 = self.app.hardware.mks_600_hw
@@ -469,13 +472,19 @@ class ALD_Display(Measurement):
         self.pressures_group.layout().addWidget(self.ch3_readout_field, 2, 1)
         self.pressures_group.layout().addItem(self.output_spacer, 3, 0)
         
-        self.mks146.settings.set_MFC0_SP.connect_to_widget(self.set_MFC1_field)
-        self.mks600.settings.sp_set_value.connect_to_widget(self.set_throttle_pressure_field)
-        self.mks600.settings.set_valve_position.connect_to_widget(self.set_throttle_pos_field)
+        if hasattr(self, 'mks146'):
+            self.mks146.settings.set_MFC0_SP.connect_to_widget(self.set_MFC1_field)
+            self.mks146.settings.MFC0_flow.connect_to_widget(self.read_MFC1_field)
+        elif hasattr(self, 'ni_mfc0'):
+            self.ni_mfc0.settings.write_flow0.connect_to_widget(self.set_MFC1_field)
+            self.ni_mfc0.settings.read_flow0.connect_to_widget(self.read_MFC1_field)
 
-        self.mks146.settings.MFC0_flow.connect_to_widget(self.read_MFC1_field)
-        self.mks600.settings.pressure.connect_to_widget(self.read_throttle_pressure_field)
-        self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
+        if hasattr(self, 'mks600'):
+            self.mks600.settings.sp_set_value.connect_to_widget(self.set_throttle_pressure_field)
+            self.mks600.settings.set_valve_position.connect_to_widget(self.set_throttle_pos_field)
+    
+            self.mks600.settings.pressure.connect_to_widget(self.read_throttle_pressure_field)
+            self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
 
         self.vgc.settings.ch1_pressure_scaled.connect_to_widget(self.ch1_readout_field)
         self.vgc.settings.ch2_pressure_scaled.connect_to_widget(self.ch2_readout_field)
@@ -528,7 +537,8 @@ class ALD_Display(Measurement):
         self.vLine2 = pg.InfiniteLine(angle=90, movable=False)
         self.hLine2 = pg.InfiniteLine(angle=0, movable=False)
         self.rf_plot.addItem(self.vLine2)
-        self.rf_plot.addItem(self.hLine2)
+        if hasattr(self, 'mks146'):
+            self.rf_plot.addItem(self.hLine2)
         
         
     def setup_shutter_control_widget(self):
@@ -765,9 +775,14 @@ class ALD_Display(Measurement):
             rf_entry = np.random.rand(3,)
             t_entry = np.random.rand(1,)
         else:
-            rf_entry = np.array([self.seren.settings['forward_power_readout'], \
+            if hasattr(self, 'mks146'):
+                rf_entry = np.array([self.seren.settings['forward_power_readout'], \
                              self.seren.settings['reflected_power'], \
                              self.mks146.settings['MFC0_flow']])
+            else:
+                rf_entry = np.array([self.seren.settings['forward_power_readout'], \
+                             self.seren.settings['reflected_power'], \
+                             0])
             t_entry = np.array([self.lovebox.settings['pv_temp']])
 
         time_entry = datetime.datetime.now()
@@ -810,8 +825,12 @@ class ALD_Display(Measurement):
         lovebox_level = self.lovebox.settings['sv_setpoint']
         self.hLine1.setPos(lovebox_level)
         
-        flow_level = self.mks146.settings['MFC0_flow']
-        self.hLine2.setPos(flow_level)
+        if hasattr(self, 'mks146'):
+            flow_level = self.mks146.settings['MFC0_flow']
+            self.hLine2.setPos(flow_level)
+        else:
+            pass
+#             print('No MFC device connected.')
         
         lower = self.index-self.WINDOW
 
@@ -841,7 +860,12 @@ class ALD_Display(Measurement):
         """Checks ALD system conditions. Conditions that are met appear with 
         green LED indicators in the Conditions Widget groupBox."""
         self.pumped_check()
-        self.gases_check()
+        if hasattr(self, 'mks146'):
+            self.gases_check()
+        else:
+            pass
+#             print('mks146 not currently active.')
+            
         self.deposition_check()
         self.substrate_check()
         self.vent_check()
