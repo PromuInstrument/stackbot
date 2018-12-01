@@ -54,7 +54,7 @@ class Pfeiffer_VGC_Interface(object):
         message = cmd+'\r\n'
         
         with self.lock:
-            self.ser.write(message)
+            self.ser.write(message.encode())
             resp = self.ser.readline()
         
         if self.debug:
@@ -62,7 +62,8 @@ class Pfeiffer_VGC_Interface(object):
             print("ask_cmd resp:", resp)
         if resp == b"\x06\r\n":
             with self.lock:
-                self.ser.write(b"\x05".decode()+"\r\n")
+#                 self.ser.write(b"\x05".decode()+"\r\n")
+                self.ser.write(b"\x05"+"\r\n".encode())
                 resp = self.ser.readline()
             return resp
         else: 
