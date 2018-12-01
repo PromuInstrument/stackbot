@@ -43,7 +43,8 @@ class MKS_146_Interface(object):
             cmd_header = str(cmd)
         message = '@'+cmd_header+str(param)+'?\r'
         with self.lock:
-            self.ser.write(message)
+#             self.ser.write(message)
+            self.ser.write(message.encode())
             resp = self.ser.readline().decode().strip().split(':')
         print('read_cmd_nd:', resp)
         if self.debug:
