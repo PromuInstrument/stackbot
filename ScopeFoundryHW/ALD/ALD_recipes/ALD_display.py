@@ -82,7 +82,7 @@ class ALD_Display(Measurement):
             self.mks146 = self.app.hardware.mks_146_hw
  
         if hasattr(self.app.hardware, 'ni_mfc'):
-            self.ni_mfc0 = self.app.hardware.ni_mfc
+            self.ni_mfc1 = self.app.hardware.ni_mfc
         
         if hasattr(self.app.hardware, 'mks_600_hw'):
             self.mks600 = self.app.hardware.mks_600_hw
@@ -419,8 +419,10 @@ class ALD_Display(Measurement):
         self.flow_output_group.setLayout(QtWidgets.QGridLayout())
         self.pressures_group.setLayout(QtWidgets.QGridLayout())
 
-        self.MFC1_label = QtWidgets.QLabel('MFC1 Flow')
+        self.MFC1_label = QtWidgets.QLabel('MFC1 (200 sccm) Flow')
         self.set_MFC1_field = QtWidgets.QDoubleSpinBox()
+        self.MFC2_label = QtWidgets.QLabel('MFC2 (100 sccm) Flow')
+        self.set_MFC2_field = QtWidgets.QDoubleSpinBox()
         
         self.throttle_pressure_label = QtWidgets.QLabel('Throttle Pressure \n [mTorr]')
         self.set_throttle_pressure_field = QtWidgets.QDoubleSpinBox()
@@ -438,23 +440,28 @@ class ALD_Display(Measurement):
 
         self.flow_input_group.layout().addWidget(self.MFC1_label, 0, 0)
         self.flow_input_group.layout().addWidget(self.set_MFC1_field, 0, 1)
-        self.flow_input_group.layout().addWidget(self.throttle_pressure_label, 1, 0)
-        self.flow_input_group.layout().addWidget(self.set_throttle_pressure_field, 1, 1)        
-        self.flow_input_group.layout().addWidget(self.throttle_pos_label, 2, 0)
-        self.flow_input_group.layout().addWidget(self.set_throttle_pos_field, 2, 1)
-        self.flow_input_group.layout().addWidget(self.shutter_indicator, 3, 0)
-        self.flow_input_group.layout().addWidget(self.shutter_pushbutton, 3, 1)
-        self.flow_input_group.layout().addItem(self.input_spacer, 4, 0)
+        self.flow_input_group.layout().addWidget(self.MFC2_label, 1, 0)
+        self.flow_input_group.layout().addWidget(self.set_MFC2_field, 1, 1)
+        
+        self.flow_input_group.layout().addWidget(self.throttle_pressure_label, 2, 0)
+        self.flow_input_group.layout().addWidget(self.set_throttle_pressure_field, 2, 1)        
+        self.flow_input_group.layout().addWidget(self.throttle_pos_label, 3, 0)
+        self.flow_input_group.layout().addWidget(self.set_throttle_pos_field, 3, 1)
+        self.flow_input_group.layout().addWidget(self.shutter_indicator, 4, 0)
+        self.flow_input_group.layout().addWidget(self.shutter_pushbutton, 4, 1)
+        self.flow_input_group.layout().addItem(self.input_spacer, 5, 0)
         
         self.read_MFC1_field = QtWidgets.QDoubleSpinBox()
+        self.read_MFC2_field = QtWidgets.QDoubleSpinBox()
         self.read_throttle_pressure_field = QtWidgets.QDoubleSpinBox()
         self.read_throttle_pos_field = QtWidgets.QDoubleSpinBox()
         self.output_spacer = QtWidgets.QSpacerItem(10,30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         
         self.flow_output_group.layout().addWidget(self.read_MFC1_field, 0, 0)
-        self.flow_output_group.layout().addWidget(self.read_throttle_pressure_field, 1, 0)
-        self.flow_output_group.layout().addWidget(self.read_throttle_pos_field, 2, 0)
-        self.flow_output_group.layout().addItem(self.output_spacer, 3, 0)
+        self.flow_output_group.layout().addWidget(self.read_MFC2_field, 1, 0)
+        self.flow_output_group.layout().addWidget(self.read_throttle_pressure_field, 2, 0)
+        self.flow_output_group.layout().addWidget(self.read_throttle_pos_field, 3, 0)
+        self.flow_output_group.layout().addItem(self.output_spacer, 4, 0)
         
         self.ch1_readout_field = QtWidgets.QDoubleSpinBox()
         self.ch1_readout_label = QtWidgets.QLabel('Ch1 Pressure')
@@ -474,9 +481,11 @@ class ALD_Display(Measurement):
         if hasattr(self, 'mks146'):
             self.mks146.settings.set_MFC0_SP.connect_to_widget(self.set_MFC1_field)
             self.mks146.settings.MFC0_flow.connect_to_widget(self.read_MFC1_field)
-        elif hasattr(self, 'ni_mfc0'):
-            self.ni_mfc0.settings.write_flow0.connect_to_widget(self.set_MFC1_field)
-            self.ni_mfc0.settings.read_flow0.connect_to_widget(self.read_MFC1_field)
+        elif hasattr(self, 'ni_mfc1'):
+            self.ni_mfc1.settings.write_mfc1.connect_to_widget(self.set_MFC1_field)
+            self.ni_mfc1.settings.read_mfc1.connect_to_widget(self.read_MFC1_field)
+            self.ni_mfc1.settings.write_mfc2.connect_to_widget(self.set_MFC2_field)
+            self.ni_mfc1.settings.read_mfc2.connect_to_widget(self.read_MFC2_field)
 
         if hasattr(self, 'mks600'):
             self.mks600.settings.sp_set_value.connect_to_widget(self.set_throttle_pressure_field)
