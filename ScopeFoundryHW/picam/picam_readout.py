@@ -1,20 +1,29 @@
-from ScopeFoundry import Measurement
+from ScopeFoundry import Measurement, h5_io
 import pyqtgraph as pg
 import numpy as np
 from qtpy import QtWidgets
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
+import time
 
 class PicamReadoutMeasure(Measurement):
 
     name = "picam_readout"
     
     def setup(self):
+
+        #local logged quantities
+        self.save_h5 = self.settings.New('save_h5', dtype = bool, initial=False)
+        self.continuous = self.settings.New('continuous', dtype=bool, initial=True)
+        
+
+        
+        #connect events
+        
         
         self.display_update_period = 0.050 #seconds
         self.hw  = self.app.hardware['picam']
-        #connect events
+        
 
-        #local logged quantities
 
     def run(self):
 
@@ -29,8 +38,28 @@ class PicamReadoutMeasure(Measurement):
             
             self.roi_data = cam.reshape_frame_data(dat)
             #print "roi_data shapes", [d.shape for d in self.roi_data]
-        
+            
+            spec  = np.average(self.roi_data[0], axis=0)
+            
+            self.t0 = time.time()
+            
 
+            if not self.continuous.val:
+                break
+
+        if self.settings['save_h5']:
+            self.h5_file = h5_io.h5_base_file(self.app, measurement=self )
+            self.h5_file.attrs['time_id'] = self.t0
+            H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
+            
+            #H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(measurement=self, h5group=self.h5_file)
+            
+            H['spectrum'] = spec
+            H['wavelength'] = np.arange(len(spec))
+            H['wavenumber'] = np.arange(len(spec))
+            
+            self.h5_file.close()
+            
 
     def setup_figure(self):
 
@@ -44,6 +73,8 @@ class PicamReadoutMeasure(Measurement):
         self.ui.interrupt_pushButton.clicked.connect(self.interrupt)
         self.ui.commit_pushButton.clicked.connect(self.hw.commit_parameters)
 
+        self.save_h5.connect_to_widget(self.ui.save_h5_checkBox)
+        self.continuous.connect_to_widget(self.ui.continuous_checkBox)
 
         if hasattr(self, 'graph_layout'):
             self.graph_layout.deleteLater() # see http://stackoverflow.com/questions/9899409/pyside-removing-a-widget-from-a-layout
