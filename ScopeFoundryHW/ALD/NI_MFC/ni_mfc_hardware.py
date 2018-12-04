@@ -10,6 +10,7 @@ from ScopeFoundryHW.ni_daq.devices.NI_Daq import NI_AdcTask
 
 import PyDAQmx as mx
 import numpy as np
+import time
 
 
 
@@ -18,7 +19,7 @@ class NI_MFC(HardwareComponent):
     name = 'ni_mfc'
     
     def __init__(self, app, debug=False):
-        self.line_names = ['valve_close', 'valve_open']
+        self.line_names = ['valve1_close', 'valve1_open', 'valve2_close', 'valve2_open']
         HardwareComponent.__init__(self, app, debug)
         
     def setup(self):
@@ -30,23 +31,35 @@ class NI_MFC(HardwareComponent):
         """        
         self.dio_port = 'Dev1/port0/line0:7'
         
-        self.set_voltage_channel = '/Dev1/ao0'
+        self.set_voltage_channel = '/Dev1/ao0:1'
         
         self.flow_voltage_range = 5.0
-        self.flow_voltage_channel = '/Dev1/ai0'
+        self.flow_voltage_channel = '/Dev1/ai0:1'
         
         self.adc_config = 'diff'
+        
+        ## Set up buffer arrays.
+        self.ai_buffer = np.zeros(2)
+        self.ao_buffer = np.zeros(2)
         
         self.line_pins = dict()
         for pin_i, line_name in enumerate(self.line_names):
             if line_name == '_':
                 continue
             self.line_pins[line_name] = pin_i
-            self.settings.New(name=line_name, dtype=bool)
-            self.settings.get_lq(line_name).add_listener(self.override)
             
-        self.settings.New(name='write_flow', dtype=float, initial=0.0, vmin=0.0, vmax = 20.0, ro=False)
-        self.settings.New(name='read_flow', dtype=float, initial=0.0, ro=False)
+            self.settings.New(name=line_name, dtype=bool)
+#             self.settings.get_lq(line_name).add_listener(self.override)
+        
+        ## Set full scale values
+        self.mfc1_fs = 200
+        self.mfc1_lim = 25
+        self.mfc2_fs = 100
+        self.mfc2_lim = 25
+        self.settings.New(name='write_mfc1', dtype=float, initial=0.0, vmin=0.0, vmax = self.mfc1_lim, ro=False)
+        self.settings.New(name='read_mfc1', dtype=float, initial=0.0, ro=True)
+        self.settings.New(name='write_mfc2', dtype=float, initial=0.0, vmin=0.0, vmax = self.mfc2_lim, ro=False)
+        self.settings.New(name='read_mfc2', dtype=float, initial=0.0, ro=True)
 
         
     def connect(self):
@@ -77,27 +90,37 @@ class NI_MFC(HardwareComponent):
             self.settings.get_lq(line_name).connect_to_hardware(
                 write_func=self.write_digital_lines)
         
-        self.settings.get_lq('write_flow').connect_to_hardware(
-                                            write_func=self.write_flow)
-        self.settings.get_lq('read_flow').connect_to_hardware(
-                                            read_func=self.read_flow)
+        self.settings.get_lq('write_mfc1').connect_to_hardware(
+                                            write_func=self.write_flow1)
+        self.settings.get_lq('read_mfc1').connect_to_hardware(
+                                            read_func=self.read_flow1)
 
-    def override(self):
-        """
-        Function ensures that both overrides are unable \
-        to be simultaneously activated.
+        self.settings.get_lq('write_mfc2').connect_to_hardware(
+                                            write_func=self.write_flow2)
+        self.settings.get_lq('read_mfc2').connect_to_hardware(
+                                            read_func=self.read_flow2)
         
-        This function is set as the listener function for 
-        :attr:`self.settings.valve_open` and :attr:`self.settings.valve_closed`
-        """
-        if self.settings['valve_open']:
-            self.settings['valve_close'] = False
-        elif self.settings['valve_close']:
-            self.settings['valve_open'] = False
-        else:
-            pass
+        time.sleep(1)
+        
+        self.settings['write_mfc1'] = 0.0
+        self.settings['write_mfc2'] = 0.0
 
-    def write_flow(self, flow):
+#     def override(self):
+#         """
+#         Function ensures that both overrides are unable \
+#         to be simultaneously activated.
+#         
+#         This function is set as the listener function for 
+#         :attr:`self.settings.valve_open` and :attr:`self.settings.valve_closed`
+#         """
+#         if self.settings['valve_open']:
+#             self.settings['valve_close'] = False
+#         elif self.settings['valve_close']:
+#             self.settings['valve_open'] = False
+#         else:
+#             pass
+
+    def write_flow1(self, flow):
         """
         Converts user supplied flow value and scales it to a voltage 
         read by the MFC analog interface.
@@ -109,29 +132,67 @@ class NI_MFC(HardwareComponent):
         =============  ==========  =========================  ====================
         
         """
-        assert 0.0 <= flow <= 20.0
-        voltage = (1/4)*flow
-#         voltage = 1*flow
-        self.dac_task.set(voltage)
+        full_scale = self.mfc1_fs
+        assert 0.0 <= flow <= self.mfc1_lim
+        sf = full_scale/5.0
+        voltage = (1/sf)*flow
+        self.ao_buffer[0] = voltage
+        self.dac_task.set(self.ao_buffer)
     
-    def read_flow(self):
+    def write_flow2(self, flow):
+        """
+        Converts user supplied flow value and scales it to a voltage 
+        read by the MFC analog interface.
+        Our particular MFC has a flow rate of 20 sccm, which corresponds to a signal of +5V.
+        
+        =============  ==========  =========================  ====================
+        **Arguments**  **type**    **Description**            **Valid Range**
+        flow           float       Desired flow rate in MFC.  (0.0, 20.0)
+        =============  ==========  =========================  ====================
+        
+        """
+        full_scale = self.mfc2_fs
+        assert 0.0 <= flow <= self.mfc2_lim
+        sf = full_scale/5.0
+        voltage = (1/sf)*flow
+        self.ao_buffer[1] = voltage
+        self.dac_task.set(self.ao_buffer)
+    
+    
+    def read_flow1(self):
         """
         Reads voltage from MFC analog interface. Scales voltage to flow value.
         Our particular MFC has a flow rate of 20 sccm, which corresponds to a signal of +5V.
         
         :returns: (float) Flow rate detected in MFC in units of sccm.
         """
-        voltage = self.read_adc_single()
-        flow = 4*voltage
-#         flow = voltage
-        return flow
+        full_scale = self.mfc1_fs
+        sf = full_scale/5.0
+        readout = self.adc_task.get()
+        voltage = np.asarray(readout, dtype=np.float16)
+        self.ai_buffer = sf*voltage
+        return self.ai_buffer[0]
+    
+    def read_flow2(self):
+        """
+        Reads voltage from MFC analog interface. Scales voltage to flow value.
+        Our particular MFC has a flow rate of 20 sccm, which corresponds to a signal of +5V.
+        
+        :returns: (float) Flow rate detected in MFC in units of sccm.
+        """
+        full_scale = self.mfc2_fs
+        sf = full_scale/5.0
+        readout = self.adc_task.get()
+        voltage = np.asarray(readout, dtype=np.float16)
+        self.ai_buffer = sf*voltage
+        return self.ai_buffer[1]
 
             
     def write_digital_lines(self, x=None):
         """Writes boolean values to digital in/out channels."""
         self.writeArray = np.zeros(8, dtype=mx.c_uint8)
         for line_name, pin in self.line_pins.items():
-            pin_bool = int(self.settings[line_name])
+            pin_bool = int(not self.settings[line_name])
             self.writeArray[pin] = pin_bool        
         sampsPerChanWritten = mx.c_int32()
         self.dio_task.WriteDigitalLines(numSampsPerChan=1, autoStart=True, timeout=0,
@@ -156,6 +217,9 @@ class NI_MFC(HardwareComponent):
         """Disconnects logged quantities from their respective functions
         Stops NI Tasks and removes Task objects.
         """
+        self.settings['write_mfc1'] = 0.0
+        self.settings['write_mfc2'] = 0.0
+        
         self.settings.disconnect_all_from_hardware()
         
         if hasattr(self, 'task'):
