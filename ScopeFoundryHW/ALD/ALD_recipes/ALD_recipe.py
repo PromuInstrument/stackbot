@@ -56,8 +56,12 @@ class ALD_Recipe(Measurement):
         self.lovebox = self.app.hardware['lovebox']
         if hasattr(self.app.hardware, 'mks_146_hw'):
             self.mks146 = self.app.hardware['mks_146_hw']
+        else:
+            self.mks146 = None
         if hasattr(self.app.hardware, 'mks_600_hw'):
             self.mks600 = self.app.hardware['mks_600_hw']
+        else:
+            self.mks600 = None
         self.vgc = self.app.hardware['pfeiffer_vgc_hw']
         self.seren = self.app.hardware['seren_hw']
         if hasattr(self.app.hardware, 'ald_shutter'):
@@ -147,14 +151,18 @@ class ALD_Recipe(Measurement):
         entries.append(self.settings['PV2'])
         entries.append(self.vgc.settings['ch3_pressure_scaled'])
         entries.append(self.vgc.settings['ch2_pressure_scaled'])
-        if self.mks600:
+        if self.mks600 is not None:
             entries.append(self.mks600.settings['pressure'])
             entries.append(self.mks600.settings['read_valve_position'])
+        else:
+            entries.extend([0,0])
         entries.append(self.seren.settings['set_forward_power'])
         entries.append(self.seren.settings['forward_power_readout'])
         entries.append(self.seren.settings['reflected_power'])
-        if self.mks146:
+        if self.mks146 is not None:
             entries.append(self.mks146.settings['MFC0_flow'])
+        else:
+            entries.append(0)
         entries.append(self.lovebox.settings['sv_setpoint'])
         entries.append(self.lovebox.settings['pv_temp'])
         entries.append(self.lovebox.settings['Proportional_band'])
@@ -181,7 +189,6 @@ class ALD_Recipe(Measurement):
                        (Currently input array should have length of 20)
         =============  ==========================================================
         '''
-        self.save_path_update()
         file = self.settings['csv_save_path']
         with open(file, 'w', newline='') as csvfile:
             writer = csv.writer(csvfile, delimiter=',')
