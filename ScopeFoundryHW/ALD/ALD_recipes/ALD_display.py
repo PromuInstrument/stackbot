@@ -421,7 +421,7 @@ class ALD_Display(Measurement):
 
         self.MFC1_label = QtWidgets.QLabel('MFC1 (200 sccm) Flow')
         self.set_MFC1_field = QtWidgets.QDoubleSpinBox()
-        self.MFC2_label = QtWidgets.QLabel('MFC2 (100 sccm) Flow')
+        self.MFC2_label = QtWidgets.QLabel('MFC2 (20 sccm) Flow')
         self.set_MFC2_field = QtWidgets.QDoubleSpinBox()
         
         self.throttle_pressure_label = QtWidgets.QLabel('Throttle Pressure \n [mTorr]')
