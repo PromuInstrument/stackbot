@@ -54,8 +54,8 @@ class NI_MFC(HardwareComponent):
         ## Set full scale values
         self.mfc1_fs = 200
         self.mfc1_lim = 25
-        self.mfc2_fs = 100
-        self.mfc2_lim = 25
+        self.mfc2_fs = 20
+        self.mfc2_lim = 20
         self.settings.New(name='write_mfc1', dtype=float, initial=0.0, vmin=0.0, vmax = self.mfc1_lim, ro=False)
         self.settings.New(name='read_mfc1', dtype=float, initial=0.0, ro=True)
         self.settings.New(name='write_mfc2', dtype=float, initial=0.0, vmin=0.0, vmax = self.mfc2_lim, ro=False)
