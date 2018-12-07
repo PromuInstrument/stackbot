@@ -39,6 +39,9 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         
         from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
         self.add_hardware(ActonSpectrometerHW(self))
+
+        from ScopeFoundryHW.andor_spec.andor_spec_hw import AndorShamrockSpecHW
+        self.add_hardware(AndorShamrockSpecHW(self))
         
         from ScopeFoundryHW.flip_mirror_arduino import FlipMirrorHW
         self.add_hardware(FlipMirrorHW(self))
