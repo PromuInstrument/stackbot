@@ -10,13 +10,17 @@ class HyperSpecPicam2DScan(MCLStage2DSlowScan):
     
     def scan_specific_setup(self):
         #Hardware
-        self.picam = self.app.hardware['picam']    
+        self.picam = self.app.hardware['picam']
+
     
     def pre_scan_setup(self):
         # FIXME hard-coded CCD dimension
         self.spec_map = np.zeros(self.scan_shape + (1340,), dtype=np.float)
         self.spec_map_h5 = self.h5_meas_group.create_dataset('spec_map', self.scan_shape + (1340,), dtype=np.float)
         self.app.measurements.picam_readout.interrupt()
+
+        self.picam.commit_parameters()
+
         
     def collect_pixel(self, pixel_num, k, j, i):
         # collect data
@@ -25,11 +29,19 @@ class HyperSpecPicam2DScan(MCLStage2DSlowScan):
         dat = self.picam.cam.acquire(readout_count=1, readout_timeout=-1)
             
         self.roi_data = self.picam.cam.reshape_frame_data(dat)
-        self.spec_map[k,j,i, :] = spec =  self.roi_data[0].sum(axis=0)
+        self.spec_map[k,j,i, :] = self.spec =  self.roi_data[0].sum(axis=0)
         
-        self.spec_map_h5[k,j,i,:] = spec
+        self.spec_map_h5[k,j,i,:] = self.spec
         
-        self.display_image_map[k,j,i] = np.sum(spec)
+        self.display_image_map[k,j,i] = np.sum(self.spec)
+
+        tot_sec_to_go = (1.0 - self.settings.progress.val / 100) * self.Npixels * self.picam.settings['ExposureTime'] / 1000
+        h_left = tot_sec_to_go / 3600
+        min_left = (tot_sec_to_go % 3600) / 60
+        sec_left = (tot_sec_to_go % 3600 ) % 60
+        
+        print('{0:1.0f}h {1:2.0f}min {2:2.0f}s left'.format(h_left, min_left, sec_left) )
+        
 
     def post_scan_cleanup(self):
         #H['spec_map'] = self.h_array
