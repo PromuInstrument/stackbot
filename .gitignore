@@ -23,6 +23,7 @@ ScopeFoundryHW/andor_camera/log/
 trpl_microscope/log/
 plimg_microscope/log/
 ir_microscope/log/
+HiP_microscope/log/
 .metadata/
 df_microscope/log/
 ScopeFoundryHW/xbox_controller/log/
@@ -37,3 +38,4 @@ ScopeFoundryHW/thorlabs_stepper_motors/log/
 ScopeFoundry/tests/log/
 ScopeFoundryHW/pololu_servo/log/
 enviro_logger/log/
+
