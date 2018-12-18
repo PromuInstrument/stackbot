@@ -60,8 +60,14 @@ class PowerScanMeasure(Measurement):
             self.collect_apd.change_readonly(True)
         
         if 'winspec_remote_client' in self.app.hardware.keys():
-            self.app.hardware['winspec_remote_client'].settings.acq_time.connect_bidir_to_widget(
-                                                                    self.ui.spectrum_int_time_doubleSpinBox)
+            self.spec_acq_time = self.app.hardware['winspec_remote_client'].settings.acq_time
+            self.spec_acq_time.connect_to_widget(self.ui.spectrum_int_time_doubleSpinBox)
+            self.spec_readout_measure_name  = 'winspec_readout'
+            
+        elif 'andor_ccd' in self.app.hardware.keys():
+            self.spec_acq_time = self.app.hardware['andor_ccd'].settings.exposure_time
+            self.spec_acq_time.connect_to_widget(self.ui.spectrum_int_time_doubleSpinBox)
+            self.spec_readout_measure_name = 'andor_ccd_readout'
         else:
             self.collect_spectrum.update_value(False)
             self.collect_spectrum.change_readonly(True)
@@ -114,6 +120,8 @@ class PowerScanMeasure(Measurement):
 
 
     def run(self):
+        self.spec_readout_measure_name = 'andor_ccd_readout'
+
         # hardware and delegate measurements
         #self.power_wheel_hw = self.app.hardware.power_wheel_arduino
         #self.power_wheel_dev = self.power_wheel_hw.power_wheel_dev
@@ -127,7 +135,7 @@ class PowerScanMeasure(Measurement):
             self.ph_hw = self.app.hardware['picoharp']
 
         if self.settings['collect_spectrum']:
-            self.winspec_readout = self.app.measurements['winspec_readout']
+            self.spec_readout = self.app.measurements[self.spec_readout_measure_name]
                    
         if self.settings['collect_ascom_img']:
             self.ascom_camera_capture = self.app.measurements.ascom_camera_capture
@@ -222,8 +230,8 @@ class PowerScanMeasure(Measurement):
                 self.picoharp_time_array =  ph.time_array[0:Nt]
                 self.picoharp_elapsed_time[ii] = ph.read_elapsed_meas_time()
             if self.settings['collect_spectrum']:
-                self.winspec_readout.run()
-                spec = np.array(self.winspec_readout.data)
+                self.spec_readout.run()
+                spec = np.array(self.spec_readout.spectrum)
                 self.spectra.append( spec )
                 self.integrated_spectra.append(spec.sum())
             if self.settings['collect_ascom_img']:
@@ -266,7 +274,7 @@ class PowerScanMeasure(Measurement):
                 H['picoharp_histograms'] = self.picoharp_histograms
                 H['picoharp_time_array'] = self.picoharp_time_array
             if self.settings['collect_spectrum']:
-                H['wls'] = self.winspec_readout.wls
+                H['wls'] = self.spec_readout.wls
                 H['spectra'] = np.squeeze(np.array(self.spectra))
                 H['integrated_spectra'] = np.array(self.integrated_spectra)
             if self.settings['collect_ascom_img']:
