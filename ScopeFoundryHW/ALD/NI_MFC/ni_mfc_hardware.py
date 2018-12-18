@@ -16,6 +16,20 @@ import time
 
 class NI_MFC(HardwareComponent):
     
+    """
+    Hardware component for use with National Instruments USB-6001 DAQ device.
+    
+    * Sets hardware addresses
+        * Addresses must mirror those listed in NI MAX utility.
+    * Creates Logged Quantities 
+    * Connects with National Instruments USB-6001 DAQ device through python \
+        wrapped NI DAQmx drivers. 
+    * Establishes software level and hardware dependent settings and limits \
+        in :meth:`setup`
+    * Defines functions needed to read and write flow rates to connected Mass \
+        Flow Controller. 
+    """
+    
     name = 'ni_mfc'
     
     def __init__(self, app, debug=False):
@@ -24,10 +38,14 @@ class NI_MFC(HardwareComponent):
         
     def setup(self):
         """
-        * Defines I/O port addresses. 
+        * Defines I/O port addresses.
         * Establishes *LoggedQuantities*
+        * Creates buffers to store MFC flow data.
         * Establishes :attr:`dict` relating pin numbers \
             and the labels used to refer to said pins.
+        * Full scale (fs) and limit (lim) values are defined \
+            here as :attr:`self.mfc1_fs` and :attr:`self.mfc1_lim` 
+            respectively.
         """        
         self.dio_port = 'Dev1/port0/line0:7'
         
@@ -38,7 +56,7 @@ class NI_MFC(HardwareComponent):
         
         self.adc_config = 'diff'
         
-        ## Set up buffer arrays.
+        ## Set up buffer arrays to store I/O data (flow rate read/write).
         self.ai_buffer = np.zeros(2)
         self.ao_buffer = np.zeros(2)
         
@@ -56,6 +74,8 @@ class NI_MFC(HardwareComponent):
         self.mfc1_lim = 25
         self.mfc2_fs = 20
         self.mfc2_lim = 20
+        
+        ## Define flow related logged quantities
         self.settings.New(name='write_mfc1', dtype=float, initial=0.0, vmin=0.0, vmax = self.mfc1_lim, ro=False)
         self.settings.New(name='read_mfc1', dtype=float, initial=0.0, ro=True)
         self.settings.New(name='write_mfc2', dtype=float, initial=0.0, vmin=0.0, vmax = self.mfc2_lim, ro=False)
@@ -67,7 +87,7 @@ class NI_MFC(HardwareComponent):
         Creates and instantiates NI task objects thereby creating a connection to the NI ADC/DAC controller
         Connects logged quantities to their respective functions.
         
-        :attr:`self.settings.valve_open` and :attr:`self.settings.valve_closed` serve as override functions.
+        :attr:`self.settings.valve_open` and :attr:`self.settings.valve_closed` serve as override settings.
         If neither are active, the Mass Flow Controller opens to a degree defined by the setpoint.
 
         
@@ -122,13 +142,16 @@ class NI_MFC(HardwareComponent):
 
     def write_flow1(self, flow):
         """
-        Converts user supplied flow value and scales it to a voltage 
-        read by the MFC analog interface.
-        Our particular MFC has a flow rate of 20 sccm, which corresponds to a signal of +5V.
+        Converts user supplied flow value and scales it to a voltage, \
+        which is then written to its slot in :attr:`self.ao_buffer` \
+        and sent to the National Instruments card.
+        The card then utilizes an analog signal to change the set point on MFC 1.
+
+        Each MFC has a manufacturer specified full scale flow rate, which is scaled to a signal of +5V.
         
         =============  ==========  =========================  ====================
         **Arguments**  **type**    **Description**            **Valid Range**
-        flow           float       Desired flow rate in MFC.  (0.0, 20.0)
+        flow           float       Desired flow rate in MFC.  (0.0, Full Scale)
         =============  ==========  =========================  ====================
         
         """
@@ -141,13 +164,16 @@ class NI_MFC(HardwareComponent):
     
     def write_flow2(self, flow):
         """
-        Converts user supplied flow value and scales it to a voltage 
-        read by the MFC analog interface.
-        Our particular MFC has a flow rate of 20 sccm, which corresponds to a signal of +5V.
+        Converts user supplied flow value and scales it to a voltage, \
+        which is then written to its slot in :attr:`self.ao_buffer` \
+        and sent to the National Instruments card.
+        The card then utilizes an analog signal to change the set point on MFC 2.
+
+        Each MFC has a manufacturer specified full scale flow rate, which is scaled to a signal of +5V.
         
         =============  ==========  =========================  ====================
         **Arguments**  **type**    **Description**            **Valid Range**
-        flow           float       Desired flow rate in MFC.  (0.0, 20.0)
+        flow           float       Desired flow rate in MFC.  (0.0, Full Scale)
         =============  ==========  =========================  ====================
         
         """
@@ -161,10 +187,12 @@ class NI_MFC(HardwareComponent):
     
     def read_flow1(self):
         """
-        Reads voltage from MFC analog interface. Scales voltage to flow value.
-        Our particular MFC has a flow rate of 20 sccm, which corresponds to a signal of +5V.
-        
-        :returns: (float) Flow rate detected in MFC in units of sccm.
+        Reads voltages from all channels of National Instruments card which may or may not \
+        have a connected Mass Flow Controller. 
+        Stores voltages to :attr:`self.ai_buffer` array. Scales read voltage to flow value.
+        Connected MFC has a manufacturer specified full scale flow rate, which is scaled to a signal of up to +5V.
+                
+        :returns: (float) Flow rate detected in MFC 1 in units of sccm.
         """
         full_scale = self.mfc1_fs
         sf = full_scale/5.0
@@ -175,10 +203,12 @@ class NI_MFC(HardwareComponent):
     
     def read_flow2(self):
         """
-        Reads voltage from MFC analog interface. Scales voltage to flow value.
-        Our particular MFC has a flow rate of 20 sccm, which corresponds to a signal of +5V.
-        
-        :returns: (float) Flow rate detected in MFC in units of sccm.
+        Reads voltages from all channels of National Instruments card which may or may not \
+        have a connected Mass Flow Controller. 
+        Stores voltages to :attr:`self.ai_buffer` array. Scales read voltage to flow value.
+        Connected MFC has a manufacturer specified full scale flow rate, which is scaled to a signal of up to +5V.
+                
+        :returns: (float) Flow rate detected in MFC 2 in units of sccm.
         """
         full_scale = self.mfc2_fs
         sf = full_scale/5.0
@@ -189,7 +219,7 @@ class NI_MFC(HardwareComponent):
 
             
     def write_digital_lines(self, x=None):
-        """Writes boolean values to digital in/out channels."""
+        """Writes boolean array to digital in/out (DIO) channels. """
         self.writeArray = np.zeros(8, dtype=mx.c_uint8)
         for line_name, pin in self.line_pins.items():
             pin_bool = int(not self.settings[line_name])
@@ -202,7 +232,8 @@ class NI_MFC(HardwareComponent):
         
     def read_adc_single(self):
         """
-        Reads voltage off analog to digital converter. In the case of this module, 
+        Deprecated. Call :meth:`read_flow1` or :meth:`read_flow2`
+        Reads voltage off analog in channel 1 (AI 0). In the case of this module, 
         this channel reads the value of our MFC's Flow Signal Output.
         
         :returns: (float) Analog In voltage.
@@ -215,11 +246,12 @@ class NI_MFC(HardwareComponent):
     
     def disconnect(self):
         """Disconnects logged quantities from their respective functions
-        Stops NI Tasks and removes Task objects.
+        Stops NI Tasks and removes Task objects (a proper means of disconnecting \
+        from National Instruments hardware.)
         """
         self.settings['write_mfc1'] = 0.0
         self.settings['write_mfc2'] = 0.0
-        
+        time.sleep(1)
         self.settings.disconnect_all_from_hardware()
         
         if hasattr(self, 'task'):

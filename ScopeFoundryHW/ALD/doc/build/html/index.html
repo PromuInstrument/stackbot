@@ -4,12 +4,20 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     <title>Welcome to scopefoundry documentation’s documentation! &#8212; scopefoundry  documentation</title>
     <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
     <script type="text/javascript" src="_static/jquery.js"></script>
     <script type="text/javascript" src="_static/underscore.js"></script>
     <script type="text/javascript" src="_static/doctools.js"></script>
@@ -20,7 +28,8 @@
     <!--[if lt IE 9]>
     <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
     <![endif]-->
-  </head><body>
+  </head>
+  <body>
     <div class="related" role="navigation" aria-label="related navigation">
       <h3>Navigation</h3>
       <ul>
@@ -53,14 +62,12 @@
    </div>
 <div id="searchbox" style="display: none" role="search">
   <h3>Quick search</h3>
-    <div class="searchformwrapper">
     <form class="search" action="search.html" method="get">
-      <input type="text" name="q" />
-      <input type="submit" value="Go" />
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
       <input type="hidden" name="check_keywords" value="yes" />
       <input type="hidden" name="area" value="default" />
     </form>
-    </div>
 </div>
 <script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
@@ -85,12 +92,12 @@
 <dl class="class">
 <dt id="ALD.ALD_app.ALD_App">
 <em class="property">class </em><code class="descclassname">ALD.ALD_app.</code><code class="descname">ALD_App</code><span class="sig-paren">(</span><em>argv=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ALD_app.ALD_App" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">ScopeFoundry.base_app.BaseMicroscopeApp</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ScopeFoundry.base_app.BaseMicroscopeApp</span></code></p>
 <p>This ALD app was written to control a custom Atomic Layer Deposition system. 
 Individual modules were written completely independently of one another and 
 can be swapped out with other ScopeFoundry modules, depending on what the 
 user may need for their setup.</p>
-<p><em>IMPORTANT:</em> <a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_recipe" title="ALD.ALD_recipes.ALD_recipe"><code class="xref py py-class docutils literal notranslate"><span class="pre">ALD_Recipe</span></code></a> must be loaded before <a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_display" title="ALD.ALD_recipes.ALD_display"><code class="xref py py-class docutils literal notranslate"><span class="pre">ALD_Display</span></code></a>
+<p><em>IMPORTANT:</em> <a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_recipe" title="ALD.ALD_recipes.ALD_recipe"><code class="xref py py-class docutils literal"><span class="pre">ALD_Recipe</span></code></a> must be loaded before <a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_display" title="ALD.ALD_recipes.ALD_display"><code class="xref py py-class docutils literal"><span class="pre">ALD_Display</span></code></a>
 because the classes are interdependent and all resources must be loaded 
 in the correct order for successful application loading.</p>
 <table border="1" class="docutils">
@@ -107,48 +114,48 @@ in the correct order for successful application loading.</p>
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td rowspan="6">Hardware</td>
-<td><a class="reference internal" href="ALD.ALD_relay.html#module-ALD.ALD_relay.ald_relay_hardware" title="ALD.ALD_relay.ald_relay_hardware"><code class="xref py py-class docutils literal notranslate"><span class="pre">Arduino</span> <span class="pre">Uno</span> <span class="pre">+</span> <span class="pre">Seeed</span> <span class="pre">Relay</span> <span class="pre">Shield</span></code></a></td>
+<td><a class="reference internal" href="ALD.ALD_relay.html#module-ALD.ALD_relay.ald_relay_hardware" title="ALD.ALD_relay.ald_relay_hardware"><code class="xref py py-class docutils literal"><span class="pre">Arduino</span> <span class="pre">Uno</span> <span class="pre">+</span> <span class="pre">Seeed</span> <span class="pre">Relay</span> <span class="pre">Shield</span></code></a></td>
 <td>Relay controlling pulse valve
 actuation</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="ALD.ellipsometer.html#module-ALD.ellipsometer.ellipsometer_hw" title="ALD.ellipsometer.ellipsometer_hw"><code class="xref py py-class docutils literal notranslate"><span class="pre">J.A.</span> <span class="pre">Woollam</span> <span class="pre">Ellipsometer</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="ALD.ellipsometer.html#module-ALD.ellipsometer.ellipsometer_hw" title="ALD.ellipsometer.ellipsometer_hw"><code class="xref py py-class docutils literal"><span class="pre">J.A.</span> <span class="pre">Woollam</span> <span class="pre">Ellipsometer</span></code></a></td>
 <td>Ellipsometer</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="ALD.Lovebox.html#module-ALD.Lovebox.lovebox_hw" title="ALD.Lovebox.lovebox_hw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Love</span> <span class="pre">Controls</span> <span class="pre">4B</span> <span class="pre">(Dwyer)</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="ALD.Lovebox.html#module-ALD.Lovebox.lovebox_hw" title="ALD.Lovebox.lovebox_hw"><code class="xref py py-class docutils literal"><span class="pre">Love</span> <span class="pre">Controls</span> <span class="pre">4B</span> <span class="pre">(Dwyer)</span></code></a></td>
 <td>Temperature controller</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="ALD.MKS_146.html#module-ALD.MKS_146.mks_146_hw" title="ALD.MKS_146.mks_146_hw"><code class="xref py py-class docutils literal notranslate"><span class="pre">MKS</span> <span class="pre">146</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="ALD.MKS_146.html#module-ALD.MKS_146.mks_146_hw" title="ALD.MKS_146.mks_146_hw"><code class="xref py py-class docutils literal"><span class="pre">MKS</span> <span class="pre">146</span></code></a></td>
 <td>Multi-purpose Controller
 (Used for Mass Flow Controller)</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="ALD.MKS_600.html#module-ALD.MKS_600.mks_600_hw" title="ALD.MKS_600.mks_600_hw"><code class="xref py py-class docutils literal notranslate"><span class="pre">MKS</span> <span class="pre">600</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="ALD.MKS_600.html#module-ALD.MKS_600.mks_600_hw" title="ALD.MKS_600.mks_600_hw"><code class="xref py py-class docutils literal"><span class="pre">MKS</span> <span class="pre">600</span></code></a></td>
 <td>Throttle valve pressure
 controller</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="ALD.pfeiffer_vgc.html#module-ALD.pfeiffer_vgc.pfeiffer_vgc_hw" title="ALD.pfeiffer_vgc.pfeiffer_vgc_hw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pfeiffer</span> <span class="pre">MaxiGauge</span> <span class="pre">TPG</span> <span class="pre">256</span> <span class="pre">A</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="ALD.pfeiffer_vgc.html#module-ALD.pfeiffer_vgc.pfeiffer_vgc_hw" title="ALD.pfeiffer_vgc.pfeiffer_vgc_hw"><code class="xref py py-class docutils literal"><span class="pre">Pfeiffer</span> <span class="pre">MaxiGauge</span> <span class="pre">TPG</span> <span class="pre">256</span> <span class="pre">A</span></code></a></td>
 <td>Compact Gauge measurement and
 control unit</td>
 </tr>
 <tr class="row-even"><td rowspan="6">Measurement</td>
-<td><a class="reference internal" href="ALD.ALD_relay.html#module-ALD.ALD_relay.ald_relay_measure" title="ALD.ALD_relay.ald_relay_measure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Arduino</span> <span class="pre">Uno</span> <span class="pre">+</span> <span class="pre">Seeed</span> <span class="pre">Relay</span> <span class="pre">Shield</span></code></a></td>
+<td><a class="reference internal" href="ALD.ALD_relay.html#module-ALD.ALD_relay.ald_relay_measure" title="ALD.ALD_relay.ald_relay_measure"><code class="xref py py-class docutils literal"><span class="pre">Arduino</span> <span class="pre">Uno</span> <span class="pre">+</span> <span class="pre">Seeed</span> <span class="pre">Relay</span> <span class="pre">Shield</span></code></a></td>
 <td>Relay controlling pulse valve
 actuation</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="ALD.ellipsometer.html#module-ALD.ellipsometer.ellipsometer_measure" title="ALD.ellipsometer.ellipsometer_measure"><code class="xref py py-class docutils literal notranslate"><span class="pre">J.A.</span> <span class="pre">Woollam</span> <span class="pre">Ellipsometer</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="ALD.ellipsometer.html#module-ALD.ellipsometer.ellipsometer_measure" title="ALD.ellipsometer.ellipsometer_measure"><code class="xref py py-class docutils literal"><span class="pre">J.A.</span> <span class="pre">Woollam</span> <span class="pre">Ellipsometer</span></code></a></td>
 <td>Ellipsometer</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="ALD.Lovebox.html#module-ALD.Lovebox.lovebox_measure" title="ALD.Lovebox.lovebox_measure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Love</span> <span class="pre">Controls</span> <span class="pre">4B</span> <span class="pre">(Dwyer)</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="ALD.Lovebox.html#module-ALD.Lovebox.lovebox_measure" title="ALD.Lovebox.lovebox_measure"><code class="xref py py-class docutils literal"><span class="pre">Love</span> <span class="pre">Controls</span> <span class="pre">4B</span> <span class="pre">(Dwyer)</span></code></a></td>
 <td>Temperature controller</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="ALD.MKS_146.html#module-ALD.MKS_146.mks_146_measure" title="ALD.MKS_146.mks_146_measure"><code class="xref py py-class docutils literal notranslate"><span class="pre">MKS</span> <span class="pre">146</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="ALD.MKS_146.html#module-ALD.MKS_146.mks_146_measure" title="ALD.MKS_146.mks_146_measure"><code class="xref py py-class docutils literal"><span class="pre">MKS</span> <span class="pre">146</span></code></a></td>
 <td>Multi-purpose Controller
 (Used for Mass Flow Controller)</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="ALD.MKS_600.html#module-ALD.MKS_600.mks_600_measure" title="ALD.MKS_600.mks_600_measure"><code class="xref py py-class docutils literal notranslate"><span class="pre">MKS</span> <span class="pre">600</span></code></a></td>
+<tr class="row-even"><td><a class="reference internal" href="ALD.MKS_600.html#module-ALD.MKS_600.mks_600_measure" title="ALD.MKS_600.mks_600_measure"><code class="xref py py-class docutils literal"><span class="pre">MKS</span> <span class="pre">600</span></code></a></td>
 <td>Throttle valve pressure
 controller</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="ALD.pfeiffer_vgc.html#module-ALD.pfeiffer_vgc.pfeiffer_vgc_measure" title="ALD.pfeiffer_vgc.pfeiffer_vgc_measure"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pfeiffer</span> <span class="pre">MaxiGauge</span> <span class="pre">TPG</span> <span class="pre">256</span> <span class="pre">A</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="ALD.pfeiffer_vgc.html#module-ALD.pfeiffer_vgc.pfeiffer_vgc_measure" title="ALD.pfeiffer_vgc.pfeiffer_vgc_measure"><code class="xref py py-class docutils literal"><span class="pre">Pfeiffer</span> <span class="pre">MaxiGauge</span> <span class="pre">TPG</span> <span class="pre">256</span> <span class="pre">A</span></code></a></td>
 <td>Compact Gauge measurement and
 control unit</td>
 </tr>
@@ -168,19 +175,19 @@ control unit</td>
 </thead>
 <tbody valign="top">
 <tr class="row-even"><td rowspan="2">Measurement</td>
-<td><a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_display" title="ALD.ALD_recipes.ALD_display"><code class="xref py py-class docutils literal notranslate"><span class="pre">ALD_Display</span></code></a></td>
+<td><a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_display" title="ALD.ALD_recipes.ALD_display"><code class="xref py py-class docutils literal"><span class="pre">ALD_Display</span></code></a></td>
 <td>Renders app UI. Plots sensor time
 histories.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_recipe" title="ALD.ALD_recipes.ALD_recipe"><code class="xref py py-class docutils literal notranslate"><span class="pre">ALD_Recipe</span></code></a></td>
+<tr class="row-odd"><td><a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_recipe" title="ALD.ALD_recipes.ALD_recipe"><code class="xref py py-class docutils literal"><span class="pre">ALD_Recipe</span></code></a></td>
 <td>Carries out Atomic Layer Deposition
 procedure.</td>
 </tr>
 </tbody>
 </table>
-<p><strong>Important:</strong> Proper loading of <a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_recipe" title="ALD.ALD_recipes.ALD_recipe"><code class="xref py py-class docutils literal notranslate"><span class="pre">ALD_Recipe</span></code></a> and <a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_display" title="ALD.ALD_recipes.ALD_display"><code class="xref py py-class docutils literal notranslate"><span class="pre">ALD_Display</span></code></a> procedure at app level. Modules must be loaded in this order since modules 
+<p><strong>Important:</strong> Proper loading of <a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_recipe" title="ALD.ALD_recipes.ALD_recipe"><code class="xref py py-class docutils literal"><span class="pre">ALD_Recipe</span></code></a> and <a class="reference internal" href="ALD.ALD_recipes.html#module-ALD.ALD_recipes.ALD_display" title="ALD.ALD_recipes.ALD_display"><code class="xref py py-class docutils literal"><span class="pre">ALD_Display</span></code></a> procedure at app level. Modules must be loaded in this order since modules 
 are co-dependent and were written separately for the sake of organization.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ScopeFoundry.base_app</span> <span class="kn">import</span> <span class="n">BaseMicroscopeApp</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">ScopeFoundry.base_app</span> <span class="kn">import</span> <span class="n">BaseMicroscopeApp</span>
 
 <span class="k">class</span> <span class="nc">ALD_App</span><span class="p">(</span><span class="n">BaseMicroscopeApp</span><span class="p">):</span>
 
@@ -206,8 +213,7 @@ are co-dependent and were written separately for the sake of organization.</p>
 <dl class="method">
 <dt id="ALD.ALD_app.ALD_App.setup">
 <code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ALD_app.ALD_App.setup" title="Permalink to this definition">¶</a></dt>
-<dd><p>Override to add Hardware and Measurement Components</p>
-</dd></dl>
+<dd></dd></dl>
 
 </dd></dl>
 
@@ -242,7 +248,7 @@ are co-dependent and were written separately for the sake of organization.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2018, Alan Buckley.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.6.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
     </div>
   </body>
 </html>
