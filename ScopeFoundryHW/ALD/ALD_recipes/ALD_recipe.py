@@ -559,7 +559,7 @@ class ALD_Recipe(Measurement):
                 self.purge(sub_t1)
         
         elif mode == 'RF':
-            power = self.seren.settings['set_forward_power']
+            power = self.seren.settings['recipe_power']
             self.plasma_dose(t3, power)
             if self.interrupt_measurement_called:
                 self.shutoff()

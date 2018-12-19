@@ -22,6 +22,7 @@ class Seren_HW(HardwareComponent):
         self.settings.New(name="port", initial="COM6", dtype=str, ro=False)
         self.settings.New(name="enable_serial", initial=True, dtype=bool, ro=False)
         self.settings.New(name="set_forward_power", initial=0, dtype=int, ro=False)
+        self.settings.New(name="recipe_power", initial=0, dtype=int, ro=False)
         self.settings.New(name="forward_power_readout", initial=0, dtype=int, ro=True)
         self.settings.New(name="reflected_power", initial=0, dtype=int, ro=True)
         self.settings.New(name="RF_enable", initial=False, dtype=bool, ro=False)
