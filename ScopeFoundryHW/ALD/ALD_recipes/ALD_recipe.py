@@ -79,7 +79,7 @@ class ALD_Recipe(Measurement):
         self.settings.New('PV1', dtype=int, initial=0, ro=True)
         self.settings.New('PV2', dtype=int, initial=0, ro=True)
         
-        self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('Shutter'),('PV/Purge')))
+        self.settings.New('t3_method', dtype=str, initial='Shutter', ro=False, choices=(('PV'), ('RF'), ('Shutter'), ('PV/Purge')))
         self.settings.New('cycles_completed', dtype=int, initial=0, ro=True)
         self.settings.New('step', dtype=int, initial=0, ro=True)
         self.settings.New('steps_taken', dtype=int, initial=0, ro=True)
@@ -557,6 +557,14 @@ class ALD_Recipe(Measurement):
             for _ in range(sub_cyc):
                 self.valve_pulse(2, sub_t0)
                 self.purge(sub_t1)
+        
+        elif mode == 'RF':
+            power = self.seren.settings['set_forward_power']
+            self.plasma_dose(t3, power)
+            if self.interrupt_measurement_called:
+                self.shutoff()
+                return
+        
         
         self.purge(t4)
         if self.interrupt_measurement_called:
