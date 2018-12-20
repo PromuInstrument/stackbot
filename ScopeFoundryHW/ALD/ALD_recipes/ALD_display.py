@@ -664,37 +664,36 @@ class ALD_Display(Measurement):
 
         # Subroutine Table Widget
 
-        self.subroutine_table_widget = QtWidgets.QWidget()
-        self.subroutine_layout = QtWidgets.QHBoxLayout()
-        self.subroutine_table_widget.setLayout(self.subroutine_layout)
-        self.subroutine_label = QtWidgets.QLabel('Subroutine [s]')
-        self.subroutine_table_widget.layout().addWidget(self.subroutine_label)
-        
-        self.subroutine_table = QtWidgets.QTableView()
-        self.subroutine_table.setMaximumHeight(65)
-        sub_names = ['Cycles', 't'+u'\u2080'+' PV2', 't'+u'\u2081'+' Purge']
-        self.subtableModel = ArrayLQ_QTableModel(self.recipe.settings.subroutine, col_names=sub_names)
-        self.subroutine_table.setModel(self.subtableModel)
-        self.subroutine_table_widget.layout().addWidget(self.subroutine_table)
-        self.recipe_control_widget.layout().addWidget(self.subroutine_table_widget)
+#         self.subroutine_table_widget = QtWidgets.QWidget()
+#         self.subroutine_layout = QtWidgets.QHBoxLayout()
+#         self.subroutine_table_widget.setLayout(self.subroutine_layout)
+#         self.subroutine_label = QtWidgets.QLabel('Subroutine [s]')
+#         self.subroutine_table_widget.layout().addWidget(self.subroutine_label)
+#         
+#         self.subroutine_table = QtWidgets.QTableView()
+#         self.subroutine_table.setMaximumHeight(65)
+#         sub_names = ['Cycles', 't'+u'\u2080'+' PV2', 't'+u'\u2081'+' Purge']
+#         self.subtableModel = ArrayLQ_QTableModel(self.recipe.settings.subroutine, col_names=sub_names)
+#         self.subroutine_table.setModel(self.subtableModel)
+#         self.subroutine_table_widget.layout().addWidget(self.subroutine_table)
+#         self.recipe_control_widget.layout().addWidget(self.subroutine_table_widget)
         
         
         ## Main Table Widget
         self.table_widget = QtWidgets.QWidget()
         self.table_widget_layout = QtWidgets.QHBoxLayout()
         self.table_widget.setLayout(self.table_widget_layout)
-#         self.table_widget.setMinimumWidth(827)
 
-        self.pulse_label = QtWidgets.QLabel('Step Durations [s]')
-        self.table_widget.layout().addWidget(self.pulse_label)
 
         self.pulse_table = QtWidgets.QTableView()
-        self.pulse_table.setMaximumHeight(65)
+
         
-        names = ['t'+u'\u2080'+' Pre Purge', 't'+u'\u2081'+' (TiCl'+u'\u2084'+' PV)',\
+        column_labels = ['t'+u'\u2080'+' Pre Purge', 't'+u'\u2081'+' (TiCl'+u'\u2084'+' PV)',\
                   't'+u'\u2082'+' Purge', 't'+u'\u2083'+' (N'+u'\u2082'+'/Shutter)', \
                  't'+u'\u2084'+' Purge', 't'+u'\u2085'+' Post Purge', u'\u03a3'+'t'+u'\u1d62']
-        self.tableModel = ArrayLQ_QTableModel(self.recipe.settings.time, col_names=names)
+        row_labels = ['Time [s]', 'Position (0,1000)']
+        
+        self.tableModel = ArrayLQ_QTableModel(self.recipe.settings.recipe_array, col_names=column_labels, row_names=row_labels)
         self.pulse_table.setModel(self.tableModel)
         self.table_widget.layout().addWidget(self.pulse_table)
         self.recipe_control_widget.layout().addWidget(self.table_widget)
