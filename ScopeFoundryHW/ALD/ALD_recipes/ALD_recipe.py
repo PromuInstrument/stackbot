@@ -52,7 +52,10 @@ class ALD_Recipe(Measurement):
         self.lock = Lock()
         
         self.relay = self.app.hardware['ald_relay_hw']
-        self.shutter = self.app.hardware['ald_shutter']
+        if hasattr(self.app.hardware, 'ald_shutter'):
+            self.shutter = self.app.hardware.ald_shutter
+        else:
+            print('Connect ALD shutter HW component first.')
         self.lovebox = self.app.hardware['lovebox']
         if hasattr(self.app.hardware, 'mks_146_hw'):
             self.mks146 = self.app.hardware['mks_146_hw']
@@ -64,10 +67,9 @@ class ALD_Recipe(Measurement):
             self.mks600 = None
         self.vgc = self.app.hardware['pfeiffer_vgc_hw']
         self.seren = self.app.hardware['seren_hw']
-        if hasattr(self.app.hardware, 'ald_shutter'):
-            self.shutter = self.app.hardware.ald_shutter
-        else:
-            print('Connect ALD shutter HW component first.')
+        self.vat = self.app.hardware['vat_throttle_hw']
+        
+
     
         self.PV_default_time = 1.
         self.default_recipe_array = [[0.3, 0.07, 2.5, 5., 0.3, 0.3, 0],
@@ -254,9 +256,9 @@ class ALD_Recipe(Measurement):
         if method == 'PV':
             result = self.PV_default_time
         elif method == 'Shutter':
-            result = self.default_array[0][3]
-#         elif method == 'PV/Purge':
-#             result = self.subroutine_sum()
+            result = self.default_recipe_array[0][3]
+        elif method == 'RF':
+            result = self.default_recipe_array[0][3]
             
         self.settings['recipe_array'][0][3] = result
         self.display.update_table()
@@ -375,11 +377,11 @@ class ALD_Recipe(Measurement):
 
         """
         print('Start plasma dose.')
-        self.seren.write_fp(power)
-        self.seren.RF_toggle(True)
+        self.seren.settings['set_forward_power'] = power
+        self.seren.settings['RF_enable'] = True
         time.sleep(width)
-        self.seren.RF_toggle(False)
-        self.seren.write_fp(0)
+        self.seren.settings['RF_enable'] = False
+        self.seren.settings['set_forward_power'] = 0
         print('Plasma dose finished.')
         
     def valve_pulse(self, channel, width):
@@ -523,7 +525,7 @@ class ALD_Recipe(Measurement):
         self.settings['steps_taken'] += 1
     
     def throttle_valve_set(self, position):
-        print("Valve set. {}".format(position))
+        self.vat.vat_throttle.write_position(position)
     
     def routine(self):
         """
@@ -533,7 +535,7 @@ class ALD_Recipe(Measurement):
         :meth:`deposition`
         """
         # Read in time table data
-        sub_cyc, sub_t0, sub_t1 = self.sub[0]
+
         _, t1, t2, t3, t4, _, _ = self.times
         _, p1, p2, p3, p4, _, _ = self.positions
         

@@ -90,6 +90,9 @@ class ALD_Display(Measurement):
         if hasattr(self.app.hardware, 'pfeiffer_vgc_hw'):
             self.vgc = self.app.hardware.pfeiffer_vgc_hw
         
+        if hasattr(self.app.hardware, 'vat_throttle_hw'):
+            self.vat = self.app.hardware.vat_throttle_hw
+        
         if hasattr(self.app.measurements, 'ALD_Recipe'):
             self.recipe = self.app.measurements.ALD_Recipe
         else:
@@ -493,6 +496,10 @@ class ALD_Display(Measurement):
     
             self.mks600.settings.pressure.connect_to_widget(self.read_throttle_pressure_field)
             self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
+        if hasattr(self, 'vat'):
+            self.vat.settings.write_position.connect_to_widget(self.set_throttle_pos_field)
+            
+            self.vat.settings.read_position.connect_to_widget(self.read_throttle_pos_field)
 
         self.vgc.settings.ch1_pressure_scaled.connect_to_widget(self.ch1_readout_field)
         self.vgc.settings.ch2_pressure_scaled.connect_to_widget(self.ch2_readout_field)

@@ -117,6 +117,9 @@ class ALD_App(BaseMicroscopeApp):
 #          
 #         from ScopeFoundryHW.ALD.MKS_600.mks_600_hw import MKS_600_Hardware
 #         self.add_hardware(MKS_600_Hardware(self))#.settings['connected'] = True
+
+        from ScopeFoundryHW.ALD.VAT_throttle.vat_throttle_hw import VAT_Throttle_HW
+        self.add_hardware(VAT_Throttle_HW(self))
         
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_hw import Pfeiffer_VGC_Hardware
         self.add_hardware(Pfeiffer_VGC_Hardware(self))#.settings['connected'] = True
@@ -151,7 +154,9 @@ class ALD_App(BaseMicroscopeApp):
         from ScopeFoundryHW.ALD.NI_MFC.ni_mfc_measure import NI_MFC_Measure
         self.add_measurement(NI_MFC_Measure(self))
 
-
+        from ScopeFoundryHW.ALD.VAT_throttle.vat_throttle_measure import VAT_Throttle_Measure
+        self.add_measurement(VAT_Throttle_Measure(self))
+        
         from ScopeFoundryHW.ALD.ALD_recipes.ALD_recipe import ALD_Recipe
         self.recipe_measure = self.add_measurement(ALD_Recipe(self))
         
