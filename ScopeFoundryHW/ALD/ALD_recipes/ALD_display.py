@@ -81,8 +81,11 @@ class ALD_Display(Measurement):
         if hasattr(self.app.hardware, 'mks_146_hw'):
             self.mks146 = self.app.hardware.mks_146_hw
  
-        if hasattr(self.app.hardware, 'ni_mfc'):
-            self.ni_mfc1 = self.app.hardware.ni_mfc
+        if hasattr(self.app.hardware, 'ni_mfc1'):
+            self.ni_mfc1 = self.app.hardware.ni_mfc1
+        
+        if hasattr(self.app.hardware, 'ni_mfc2'):
+            self.ni_mfc2 = self.app.hardware.ni_mfc2
         
         if hasattr(self.app.hardware, 'mks_600_hw'):
             self.mks600 = self.app.hardware.mks_600_hw
@@ -157,6 +160,10 @@ class ALD_Display(Measurement):
         self.rf_dock = Dock('RF Settings')
         self.rf_dock.addWidget(self.rf_widget)
         self.ui.addDock(self.rf_dock)
+
+        self.vgc_dock = Dock('VGC History')
+        self.vgc_dock.addWidget(self.pressure_vgc_plot_widget)
+        self.ui.addDock(self.vgc_dock, position='left', relativeTo=self.rf_dock)
 
         self.thermal_dock = Dock('Thermal History')
         self.thermal_dock.addWidget(self.thermal_widget)
@@ -235,6 +242,7 @@ class ALD_Display(Measurement):
         self.setup_conditions_widget()
         self.setup_thermal_control_widget()
         self.setup_rf_flow_widget()
+        self.setup_vgc_pressure_widget()
         self.setup_recipe_control_widget()
         self.setup_display_controls()
         self.setup_hardware_widget()
@@ -322,10 +330,11 @@ class ALD_Display(Measurement):
 
         self.left_widget = QtWidgets.QWidget()
         self.left_widget.setLayout(QtWidgets.QVBoxLayout())
+        self.left_widget.setMinimumWidth(350)
         
         self.right_widget = QtWidgets.QGroupBox('Pressures and Flow')
         self.right_widget.setLayout(QtWidgets.QHBoxLayout())
-        
+        self.right_widget.setMinimumHeight(250)
         self.temp_field_panel = QtWidgets.QGroupBox('Temperature Readout Panel ['+u'\u00b0'+'C]')
         self.temp_field_panel.setLayout(QtWidgets.QGridLayout())
         
@@ -362,9 +371,9 @@ class ALD_Display(Measurement):
         self.plasma_panel = QtWidgets.QGroupBox('Plasma Panel [W]')
         self.left_widget.layout().addWidget(self.plasma_panel)
 
-        self.fwd_power_input_label = QtWidgets.QLabel('FWD Power Input')
+        self.fwd_power_input_label = QtWidgets.QLabel('FWD Power \n Input')
         self.fwd_power_input = QtWidgets.QDoubleSpinBox()
-        self.fwd_power_readout_label = QtWidgets.QLabel('FWD Power Readout')
+        self.fwd_power_readout_label = QtWidgets.QLabel('FWD Power \n Readout')
         self.fwd_power_readout = QtWidgets.QDoubleSpinBox()
         
         self.plasma_left_panel = QtWidgets.QWidget()
@@ -384,7 +393,7 @@ class ALD_Display(Measurement):
             self.seren.settings.RF_enable.connect_to_widget(self.rf_indicator)
             self.rf_pushbutton.clicked.connect(self.seren.RF_toggle)
  
-        self.rev_power_readout_label = QtWidgets.QLabel('REFL Power Readout')
+        self.rev_power_readout_label = QtWidgets.QLabel('REFL Power \n Readout')
         self.rev_power_readout = QtWidgets.QDoubleSpinBox()
                 
         self.plasma_right_panel.layout().addWidget(self.rf_indicator, 0, 1)
@@ -420,17 +429,21 @@ class ALD_Display(Measurement):
         self.flow_input_group.setStyleSheet(self.cb_stylesheet)
         self.flow_input_group.setLayout(QtWidgets.QGridLayout())
         self.flow_output_group.setLayout(QtWidgets.QGridLayout())
+        self.flow_output_group.setMinimumWidth(100)
         self.pressures_group.setLayout(QtWidgets.QGridLayout())
+        self.pressures_group.setMinimumWidth(158)
 
         self.MFC1_label = QtWidgets.QLabel('MFC1 (200 sccm) Flow')
         self.set_MFC1_field = QtWidgets.QDoubleSpinBox()
         self.MFC2_label = QtWidgets.QLabel('MFC2 (20 sccm) Flow')
         self.set_MFC2_field = QtWidgets.QDoubleSpinBox()
+        self.MFC3_label = QtWidgets.QLabel('MFC3 (x sccm) Flow')
+        self.set_MFC3_field = QtWidgets.QDoubleSpinBox()
         
         self.throttle_pressure_label = QtWidgets.QLabel('Throttle Pressure \n [mTorr]')
         self.set_throttle_pressure_field = QtWidgets.QDoubleSpinBox()
         
-        self.throttle_pos_label = QtWidgets.QLabel('Throttle Valve \n Position [%]')
+        self.throttle_pos_label = QtWidgets.QLabel('Throttle Valve \n Position')
         self.set_throttle_pos_field = QtWidgets.QDoubleSpinBox()
         
         self.shutter_indicator = QtWidgets.QCheckBox()
@@ -445,33 +458,39 @@ class ALD_Display(Measurement):
         self.flow_input_group.layout().addWidget(self.set_MFC1_field, 0, 1)
         self.flow_input_group.layout().addWidget(self.MFC2_label, 1, 0)
         self.flow_input_group.layout().addWidget(self.set_MFC2_field, 1, 1)
+        self.flow_input_group.layout().addWidget(self.MFC3_label, 2, 0)
+        self.flow_input_group.layout().addWidget(self.set_MFC3_field, 2, 1)
         
-        self.flow_input_group.layout().addWidget(self.throttle_pressure_label, 2, 0)
-        self.flow_input_group.layout().addWidget(self.set_throttle_pressure_field, 2, 1)        
-        self.flow_input_group.layout().addWidget(self.throttle_pos_label, 3, 0)
-        self.flow_input_group.layout().addWidget(self.set_throttle_pos_field, 3, 1)
-        self.flow_input_group.layout().addWidget(self.shutter_indicator, 4, 0)
-        self.flow_input_group.layout().addWidget(self.shutter_pushbutton, 4, 1)
-        self.flow_input_group.layout().addItem(self.input_spacer, 5, 0)
+        
+        self.flow_input_group.layout().addWidget(self.throttle_pressure_label, 3, 0)
+        self.flow_input_group.layout().addWidget(self.set_throttle_pressure_field, 3, 1)        
+        self.flow_input_group.layout().addWidget(self.throttle_pos_label, 4, 0)
+        self.flow_input_group.layout().addWidget(self.set_throttle_pos_field, 4, 1)
+        self.flow_input_group.layout().addWidget(self.shutter_indicator, 5, 0)
+        self.flow_input_group.layout().addWidget(self.shutter_pushbutton, 5, 1)
+        self.flow_input_group.layout().addItem(self.input_spacer, 6, 0)
         
         self.read_MFC1_field = QtWidgets.QDoubleSpinBox()
         self.read_MFC2_field = QtWidgets.QDoubleSpinBox()
+        self.read_MFC3_field = QtWidgets.QDoubleSpinBox()
         self.read_throttle_pressure_field = QtWidgets.QDoubleSpinBox()
         self.read_throttle_pos_field = QtWidgets.QDoubleSpinBox()
         self.output_spacer = QtWidgets.QSpacerItem(10,30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         
         self.flow_output_group.layout().addWidget(self.read_MFC1_field, 0, 0)
         self.flow_output_group.layout().addWidget(self.read_MFC2_field, 1, 0)
-        self.flow_output_group.layout().addWidget(self.read_throttle_pressure_field, 2, 0)
-        self.flow_output_group.layout().addWidget(self.read_throttle_pos_field, 3, 0)
-        self.flow_output_group.layout().addItem(self.output_spacer, 4, 0)
+        self.flow_output_group.layout().addWidget(self.read_MFC3_field, 2, 0)
+        
+        self.flow_output_group.layout().addWidget(self.read_throttle_pressure_field, 3, 0)
+        self.flow_output_group.layout().addWidget(self.read_throttle_pos_field, 4, 0)
+        self.flow_output_group.layout().addItem(self.output_spacer, 5, 0)
         
         self.ch1_readout_field = QtWidgets.QDoubleSpinBox()
-        self.ch1_readout_label = QtWidgets.QLabel('Ch1 Pressure')
+        self.ch1_readout_label = QtWidgets.QLabel('Ch1 Pressure \n [torr]')
         self.ch2_readout_field = QtWidgets.QDoubleSpinBox()
-        self.ch2_readout_label = QtWidgets.QLabel('Ch2 Pressure')
+        self.ch2_readout_label = QtWidgets.QLabel('Ch2 Pressure \n [torr]')
         self.ch3_readout_field = QtWidgets.QDoubleSpinBox()
-        self.ch3_readout_label = QtWidgets.QLabel('Ch3 Pressure')
+        self.ch3_readout_label = QtWidgets.QLabel('Ch3 Pressure \n [torr]')
         
         self.pressures_group.layout().addWidget(self.ch1_readout_label, 0, 0)
         self.pressures_group.layout().addWidget(self.ch1_readout_field, 0, 1)
@@ -481,14 +500,15 @@ class ALD_Display(Measurement):
         self.pressures_group.layout().addWidget(self.ch3_readout_field, 2, 1)
         self.pressures_group.layout().addItem(self.output_spacer, 3, 0)
         
-        if hasattr(self, 'mks146'):
-            self.mks146.settings.set_MFC0_SP.connect_to_widget(self.set_MFC1_field)
-            self.mks146.settings.MFC0_flow.connect_to_widget(self.read_MFC1_field)
-        elif hasattr(self, 'ni_mfc1'):
+        if hasattr(self, 'ni_mfc1'):
             self.ni_mfc1.settings.write_mfc1.connect_to_widget(self.set_MFC1_field)
             self.ni_mfc1.settings.read_mfc1.connect_to_widget(self.read_MFC1_field)
             self.ni_mfc1.settings.write_mfc2.connect_to_widget(self.set_MFC2_field)
             self.ni_mfc1.settings.read_mfc2.connect_to_widget(self.read_MFC2_field)
+
+        if hasattr(self, 'ni_mfc2'):
+            self.ni_mfc2.settings.write_mfc3.connect_to_widget(self.set_MFC3_field)
+            self.ni_mfc2.settings.read_mfc3.connect_to_widget(self.read_MFC3_field)
 
         if hasattr(self, 'mks600'):
             self.mks600.settings.sp_set_value.connect_to_widget(self.set_throttle_pressure_field)
@@ -498,7 +518,6 @@ class ALD_Display(Measurement):
             self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
         if hasattr(self, 'vat'):
             self.vat.settings.write_position.connect_to_widget(self.set_throttle_pos_field)
-            
             self.vat.settings.read_position.connect_to_widget(self.read_throttle_pos_field)
 
         self.vgc.settings.ch1_pressure_scaled.connect_to_widget(self.ch1_readout_field)
@@ -550,11 +569,33 @@ class ALD_Display(Measurement):
                                           name = self.rf_plot_names[i])
             self.rf_plot_lines.append(plot_line)
         self.vLine2 = pg.InfiniteLine(angle=90, movable=False)
-        self.hLine2 = pg.InfiniteLine(angle=0, movable=False)
         self.rf_plot.addItem(self.vLine2)
-        if hasattr(self, 'mks146'):
-            self.rf_plot.addItem(self.hLine2)
+
+    def setup_vgc_pressure_widget(self):
+        """Creates VGC plotting widget. UI elements are created, which are meant to 
+        allow the user to monitor ALD system conditions through the use of live plots."""
+        self.pressure_vgc_plot_widget = QtWidgets.QGroupBox('Pressure Plot')
+        self.layout.addWidget(self.pressure_vgc_plot_widget)
+        self.pressure_vgc_plot_widget.setLayout(QtWidgets.QVBoxLayout())
         
+        self.vgc_plot_widget = pg.GraphicsLayoutWidget()
+        
+        self.vgc_plot = self.vgc_plot_widget.addPlot(title='Chamber Pressures')
+        self.vgc_plot.setLogMode(y=True)
+        self.vgc_plot.setYRange(-8,2)
+        self.vgc_plot.showGrid(y=True)
+        self.vgc_plot.addLegend()
+        self.pressure_vgc_plot_widget.layout().addWidget(self.vgc_plot_widget)
+        self.vgc_plot_names = ['TKP_1', 'TKP_2', 'PKR_3']
+        self.vgc_plot_lines = []
+        for i in range(self.P_CHANS):
+            color = pg.intColor(i)
+            plot_line = self.vgc_plot.plot([1], pen=pg.mkPen(color, width=2),
+                                          name = self.vgc_plot_names[i])
+            self.vgc_plot_lines.append(plot_line)
+        self.vLine3 = pg.InfiniteLine(angle=90, movable=False)
+        self.vgc_plot.addItem(self.vLine3)
+
         
     def setup_shutter_control_widget(self):
         """
@@ -772,13 +813,15 @@ class ALD_Display(Measurement):
         self.psu_connected = None
         self.HIST_LEN = self.settings.history_length.val
         self.WINDOW = self.settings.display_window.val
-        self.RF_CHANS = 3
+        self.RF_CHANS = 2
         self.T_CHANS = 1
+        self.P_CHANS = 3
         self.history_i = 0
         self.index = 0
         
         self.rf_history = np.zeros((self.RF_CHANS, self.HIST_LEN))
         self.thermal_history = np.zeros((self.T_CHANS, self.HIST_LEN))
+        self.pressure_history = np.zeros((self.P_CHANS, self.HIST_LEN))
         self.time_history = np.zeros((1, self.HIST_LEN), dtype='datetime64[s]')
         self.debug_mode = False
 
@@ -786,18 +829,17 @@ class ALD_Display(Measurement):
         '''This function reads from *LoggedQuantities* and stores them in arrays. 
         These arrays are then plotted by :meth:`update_display`'''
         if self.debug_mode:
-            rf_entry = np.random.rand(3,)
-            t_entry = np.random.rand(1,)
+            RF_entry = np.random.rand(self.RF_CHANS,)
+            
+            T_entry = np.random.rand(self.T_CHANS,)
+            P_entry = np.random.rang(self.P_CHANS,)
         else:
-            if hasattr(self, 'mks146'):
-                rf_entry = np.array([self.seren.settings['forward_power_readout'], \
-                             self.seren.settings['reflected_power'], \
-                             self.mks146.settings['MFC0_flow']])
-            else:
-                rf_entry = np.array([self.seren.settings['forward_power_readout'], \
-                             self.seren.settings['reflected_power'], \
-                             0])
-            t_entry = np.array([self.lovebox.settings['pv_temp']])
+            RF_entry = np.array([self.seren.settings['forward_power_readout'], \
+                             self.seren.settings['reflected_power']])
+            T_entry = np.array([self.lovebox.settings['pv_temp']])
+            P_entry = np.array([self.vgc.settings['ch1_pressure_scaled'],
+                                self.vgc.settings['ch2_pressure_scaled'],
+                                self.vgc.settings['ch3_pressure_scaled']])
 
         time_entry = datetime.datetime.now()
         if self.history_i < self.HIST_LEN-1:
@@ -806,9 +848,11 @@ class ALD_Display(Measurement):
             self.index = self.HIST_LEN-1
             self.rf_history = np.roll(self.rf_history, -1, axis=1)
             self.thermal_history = np.roll(self.thermal_history, -1, axis=1)
+            self.pressure_history = np.roll(self.pressure_history, -1, axis=1)
             self.time_history = np.roll(self.time_history, -1, axis=1)
-        self.rf_history[:, self.index] = rf_entry
-        self.thermal_history[:, self.index] = t_entry
+        self.rf_history[:, self.index] = RF_entry
+        self.thermal_history[:, self.index] = T_entry
+        self.pressure_history[:, self.index] = P_entry
         self.time_history[:, self.index] = time_entry
         self.history_i += 1
         
@@ -835,29 +879,13 @@ class ALD_Display(Measurement):
         self.WINDOW = self.settings.display_window.val
         self.vLine1.setPos(self.WINDOW)
         self.vLine2.setPos(self.WINDOW)
+        self.vLine3.setPos(self.WINDOW)
         
         lovebox_level = self.lovebox.settings['sv_setpoint']
         self.hLine1.setPos(lovebox_level)
-        
-        if hasattr(self, 'mks146'):
-            flow_level = self.mks146.settings['MFC0_flow']
-            self.hLine2.setPos(flow_level)
-        else:
-            pass
-#             print('No MFC device connected.')
-        
+
+                
         lower = self.index-self.WINDOW
-
-        for i in range(self.RF_CHANS):
-            if self.index >= self.WINDOW:
-
-                self.rf_plot_lines[i].setData(
-                    self.rf_history[i, lower:self.index+1])
-            else:
-                self.rf_plot_lines[i].setData(
-                    self.rf_history[i, :self.index+1])
-                self.vLine1.setPos(self.index)
-                self.vLine2.setPos(self.index)
 
         for i in range(self.T_CHANS):
             if self.index >= self.WINDOW:
@@ -868,7 +896,29 @@ class ALD_Display(Measurement):
                 self.thermal_plot_lines[i].setData(
                     self.thermal_history[i, :self.index+1])
                 self.vLine1.setPos(self.index)
+#                 self.vLine2.setPos(self.index)
+
+        for i in range(self.RF_CHANS):
+            if self.index >= self.WINDOW:
+                self.rf_plot_lines[i].setData(
+                    self.rf_history[i, lower:self.index+1])
+            else:
+                self.rf_plot_lines[i].setData(
+                    self.rf_history[i, :self.index+1])
+#                 self.vLine1.setPos(self.index)
                 self.vLine2.setPos(self.index)
+
+
+        
+        for i in range(self.P_CHANS):
+            if self.index >= self.WINDOW:
+                self.vgc_plot_lines[i].setData(
+                    self.pressure_history[i, lower:self.index+1])
+                
+            else:
+                self.vgc_plot_lines[i].setData(
+                    self.pressure_history[i, :self.index+1])
+                self.vLine3.setPos(self.index)
 
     def conditions_check(self):
         """Checks ALD system conditions. Conditions that are met appear with 

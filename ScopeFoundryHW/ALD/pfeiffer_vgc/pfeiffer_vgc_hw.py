@@ -22,7 +22,7 @@ class Pfeiffer_VGC_Hardware(HardwareComponent):
     name = "pfeiffer_vgc_hw"
     
     def setup(self):
-        self.settings.New(name="port", initial="COM3", dtype=str, ro=False)
+        self.settings.New(name="port", initial="COM4", dtype=str, ro=False)
         self.ch1 = self.settings.New(name="ch1_pressure", initial=0.0, si=True, unit='bar', fmt='%e', dtype=float, spinbox_decimals=6,  ro=True)
         self.ch2 = self.settings.New(name="ch2_pressure", initial=0.0, si=True, unit='bar', fmt='%e', dtype=float, spinbox_decimals=6, ro=True)
         self.ch3 = self.settings.New(name="ch3_pressure", initial=0.0, si=True, unit='bar', fmt='%e', dtype=float, spinbox_decimals=6, ro=True)

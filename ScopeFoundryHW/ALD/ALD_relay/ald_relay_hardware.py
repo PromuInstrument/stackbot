@@ -16,7 +16,7 @@ class ALDRelayHW(HardwareComponent):
     
     def setup(self):
         self.ENABLED_PORTS = 2
-        self.settings.New(name='port', initial='COM9', dtype=str, ro=False)
+        self.settings.New(name='port', initial='COM3', dtype=str, ro=False)
         self.create_pulse_lq()
     
     def connect(self):

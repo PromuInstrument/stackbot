@@ -122,7 +122,7 @@ class ALD_App(BaseMicroscopeApp):
         self.add_hardware(VAT_Throttle_HW(self))
         
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_hw import Pfeiffer_VGC_Hardware
-        self.add_hardware(Pfeiffer_VGC_Hardware(self))#.settings['connected'] = True
+        self.add_hardware(Pfeiffer_VGC_Hardware(self)).settings['connected'] = True
           
         from ScopeFoundryHW.ALD.Seren.seren_hw import Seren_HW
         self.add_hardware(Seren_HW(self))#.settings['connected'] = True
@@ -143,13 +143,17 @@ class ALD_App(BaseMicroscopeApp):
 #         self.add_measurement(MKS_600_Measure(self))#.start()
          
         from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_measure import Pfeiffer_VGC_Measure
-        self.add_measurement(Pfeiffer_VGC_Measure(self))#.start()
+        self.add_measurement(Pfeiffer_VGC_Measure(self)).start()
         
         from ScopeFoundryHW.ALD.Seren.seren_measure import Seren
         self.add_measurement(Seren(self))#.start()
 
-        from ScopeFoundryHW.ALD.NI_MFC.ni_mfc_hardware import NI_MFC
-        self.add_hardware(NI_MFC(self))
+        ## Load pair of NI DAQ cards. One hardware component per card.
+        from ScopeFoundryHW.ALD.NI_MFC.ni_mfc_hardware1 import NI_MFC1
+        self.add_hardware(NI_MFC1(self))
+
+        from ScopeFoundryHW.ALD.NI_MFC.ni_mfc_hardware2 import NI_MFC2
+        self.add_hardware(NI_MFC2(self))
         
         from ScopeFoundryHW.ALD.NI_MFC.ni_mfc_measure import NI_MFC_Measure
         self.add_measurement(NI_MFC_Measure(self))

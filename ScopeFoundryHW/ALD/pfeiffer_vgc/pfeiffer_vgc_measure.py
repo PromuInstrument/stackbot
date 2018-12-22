@@ -271,9 +271,9 @@ class Pfeiffer_VGC_Measure(Measurement):
         """
         self.WINDOW = self.settings.display_window.val
         self.vLine.setPos(self.WINDOW)
-        
+         
         lower = self.index-self.WINDOW
-
+ 
         for i in range(self.NUM_CHANS):
             if self.index >= self.WINDOW:
                 self.plot_lines[i].setData(
@@ -295,25 +295,12 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.database.closeout()
     
     def run(self):
-        dt=0.005
+        dt=0.05
         self.HIST_LEN = self.settings['history_length']
-        try:
-#             self.db_connect()
-            while not self.interrupt_measurement_called:
-#                 if self.server_connected:
-                if True:
-                    self.vgc.settings.ch1_pressure.read_from_hardware()
-                    self.vgc.settings.ch2_pressure.read_from_hardware()
-                    self.vgc.settings.ch3_pressure.read_from_hardware()
-                    self.routine()
-                    time.sleep(dt)
-                else:
-#                     self.reconnect_server()
-                    self.server_connected = True
-                    self.routine()
-                    time.sleep(dt)
-        finally:
-#             self.disconnect_server()
-#             self.server_connected = False
-            pass
+        while not self.interrupt_measurement_called:
+            self.vgc.settings.ch1_pressure.read_from_hardware()
+            self.vgc.settings.ch2_pressure.read_from_hardware()
+            self.vgc.settings.ch3_pressure.read_from_hardware()
+            self.routine()
+            time.sleep(dt)
                         

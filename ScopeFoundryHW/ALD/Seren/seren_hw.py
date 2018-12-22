@@ -19,7 +19,7 @@ class Seren_HW(HardwareComponent):
     name = 'seren_hw'
     
     def setup(self):
-        self.settings.New(name="port", initial="COM6", dtype=str, ro=False)
+        self.settings.New(name="port", initial="COM7", dtype=str, ro=False)
         self.settings.New(name="enable_serial", initial=True, dtype=bool, ro=False)
         self.settings.New(name="set_forward_power", initial=0, dtype=int, ro=False)
         self.settings.New(name="recipe_power", initial=0, dtype=int, ro=False)

@@ -26,10 +26,11 @@ class NI_MFC_Measure(Measurement):
         Measurement.__init__(self, app)
         
     def setup(self):
-        self.adc = self.app.hardware['ni_mfc']
-        
+        self.mfc1 = self.app.hardware['ni_mfc1']
+        self.mfc2 = self.app.hardware['ni_mfc2']
     def run(self):
         dt=0.1
         while not self.interrupt_measurement_called:
             time.sleep(dt)
-            self.adc.read_from_hardware()
+            self.mfc1.read_from_hardware()
+            self.mfc2.read_from_hardware()

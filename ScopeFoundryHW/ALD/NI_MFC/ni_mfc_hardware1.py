@@ -14,7 +14,7 @@ import time
 
 
 
-class NI_MFC(HardwareComponent):
+class NI_MFC1(HardwareComponent):
     
     """
     Hardware component for use with National Instruments USB-6001 DAQ device.
@@ -30,10 +30,15 @@ class NI_MFC(HardwareComponent):
         Flow Controller. 
     """
     
-    name = 'ni_mfc'
+    name = 'ni_mfc1'
     
     def __init__(self, app, debug=False):
-        self.line_names = ['valve1_close', 'valve1_open', 'valve2_close', 'valve2_open']
+        self.mfc_assignments = [1,2]
+        self.line_names = []
+        for i in self.mfc_assignments:
+            self.line_names.append('valve{}_close'.format(i))
+            self.line_names.append('valve{}_open'.format(i))
+
         HardwareComponent.__init__(self, app, debug)
         
     def setup(self):
@@ -47,12 +52,13 @@ class NI_MFC(HardwareComponent):
             here as :attr:`self.mfc1_fs` and :attr:`self.mfc1_lim` 
             respectively.
         """        
-        self.dio_port = 'Dev1/port0/line0:7'
+        self.daq_name = '/Dev1/'
+        self.dio_port = self.daq_name+'port0/line0:7'
         
-        self.set_voltage_channel = '/Dev1/ao0:1'
+        self.set_voltage_channel = self.daq_name+'ao0:1'
         
         self.flow_voltage_range = 5.0
-        self.flow_voltage_channel = '/Dev1/ai0:1'
+        self.flow_voltage_channel = self.daq_name+'ai0:1'
         
         self.adc_config = 'diff'
         
@@ -67,8 +73,7 @@ class NI_MFC(HardwareComponent):
             self.line_pins[line_name] = pin_i
             
             self.settings.New(name=line_name, dtype=bool)
-#             self.settings.get_lq(line_name).add_listener(self.override)
-        
+
         ## Set full scale values
         self.mfc1_fs = 200
         self.mfc1_lim = 25
@@ -76,10 +81,10 @@ class NI_MFC(HardwareComponent):
         self.mfc2_lim = 20
         
         ## Define flow related logged quantities
-        self.settings.New(name='write_mfc1', dtype=float, initial=0.0, vmin=0.0, vmax = self.mfc1_lim, ro=False)
-        self.settings.New(name='read_mfc1', dtype=float, initial=0.0, ro=True)
-        self.settings.New(name='write_mfc2', dtype=float, initial=0.0, vmin=0.0, vmax = self.mfc2_lim, ro=False)
-        self.settings.New(name='read_mfc2', dtype=float, initial=0.0, ro=True)
+        for i in self.mfc_assignments:
+            limit = getattr(self, 'mfc{}_lim'.format(i))
+            self.settings.New(name='write_mfc{}'.format(i), dtype=float, initial=0.0, vmin=0.0, vmax = limit, ro=False)
+            self.settings.New(name='read_mfc{}'.format(i), dtype=float, initial=0.0, ro=True)
 
         
     def connect(self):
@@ -95,12 +100,12 @@ class NI_MFC(HardwareComponent):
         self.dio_task = mx.Task()
         self.dio_task.CreateDOChan(self.dio_port, "", mx.DAQmx_Val_ChanForAllLines)
         
-        self.dac_task = NI_DacTask(channel=self.set_voltage_channel, name='ni_dac')
+        self.dac_task = NI_DacTask(channel=self.set_voltage_channel, name='ni_dac1')
         self.dac_task.set_single()
         self.dac_task.start()
         
         self.adc_task = NI_AdcTask(channel=self.flow_voltage_channel, 
-                                   range=self.flow_voltage_range, name='ni_adc',
+                                   range=self.flow_voltage_range, name='ni_adc1',
                                    terminalConfig=self.adc_config)
         self.adc_task.set_single()
         self.adc_task.start()
@@ -110,35 +115,17 @@ class NI_MFC(HardwareComponent):
             self.settings.get_lq(line_name).connect_to_hardware(
                 write_func=self.write_digital_lines)
         
-        self.settings.get_lq('write_mfc1').connect_to_hardware(
-                                            write_func=self.write_flow1)
-        self.settings.get_lq('read_mfc1').connect_to_hardware(
-                                            read_func=self.read_flow1)
-
-        self.settings.get_lq('write_mfc2').connect_to_hardware(
-                                            write_func=self.write_flow2)
-        self.settings.get_lq('read_mfc2').connect_to_hardware(
-                                            read_func=self.read_flow2)
+        for i in self.mfc_assignments:
+            self.settings.get_lq('write_mfc{}'.format(i)).connect_to_hardware(
+                                                write_func=getattr(self, 'write_flow{}'.format(i)))
+            self.settings.get_lq('read_mfc{}'.format(i)).connect_to_hardware(
+                                                read_func=getattr(self, 'read_flow{}'.format(i)))
         
         time.sleep(1)
         
-        self.settings['write_mfc1'] = 0.0
-        self.settings['write_mfc2'] = 0.0
-
-#     def override(self):
-#         """
-#         Function ensures that both overrides are unable \
-#         to be simultaneously activated.
-#         
-#         This function is set as the listener function for 
-#         :attr:`self.settings.valve_open` and :attr:`self.settings.valve_closed`
-#         """
-#         if self.settings['valve_open']:
-#             self.settings['valve_close'] = False
-#         elif self.settings['valve_close']:
-#             self.settings['valve_open'] = False
-#         else:
-#             pass
+        for i in self.mfc_assignments:
+            self.settings['write_mfc{}'.format(i)] = 0.0
+       
 
     def write_flow1(self, flow):
         """
@@ -249,8 +236,8 @@ class NI_MFC(HardwareComponent):
         Stops NI Tasks and removes Task objects (a proper means of disconnecting \
         from National Instruments hardware.)
         """
-        self.settings['write_mfc1'] = 0.0
-        self.settings['write_mfc2'] = 0.0
+        for i in self.mfc_assignments:
+            self.settings['write_mfc{}'.format(i)] = 0.0
         time.sleep(1)
         self.settings.disconnect_all_from_hardware()
         
