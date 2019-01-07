@@ -14,8 +14,9 @@ class PicamReadoutMeasure(Measurement):
         #local logged quantities
         self.save_h5 = self.settings.New('save_h5', dtype = bool, initial=False)
         self.continuous = self.settings.New('continuous', dtype=bool, initial=True)
-        self.wl_calib = self.settings.New('wl_calib', dtype=str, initial='acton_spectrometer', 
-                          choices=('pixels', 'raw_pixels', 'acton_spectrometer', 'wave_numbers'))
+        self.wl_calib = self.settings.New('wl_calib', dtype=str, initial='raman_shifts', 
+                          choices=('pixels', 'raw_pixels', 'acton_spectrometer', 'wave_numbers', 'raman_shifts'))
+        self.laser_wl = self.settings.New('laser_wl', initial = 532.0, vmin=1e-15)
         
         
 
@@ -53,27 +54,28 @@ class PicamReadoutMeasure(Measurement):
             self.pixels = self.hbin*px_index + 0.5*(self.hbin-1)
             self.raw_pixels = px_index
             self.wave_numbers = 1.0e7/self.wls
+            self.raman_shifts = 1.0e7/self.laser_wl.val - 1.0e7/self.wls
+            
             
             self.wls_mean = self.wls.mean()
 
             if not self.continuous.val:
                 break
             
-            
-        
 
-            if self.settings['save_h5']:
-                self.h5_file = h5_io.h5_base_file(self.app, measurement=self )
-                self.h5_file.attrs['time_id'] = self.t0
-                H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
-                  
-                H['spectrum'] = spec
-                H['wavelength'] = self.wls
-                H['raw_pixels'] = self.px_index
-                H['pixels'] = self.pixels
-                H['wave_numbers'] = self.wave_numbers
-                
-                self.h5_file.close()
+        if self.settings['save_h5']:
+            self.h5_file = h5_io.h5_base_file(self.app, measurement=self )
+            self.h5_file.attrs['time_id'] = self.t0
+            H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
+              
+            H['spectrum'] = spec
+            H['wavelength'] = self.wls
+            H['wave_numbers'] = self.wave_numbers
+            H['raman_shifts'] = self.raman_shifts
+            
+            print('saved file')
+            
+            self.h5_file.close()
             
 
     def setup_figure(self):
@@ -129,5 +131,7 @@ class PicamReadoutMeasure(Measurement):
             x = self.raw_pixels
         elif wl_calib=='wave_numbers':
             x = self.wave_numbers
+        elif wl_calib=='raman_shifts':
+            x = self.raman_shifts            
             
         self.spec_plot_line.setData(x,self.spec)
