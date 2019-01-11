@@ -27,7 +27,7 @@ class MirrorRecipeControl(BaseRecipeControl):
         # position safety checks        
         S = self.settings
         
-        if abs(S['recipe_x']) > 250. or abs(S['recipe_y']) > 250.:
+        if abs(S['recipe_x']) > 500. or abs(S['recipe_y']) > 500.:
             self.log.warn("Failed to execute mirror recipe {}: xy out of safe range".format(S['recipe_name']))
             return 
         

@@ -10,10 +10,19 @@ from ScopeFoundryHW.ALD.pfeiffer_vgc.pfeiffer_vgc_interface import Pfeiffer_VGC_
 
 class Pfeiffer_VGC_Hardware(HardwareComponent):
     
+    """
+    This hardware component module establishes a connection with the Pfeiffer MaxiGauge TPG 256A 
+    and connects its *LoggedQuantities* to their respective functions.
+    
+    **IMPORTANT:** Call functions defined in this Hardware module to retrieve data 
+    as opposed to calling lower level functions. These functions account for the way data is structured
+    when returned at the lower level.
+    """
+    
     name = "pfeiffer_vgc_hw"
     
     def setup(self):
-        self.settings.New(name="port", initial="COM3", dtype=str, ro=False)
+        self.settings.New(name="port", initial="COM4", dtype=str, ro=False)
         self.ch1 = self.settings.New(name="ch1_pressure", initial=0.0, si=True, unit='bar', fmt='%e', dtype=float, spinbox_decimals=6,  ro=True)
         self.ch2 = self.settings.New(name="ch2_pressure", initial=0.0, si=True, unit='bar', fmt='%e', dtype=float, spinbox_decimals=6, ro=True)
         self.ch3 = self.settings.New(name="ch3_pressure", initial=0.0, si=True, unit='bar', fmt='%e', dtype=float, spinbox_decimals=6, ro=True)
@@ -36,6 +45,11 @@ class Pfeiffer_VGC_Hardware(HardwareComponent):
         self.ch1_index, self.ch2_index, self.ch3_index = (0,1,2)
         
     def connect(self):
+        """
+        Establishes connections between *LoggedQuantities* and their readout functions.
+        
+        Automatically updates *LoggedQuantities* once to reflect system state at time of established connection.
+        """
         self.vgc = Pfeiffer_VGC_Interface(port=self.settings.port.val, debug=self.settings['debug_mode'])
 
         self.settings.ch1_pressure.connect_to_hardware(read_func=getattr(self,'read_ch1_pressure'))

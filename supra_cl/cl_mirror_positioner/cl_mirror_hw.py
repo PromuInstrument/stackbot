@@ -11,9 +11,12 @@ class CLMirrorHW(HardwareComponent):
     
     PITCH: ECGt5050-Q1-932 Range -6.055 to +6.123 deg
     YAW: ECGp5050-R1-920 Range -5.913 +5.935 deg
-    X: ECSx3030 Range -10.505 to +9.955 mm 
-    Y: ECSx3030 Range -10.505 to +9.888 mm
+    X: ECSx3030 Range -10.505 to +9.955 mm after exchange 10/12/18 -10.522 to 9.954
+    Y: ECSx3030 Range -10.505 to +9.888 mm after exchange 10/12/18 -10.535 to 9.857 
     Z: ECSx3030 Range -13.351 to +7.057 mm
+    
+    Stage was disassembed and reassembled with different translators after x axis
+    was damaged in collsion 10/5/18. This caused some change to stored reference positions
     """
     
     
@@ -102,12 +105,21 @@ class CLMirrorHW(HardwareComponent):
         self.settings['park_pitch'] = 0.0
         self.settings['park_yaw'] = 0.0
         
+#         Before Oct 5, 2018
+#         self.settings['ref_x'] = +5.9995
+#         self.settings['ref_y'] = +6.8906
+#         self.settings['ref_z'] = -3.2978
+#         self.settings['ref_pitch'] = -0.5700
+#         self.settings['ref_yaw'] = +0.523
+
+#         As of Oct 15, 2018        
+        self.settings['ref_x'] = +5.31
+        self.settings['ref_y'] = +6.57      
+        self.settings['ref_z'] = -3.00
         
-        self.settings['ref_x'] = +5.9995
-        self.settings['ref_y'] = +6.8906
-        self.settings['ref_z'] = -3.2978
         self.settings['ref_pitch'] = -0.5700
         self.settings['ref_yaw'] = +0.523
+                        
                         
         
         self.add_operation('Stop All Motion', self.stop_all_motion)

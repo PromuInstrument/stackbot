@@ -16,7 +16,7 @@ class ALDRelayInterface(object):
     name = "ALD_relay_interface"
     
     def __init__(self, port="COM4", debug=False):
-        """Sets initial parameters and sets up a blank integer array for storing relay states."""
+        """Sets initial parameters and sets up a blank integer array [size (4,4)] for storing relay states."""
         self.port = port
         self.debug = debug
         self.lock = Lock()
@@ -34,11 +34,23 @@ class ALDRelayInterface(object):
         self.pulse_running = 3
         
     def write_cmd(self, cmd):
-        """Send Arduino a serial command, cmd."""
+        """
+        Sends serial command to the Arduino with proper formatting. 
+        Retrieves response from the unit.
+        
+        =============  ==========  ==========================================================
+        **Arguments**  **Type**    **Description**
+        cmd            str         Command or query to be sent to the Arduino.
+        =============  ==========  ==========================================================
+
+        :returns: (str) Arduino's response to query.
+
+        """
         self.ser.flush()
         message = cmd+'\n'
         with self.lock:
-            self.ser.write(message)
+#             self.ser.write(message)
+            self.ser.write(message.encode())
             resp = self.ser.readline().decode()
         return resp
     
@@ -64,7 +76,25 @@ class ALDRelayInterface(object):
 
         
     def write_state(self, pin, value):
-        """Manually toggle a relay"""
+        """
+        Manually toggle a relay
+        
+        ================  ==============  ================================  ===============
+        **Arguments**     **Type**        **Description**                   **Valid Range**
+        pin               int             Boolean integer which tells the   (0, 1)
+                                          controller whether or not to run
+                                          its PID control mode.
+                                          See table below.
+        value             bool or int     State to be written to pulse      * (0, 1)
+                                          valve                             * True/False
+        ================  ==============  ================================  ===============
+        
+        =============  ===============
+        **Argument**   **Description**
+        True (1)       Close
+        False (0)      Open           
+        =============  ===============
+        """
         assert pin in (0,1,2,3)
         state = int(value)
         choices = {0: 'o',
@@ -73,13 +103,25 @@ class ALDRelayInterface(object):
         self.write_cmd(cmd)
         
     def send_pulse(self, pin, duration):
-        """Order a relay to send a pulse with width of duration argument"""
+        """
+        Order a relay to send a pulse.
+        
+        =============  ==========  ==================================================  =================
+        **Arguments**  **Type**    **Description**                                     **Valid Range**
+        pin            int         Relay channel to actuate                            (1,4)
+ 
+        width          int         Duration pulse should remain open in milliseconds   (10,)
+        =============  ==========  ==================================================  =================
+
+        """
         cmd = "{}t={}".format(pin, int(duration))
         self.write_cmd(cmd)
         
     def poll(self):
-        """Ask Arduino to report on relay states by running self.resp_loop()
-        :returns: self.relay_array"""
+        """
+        Ask Arduino to report on relay states by running self.resp_loop()
+        :returns: self.relay_array
+        """
         self.resp_loop()
         return self.relay_array
 

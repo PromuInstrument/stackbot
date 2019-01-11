@@ -74,7 +74,8 @@ class Seren_Interface(object):
         message = str(cmd)+'\r'
         with self.lock:
             self.ser.flush()
-            self.ser.write(message)
+#             self.ser.write(message)
+            self.ser.write(message.encode())
             _resp = self.cr_readline()
         if _resp != (b'\r' or b'N\r'):
             return _resp
@@ -112,6 +113,7 @@ class Seren_Interface(object):
         :returns: (str) Forward power output, in Watts, 1 to 5 digits, 1-Watt increments.
         """
         resp = self.write_cmd("W?")
+        resp = int(resp)
         return resp
     
     def read_reflected(self):

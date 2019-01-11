@@ -26,7 +26,7 @@ class LoveboxHW(HardwareComponent):
 
     def setup(self):
         self.active_profile = self.desired_PID_profile
-        self.settings.New(name='port', initial='COM4', dtype=str, ro=False)
+        self.settings.New(name='port', initial='COM9', dtype=str, ro=False)
         self.settings.New(name='control_method', initial='ON/OFF', dtype=str, choices=self.CTRL_METHODS, ro=False)
         self.settings.New(name='heat_cool_control', initial='Heating', dtype=str, ro=True)
         self.settings.New(name='pv_temp', initial=0.0, dtype=float, spinbox_decimals=1, ro=True)

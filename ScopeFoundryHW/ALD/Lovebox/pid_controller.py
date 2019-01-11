@@ -16,6 +16,7 @@ class PIDController(object):
     
     Communications library works with PID controllers including but not 
     limited to the following models:
+    
     * Omega CN7500
     * Dwyer Love Controls 4B
     
@@ -436,7 +437,7 @@ class PIDController(object):
         
     def set_pid_ctrl_run(self, run):
         """
-        Set PID program control status.
+        Sets PID program control status.
         
         ================  ==========  ================================  ===============
         **Arguments**     **Type**    **Description**                   **Valid Range**
@@ -448,8 +449,8 @@ class PIDController(object):
         
         =============  ===============
         **Argument**   **Description**
-        True           Run            
-        False          Stop           
+        True (1)       Run            
+        False (0)      Stop           
         =============  ===============
         
         """
@@ -457,7 +458,7 @@ class PIDController(object):
     
     def read_pid_ctrl_run(self):
         """
-        PID program control status.
+        Reads PID program control status.
         
         =========  ===============  ===================
         **Value**  **Description**  **Returned Value**
@@ -503,7 +504,7 @@ class PIDController(object):
         assert 1 <= length <= 8
 
         with self.lock:
-            self.ser.write(self.analog_read_command(register, length).decode())
+            self.ser.write(self.analog_read_command(register, length))#.decode())
             output = self.ser.readline() # is \r\n included !? Yes.
             """:01030200EA10"""
 
@@ -546,7 +547,7 @@ class PIDController(object):
         """
         cmd = self.analog_write_command(register, data)
         with self.lock:
-            self.ser.write(cmd.decode())
+            self.ser.write(cmd)#.decode())
             output = self.ser.readline()
 
     def close(self):

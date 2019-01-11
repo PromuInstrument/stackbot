@@ -65,7 +65,7 @@ class PolarizedHyperspecScanMeasure(MCLStage2DSlowScan):
             
             print('moving to angle', theta)
             self.polarizer_target_position.update_value(theta)
-            self.winspec_readout.run()            
+            self.start_nested_measure_and_wait(self.winspec_readout, start_time=0.5)           
             #self.spec_map[k,j,i,p,:] = self.winspec_readout.data.squeeze()# extra data picker
             self.spec_map_h5[k,j,i,p,:] = self.winspec_readout.data.squeeze()# direct saving matrix to hard drive using the created link
             self.theta_recorded_h5[p] = self.polarizer_position.value

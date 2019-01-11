@@ -17,13 +17,22 @@ import os
 
 class Pfeiffer_VGC_Measure(Measurement):
     
+    """
+    This class creates a measurement tab in the ScopeFoundry MDI interface 
+    a widget contained in which, contains live plotting features and export features. 
+    
+    This allows the user to not only monitor the pressure history with respect to time, 
+    but also dump the recorded arrays, :attr:`self.pressure_history` and :attr:`self.time_history` 
+    to export .npy files.
+    """
+    
     name = "pfeiffer_vgc_measure"
     
     def __init__(self, app):
         Measurement.__init__(self, app)
         
     def setup(self):
-
+        """Establishes *LoggedQuantities* and their initial values."""
         self.settings.New('display_window', dtype=int, initial=1e4, vmin=200)
         self.settings.New('history_length', dtype=int, initial=1e6, vmin=1000)
         self.setup_buffers_constants()
@@ -162,9 +171,19 @@ class Pfeiffer_VGC_Measure(Measurement):
     
     def setup_buffers_constants(self):
         """
-        Creates constants for use in measurement routine.
+        Creates constants for use in live plotting features.
         
-        Called from 
+        This function reads from the following logged quantities and their initial values 
+        to create initial arrays.
+        
+        ==================  ==========  ==========================================================
+        **LoggedQuantity**  **Type**    **Description**
+        history_length      int         Length of data array to record pressure values over time.
+
+        display_window      int         Section of data array to be displayed in live plot.
+        ==================  ==========  ==========================================================
+
+        Called once from 
         :meth:`setup`
         """
         home = os.path.expanduser("~")
@@ -202,6 +221,7 @@ class Pfeiffer_VGC_Measure(Measurement):
         
         :attr:`self.read_pressures` is called to obtain pressures from Pfeiffer VGC. 
         This includes for following measurements:
+        
         * Pirani Gauge 
         * Compact Full Range Gauge 
         
@@ -215,8 +235,11 @@ class Pfeiffer_VGC_Measure(Measurement):
             man_readout = np.random.rand(1,)
         else:
             readout = self.read_pressures()
-            man_readout = np.array(self.app.hardware['mks_600_hw'].settings['pressure'])
-        
+            if hasattr(self.app.hardware, 'mks_600_hw'):
+                man_readout = np.array(self.app.hardware['mks_600_hw'].settings['pressure'])
+            else:
+                man_readout = np.array(0)
+                
         time_entry = datetime.datetime.now()
         if self.history_i < self.HIST_LEN-1:
             self.index = self.history_i % self.HIST_LEN
@@ -248,9 +271,9 @@ class Pfeiffer_VGC_Measure(Measurement):
         """
         self.WINDOW = self.settings.display_window.val
         self.vLine.setPos(self.WINDOW)
-        
+         
         lower = self.index-self.WINDOW
-
+ 
         for i in range(self.NUM_CHANS):
             if self.index >= self.WINDOW:
                 self.plot_lines[i].setData(
@@ -272,25 +295,12 @@ class Pfeiffer_VGC_Measure(Measurement):
         self.database.closeout()
     
     def run(self):
-        dt=0.005
+        dt=0.05
         self.HIST_LEN = self.settings['history_length']
-        try:
-#             self.db_connect()
-            while not self.interrupt_measurement_called:
-#                 if self.server_connected:
-                if True:
-                    self.vgc.settings.ch1_pressure.read_from_hardware()
-                    self.vgc.settings.ch2_pressure.read_from_hardware()
-                    self.vgc.settings.ch3_pressure.read_from_hardware()
-                    self.routine()
-                    time.sleep(dt)
-                else:
-#                     self.reconnect_server()
-                    self.server_connected = True
-                    self.routine()
-                    time.sleep(dt)
-        finally:
-#             self.disconnect_server()
-#             self.server_connected = False
-            pass
+        while not self.interrupt_measurement_called:
+            self.vgc.settings.ch1_pressure.read_from_hardware()
+            self.vgc.settings.ch2_pressure.read_from_hardware()
+            self.vgc.settings.ch3_pressure.read_from_hardware()
+            self.routine()
+            time.sleep(dt)
                         

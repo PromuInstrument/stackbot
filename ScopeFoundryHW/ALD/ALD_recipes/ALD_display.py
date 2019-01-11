@@ -20,8 +20,24 @@ import os
 class ALD_Display(Measurement):
     
     '''
-    This module is responsible for generating the user interface layout 
-    as well as creating and updating any plots with data stored in arrays
+    - Generates the user interface layout including user input fields and \
+    output fields displaying ALD sensor data
+    - Creates and updates any plots with data stored in arrays.
+    - This module also checks whether certain conditions in the ALD system environment are met.
+    
+    *LoggedQuantities* in \
+    :class:`ALD_Recipe` are connected to indicators defined here within 
+    :meth:`setup_conditions_widget`.
+    
+    This Measurement module and the 
+    :class:`ALD_Display` module are interdependent and make calls to functions in the other module.
+    These modules should be loaded by 
+    :class:`ALD_App`
+    in the following order:
+    
+    1. :class:`ALD_Recipe <ALD.ALD_recipes.ALD_recipe>`
+    2. :class:`ALD_Display <ALD.ALD_recipes.ALD_display>`
+
     '''
     
     
@@ -31,21 +47,8 @@ class ALD_Display(Measurement):
         Measurement.__init__(self, app)        
         
     def setup(self):
-        self.cb_stylesheet = '''
-        QCheckBox::indicator {
-            width: 25px;
-            height: 25px;
-        }
-        QCheckBox::indicator:checked {
-            image: url(://icons//GreenLED.png);
-        }
-        QCheckBox::indicator:unchecked {
-            image: url(://icons//RedLED.png);
-        }
-        '''
-
         self.settings.New('RF_pulse_duration', dtype=int, initial=1)
-        self.settings.New('history_length', dtype=int, initial=1e6, vmin=1)
+        self.settings.New('history_length', dtype=int, initial=1e6, vmin=1, ro=True)
         self.settings.New('shutter_open', dtype=bool, initial=False, ro=True)
         self.settings.New('display_window', dtype=int, initial=1e4, vmin=1)
 
@@ -77,12 +80,21 @@ class ALD_Display(Measurement):
         
         if hasattr(self.app.hardware, 'mks_146_hw'):
             self.mks146 = self.app.hardware.mks_146_hw
+ 
+        if hasattr(self.app.hardware, 'ni_mfc1'):
+            self.ni_mfc1 = self.app.hardware.ni_mfc1
+        
+        if hasattr(self.app.hardware, 'ni_mfc2'):
+            self.ni_mfc2 = self.app.hardware.ni_mfc2
         
         if hasattr(self.app.hardware, 'mks_600_hw'):
             self.mks600 = self.app.hardware.mks_600_hw
         
         if hasattr(self.app.hardware, 'pfeiffer_vgc_hw'):
             self.vgc = self.app.hardware.pfeiffer_vgc_hw
+        
+        if hasattr(self.app.hardware, 'vat_throttle_hw'):
+            self.vat = self.app.hardware.vat_throttle_hw
         
         if hasattr(self.app.measurements, 'ALD_Recipe'):
             self.recipe = self.app.measurements.ALD_Recipe
@@ -149,6 +161,10 @@ class ALD_Display(Measurement):
         self.rf_dock.addWidget(self.rf_widget)
         self.ui.addDock(self.rf_dock)
 
+        self.vgc_dock = Dock('VGC History')
+        self.vgc_dock.addWidget(self.pressure_vgc_plot_widget)
+        self.ui.addDock(self.vgc_dock, position='left', relativeTo=self.rf_dock)
+
         self.thermal_dock = Dock('Thermal History')
         self.thermal_dock.addWidget(self.thermal_widget)
         self.ui.addDock(self.thermal_dock, position='right', relativeTo=self.rf_dock)
@@ -210,10 +226,23 @@ class ALD_Display(Measurement):
         and then populates them.
         This function is called from :meth:`ui_setup`
         """
+        self.cb_stylesheet = '''
+        QCheckBox::indicator {
+            width: 25px;
+            height: 25px;
+        }
+        QCheckBox::indicator:checked {
+            image: url(://icons//GreenLED.png);
+        }
+        QCheckBox::indicator:unchecked {
+            image: url(://icons//RedLED.png);
+        }
+        '''
         self.setup_operations_widget()
         self.setup_conditions_widget()
         self.setup_thermal_control_widget()
         self.setup_rf_flow_widget()
+        self.setup_vgc_pressure_widget()
         self.setup_recipe_control_widget()
         self.setup_display_controls()
         self.setup_hardware_widget()
@@ -221,6 +250,12 @@ class ALD_Display(Measurement):
         self.ui_initial_defaults()
         
     def setup_conditions_widget(self):
+        """
+        Creates conditions widget which is meant to provide end user with an 
+        array of LED indicators (and greyed out pushbuttons serving as labels.)
+        which serve as indicators of desired conditions within the ALD recipe process.
+        """
+
         self.conditions_widget = QtWidgets.QGroupBox('Conditions Widget')
         self.conditions_widget.setLayout(QtWidgets.QGridLayout())
         self.conditions_widget.setStyleSheet(self.cb_stylesheet)
@@ -234,8 +269,6 @@ class ALD_Display(Measurement):
         self.gases_ready_button = QtWidgets.QPushButton('Gases Ready')
         self.conditions_widget.layout().addWidget(self.gases_ready_indicator, 1, 0)
         self.conditions_widget.layout().addWidget(self.gases_ready_button, 1, 1)
-        
-
     
         self.substrate_indicator = QtWidgets.QCheckBox()
         self.substrate_button = QtWidgets.QPushButton('Stage Temp. Ready')
@@ -258,6 +291,8 @@ class ALD_Display(Measurement):
         self.conditions_widget.layout().addWidget(self.recipe_complete_button, 5, 1)
     
     def setup_operations_widget(self):
+        """Creates operations widget which is meant to provide end user with push buttons 
+        which initiate specific subroutines of the ALD recipe process."""
         self.operations_widget = QtWidgets.QGroupBox('Operations Widget')
         self.operations_widget.setLayout(QtWidgets.QGridLayout())
         self.operations_widget.setStyleSheet(self.cb_stylesheet)
@@ -284,15 +319,22 @@ class ALD_Display(Measurement):
         
 
     def setup_hardware_widget(self):
+        """
+        Creates Hardware widget which contains the Plasma and Temperature readout subpanels 
+        and the Pressures and Flow subpanel. 
+        This enclosing widget was created solely for the purpose of organizing subpanel 
+        arrangement in UI.
+        """
         self.hardware_widget = QtWidgets.QGroupBox('Hardware Widget')
         self.hardware_widget.setLayout(QtWidgets.QHBoxLayout())
 
         self.left_widget = QtWidgets.QWidget()
         self.left_widget.setLayout(QtWidgets.QVBoxLayout())
+        self.left_widget.setMinimumWidth(350)
         
         self.right_widget = QtWidgets.QGroupBox('Pressures and Flow')
         self.right_widget.setLayout(QtWidgets.QHBoxLayout())
-        
+        self.right_widget.setMinimumHeight(250)
         self.temp_field_panel = QtWidgets.QGroupBox('Temperature Readout Panel ['+u'\u00b0'+'C]')
         self.temp_field_panel.setLayout(QtWidgets.QGridLayout())
         
@@ -317,12 +359,21 @@ class ALD_Display(Measurement):
         self.setup_pressures_subpanel()
     
     def setup_plasma_subpanel(self):
+        """
+        Creates plasma subpanel which displays information relevant to the 
+        connected RF power supply. Subpanel also includes fields allowing for 
+        user defined setpoints to be sent to the power supply software side.
+
+        Creates UI elements related to the ALD RF power supply,
+        establishes signals and slots, as well as connections between UI elements 
+        and their associated *LoggedQuantities*.
+        """
         self.plasma_panel = QtWidgets.QGroupBox('Plasma Panel [W]')
         self.left_widget.layout().addWidget(self.plasma_panel)
 
-        self.fwd_power_input_label = QtWidgets.QLabel('FWD Power Input')
+        self.fwd_power_input_label = QtWidgets.QLabel('FWD Power \n Input')
         self.fwd_power_input = QtWidgets.QDoubleSpinBox()
-        self.fwd_power_readout_label = QtWidgets.QLabel('FWD Power Readout')
+        self.fwd_power_readout_label = QtWidgets.QLabel('FWD Power \n Readout')
         self.fwd_power_readout = QtWidgets.QDoubleSpinBox()
         
         self.plasma_left_panel = QtWidgets.QWidget()
@@ -342,7 +393,7 @@ class ALD_Display(Measurement):
             self.seren.settings.RF_enable.connect_to_widget(self.rf_indicator)
             self.rf_pushbutton.clicked.connect(self.seren.RF_toggle)
  
-        self.rev_power_readout_label = QtWidgets.QLabel('REFL Power Readout')
+        self.rev_power_readout_label = QtWidgets.QLabel('REFL Power \n Readout')
         self.rev_power_readout = QtWidgets.QDoubleSpinBox()
                 
         self.plasma_right_panel.layout().addWidget(self.rf_indicator, 0, 1)
@@ -359,6 +410,14 @@ class ALD_Display(Measurement):
         self.plasma_panel.layout().addWidget(self.plasma_right_panel)
 
     def setup_pressures_subpanel(self):
+        """Creates pressures subpanel which display pressure sensor measurements. 
+        Subpanel includes measurement value fields and input fields which allow for 
+        user defined setpoints to be sent to pressure controllers. 
+        
+        Creates UI elements related to ALD pressure controllers,
+        establishes signals and slots, as well as connections between UI elements 
+        and their associated *LoggedQuantities*.
+        """
         self.flow_input_group = QtWidgets.QGroupBox('Flow Inputs')
         self.flow_output_group = QtWidgets.QGroupBox('Flow Outputs')
         self.pressures_group = QtWidgets.QGroupBox('Pressure Outputs')
@@ -370,15 +429,21 @@ class ALD_Display(Measurement):
         self.flow_input_group.setStyleSheet(self.cb_stylesheet)
         self.flow_input_group.setLayout(QtWidgets.QGridLayout())
         self.flow_output_group.setLayout(QtWidgets.QGridLayout())
+        self.flow_output_group.setMinimumWidth(100)
         self.pressures_group.setLayout(QtWidgets.QGridLayout())
+        self.pressures_group.setMinimumWidth(158)
 
-        self.MFC1_label = QtWidgets.QLabel('MFC1 Flow')
+        self.MFC1_label = QtWidgets.QLabel('MFC1 (200 sccm) Flow')
         self.set_MFC1_field = QtWidgets.QDoubleSpinBox()
+        self.MFC2_label = QtWidgets.QLabel('MFC2 (20 sccm) Flow')
+        self.set_MFC2_field = QtWidgets.QDoubleSpinBox()
+        self.MFC3_label = QtWidgets.QLabel('MFC3 (x sccm) Flow')
+        self.set_MFC3_field = QtWidgets.QDoubleSpinBox()
         
         self.throttle_pressure_label = QtWidgets.QLabel('Throttle Pressure \n [mTorr]')
         self.set_throttle_pressure_field = QtWidgets.QDoubleSpinBox()
         
-        self.throttle_pos_label = QtWidgets.QLabel('Throttle Valve \n Position [%]')
+        self.throttle_pos_label = QtWidgets.QLabel('Throttle Valve \n Position')
         self.set_throttle_pos_field = QtWidgets.QDoubleSpinBox()
         
         self.shutter_indicator = QtWidgets.QCheckBox()
@@ -391,30 +456,41 @@ class ALD_Display(Measurement):
 
         self.flow_input_group.layout().addWidget(self.MFC1_label, 0, 0)
         self.flow_input_group.layout().addWidget(self.set_MFC1_field, 0, 1)
-        self.flow_input_group.layout().addWidget(self.throttle_pressure_label, 1, 0)
-        self.flow_input_group.layout().addWidget(self.set_throttle_pressure_field, 1, 1)        
-        self.flow_input_group.layout().addWidget(self.throttle_pos_label, 2, 0)
-        self.flow_input_group.layout().addWidget(self.set_throttle_pos_field, 2, 1)
-        self.flow_input_group.layout().addWidget(self.shutter_indicator, 3, 0)
-        self.flow_input_group.layout().addWidget(self.shutter_pushbutton, 3, 1)
-        self.flow_input_group.layout().addItem(self.input_spacer, 4, 0)
+        self.flow_input_group.layout().addWidget(self.MFC2_label, 1, 0)
+        self.flow_input_group.layout().addWidget(self.set_MFC2_field, 1, 1)
+        self.flow_input_group.layout().addWidget(self.MFC3_label, 2, 0)
+        self.flow_input_group.layout().addWidget(self.set_MFC3_field, 2, 1)
+        
+        
+        self.flow_input_group.layout().addWidget(self.throttle_pressure_label, 3, 0)
+        self.flow_input_group.layout().addWidget(self.set_throttle_pressure_field, 3, 1)        
+        self.flow_input_group.layout().addWidget(self.throttle_pos_label, 4, 0)
+        self.flow_input_group.layout().addWidget(self.set_throttle_pos_field, 4, 1)
+        self.flow_input_group.layout().addWidget(self.shutter_indicator, 5, 0)
+        self.flow_input_group.layout().addWidget(self.shutter_pushbutton, 5, 1)
+        self.flow_input_group.layout().addItem(self.input_spacer, 6, 0)
         
         self.read_MFC1_field = QtWidgets.QDoubleSpinBox()
+        self.read_MFC2_field = QtWidgets.QDoubleSpinBox()
+        self.read_MFC3_field = QtWidgets.QDoubleSpinBox()
         self.read_throttle_pressure_field = QtWidgets.QDoubleSpinBox()
         self.read_throttle_pos_field = QtWidgets.QDoubleSpinBox()
         self.output_spacer = QtWidgets.QSpacerItem(10,30, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         
         self.flow_output_group.layout().addWidget(self.read_MFC1_field, 0, 0)
-        self.flow_output_group.layout().addWidget(self.read_throttle_pressure_field, 1, 0)
-        self.flow_output_group.layout().addWidget(self.read_throttle_pos_field, 2, 0)
-        self.flow_output_group.layout().addItem(self.output_spacer, 3, 0)
+        self.flow_output_group.layout().addWidget(self.read_MFC2_field, 1, 0)
+        self.flow_output_group.layout().addWidget(self.read_MFC3_field, 2, 0)
+        
+        self.flow_output_group.layout().addWidget(self.read_throttle_pressure_field, 3, 0)
+        self.flow_output_group.layout().addWidget(self.read_throttle_pos_field, 4, 0)
+        self.flow_output_group.layout().addItem(self.output_spacer, 5, 0)
         
         self.ch1_readout_field = QtWidgets.QDoubleSpinBox()
-        self.ch1_readout_label = QtWidgets.QLabel('Ch1 Pressure')
+        self.ch1_readout_label = QtWidgets.QLabel('Ch1 Pressure \n [torr]')
         self.ch2_readout_field = QtWidgets.QDoubleSpinBox()
-        self.ch2_readout_label = QtWidgets.QLabel('Ch2 Pressure')
+        self.ch2_readout_label = QtWidgets.QLabel('Ch2 Pressure \n [torr]')
         self.ch3_readout_field = QtWidgets.QDoubleSpinBox()
-        self.ch3_readout_label = QtWidgets.QLabel('Ch3 Pressure')
+        self.ch3_readout_label = QtWidgets.QLabel('Ch3 Pressure \n [torr]')
         
         self.pressures_group.layout().addWidget(self.ch1_readout_label, 0, 0)
         self.pressures_group.layout().addWidget(self.ch1_readout_field, 0, 1)
@@ -424,19 +500,33 @@ class ALD_Display(Measurement):
         self.pressures_group.layout().addWidget(self.ch3_readout_field, 2, 1)
         self.pressures_group.layout().addItem(self.output_spacer, 3, 0)
         
-        self.mks146.settings.set_MFC0_SP.connect_to_widget(self.set_MFC1_field)
-        self.mks600.settings.sp_set_value.connect_to_widget(self.set_throttle_pressure_field)
-        self.mks600.settings.set_valve_position.connect_to_widget(self.set_throttle_pos_field)
+        if hasattr(self, 'ni_mfc1'):
+            self.ni_mfc1.settings.write_mfc1.connect_to_widget(self.set_MFC1_field)
+            self.ni_mfc1.settings.read_mfc1.connect_to_widget(self.read_MFC1_field)
+            self.ni_mfc1.settings.write_mfc2.connect_to_widget(self.set_MFC2_field)
+            self.ni_mfc1.settings.read_mfc2.connect_to_widget(self.read_MFC2_field)
 
-        self.mks146.settings.MFC0_flow.connect_to_widget(self.read_MFC1_field)
-        self.mks600.settings.pressure.connect_to_widget(self.read_throttle_pressure_field)
-        self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
+        if hasattr(self, 'ni_mfc2'):
+            self.ni_mfc2.settings.write_mfc3.connect_to_widget(self.set_MFC3_field)
+            self.ni_mfc2.settings.read_mfc3.connect_to_widget(self.read_MFC3_field)
+
+        if hasattr(self, 'mks600'):
+            self.mks600.settings.sp_set_value.connect_to_widget(self.set_throttle_pressure_field)
+            self.mks600.settings.set_valve_position.connect_to_widget(self.set_throttle_pos_field)
+    
+            self.mks600.settings.pressure.connect_to_widget(self.read_throttle_pressure_field)
+            self.mks600.settings.read_valve_position.connect_to_widget(self.read_throttle_pos_field)
+        if hasattr(self, 'vat'):
+            self.vat.settings.write_position.connect_to_widget(self.set_throttle_pos_field)
+            self.vat.settings.read_position.connect_to_widget(self.read_throttle_pos_field)
 
         self.vgc.settings.ch1_pressure_scaled.connect_to_widget(self.ch1_readout_field)
         self.vgc.settings.ch2_pressure_scaled.connect_to_widget(self.ch2_readout_field)
         self.vgc.settings.ch3_pressure_scaled.connect_to_widget(self.ch3_readout_field)
         
     def setup_thermal_control_widget(self):
+        """Creates temperature plotting widget, UI elements meant to allow the user to monitor
+        ALD system conditions, specifically temperature, through the use of live plots."""
         self.thermal_widget = QtWidgets.QGroupBox('Thermal Plot')
         self.thermal_widget.setLayout(QtWidgets.QVBoxLayout())
         self.thermal_channels = 1
@@ -460,6 +550,8 @@ class ALD_Display(Measurement):
         self.thermal_plot.addItem(self.hLine1)
     
     def setup_rf_flow_widget(self):
+        """Creates RF/MFC plotting widget. UI elements are created, which are meant to 
+        allow the user to monitor ALD system conditions through the use of live plots."""
         self.rf_widget = QtWidgets.QGroupBox('RF Plot')
         self.layout.addWidget(self.rf_widget)
         self.rf_widget.setLayout(QtWidgets.QVBoxLayout())
@@ -477,12 +569,40 @@ class ALD_Display(Measurement):
                                           name = self.rf_plot_names[i])
             self.rf_plot_lines.append(plot_line)
         self.vLine2 = pg.InfiniteLine(angle=90, movable=False)
-        self.hLine2 = pg.InfiniteLine(angle=0, movable=False)
         self.rf_plot.addItem(self.vLine2)
-        self.rf_plot.addItem(self.hLine2)
+
+    def setup_vgc_pressure_widget(self):
+        """Creates VGC plotting widget. UI elements are created, which are meant to 
+        allow the user to monitor ALD system conditions through the use of live plots."""
+        self.pressure_vgc_plot_widget = QtWidgets.QGroupBox('Pressure Plot')
+        self.layout.addWidget(self.pressure_vgc_plot_widget)
+        self.pressure_vgc_plot_widget.setLayout(QtWidgets.QVBoxLayout())
         
+        self.vgc_plot_widget = pg.GraphicsLayoutWidget()
+        
+        self.vgc_plot = self.vgc_plot_widget.addPlot(title='Chamber Pressures')
+        self.vgc_plot.setLogMode(y=True)
+        self.vgc_plot.setYRange(-8,2)
+        self.vgc_plot.showGrid(y=True)
+        self.vgc_plot.addLegend()
+        self.pressure_vgc_plot_widget.layout().addWidget(self.vgc_plot_widget)
+        self.vgc_plot_names = ['TKP_1', 'TKP_2', 'PKR_3']
+        self.vgc_plot_lines = []
+        for i in range(self.P_CHANS):
+            color = pg.intColor(i)
+            plot_line = self.vgc_plot.plot([1], pen=pg.mkPen(color, width=2),
+                                          name = self.vgc_plot_names[i])
+            self.vgc_plot_lines.append(plot_line)
+        self.vLine3 = pg.InfiniteLine(angle=90, movable=False)
+        self.vgc_plot.addItem(self.vLine3)
+
         
     def setup_shutter_control_widget(self):
+        """
+        Creates shutter control widget, UI elements related to ALD shutter controls,
+        establishes signals and slots, as well as connections between UI elements 
+        and their associated *LoggedQuantities*
+        """
         self.shutter_control_widget = QtWidgets.QGroupBox('Shutter Controls')
         self.shutter_control_widget.setLayout(QtWidgets.QGridLayout())
         self.shutter_control_widget.setStyleSheet(self.cb_stylesheet)
@@ -501,6 +621,63 @@ class ALD_Display(Measurement):
             self.shaul_shutter_toggle.clicked.connect(self.shutter.shutter_toggle)
 
     def setup_recipe_control_widget(self):
+        """
+        Creates recipe control widget, UI elements related to ALD recipe settings,
+        establishes signals and slots, as well as connections between UI elements 
+        and their associated *LoggedQuantities*
+        
+        The table widget consists of a hierarchy of PyQt5 classes.
+        The structure of the table widget assumes the following form:
+        
+        * :class:`QWidget`
+            * :class:`QTableView`
+                * :class:`QTableModel`
+        
+        More specific to the case of the subroutine table:
+        
+        * :class:`QWidget` (:attr:`subroutine_table_widget`)
+            * :class:`QTableView` (:attr:`subroutine_table`)
+                * :class:`QTableModel` (:attr:`subtableModel`)
+                
+        And in the case of the main recipe table:
+        
+        * :class:`QWidget` (:attr:`table_widget`)
+            * :class:`QTableView` (:attr:`pulse_table`)
+                * :class:`QTableModel` (:attr:`tableModel`)
+                
+        See \
+        :meth:`ALD.ALD_recipes.ALD_display.setup_recipe_control_widget` \
+        for details.
+        
+        
+        **Example of table creation using PyQt5 and ScopeFoundry:**
+        
+        .. highlight:: python
+        .. code-block:: python
+        
+            self.table_widget = QtWidgets.QWidget()
+            self.table_widget_layout = QtWidgets.QHBoxLayout()
+            self.table_widget.setLayout(self.table_widget_layout)
+    
+            self.table_label = QtWidgets.QLabel('Table Label')
+            self.table_widget.layout().addWidget(self.table_label)
+    
+            self.table = QtWidgets.QTableView()
+            ## Optional height constraint.
+            self.table.setMaximumHeight(65)
+            
+            names = ['List', 'of', 'column', 'labels']
+            
+            self.tableModel = ArrayLQ_QTableModel(self.displayed_array, col_names=names)
+            self.table.setModel(self.tableModel)
+            self.table_widget.layout().addWidget(self.table)
+            
+            ### Add widget to enclosing outer widget
+            self.containing_widget.layout().addWidget(self.table_widget)
+        
+        Note that :class:`ArrayLQ_QTableModel` is a ScopeFoundry function containing PyQt5 code.
+        For simplicity, it has been included in ScopeFoundry's core framework under ndarray_interactive.
+        """
         self.recipe_control_widget = QtWidgets.QGroupBox('Recipe Controls')
         self.recLayout = QtWidgets.QVBoxLayout()
         self.recipe_control_widget.setLayout(self.recLayout)
@@ -535,37 +712,36 @@ class ALD_Display(Measurement):
 
         # Subroutine Table Widget
 
-        self.subroutine_table_widget = QtWidgets.QWidget()
-        self.subroutine_layout = QtWidgets.QHBoxLayout()
-        self.subroutine_table_widget.setLayout(self.subroutine_layout)
-        self.subroutine_label = QtWidgets.QLabel('Subroutine [s]')
-        self.subroutine_table_widget.layout().addWidget(self.subroutine_label)
-        
-        self.subroutine_table = QtWidgets.QTableView()
-        self.subroutine_table.setMaximumHeight(65)
-        sub_names = ['Cycles', 't'+u'\u2080'+' PV2', 't'+u'\u2081'+' Purge']
-        self.subtableModel = ArrayLQ_QTableModel(self.recipe.settings.subroutine, col_names=sub_names)
-        self.subroutine_table.setModel(self.subtableModel)
-        self.subroutine_table_widget.layout().addWidget(self.subroutine_table)
-        self.recipe_control_widget.layout().addWidget(self.subroutine_table_widget)
+#         self.subroutine_table_widget = QtWidgets.QWidget()
+#         self.subroutine_layout = QtWidgets.QHBoxLayout()
+#         self.subroutine_table_widget.setLayout(self.subroutine_layout)
+#         self.subroutine_label = QtWidgets.QLabel('Subroutine [s]')
+#         self.subroutine_table_widget.layout().addWidget(self.subroutine_label)
+#         
+#         self.subroutine_table = QtWidgets.QTableView()
+#         self.subroutine_table.setMaximumHeight(65)
+#         sub_names = ['Cycles', 't'+u'\u2080'+' PV2', 't'+u'\u2081'+' Purge']
+#         self.subtableModel = ArrayLQ_QTableModel(self.recipe.settings.subroutine, col_names=sub_names)
+#         self.subroutine_table.setModel(self.subtableModel)
+#         self.subroutine_table_widget.layout().addWidget(self.subroutine_table)
+#         self.recipe_control_widget.layout().addWidget(self.subroutine_table_widget)
         
         
         ## Main Table Widget
         self.table_widget = QtWidgets.QWidget()
         self.table_widget_layout = QtWidgets.QHBoxLayout()
         self.table_widget.setLayout(self.table_widget_layout)
-#         self.table_widget.setMinimumWidth(827)
 
-        self.pulse_label = QtWidgets.QLabel('Step Durations [s]')
-        self.table_widget.layout().addWidget(self.pulse_label)
 
         self.pulse_table = QtWidgets.QTableView()
-        self.pulse_table.setMaximumHeight(65)
+
         
-        names = ['t'+u'\u2080'+' Pre Purge', 't'+u'\u2081'+' (TiCl'+u'\u2084'+' PV)',\
+        column_labels = ['t'+u'\u2080'+' Pre Purge', 't'+u'\u2081'+' (TiCl'+u'\u2084'+' PV)',\
                   't'+u'\u2082'+' Purge', 't'+u'\u2083'+' (N'+u'\u2082'+'/Shutter)', \
                  't'+u'\u2084'+' Purge', 't'+u'\u2085'+' Post Purge', u'\u03a3'+'t'+u'\u1d62']
-        self.tableModel = ArrayLQ_QTableModel(self.recipe.settings.time, col_names=names)
+        row_labels = ['Time [s]', 'Position (0,1000)']
+        
+        self.tableModel = ArrayLQ_QTableModel(self.recipe.settings.recipe_array, col_names=column_labels, row_names=row_labels)
         self.pulse_table.setModel(self.tableModel)
         self.table_widget.layout().addWidget(self.pulse_table)
         self.recipe_control_widget.layout().addWidget(self.table_widget)
@@ -600,6 +776,12 @@ class ALD_Display(Measurement):
 
         
     def setup_display_controls(self):
+        """
+        Creates a dockArea widget containing other parameters to be set by the 
+        end user, including the length of plot time history and temperature data 
+        export path.
+        """
+        
         self.display_control_widget = QtWidgets.QGroupBox('Display Control Panel')
         self.display_control_widget.setLayout(QtWidgets.QVBoxLayout())
         
@@ -631,13 +813,15 @@ class ALD_Display(Measurement):
         self.psu_connected = None
         self.HIST_LEN = self.settings.history_length.val
         self.WINDOW = self.settings.display_window.val
-        self.RF_CHANS = 3
+        self.RF_CHANS = 2
         self.T_CHANS = 1
+        self.P_CHANS = 3
         self.history_i = 0
         self.index = 0
         
         self.rf_history = np.zeros((self.RF_CHANS, self.HIST_LEN))
         self.thermal_history = np.zeros((self.T_CHANS, self.HIST_LEN))
+        self.pressure_history = np.zeros((self.P_CHANS, self.HIST_LEN))
         self.time_history = np.zeros((1, self.HIST_LEN), dtype='datetime64[s]')
         self.debug_mode = False
 
@@ -645,13 +829,17 @@ class ALD_Display(Measurement):
         '''This function reads from *LoggedQuantities* and stores them in arrays. 
         These arrays are then plotted by :meth:`update_display`'''
         if self.debug_mode:
-            rf_entry = np.random.rand(3,)
-            t_entry = np.random.rand(1,)
+            RF_entry = np.random.rand(self.RF_CHANS,)
+            
+            T_entry = np.random.rand(self.T_CHANS,)
+            P_entry = np.random.rang(self.P_CHANS,)
         else:
-            rf_entry = np.array([self.seren.settings['forward_power_readout'], \
-                             self.seren.settings['reflected_power'], \
-                             self.mks146.settings['MFC0_flow']])
-            t_entry = np.array([self.lovebox.settings['pv_temp']])
+            RF_entry = np.array([self.seren.settings['forward_power_readout'], \
+                             self.seren.settings['reflected_power']])
+            T_entry = np.array([self.lovebox.settings['pv_temp']])
+            P_entry = np.array([self.vgc.settings['ch1_pressure_scaled'],
+                                self.vgc.settings['ch2_pressure_scaled'],
+                                self.vgc.settings['ch3_pressure_scaled']])
 
         time_entry = datetime.datetime.now()
         if self.history_i < self.HIST_LEN-1:
@@ -660,9 +848,11 @@ class ALD_Display(Measurement):
             self.index = self.HIST_LEN-1
             self.rf_history = np.roll(self.rf_history, -1, axis=1)
             self.thermal_history = np.roll(self.thermal_history, -1, axis=1)
+            self.pressure_history = np.roll(self.pressure_history, -1, axis=1)
             self.time_history = np.roll(self.time_history, -1, axis=1)
-        self.rf_history[:, self.index] = rf_entry
-        self.thermal_history[:, self.index] = t_entry
+        self.rf_history[:, self.index] = RF_entry
+        self.thermal_history[:, self.index] = T_entry
+        self.pressure_history[:, self.index] = P_entry
         self.time_history[:, self.index] = time_entry
         self.history_i += 1
         
@@ -679,6 +869,8 @@ class ALD_Display(Measurement):
         
     def update_display(self):
         """
+        **IMPORTANT:** *Do not call this function. The core framework already does so.*
+        
         Built in ScopeFoundry function is called repeatedly. 
         Its purpose is to update UI plot objects.
         This particular function updates plot objects depicting 
@@ -687,25 +879,13 @@ class ALD_Display(Measurement):
         self.WINDOW = self.settings.display_window.val
         self.vLine1.setPos(self.WINDOW)
         self.vLine2.setPos(self.WINDOW)
+        self.vLine3.setPos(self.WINDOW)
         
         lovebox_level = self.lovebox.settings['sv_setpoint']
         self.hLine1.setPos(lovebox_level)
-        
-        flow_level = self.mks146.settings['MFC0_flow']
-        self.hLine2.setPos(flow_level)
-        
+
+                
         lower = self.index-self.WINDOW
-
-        for i in range(self.RF_CHANS):
-            if self.index >= self.WINDOW:
-
-                self.rf_plot_lines[i].setData(
-                    self.rf_history[i, lower:self.index+1])
-            else:
-                self.rf_plot_lines[i].setData(
-                    self.rf_history[i, :self.index+1])
-                self.vLine1.setPos(self.index)
-                self.vLine2.setPos(self.index)
 
         for i in range(self.T_CHANS):
             if self.index >= self.WINDOW:
@@ -716,21 +896,48 @@ class ALD_Display(Measurement):
                 self.thermal_plot_lines[i].setData(
                     self.thermal_history[i, :self.index+1])
                 self.vLine1.setPos(self.index)
+#                 self.vLine2.setPos(self.index)
+
+        for i in range(self.RF_CHANS):
+            if self.index >= self.WINDOW:
+                self.rf_plot_lines[i].setData(
+                    self.rf_history[i, lower:self.index+1])
+            else:
+                self.rf_plot_lines[i].setData(
+                    self.rf_history[i, :self.index+1])
+#                 self.vLine1.setPos(self.index)
                 self.vLine2.setPos(self.index)
+
+
+        
+        for i in range(self.P_CHANS):
+            if self.index >= self.WINDOW:
+                self.vgc_plot_lines[i].setData(
+                    self.pressure_history[i, lower:self.index+1])
+                
+            else:
+                self.vgc_plot_lines[i].setData(
+                    self.pressure_history[i, :self.index+1])
+                self.vLine3.setPos(self.index)
 
     def conditions_check(self):
         """Checks ALD system conditions. Conditions that are met appear with 
         green LED indicators in the Conditions Widget groupBox."""
         self.pumped_check()
-        self.gases_check()
+        if hasattr(self, 'mks146'):
+            self.gases_check()
+        else:
+            pass
+#             print('mks146 not currently active.')
+            
         self.deposition_check()
         self.substrate_check()
         self.vent_check()
     
     def run(self):
         dt = 0.1
-        self.conditions_check()
         while not self.interrupt_measurement_called:
+            self.conditions_check()
             self.plot_routine()
             time.sleep(dt)
 
@@ -747,14 +954,22 @@ class ALD_Display(Measurement):
 #             self.pre_deposition_button.setEnabled(False)
 
     def gases_check(self):
-        '''Check if MFC flow and system pressure conditions are ideal
-         for deposition'''
+        '''Checks if MFC flow and system pressure conditions are ideal
+        for deposition. 
+
+        Should its conditions be satisfied, its *LoggedQuantity* is updated
+        and its respective LED indicator in the Conditions Widget groupBox will appear green.'''
         flow = self.mks146.settings['MFC0_flow']
         condition = (0.7 <= flow)
         self.recipe.settings['gases_ready'] = condition
 
     def substrate_check(self):
-        '''Checks if stage is adequately heated.'''
+        '''
+        Checks if stage is adequately heated.
+        
+        Should its condition be satisfied, its *LoggedQuantity* is updated 
+        and its respective LED indicator in the Conditions Widget groupBox will appear green.
+        '''
         T = self.lovebox.settings['sv_setpoint']
         pv = self.lovebox.settings['pv_temp']
         condition = (0.9*T <= pv <= 1.1*T)
@@ -770,6 +985,9 @@ class ALD_Display(Measurement):
          * Gases ready
          * RF enabled
          * Substrate temperature hot.
+         
+        Button which initiates deposition is enabled only upon the 
+        satisfaction of the above 4 requirements.
         """
         condition1 = self.recipe.settings['pumped']
         condition2 = self.recipe.settings['gases_ready']
@@ -781,8 +999,12 @@ class ALD_Display(Measurement):
             self.deposition_button.setEnabled(False)
 
     def vent_check(self):
-        """Checks whether predeposition and deposition stages have been completed. 
-        If so, its respective LED indicator in the Conditions Widget groupBox will appear green."""
+        """
+        Checks whether predeposition and deposition stages have been completed. 
+        
+        Should its conditions be satisfied, its *LoggedQuantity* is updated 
+        and its respective LED indicator in the Conditions Widget groupBox will appear green.
+        """
         if self.recipe.dep_complete and self.recipe.predep_complete:
             self.vent_button.setEnabled(True)
         else:
