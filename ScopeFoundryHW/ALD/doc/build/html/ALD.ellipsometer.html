@@ -1,0 +1,226 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ALD.ellipsometer package &#8212; scopefoundry  documentation</title>
+    <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scopefoundry  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ALD.ellipsometer package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ALD.ellipsometer.ellipsometer_hw">ALD.ellipsometer.ellipsometer_hw module</a></li>
+<li><a class="reference internal" href="#module-ALD.ellipsometer.ellipsometer_interface">ALD.ellipsometer.ellipsometer_interface module</a></li>
+<li><a class="reference internal" href="#module-ALD.ellipsometer.ellipsometer_measure">ALD.ellipsometer.ellipsometer_measure module</a></li>
+<li><a class="reference internal" href="#module-ALD.ellipsometer">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ALD.ellipsometer.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ald-ellipsometer-package">
+<h1>ALD.ellipsometer package<a class="headerlink" href="#ald-ellipsometer-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-ALD.ellipsometer.ellipsometer_hw">
+<span id="ald-ellipsometer-ellipsometer-hw-module"></span><h2>ALD.ellipsometer.ellipsometer_hw module<a class="headerlink" href="#module-ALD.ellipsometer.ellipsometer_hw" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ALD.ellipsometer.ellipsometer_hw.EllipsometerHW">
+<em class="property">class </em><code class="descclassname">ALD.ellipsometer.ellipsometer_hw.</code><code class="descname">EllipsometerHW</code><span class="sig-paren">(</span><em>app</em>, <em>debug=False</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_hw.EllipsometerHW" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ScopeFoundry.hardware.HardwareComponent</span></code></p>
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.connect">
+<code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.connect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.disconnect">
+<code class="descname">disconnect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.disconnect" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.name">
+<code class="descname">name</code><em class="property"> = 'ellipsometer_hw'</em><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.poll">
+<code class="descname">poll</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.poll" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.start_acq">
+<code class="descname">start_acq</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.start_acq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.stop_acq">
+<code class="descname">stop_acq</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.stop_acq" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.trigger">
+<code class="descname">trigger</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_hw.EllipsometerHW.trigger" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ALD.ellipsometer.ellipsometer_interface">
+<span id="ald-ellipsometer-ellipsometer-interface-module"></span><h2>ALD.ellipsometer.ellipsometer_interface module<a class="headerlink" href="#module-ALD.ellipsometer.ellipsometer_interface" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ALD.ellipsometer.ellipsometer_interface.Ellipsometer_Interface">
+<em class="property">class </em><code class="descclassname">ALD.ellipsometer.ellipsometer_interface.</code><code class="descname">Ellipsometer_Interface</code><span class="sig-paren">(</span><em>host='192.168.0.1'</em>, <em>port=4444</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_interface.Ellipsometer_Interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Interface level ScopeFoundry module for Woolam Ellipsometer control.
+Creates object used to connect to Ellipsometer via RJ45 connection over TCP/IP protocol.</p>
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_interface.Ellipsometer_Interface.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_interface.Ellipsometer_Interface.close" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ALD.ellipsometer.ellipsometer_interface.Ellipsometer_Interface.name">
+<code class="descname">name</code><em class="property"> = 'ellipsometer_interface'</em><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_interface.Ellipsometer_Interface.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_interface.Ellipsometer_Interface.write_cmd">
+<code class="descname">write_cmd</code><span class="sig-paren">(</span><em>cmd</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_interface.Ellipsometer_Interface.write_cmd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ALD.ellipsometer.ellipsometer_measure">
+<span id="ald-ellipsometer-ellipsometer-measure-module"></span><h2>ALD.ellipsometer.ellipsometer_measure module<a class="headerlink" href="#module-ALD.ellipsometer.ellipsometer_measure" title="Permalink to this headline">¶</a></h2>
+<p>Created on Jul 17, 2018</p>
+<dl class="docutils">
+<dt>&#64;author: Alan Buckley &lt;<a class="reference external" href="mailto:alanbuckley&#37;&#52;&#48;lbl&#46;gov">alanbuckley<span>&#64;</span>lbl<span>&#46;</span>gov</a>&gt;</dt>
+<dd>&lt;<a class="reference external" href="mailto:alanbuckley&#37;&#52;&#48;berkeley&#46;edu">alanbuckley<span>&#64;</span>berkeley<span>&#46;</span>edu</a>&gt;</dd>
+</dl>
+<dl class="class">
+<dt id="ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure">
+<em class="property">class </em><code class="descclassname">ALD.ellipsometer.ellipsometer_measure.</code><code class="descname">Ellipsometer_Measure</code><span class="sig-paren">(</span><em>app</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ScopeFoundry.measurement.Measurement</span></code></p>
+<dl class="attribute">
+<dt id="ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure.name">
+<code class="descname">name</code><em class="property"> = 'ellipsometer_measure'</em><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure.ui_setup">
+<code class="descname">ui_setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.ellipsometer.ellipsometer_measure.Ellipsometer_Measure.ui_setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ALD.ellipsometer">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ALD.ellipsometer" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scopefoundry  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Alan Buckley.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

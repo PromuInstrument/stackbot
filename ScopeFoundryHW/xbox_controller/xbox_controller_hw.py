@@ -7,6 +7,9 @@ from ScopeFoundryHW.xbox_controller.xbox_controller_device import XboxController
 
 class XboxControllerHW(HardwareComponent):
 
+    """Defines button maps and *LoggedQuantities* used to 
+    interpret signals received by Pygame module from controller."""
+
     name = "xbox_controller"
 
     direction_map = {
