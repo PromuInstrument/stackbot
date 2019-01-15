@@ -50,8 +50,10 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         #self.add_hardware(ActonSpectrometerHW(self))
 
 
-        from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
-        self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))    
+        #from ScopeFoundryHW.powerwheel_arduino import PowerWheelArduinoHW
+        #self.power_wheel = self.add_hardware_component(PowerWheelArduinoHW(self))
+        from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW
+        self.add_hardware(PololuMaestroServoHW(self, name='power_wheel'))
         
         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW
         self.add_hardware_component(ThorlabsPowerMeterHW(self))
@@ -97,7 +99,7 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         #self.add_measurement(apd_scan.M4APDScanPhMeasure(self))
         
         from confocal_measure.power_scan import PowerScanMeasure
-        self.add_measurement(PowerScanMeasure(self))
+        self.add_measurement(PowerScanMeasure(self))       
         
         from ScopeFoundryHW.thorlabs_powermeter import PowerMeterOptimizerMeasure
         self.add_measurement(PowerMeterOptimizerMeasure(self))    
@@ -126,14 +128,27 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(LaserLineWriter(self))
         
         
-        from measurements.laser_power_feedback_control import LaserPowerFeedbackControl
+        from ir_microscope.measurements.laser_power_feedback_control import LaserPowerFeedbackControl
         self.add_measurement(LaserPowerFeedbackControl(self))
         
         
         from ir_microscope.measurements.position_recipe_control import PositionRecipeControl
         self.add_measurement(PositionRecipeControl(self))
-        from ir_microscope.measurements.focus_recipe_control import FocusRecipeControl
-        self.add_measurement(FocusRecipeControl(self))
+        #from ir_microscope.measurements.focus_recipe_control import FocusRecipeControl
+        #self.add_measurement(FocusRecipeControl(self))
+        
+        
+        from ir_microscope.measurements.nested_trpl_scans import NestedTrplScans
+        self.add_measurement(NestedTrplScans(self))
+        
+        
+        from ir_microscope.measurements.apd_scan import PicoharpApdScan
+        self.add_measurement(PicoharpApdScan(self, use_external_range_sync=True))
+        
+        
+        from ir_microscope.measurements.trpl_parallelogram_scan import TRPLParallelogramScan
+        self.add_measurement(TRPLParallelogramScan(self, use_external_range_sync=False))
+        
         
         #from ScopeFoundryHW.xbox_controller.xbox_controller_test_measure import 
         
@@ -203,20 +218,19 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         pm_opt = self.measurements['powermeter_optimizer']
         pm_opt.settings.activation.connect_to_widget(Q.power_meter_acquire_cont_checkBox)
         
-        # power meter analog readout
-        pma = self.hardware['thorlabs_powermeter_analog_readout']
-        pma.settings.voltage.connect_to_widget(Q.power_meter_analog_readout_label)
+        # laser power feedback
         lpfc = self.measurements['laser_power_feedback_control']
-        lpfc.settings.set_voltage.connect_to_widget(Q.laser_power_feedback_control_set_voltage_doubleSpinBox)
+        lpfc.settings.setpoint_power.connect_to_widget(Q.laser_power_feedback_control_setpoint_doubleSpinBox)
         lpfc.settings.p_gain.connect_to_widget(Q.laser_power_feedback_control_p_gain_doubleSpinBox)
         lpfc.settings.activation.connect_to_widget(Q.laser_power_feedback_control_activation_checkBox)
         
         # Power Wheel
-        pw = self.hardware['power_wheel_arduino']
-        pw.settings.encoder_pos.connect_to_widget(Q.power_wheel_encoder_pos_doubleSpinBox)
-        pw.settings.move_steps.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
-        Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.move_fwd)
-        Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.move_bkwd)
+        #pw = self.hardware['power_wheel_arduino']
+        pw = self.hardware['power_wheel']
+        pw.settings.position.connect_to_widget(Q.power_wheel_encoder_pos_doubleSpinBox)
+        pw.settings.jog_step.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
+        Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.jog_fwd)
+        Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.jog_bkwd)
 
         # Filter Wheel
         fw = self.hardware['filter_wheel']
@@ -273,7 +287,7 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         # 2d scan
 
         
-        _2D_scans = ['trpl_2d_scan', 'hyperspectral_2d_scan']
+        _2D_scans = ['trpl_2d_scan', 'hyperspectral_2d_scan', 'apd_scan']
         
         #Create and connect logged quantities to widget and equivalent lqs measurements
         S = self.settings        
