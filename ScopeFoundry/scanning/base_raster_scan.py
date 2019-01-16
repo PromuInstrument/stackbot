@@ -32,7 +32,8 @@ def ijk_zigzag_generator(dims, axis_order=(0,1,2)):
     return
 
 class BaseRaster2DScan(Measurement):
-    name = "base_raster_2Dscan"
+    
+    name = "base_raster_2D_scan"
     
     def __init__(self, app, 
                  h_limits=(-1,1),        v_limits=(-1,1), 
@@ -457,11 +458,13 @@ class BaseRaster2DScan(Measurement):
         
     @property
     def h_array(self):
-        return self.h_range.array
+        #return self.h_range.array
+        return np.linspace(self.h0.val, self.h1.val, self.Nh.val)
 
     @property
     def v_array(self):
-        return self.v_range.array
+        #return self.v_range.array
+        return np.linspace(self.v0.val, self.v1.val, self.Nv.val)
 
     def compute_times(self):
         #self.settings['pixel_time'] = 1.0/self.scanDAQ.settings['dac_rate']
@@ -497,6 +500,8 @@ class BaseRaster2DScan(Measurement):
             H, V = np.meshgrid(self.h_array, self.v_array)
             self.scan_h_positions[:] = H.flat
             self.scan_v_positions[:] = V.flat
+            
+            self.scan_slow_move[::self.Nh.val] = True
             
             II,JJ = np.meshgrid(np.arange(self.Nh.val), np.arange(self.Nv.val))
             self.scan_index_array[:,1] = JJ.flat

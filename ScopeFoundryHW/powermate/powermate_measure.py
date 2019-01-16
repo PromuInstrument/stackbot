@@ -8,20 +8,29 @@ Created on Jun 29, 2017
 from ScopeFoundry.measurement import Measurement
 import time
 
-class PowermateMeasure(Measurement):
-    name = 'powermate_measure'
-
-    def setup(self):
-        self.powermate = self.app.hardware['powermate_hw']
-        self.n_devs = 2
-                
-        self.dt = 0.05
-        
-        choices = ['hardware/attocube_xyz_stage/z_target_position',
+choices = ['hardware/attocube_xyz_stage/z_target_position',
                    'hardware/attocube_xyz_stage/x_target_position',
                    'hardware/attocube_xyz_stage/y_target_position',
                    '',
                    ]
+
+class PowermateMeasure(Measurement):
+    name = 'powermate_measure'
+    
+    def __init__(self, app, name=None, n_devs=2, dev_lq_choices=choices):
+        self.n_devs = n_devs
+        self.dev_lq_choices=dev_lq_choices
+        Measurement.__init__(self, app, name=name)
+
+    def setup(self):
+        self.powermate = self.app.hardware['powermate_hw']
+                
+        self.dt = 0.05
+        
+        
+        self.fine = self.settings.New(name = 'fine', dtype=bool, initial=False)
+        
+        choices=self.dev_lq_choices
         
         for channel in range(self.n_devs):
             self.settings.New(name='dev_{}_lq_path_moved'.format(channel), dtype=str, 
@@ -31,7 +40,7 @@ class PowermateMeasure(Measurement):
             self.settings.New(name='dev_{}_moved_pressed'.format(channel), initial=0.1, dtype=float, ro=False, spinbox_decimals=6)
         
         self.connect_pm_signals_to_lqs()
-        
+            
     def disconnect_pm_signals_from_lqs(self):
         """"disconnect all signals"""
         for signal_name in ['moved', 'button_pressed', 'button_released', 'moved_left', 'moved_right']:
@@ -54,7 +63,12 @@ class PowermateMeasure(Measurement):
             delta = self.settings['dev_{}_moved_pressed'.format(channel)]
         else:
             delta = self.settings['dev_{}_moved_released'.format(channel)]
-        new_val = old_val + delta*direction
+        
+        if self.fine.val:
+            new_val = old_val + delta*direction/4.0
+        else:
+            new_val = old_val + delta*direction
+            
         lq.update_value(new_val)
     
     def toggle_on_button_pressed(self, channel):

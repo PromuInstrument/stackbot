@@ -14,12 +14,19 @@ class WinSpecMCL2DSlowScan(MCLStage2DSlowScan):
 
     
     def pre_scan_setup(self):
+        self.winspec_hw = self.app.hardware['winspec_remote_client']
+        self.winspec_readout = self.app.measurements['winspec_readout']
+
+        
+        self.winspec_hw = self.app.hardware['winspec_remote_client']
         self.winspec_client = self.winspec_hw.winspec_client  # low level device 
+        self.winspec_readout.settings['continuous'] = False
         self.winspec_readout.settings['save_h5'] = False
 
     def collect_pixel(self, pixel_num, k, j, i):
         # collect data
-        # store in arrays        
+        # store in arrays
+        self.winspec_readout.interrupt_measurement_called = False       
         self.winspec_readout.run()
         
         if pixel_num == 0:
@@ -28,10 +35,13 @@ class WinSpecMCL2DSlowScan(MCLStage2DSlowScan):
             self.spec_map = np.zeros(spec_map_shape, dtype=np.float)
             self.spec_map_h5 = self.h5_meas_group.create_dataset(
                                  'spec_map', spec_map_shape, dtype=np.float)
+            
+            self.wls_h5 = self.h5_meas_group['wls'] = self.winspec_readout.wls
             self.h5_file.flush()
             
         if (pixel_num % 5) == 0:
             self.h5_file.flush()
+            
         
 
         #self.roi_data = self.picam.cam.reshape_frame_data(dat)

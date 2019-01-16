@@ -16,9 +16,9 @@ class PowerScanMeasure(Measurement):
     def setup(self):
         
         self.power_wheel_min = self.add_logged_quantity("power_wheel_min", 
-                                                          dtype=int, unit='', initial=0, vmin=-3200, vmax=+3200, ro=False)
+                                                          dtype=float, unit='', initial=0, vmin=-3200, vmax=+3200, ro=False)
         self.power_wheel_max = self.add_logged_quantity("power_wheel_max", 
-                                                          dtype=int, unit='', initial=1000, vmin=-3200, vmax=+3200, ro=False)
+                                                          dtype=float, unit='', initial=280, vmin=-3200, vmax=+3200, ro=False)
         self.power_wheel_ndatapoints = self.add_logged_quantity("power_wheel_ndatapoints", 
                                                           dtype=int, unit='', initial=100, vmin=1, vmax=3200, ro=False)
         
@@ -30,6 +30,9 @@ class PowerScanMeasure(Measurement):
         self.collect_ascom_img = self.add_logged_quantity('collect_ascom_img', dtype=bool, initial=False)
         
         self.settings.New("x_axis", dtype=str, initial='power_wheel', choices=('power_wheel', 'pm_power'))
+        
+        self.settings.New('acq_mode', dtype=str, initial = 'const_time', choices=('const_time', 'const_SNR', 'const_signal'))
+
     
     
     
@@ -53,29 +56,35 @@ class PowerScanMeasure(Measurement):
         
         # Hardware connections
         if 'apd_counter' in self.app.hardware.keys():
-            self.app.hardware.apd_counter.settings.int_time.connect_bidir_to_widget(
-                                                                    self.ui.apd_int_time_doubleSpinBox)
+            self.apd_counter_acq_time = self.app.hardware.apd_counter.settings.int_time
+            self.apd_counter_acq_time.connect_to_widget(self.ui.apd_int_time_doubleSpinBox)
         else:
             self.collect_apd.update_value(False)
             self.collect_apd.change_readonly(True)
         
         if 'winspec_remote_client' in self.app.hardware.keys():
-            self.app.hardware['winspec_remote_client'].settings.acq_time.connect_bidir_to_widget(
-                                                                    self.ui.spectrum_int_time_doubleSpinBox)
+            self.spec_acq_time = self.app.hardware['winspec_remote_client'].settings.acq_time
+            self.spec_acq_time.connect_to_widget(self.ui.spectrum_int_time_doubleSpinBox)
+            self.spec_readout_measure_name  = 'winspec_readout'
+            
+        elif 'andor_ccd' in self.app.hardware.keys():
+            self.spec_acq_time = self.app.hardware['andor_ccd'].settings.exposure_time
+            self.spec_acq_time.connect_to_widget(self.ui.spectrum_int_time_doubleSpinBox)
+            self.spec_readout_measure_name = 'andor_ccd_readout'
         else:
             self.collect_spectrum.update_value(False)
             self.collect_spectrum.change_readonly(True)
 
         if 'ascom_camera' in self.app.hardware.keys():
-            self.app.hardware.ascom_camera.settings.exp_time.connect_bidir_to_widget(
-                self.ui.ascom_img_int_time_doubleSpinBox)
+            self.ascom_camera_acq_time =  self.app.hardware.ascom_camera.settings.exp_time
+            self.ascom_camera_acq_time.connect_to_widget(self.ui.ascom_img_int_time_doubleSpinBox)
         else:
             self.collect_ascom_img.update_value(False)
             self.collect_ascom_img.change_readonly(True)
             
         if 'picoharp' in self.app.hardware.keys():
-            self.app.hardware['picoharp'].settings.Tacq.connect_to_widget(
-                self.ui.picoharp_int_time_doubleSpinBox)
+            self.lifetime_acq_time = self.app.hardware['picoharp'].settings.Tacq
+            self.lifetime_acq_time.connect_to_widget(self.ui.picoharp_int_time_doubleSpinBox)
         else:
             self.collect_lifetime.update_value(False)
             self.collect_lifetime.change_readonly(True)
@@ -89,8 +98,7 @@ class PowerScanMeasure(Measurement):
         self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
         
         self.plot1 = self.graph_layout.addPlot(title="Power Scan")
-
-        self.plot_line1 = self.plot1.plot([0])
+        self.plot_line1 = self.plot1.plot([0], symbol='o')
 
     def update_display(self):
         ii = self.ii
@@ -105,7 +113,7 @@ class PowerScanMeasure(Measurement):
             self.plot_line1.setData(X, self.picoharp_histograms[:ii, :].sum(axis=1)/self.picoharp_elapsed_time[:ii])
         elif self.settings['collect_spectrum']:
             self.plot_line1.setData(X, self.integrated_spectra[:ii])
-            self.winspec_readout.update_display()
+            #self.winspec_readout.update_display()
         elif self.settings['collect_ascom_img']:
             self.plot_line1.setData(X, self.ascom_img_integrated[:ii])
             self.ascom_camera_capture.update_display()
@@ -114,9 +122,12 @@ class PowerScanMeasure(Measurement):
 
 
     def run(self):
+        self.spec_readout_measure_name = 'andor_ccd_readout'
+
         # hardware and delegate measurements
-        self.power_wheel_hw = self.app.hardware.power_wheel_arduino
-        self.power_wheel_dev = self.power_wheel_hw.power_wheel_dev
+        #self.power_wheel_hw = self.app.hardware.power_wheel_arduino
+        #self.power_wheel_dev = self.power_wheel_hw.power_wheel_dev
+        self.power_wheel_hw = self.app.hardware['power_wheel']
         
         if self.settings['collect_apd']:
             self.apd_counter_hw = self.app.hardware.apd_counter
@@ -126,7 +137,7 @@ class PowerScanMeasure(Measurement):
             self.ph_hw = self.app.hardware['picoharp']
 
         if self.settings['collect_spectrum']:
-            self.winspec_readout = self.app.measurements['winspec_readout']
+            self.spec_readout = self.app.measurements[self.spec_readout_measure_name]
                    
         if self.settings['collect_ascom_img']:
             self.ascom_camera_capture = self.app.measurements.ascom_camera_capture
@@ -136,19 +147,25 @@ class PowerScanMeasure(Measurement):
         
         #####
         self.Np = Np = self.power_wheel_ndatapoints.val
-        self.step_size = int( (self.power_wheel_max.val-self.power_wheel_min.val)/Np )
+#        self.step_size = int( (self.power_wheel_max.val-self.power_wheel_min.val)/Np )
         
+        self.power_wheel_position = np.linspace(self.settings['power_wheel_min'], self.settings['power_wheel_max'], self.Np)
+        self.step_size = self.power_wheel_position[1] - self.power_wheel_position[0]
     
         if self.settings['up_and_down_sweep']:
             self.direction = np.ones(Np*2) # step up
             self.direction[Np] = 0 # don't step at the top!
             self.direction[Np+1:] = -1 # step down
             Np = self.Np = 2*Np
+            
+            self.power_wheel_position = np.concatenate([self.power_wheel_position, self.power_wheel_position[::-1]])
+            
         else:
             self.direction = np.ones(Np)
     
         # Create Data Arrays    
-        self.power_wheel_position = np.zeros(Np)      
+        #self.power_wheel_position = np.zeros(Np, dtype=float)      
+
         
         self.pm_powers = np.zeros(Np, dtype=float)
         self.pm_powers_after = np.zeros(Np, dtype=float)
@@ -168,6 +185,18 @@ class PowerScanMeasure(Measurement):
             self.ascom_img_integrated = []
             
         
+        #if self.settings['acq_mode'] == 'const_SNR':
+        #    self.spec_acq_times_array = self.spec_acq_time.val / np.exp(2*self.log_power_index)
+        #    self.lifetime_acq_times_array = self.lifetime_acq_time.val / np.exp(2*self.log_power_index) 
+            
+        if self.settings['acq_mode'] == 'const_signal':
+            self.spec_acq_t0 = float(self.spec_acq_time.val) 
+            theta = self.power_wheel_position
+            OD_MAX = 4.3
+            OD_MAX_POS = 270.
+            OD = OD_MAX * (theta - theta[0]) / OD_MAX_POS         
+            self.spec_acq_times_array = np.array([round(item,4) for item in (self.spec_acq_t0 * 10**(-OD))])
+            print('Estimated time {}'.format(np.sum(self.spec_acq_times_array)))
         ### Acquire data
         
         self.move_to_min_pos()
@@ -176,6 +205,8 @@ class PowerScanMeasure(Measurement):
         
         # loop through power wheel positions
         for ii in range(self.Np):
+            if self.settings['acq_mode'] == 'const_signal':
+                print("power scan {} of {}, acq_time {}".format(ii, self.Np,self.spec_acq_times_array[ii]))
             self.ii = ii
             self.settings['progress'] = 100.*ii/self.Np
             
@@ -183,15 +214,22 @@ class PowerScanMeasure(Measurement):
                 break
             
             # record power wheel position
-            self.power_wheel_position[ii] = self.power_wheel_hw.encoder_pos.read_from_hardware()
+            #self.power_wheel_position[ii] = self.power_wheel_hw.encoder_pos.read_from_hardware()
+            #self.power_wheel_hw.settings.raw_position.read_from_hardware()
+            self.power_wheel_hw.settings['position'] = self.power_wheel_position[ii]
+            print("moving power wheel", "now at ", self.power_wheel_hw.settings['position'])
+            time.sleep(0.20)
+
             
             # collect power meter value
             self.pm_powers[ii]=self.collect_pm_power_data()
             
             # read detectors
             if self.settings['collect_apd']:
+                time.sleep(self.apd_counter_hw.settings['int_time'])
                 self.apd_count_rates[ii] = \
                     self.apd_counter_hw.settings.count_rate.read_from_hardware()
+                
             if self.settings['collect_lifetime']:
                 ph = self.ph_hw.picoharp
                 ph.start_histogram()
@@ -208,10 +246,23 @@ class PowerScanMeasure(Measurement):
                 self.picoharp_time_array =  ph.time_array[0:Nt]
                 self.picoharp_elapsed_time[ii] = ph.read_elapsed_meas_time()
             if self.settings['collect_spectrum']:
-                self.winspec_readout.run()
-                spec = np.array(self.winspec_readout.data)
-                self.spectra.append( spec )
+                if self.settings['acq_mode'] == 'const_signal':
+                    self.spec_acq_time.update_value(self.spec_acq_times_array[ii])
+                
+                #self.spec_readout.run()
+                self.spec_readout.settings['read_single'] = True
+                self.spec_readout.settings['save_h5'] = True
+                #self.start_nested_measure_and_wait(self.spec_readout)
+                
+                self.spec_readout.settings['activation'] = True
+                time.sleep(0.5)
+                time.sleep(self.spec_acq_time.val)
+                spec = np.array(self.spec_readout.spectrum)
+                if self.settings['acq_mode'] == 'const_signal':
+                    spec = spec/self.spec_acq_times_array[ii]
+                self.spectra.append(spec)
                 self.integrated_spectra.append(spec.sum())
+                self.spec_readout.settings['read_single'] = True
             if self.settings['collect_ascom_img']:
                 self.ascom_camera_capture.interrupt_measurement_called = False
                 self.ascom_camera_capture.run()
@@ -224,10 +275,15 @@ class PowerScanMeasure(Measurement):
             self.pm_powers_after[ii]=self.collect_pm_power_data()
 
             # move to new power wheel position
-            self.power_wheel_dev.write_steps_and_wait(self.step_size*self.direction[ii])
-            time.sleep(0.5)
-            self.power_wheel_hw.encoder_pos.read_from_hardware()
-
+            #self.power_wheel_dev.write_steps_and_wait(self.step_size*self.direction[ii])
+            #time.sleep(0.5)
+            #self.power_wheel_hw.encoder_pos.read_from_hardware()
+            #delta = self.step_size*self.direction[ii]
+            #print("moving power wheel", delta)
+            #self.power_wheel_hw.settings['position'] += delta
+            #print("moving power wheel", delta, "now at ", self.power_wheel_hw.settings['position'])
+            
+            
         # write data to h5 file on disk
         
         self.t0 = time.time()
@@ -247,7 +303,7 @@ class PowerScanMeasure(Measurement):
                 H['picoharp_histograms'] = self.picoharp_histograms
                 H['picoharp_time_array'] = self.picoharp_time_array
             if self.settings['collect_spectrum']:
-                H['wls'] = self.winspec_readout.wls
+                H['wls'] = self.spec_readout.wls
                 H['spectra'] = np.squeeze(np.array(self.spectra))
                 H['integrated_spectra'] = np.array(self.integrated_spectra)
             if self.settings['collect_ascom_img']:
@@ -258,13 +314,16 @@ class PowerScanMeasure(Measurement):
             H['pm_powers_after'] = self.pm_powers_after
             H['power_wheel_position'] = self.power_wheel_position
             H['direction'] = self.direction
+            if self.settings['acq_mode'] == 'const_signal':
+                H['acq_times'] = self.spec_acq_times_array
+                
         finally:
             self.log.info("data saved "+self.h5_file.filename)
             self.h5_file.close()
         
 
 
-    def move_to_min_pos(self):
+        """    def move_to_min_pos(self):
         self.power_wheel_dev.read_status()
         
         delta_steps = self.power_wheel_min.val - self.power_wheel_hw.encoder_pos.read_from_hardware()
@@ -272,7 +331,10 @@ class PowerScanMeasure(Measurement):
             #print 'moving to min pos'
             self.power_wheel_dev.write_steps_and_wait(delta_steps)
             #print 'done moving to min pos'
-
+"""
+    def move_to_min_pos(self):
+        self.power_wheel_hw.settings['position'] = self.settings['power_wheel_min']
+        time.sleep(2.0)
     
     def collect_pm_power_data(self):
         PM_SAMPLE_NUMBER = 10

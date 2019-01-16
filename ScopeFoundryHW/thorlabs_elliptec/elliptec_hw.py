@@ -6,13 +6,28 @@ class ThorlabsElliptecSingleHW(HardwareComponent):
     
     name = 'elliptec'
     
+    def __init__(self, app, debug=False, name=None, named_positions=None):
+        """ named_positions is a dictionary of names:positions
+        """
+        self.named_positions = named_positions
+        HardwareComponent.__init__(self, app, debug=debug, name=name)
+        
+    
     def setup(self):
         self.settings.New('port', dtype=str, initial='COM7')
         self.settings.New('addr', dtype=int, initial=0, vmin=0, vmax=15)
         self.settings.New('position', dtype=float, initial=0, unit='mm', spinbox_decimals=4)
         
+        
         self.add_operation('Home', self.home_device)
         
+        if self.named_positions is not None:
+            self.settings.New('named_position', dtype=str, initial='Other', 
+                              choices=('Other',) + tuple(self.named_positions.keys()) )
+            
+            for name, pos in self.named_positions.items():
+                #self.add_operation('Goto '+name, lambda name=name: self.goto_named_position(name))
+                self.add_operation('Goto '+name, lambda name=name: self.settings.named_position.update_value(name))
     def connect(self):
         S = self.settings
         self.dev = ThorlabsElliptecDevice(port=S['port'], addr=S['addr'], debug=S['debug_mode'])
@@ -21,8 +36,13 @@ class ThorlabsElliptecSingleHW(HardwareComponent):
         self.settings.position.reread_from_hardware_after_write = True
         self.settings.position.connect_to_hardware(
             read_func= self.dev.get_position_mm,
-            write_func= self.dev.move_absolute_mm
+            write_func= self.goto_position
             )
+        
+        if 'named_position' in self.settings:
+            self.settings.named_position.connect_to_hardware(
+                write_func=self.goto_named_position
+                )
 
         self.settings.position.read_from_hardware()
 
@@ -38,6 +58,16 @@ class ThorlabsElliptecSingleHW(HardwareComponent):
     def home_device(self):
         self.dev.home_device()
         self.settings.position.read_from_hardware()
+        
+    def goto_position(self, pos):
+        self.dev.move_absolute_mm(pos)
+        if 'named_position' in self.settings:
+            self.settings['named_position'] = "Other"
+        
+    def goto_named_position(self, name):
+        if name != 'Other':
+            self.dev.move_absolute_mm(self.named_positions[name])
+            self.settings.position.read_from_hardware()
 
 class ThorlabsElliptcMultiHW(HardwareComponent):
     

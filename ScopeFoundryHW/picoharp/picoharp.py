@@ -6,6 +6,8 @@ Created on Apr 1, 2014
 from __future__ import absolute_import, print_function
 from ScopeFoundry import HardwareComponent
 import numpy as np
+import threading
+import time
 
 try:
     from .pypicoharp import PicoHarp300
@@ -96,6 +98,10 @@ class PicoHarpHW(HardwareComponent):
         # read initial information
         self.read_from_hardware()
         
+        # read thread
+        self.update_thread_interrupted = False
+        self.update_thread = threading.Thread(target=self.update_thread_run)
+        self.update_thread.start()
         
         
         if self.settings['debug_mode']: self.log.debug( "Done Connecting to PicoHarp" )
@@ -103,10 +109,12 @@ class PicoHarpHW(HardwareComponent):
         
     def disconnect(self):
         
-        for lq in self.settings.as_list():
-            lq.hardware_read_func = None
-            lq.hardware_set_func = None
+        self.settings.disconnect_all_from_hardware()
 
+        if hasattr(self, 'update_thread'):
+            self.update_thread_interrupted = True
+            self.update_thread.join(timeout=1.0)
+            del self.update_thread
 
         if hasattr(self, 'picoharp'):
             #disconnect hardware
@@ -114,9 +122,17 @@ class PicoHarpHW(HardwareComponent):
             
             #clean up hardware object
             del self.picoharp
+            
 
     def calc_num_hist_chans(self):
         cr0 = self.settings.count_rate0.read_from_hardware()
         rep_period_s = 1.0/cr0
         time_bin_resolution = self.settings['Resolution']*1e-12
         return int(np.ceil(rep_period_s/time_bin_resolution))
+    
+    
+    def update_thread_run(self):
+        while not self.update_thread_interrupted:
+            self.settings.count_rate0.read_from_hardware()
+            self.settings.count_rate1.read_from_hardware()
+            time.sleep(0.1)

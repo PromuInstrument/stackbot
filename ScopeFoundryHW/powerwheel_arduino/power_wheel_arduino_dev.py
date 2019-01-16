@@ -6,6 +6,7 @@ Created on 21.09.2014
 
 import serial
 import time
+import threading
 
 class PowerWheelArduino(object):
     """Arduino controlled Stepper motor Power ND filter Wheel"""
@@ -17,7 +18,8 @@ class PowerWheelArduino(object):
         if self.debug: print("PowerWheelArduino init, port=%s" % self.port)
         
         self.ser = serial.Serial(port=self.port, baudrate=57600, timeout=1.0)
-                          
+        
+        self.lock = threading.Lock()  
                           
         # Toggle DTR to reset Arduino
         #self.ser.setDTR(False)
@@ -37,16 +39,18 @@ class PowerWheelArduino(object):
     
     def ask_cmd(self, cmd):
         if self.debug: print("ask:", repr(cmd))
-        self.send_cmd(cmd)
-        time.sleep(0.01)
-        resp = self.ser.readline()
+        with self.lock:
+            self.send_cmd(cmd)
+            time.sleep(0.01)
+            resp = self.ser.readline()
         if self.debug: print("resp:", repr(resp))
         return resp 
 
     def write_steps(self,steps):
         """ Non-blocking movement of :steps:
         """
-        self.send_cmd(b'am%i' % steps)
+        with self.lock:
+            self.send_cmd(b'am%i' % steps)
         #print "steps ", steps
     
     def write_steps_and_wait(self,steps):
@@ -64,7 +68,8 @@ class PowerWheelArduino(object):
         
     
     def write_speed(self, speed):
-        self.send_cmd(b'as%i'% speed)
+        with self.lock:
+            self.send_cmd(b'as%i'% speed)
     
     def read_speed(self):
         self.read_status()
@@ -84,8 +89,9 @@ class PowerWheelArduino(object):
         return status    
     
     def read_encoder(self):
-        self.ser.write(b'ae\n')
-        resp=self.ser.readline() 
+        with self.lock:
+            self.ser.write(b'ae\n')
+            resp=self.ser.readline() 
         self.encoder_pos = int(resp)       
         if self.debug:
             print("read_encoder", self.encoder_pos)
@@ -100,11 +106,13 @@ class PowerWheelArduino(object):
         print('the new powerwheel position is: ', self.read_encoder())
         
     def write_zero_encoder(self):
-        self.send_cmd(b"az")
+        with self.lock:
+            self.send_cmd(b"az")
 
 
     def write_brake(self):
-        self.send_cmd(b"ab")
+        with self.lock:
+            self.send_cmd(b"ab")
         
     def close(self):
         self.ser.close()      

@@ -97,10 +97,13 @@ class AugerMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(SEMAlignMeasure)
 
         from Auger.auger_quad_scan import AugerQuadSlowScan
-        self.add_measurement_component(AugerQuadSlowScan(self))
+        self.add_measurement(AugerQuadSlowScan(self))
         
         from Auger.sem_auto_focus import SEMAutoFocus
-        self.add_measurement_component(SEMAutoFocus(self))
+        self.add_measurement(SEMAutoFocus(self))
+        
+        from Auger.sem_auto_stig_measure import SEMAutoStigMeasure
+        self.add_measurement(SEMAutoStigMeasure(self))
         
 
 

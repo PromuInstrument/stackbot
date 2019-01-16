@@ -13,7 +13,6 @@ image_window.ui.oA7156
 *.h5
 log.out
 build
-dist
 *.autosave
 *.mat
 ScopeFoundry/ScopeFoundry.egg-info
@@ -24,6 +23,21 @@ ScopeFoundryHW/andor_camera/log/
 trpl_microscope/log/
 plimg_microscope/log/
 ir_microscope/log/
+HiP_microscope/log/
+.metadata/
+df_microscope/log/
+ScopeFoundryHW/xbox_controller/log/
+ScopeFoundryHW/thorlabs_stepper_motors/log/
+ScopeFoundryHW/princeton_omaV/OMAV InGaAs System Manual.pdf
+ScopeFoundryHW/powermate/log/
+ScopeFoundry/tests/log
+laser_scribe_microscope/log/
+ScopeFoundryHW/asi_stage/log/
 ScopeFoundry/log/
 ScopeFoundryHW/thorlabs_stepper_motors/log/
 ScopeFoundry/tests/log/
+ScopeFoundryHW/pololu_servo/log/
+enviro_logger/log/
+FoundryDataBrowser/dist
+ScopeFoundryHW/elgato_streamdeck/log
+ScopeFoundryHW/acton_spec/log/
