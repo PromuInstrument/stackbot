@@ -38,4 +38,6 @@ ScopeFoundryHW/thorlabs_stepper_motors/log/
 ScopeFoundry/tests/log/
 ScopeFoundryHW/pololu_servo/log/
 enviro_logger/log/
-
+FoundryDataBrowser/dist
+ScopeFoundryHW/elgato_streamdeck/log
+ScopeFoundryHW/acton_spec/log/
