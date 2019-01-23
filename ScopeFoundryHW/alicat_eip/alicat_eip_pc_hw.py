@@ -12,6 +12,11 @@ class Alicat_EIP_PC_HW(HardwareComponent):
     """
     
     name = 'alicat_pc'
+
+    def __init__(self, app, debug=False, name=None, pressure_unit='PSIA'):
+        self.pressure_unit = pressure_unit
+        HardwareComponent.__init__(self, app, debug=debug, name=name)
+    
     
     def setup(self):
         
@@ -20,10 +25,10 @@ class Alicat_EIP_PC_HW(HardwareComponent):
         self.settings.New("serial_num", dtype=int, ro=True)
         self.settings.New("gas", dtype=str, ro=True)
         
-        self.settings.New("setpoint", dtype=float, initial=0, spinbox_decimals=3)
+        self.settings.New("setpoint", dtype=float, unit=self.pressure_unit, initial=0, spinbox_decimals=3)
         
         # Pressure Controller specific
-        self.settings.New("pressure", dtype=float, unit="PSIA", ro=True, spinbox_decimals=2)
+        self.settings.New("pressure", dtype=float, unit=self.pressure_unit, ro=True, spinbox_decimals=2)
         
         self.add_operation('read_state', self.read_state)
     
@@ -44,6 +49,10 @@ class Alicat_EIP_PC_HW(HardwareComponent):
         self.settings.setpoint.read_from_hardware()
         self.read_state()
         
+    def disconnect(self):
+        self.settings.disconnect_all_from_hardware()
+        if hasattr(self, 'p'):
+            del self.p
         
         
     def read_setpoint(self):
@@ -56,7 +65,14 @@ class Alicat_EIP_PC_HW(HardwareComponent):
     def read_state(self):
         """Update settings (pressure, etc) based on hardware state
         """
-        dat = bytes(list(self.p.read( [('@4/101/3','USINT')] ))[0])
+        try:
+            dat = bytes(list(self.p.read( [('@4/101/3','USINT')] ))[0])
+        except ConnectionAbortedError as err:
+            print("failed to communicate to {}. Retrying".format(self.name))
+            self.disconnect()
+            self.connect()
+            dat = bytes(list(self.p.read( [('@4/101/3','USINT')] ))[0])
+
 
         x = struct.unpack("<HIff", dat)
 

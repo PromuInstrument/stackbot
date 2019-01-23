@@ -12,6 +12,15 @@ class Alicat_EIP_MFC_HW(HardwareComponent):
     
     name = 'alicat_mfc'
     
+    def __init__(self, app, debug=False, name=None,
+                 pressure_unit='PSIA',
+                 vol_flow_unit='LPM',
+                 mass_flow_unit='SLPM'):
+        self.pressure_unit = pressure_unit
+        self.vol_flow_unit = vol_flow_unit
+        self.mass_flow_unit = mass_flow_unit
+        HardwareComponent.__init__(self, app, debug=debug, name=name)
+    
     
     def setup(self):
         
@@ -20,13 +29,13 @@ class Alicat_EIP_MFC_HW(HardwareComponent):
         self.settings.New("serial_num", dtype=int, ro=True)
         self.settings.New("gas", dtype=str, ro=True)
         
-        self.settings.New("setpoint", dtype=float, initial=0, spinbox_decimals=3)
+        self.settings.New("setpoint", dtype=float, initial=0, unit=self.mass_flow_unit, spinbox_decimals=3)
         
         # MFC specific
-        self.settings.New("pressure", dtype=float, unit="PSIA", ro=True, spinbox_decimals=2)
+        self.settings.New("pressure", dtype=float, unit=self.pressure_unit, ro=True, spinbox_decimals=2)
         self.settings.New("temp", dtype=float, unit="C", ro=True, spinbox_decimals=2)
-        self.settings.New("volumetric_flow", dtype=float, ro=True, spinbox_decimals=3)
-        self.settings.New("mass_flow", dtype=float, ro=True, spinbox_decimals=3)
+        self.settings.New("vol_flow", dtype=float, unit=self.vol_flow_unit, ro=True, spinbox_decimals=3)
+        self.settings.New("mass_flow", dtype=float, unit=self.mass_flow_unit, ro=True, spinbox_decimals=3)
         #self.settings.New("mass_flow_setpoint", dtype=float, ro=True)
         
         self.add_operation('read_state', self.read_state)
@@ -48,6 +57,11 @@ class Alicat_EIP_MFC_HW(HardwareComponent):
         self.settings.setpoint.read_from_hardware()
         self.read_state()
         
+    def disconnect(self):
+        self.settings.disconnect_all_from_hardware()
+        if hasattr(self, 'p'):
+            del self.p
+        
         
         
     def read_setpoint(self):
@@ -60,19 +74,25 @@ class Alicat_EIP_MFC_HW(HardwareComponent):
     def read_state(self):
         """Update settings (pressure, temp, mass_flow, etc) based on hardware state
         """
-        dat = bytes(list(self.p.read( [('@4/101/3','USINT')] ))[0])
-
+        try:
+            dat = bytes(list(self.p.read( [('@4/101/3','USINT')] ))[0])
+        except ConnectionAbortedError as err:
+            print("failed to communicate to {}. Retrying".format(self.name))
+            self.disconnect()
+            self.connect()
+            dat = bytes(list(self.p.read( [('@4/101/3','USINT')] ))[0])
+            
         x = struct.unpack("<HIfffff", dat)
 
         S  = self.settings
 
         gas_num = x[0]
-        print("gas", gas_num, gas_list[gas_num])
+        #print("gas", gas_num, gas_list[gas_num])
         S['gas'] = gas_list[gas_num]
         device_status = x[1]
         S['pressure'] = x[2]
         S['temp'] = x[3]
-        S['volumetric_flow'] = x[4]
+        S['vol_flow'] = x[4]
         S['mass_flow'] = x[5]
         mass_flow_sp = x[6]
         
