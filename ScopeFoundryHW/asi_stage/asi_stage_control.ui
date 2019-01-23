@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>539</width>
-    <height>423</height>
+    <width>517</width>
+    <height>410</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -21,42 +21,38 @@
      </property>
     </widget>
    </item>
+   <item row="3" column="0">
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>54</height>
+      </size>
+     </property>
+    </spacer>
+   </item>
+   <item row="0" column="0" rowspan="2">
+    <widget class="QLabel" name="label">
+     <property name="font">
+      <font>
+       <pointsize>20</pointsize>
+      </font>
+     </property>
+     <property name="text">
+      <string>ASI Stage</string>
+     </property>
+    </widget>
+   </item>
    <item row="2" column="0" colspan="2">
     <widget class="QGroupBox" name="xy_groupBox">
      <property name="title">
       <string>XY</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_8">
-      <item row="3" column="3">
-       <widget class="QDoubleSpinBox" name="xy_step_doubleSpinBox"/>
-      </item>
-      <item row="1" column="0" rowspan="2">
-       <widget class="QPushButton" name="x_down_pushButton">
-        <property name="minimumSize">
-         <size>
-          <width>75</width>
-          <height>75</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>&lt;--</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1" colspan="2">
-       <widget class="QPushButton" name="y_up_pushButton">
-        <property name="minimumSize">
-         <size>
-          <width>75</width>
-          <height>75</height>
-         </size>
-        </property>
-        <property name="text">
-         <string>^</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1" colspan="2">
+      <item row="3" column="1" rowspan="3" colspan="2">
        <widget class="QPushButton" name="y_down_pushButton">
         <property name="minimumSize">
          <size>
@@ -69,22 +65,10 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="3" rowspan="2">
-       <widget class="QPushButton" name="x_up_pushButton">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>75</width>
-          <height>75</height>
-         </size>
-        </property>
+      <item row="3" column="3">
+       <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>--&gt;</string>
+         <string>Step</string>
         </property>
        </widget>
       </item>
@@ -131,53 +115,181 @@
         </layout>
        </widget>
       </item>
-      <item row="4" column="0" colspan="4">
+      <item row="5" column="3">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QDoubleSpinBox" name="xy_step_doubleSpinBox"/>
+      </item>
+      <item row="0" column="1" colspan="2">
+       <widget class="QPushButton" name="y_up_pushButton">
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>75</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>^</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" rowspan="2">
+       <widget class="QPushButton" name="x_down_pushButton">
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>75</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>&lt;--</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3" rowspan="2">
+       <widget class="QPushButton" name="x_up_pushButton">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>75</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>--&gt;</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0" colspan="4">
        <widget class="QPushButton" name="xy_stop_pushButton">
         <property name="text">
          <string>STOP</string>
         </property>
        </widget>
       </item>
+      <item row="7" column="0" colspan="4">
+       <widget class="QGroupBox" name="groupBox">
+        <property name="title">
+         <string>XY Settings</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_4">
+           <property name="text">
+            <string>Speed</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLabel" name="label_5">
+           <property name="text">
+            <string>Accel</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="label_6">
+           <property name="text">
+            <string>Backlash</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QDoubleSpinBox" name="xy_speed_doubleSpinBox"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="xy_acc_doubleSpinBox"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="QDoubleSpinBox" name="xy_backlash_doubleSpinBox"/>
+         </item>
+        </layout>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
    <item row="2" column="2">
+    <widget class="QGroupBox" name="z_groupBox">
+     <property name="title">
+      <string>Z</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0" colspan="2">
+       <widget class="QPushButton" name="z_up_pushButton">
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>75</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>^</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Position</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="z_pos_doubleSpinBox">
+        <property name="decimals">
+         <number>6</number>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Jog Step</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="z_step_doubleSpinBox"/>
+      </item>
+      <item row="3" column="0" colspan="2">
+       <widget class="QPushButton" name="z_down_pushButton">
+        <property name="minimumSize">
+         <size>
+          <width>75</width>
+          <height>75</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>v</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="2" column="3">
     <spacer name="horizontalSpacer">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
-       <width>221</width>
+       <width>40</width>
        <height>20</height>
       </size>
      </property>
     </spacer>
-   </item>
-   <item row="3" column="0">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>54</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="0" column="0" rowspan="2">
-    <widget class="QLabel" name="label">
-     <property name="font">
-      <font>
-       <pointsize>20</pointsize>
-      </font>
-     </property>
-     <property name="text">
-      <string>ASI Stage</string>
-     </property>
-    </widget>
    </item>
   </layout>
  </widget>

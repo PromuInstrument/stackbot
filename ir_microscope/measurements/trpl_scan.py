@@ -60,9 +60,13 @@ class TRPL2DScan(IRMicroscopeBase2DScan):
                                                               shape=time_trace_map_shape,
                                                               dtype=float)
         
+        self.elapsed_time_h5 = self.h5_meas_group.create_dataset('elaspsed_time',
+                                                                   shape=self.scan_shape,
+                                                                   dtype=float, 
+                                                                   compression='gzip')
+        
         self.time_array = self.ph.time_array*1e-3
         self.h5_meas_group['time_array'] = self.time_array[self.data_slice]
-        self.elapsed_time_h5 = self.h5_meas_group['elapsed_time'] = np.zeros(self.scan_shape, dtype=float)
  
         # pyqt graph
         self.initial_scan_setup_plotting = True
@@ -86,13 +90,12 @@ class TRPL2DScan(IRMicroscopeBase2DScan):
             time.sleep(0.005) #self.sleep_time)  
         ph.stop_histogram()
         #ta = time.time()
+        
         ph.read_histogram_data()
-
         hist_data = ph.histogram_data[self.data_slice]
-        elapsed_time = ph.read_elapsed_meas_time()
-
         self.time_trace_map_h5[k,j,i, :] = hist_data
         
+        elapsed_time = ph.read_elapsed_meas_time()
         self.elapsed_time_h5[k,j,i] = elapsed_time
 
         # display count-AC_FRAMERATE

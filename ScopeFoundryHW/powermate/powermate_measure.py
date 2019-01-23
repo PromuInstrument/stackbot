@@ -27,6 +27,9 @@ class PowermateMeasure(Measurement):
                 
         self.dt = 0.05
         
+        
+        self.fine = self.settings.New(name = 'fine', dtype=bool, initial=False)
+        
         choices=self.dev_lq_choices
         
         for channel in range(self.n_devs):
@@ -37,7 +40,7 @@ class PowermateMeasure(Measurement):
             self.settings.New(name='dev_{}_moved_pressed'.format(channel), initial=0.1, dtype=float, ro=False, spinbox_decimals=6)
         
         self.connect_pm_signals_to_lqs()
-        
+            
     def disconnect_pm_signals_from_lqs(self):
         """"disconnect all signals"""
         for signal_name in ['moved', 'button_pressed', 'button_released', 'moved_left', 'moved_right']:
@@ -60,7 +63,12 @@ class PowermateMeasure(Measurement):
             delta = self.settings['dev_{}_moved_pressed'.format(channel)]
         else:
             delta = self.settings['dev_{}_moved_released'.format(channel)]
-        new_val = old_val + delta*direction
+        
+        if self.fine.val:
+            new_val = old_val + delta*direction/4.0
+        else:
+            new_val = old_val + delta*direction
+            
         lq.update_value(new_val)
     
     def toggle_on_button_pressed(self, channel):

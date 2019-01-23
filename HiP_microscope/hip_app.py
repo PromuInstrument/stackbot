@@ -1,6 +1,6 @@
 import sys
 from ScopeFoundry import BaseMicroscopeApp
-
+import time
 # Import Hardware Components
 #from hardware_components.dummy_xy_stage import DummyXYStage
 
@@ -26,6 +26,11 @@ class HiPMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.picam import PicamHW, PicamReadoutMeasure
         self.add_hardware_component(PicamHW(self))
         self.add_measurement_component(PicamReadoutMeasure(self))
+        
+        from ScopeFoundryHW.asi_stage.asi_stage_hw import ASIStageHW
+        self.add_hardware(ASIStageHW(self))
+        from ScopeFoundryHW.asi_stage.asi_stage_control_measure import ASIStageControlMeasure
+        self.add_measurement(ASIStageControlMeasure(self))
 
 
         #from hardware_components.omega_pt_pid_controller import OmegaPtPIDControllerHardware        
@@ -37,7 +42,12 @@ class HiPMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement_component(HyperSpecPicam2DScan(self))
         #self.add_measurement_component(HiPMicroscopeDualTemperature(self))
         self.add_measurement_component(HyperSpecPicam3DStack(self))
+        
+        
+        from HiP_microscope.measure.picam_calibration_sweep import PicamCalibrationSweep
+        self.add_measurement(PicamCalibrationSweep(self))        
                 
+        
         #set some default logged quantities
         #self.hardware_components['apd_counter'].debug_mode.update_value(True)
         #self.hardware_components['apd_counter'].dummy_mode.update_value(True)
@@ -48,6 +58,7 @@ class HiPMicroscopeApp(BaseMicroscopeApp):
 
         self.hardware['mcl_xyz_stage'].settings['connected']=True
         self.hardware['picam'].settings['connected']=True
+        time.sleep(0.5)
         self.hardware['picam'].settings['roi_y_bin'] = 100
         self.hardware['picam'].commit_parameters()
         self.hardware['acton_spectrometer'].settings['connected']=True

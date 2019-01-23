@@ -3,6 +3,7 @@ import PyDAQmx as mx
 import numpy as np
 import pyqtgraph as pg
 from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path
+from scipy import signal
 
 class MagnetometerLogger(Measurement):
     
@@ -39,7 +40,7 @@ class MagnetometerLogger(Measurement):
         
             p.showLabel('top', True)
             p.setLabel('top', "Frequency", 'Hz')
-            p.setLogMode(x=True, y=True)
+            p.setLogMode(x=False, y=True)
             
             dc_p = self.graph_layout.addPlot(row=i, col=1)
             dc_p.setTitle("Chan {}".format(i))
@@ -90,7 +91,12 @@ class MagnetometerLogger(Measurement):
                                 self.adc_buffer, len(self.adc_buffer), mx.byref(read_count), None)
         
             self.current_data = self.adc_buffer.reshape(-1, n_chans)
-            self.current_fft = np.abs(np.fft.rfft(self.current_data,axis=0))
+            dc = self.current_data.mean(axis=0)
+            
+            #self.current_fft = np.abs(np.fft.rfft(self.current_data-dc,axis=0))
+            
+            f, self.current_fft = signal.periodogram(self.current_data, fs=rate,window='hanning', detrend='linear', axis=0)
+            
             
             ii = self.mean_fft_count % self.hist_len
             self.dc_time[ii] = self.mean_fft_count*self.settings['refresh_time']
