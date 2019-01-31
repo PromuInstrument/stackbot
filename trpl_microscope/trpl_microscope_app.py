@@ -35,10 +35,12 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.andor_camera import AndorCCDHW, AndorCCDReadoutMeasure
         self.add_hardware(AndorCCDHW(self))
         self.add_measurement(AndorCCDReadoutMeasure)
-
         
-        from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
-        self.add_hardware(ActonSpectrometerHW(self))
+        #from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
+        #self.add_hardware(ActonSpectrometerHW(self))
+
+        from ScopeFoundryHW.andor_spec.andor_spec_hw import AndorShamrockSpecHW
+        self.add_hardware(AndorShamrockSpecHW(self))
         
         from ScopeFoundryHW.flip_mirror_arduino import FlipMirrorHW
         self.add_hardware(FlipMirrorHW(self))
@@ -86,8 +88,11 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         self.add_hardware(PowermateHW(self))
         
         from ScopeFoundryHW.asi_stage import ASIStageHW, ASIStageControlMeasure
-        self.add_hardware(ASIStageHW(self))
+        self.add_hardware(ASIStageHW(self)) # sample stage
+        self.add_hardware(ASIStageHW(self, name='fiber_stage'))
         self.add_measurement(ASIStageControlMeasure(self))
+        self.add_measurement(ASIStageControlMeasure(self,name='Fiber_Stage_Control', hw_name='fiber_stage'))
+        
         
         from xbox_trpl_measure import XboxControllerTRPLMeasure
         from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
@@ -222,9 +227,9 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         #self.measurement_state_changed[bool].connect(self.gui.ui.apd_optimize_startstop_checkBox.setChecked)
         
         # Spectrometer
-        aspec = self.hardware['acton_spectrometer']
+        aspec = self.hardware['andor_spec']
         aspec.settings.center_wl.connect_to_widget(Q.acton_spec_center_wl_doubleSpinBox)
-        aspec.settings.exit_mirror.connect_to_widget(Q.acton_spec_exitmirror_comboBox)
+        #aspec.settings.exit_mirror.connect_to_widget(Q.acton_spec_exitmirror_comboBox)
         aspec.settings.grating_name.connect_to_widget(Q.acton_spec_grating_lineEdit)        
         
         # Andor CCD

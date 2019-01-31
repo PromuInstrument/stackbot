@@ -20,7 +20,7 @@ import h5py
 from kde_map_interpolation import kde_map_interpolation, bilinear_weighted_map
 from ir_microscope.data.analysis import shift_time_trace_map, tau_x_calc_map
 from astropy._erfa.core import DTY
-from ScopeFoundry.logged_quantity import MinMaxQSlider
+from ScopeFoundry.widgets import MinMaxQSlider
 
 class MapCorrelatorApp(BaseApp):
     
