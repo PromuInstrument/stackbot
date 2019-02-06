@@ -3,10 +3,8 @@ from ScopeFoundryHW.ni_daq.devices.NI_Daq import NI_AdcTask
 
 class NI_ADC_HW(HardwareComponent):
     
-    def __init__(self, app, name='ni_adc', debug=False):
-        self.name = name
-        HardwareComponent.__init__(self, app, debug=debug)
-    
+    name = 'ni_adc'
+        
     def setup(self):
         self.settings.New('adc_val', dtype=float, ro=True,  unit='V')
         self.settings.New('channel', dtype=str, initial='/Dev1/ai0')
