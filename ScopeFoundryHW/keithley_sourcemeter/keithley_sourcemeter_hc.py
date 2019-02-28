@@ -19,11 +19,14 @@ class KeithleySourceMeterComponent(HardwareComponent): #object-->HardwareCompone
     def setup(self):
         self.debug = True
         
-        self.port = self.add_logged_quantity('port', dtype=str, initial='COM21')
+        self.port = self.settings.New('port', dtype=str, initial='COM21')
         
-        self.voltage = self.add_logged_quantity('v', dtype=float, unit='V', ro=True, si=True)
-        self.current = self.add_logged_quantity('i', dtype=float, unit='A', ro=True, si=True)
         
+        self.voltage = self.V_a = self.settings.New('V_a', unit='V', ro=True, si=True)
+        self.current = self.I_a = self.settings.New('I_a', unit='A', ro=True, si=True)
+        
+        self.source_V_a = self.settings.New('source_V_a', unit='V', spinbox_decimals = 6)
+        self.source_I_a = self.settings.New('source_I_a', unit='A', spinbox_decimals = 6)
         
     def connect(self):
         if self.debug: print("connecting to keithley sourcemeter")
@@ -32,31 +35,28 @@ class KeithleySourceMeterComponent(HardwareComponent): #object-->HardwareCompone
         self.keithley = KeithleySourceMeter(port=self.port.val, debug=True)
         
         # connect logged quantities
-        self.voltage.hardware_read_func = \
-            self.keithley.getV_A
-        self.current.hardware_read_func = \
-            self.keithley.getI_A
+        self.V_a.connect_to_hardware(lambda:self.keithley.read_I('a'),None)
+        self.I_a.connect_to_hardware(lambda:self.keithley.read_I('a'),None)
+        
+        self.source_I_a.connect_to_hardware(None,lambda I:self.keithley.source_I(I,'a'),)
+        self.source_V_a.connect_to_hardware(None,lambda V:self.keithley.source_V(V,'a'),)
         
         print('connected to ',self.name)
     
 
     def disconnect(self):
-
-        # disconnect logged quantities from hardware
-        # ///
-        self.settings.disconnect_all_from_hardware()
-    
         #disconnect hardware
         if hasattr(self, 'keithley'):
+            self.keithley.write_output_on(False, channel='a')
+            self.keithley.write_output_on(False, channel='b')
             self.keithley.close()
         
             # clean up hardware object
             del self.keithley
         
         print('disconnected ',self.name)
-        
-        
-        
+
+ 
         
 
         
