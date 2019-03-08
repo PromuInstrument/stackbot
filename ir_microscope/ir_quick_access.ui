@@ -15,6 +15,29 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Power mate</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="fine_checkBox">
+        <property name="text">
+         <string>Fine</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>decrease update to 10%</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="acton_spectrometer_groupBox">
      <property name="title">
       <string>Acton Spectrometer</string>
@@ -701,67 +724,33 @@ Continuously</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_10">
       <item row="2" column="1">
-       <widget class="QDoubleSpinBox" name="laser_power_feedback_control_p_gain_doubleSpinBox"/>
-      </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="laser_power_feedback_control_set_voltage_doubleSpinBox">
-        <property name="decimals">
-         <number>3</number>
+       <widget class="QCheckBox" name="laser_power_feedback_control_activation_checkBox">
+        <property name="text">
+         <string>Run</string>
         </property>
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QLabel" name="power_meter_analog_readout_label">
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-          <weight>50</weight>
-          <bold>false</bold>
-          <kerning>false</kerning>
-         </font>
-        </property>
-        <property name="mouseTracking">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string notr="true">0.0000 V</string>
-        </property>
-        <property name="textFormat">
-         <enum>Qt::RichText</enum>
-        </property>
-        <property name="scaledContents">
-         <bool>true</bool>
-        </property>
-        <property name="wordWrap">
-         <bool>false</bool>
+       <widget class="QDoubleSpinBox" name="laser_power_feedback_control_setpoint_doubleSpinBox">
+        <property name="decimals">
+         <number>6</number>
         </property>
        </widget>
       </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="laser_power_feedback_control_p_gain_doubleSpinBox"/>
+      </item>
       <item row="0" column="0">
-       <widget class="QLabel" name="label_9">
+       <widget class="QLabel" name="label_11">
         <property name="text">
-         <string>current voltage (V)</string>
+         <string>set power</string>
         </property>
        </widget>
       </item>
       <item row="1" column="0">
-       <widget class="QLabel" name="label_11">
-        <property name="text">
-         <string>set voltage</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
        <widget class="QLabel" name="label_13">
         <property name="text">
          <string>p_gain</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QCheckBox" name="laser_power_feedback_control_activation_checkBox">
-        <property name="text">
-         <string>activate</string>
         </property>
        </widget>
       </item>
@@ -1291,7 +1280,7 @@ Continuously</string>
   <tabstop>powerwheel_move_bkwd_pushButton</tabstop>
   <tabstop>power_meter_wl_doubleSpinBox</tabstop>
   <tabstop>power_meter_acquire_cont_checkBox</tabstop>
-  <tabstop>laser_power_feedback_control_set_voltage_doubleSpinBox</tabstop>
+  <tabstop>laser_power_feedback_control_setpoint_doubleSpinBox</tabstop>
   <tabstop>laser_power_feedback_control_p_gain_doubleSpinBox</tabstop>
   <tabstop>laser_power_feedback_control_activation_checkBox</tabstop>
   <tabstop>apd_optimize_startstop_checkBox</tabstop>
