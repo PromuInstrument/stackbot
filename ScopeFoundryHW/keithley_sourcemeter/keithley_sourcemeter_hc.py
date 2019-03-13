@@ -57,10 +57,10 @@ class KeithleySourceMeterComponent(HardwareComponent): #object-->HardwareCompone
         if self.debug: print("connecting to keithley sourcemeter")
         
         # Open connection to hardware
-        K = self.keithley = KeithleySourceMeter(port=self.port.val, debug=True)
+        K = self.keithley = KeithleySourceMeter(port=self.port.val, debug=self.debug_mode.val)
         
         # connect logged quantities
-        self.V_a.connect_to_hardware(lambda:K.read_I('a'),None)
+        self.V_a.connect_to_hardware(lambda:K.read_V('a'),None)
         self.I_a.connect_to_hardware(lambda:K.read_I('a'),None)
         
         self.source_I_a.connect_to_hardware(None,lambda I:K.source_I(I,'a'))
