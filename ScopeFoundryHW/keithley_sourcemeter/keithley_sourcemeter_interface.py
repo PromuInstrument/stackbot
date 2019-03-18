@@ -59,12 +59,13 @@ class KeithleySourceMeter(object):#object -->KeithleySourceMeterComponent
         self.ser.write('smua.source.autorangei = smua.AUTORANGE_ON\r\n'.encode())
         self.ser.write('smua.measure.autorangei = smua.AUTORANGE_ON\r\n'.encode())                           
         
-    def setV_A(self,V):
+    def setV_A(self,Va):
         """
         set DC voltage on channel A and turns it on
         """
         self.ser.write('smua.source.func = smua.OUTPUT_DCVOLTS\r\n'.encode())
-        self.ser.write('smua.source.levelv = '+str(V)+'\r\n'.encode())
+        #print(type('smua.source.levelv = '+str(Va)+'\r\n'))
+        self.ser.write(('smua.source.levelv = '+str(Va)+'\r\n').encode())
         #print('set Voltage in channel A to '+str(V_A))
         pass
     
@@ -90,7 +91,7 @@ class KeithleySourceMeter(object):#object -->KeithleySourceMeterComponent
         return float(self.ser.readline())
         
    
-    def measureI_A(self,N,KeithleyADCIntTime,delay):
+    def measureI_A(self,N,KeithleyADCIntTime,delay,sleep_time=0):
         """
         takes N current measurements and returns them as ndarray
         KeithleyADCIntTime = 0.1 sets integration time in Keitheley ADC to 0.1/60 sec
@@ -124,6 +125,10 @@ class KeithleySourceMeter(object):#object -->KeithleySourceMeterComponent
         # Make N measurements
           
         self.ser.write('for v = 1, '+str(N)+'do smua.measure.i(smua.nvbuffer1) end\r\n'.encode())
+        
+        #sleep
+        time.sleep(sleep_time)
+        
         # read out measured currents
         self.ser.write('printbuffer(1, smua.nvbuffer1.n, smua.nvbuffer1.readings)\r\n'.encode())
         StrI = self.ser.readline()
@@ -142,6 +147,8 @@ class KeithleySourceMeter(object):#object -->KeithleySourceMeterComponent
             Note: lowering KeithleyADCIntTime increases rate of measurements and decreases accuracy (0.001 is fastest and 25 slowest)
         delay [sec]: delay between measurements
         """
+        
+        self.ser.flush()
         
         self.ser.write('format.data = format.ASCII\r\n'.encode())
         
@@ -170,6 +177,9 @@ class KeithleySourceMeter(object):#object -->KeithleySourceMeterComponent
         # Make N measurements  
         dV = str(float(Vmax-Vmin)/(N-1))
         self.ser.write(('for v = 0, '+str(N)+'do smua.source.levelv = v*'+dV+'+'+str(Vmin)+' smua.measure.i(smua.nvbuffer1) end\r\n').encode())
+        
+        # wait till measurement complete
+        time.sleep( (delay + KeithleyADCIntTime/60.) * N)
         
         # read out measured currents
         self.ser.write('printbuffer(1, smua.nvbuffer1.n, smua.nvbuffer1.readings)\r\n'.encode())

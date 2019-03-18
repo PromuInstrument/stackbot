@@ -1,8 +1,7 @@
-
 '''
-Created on Sep 8, 2014
+Created on Feb 27, 2019
 
-@author: Edward Barnard and Benedikt Ursprung
+@author: Edward Barnard and Benedikt Ursprung and Brian Shevitski
 '''
 
 from ScopeFoundry  import Measurement, LQRange, h5_io
@@ -10,15 +9,15 @@ import time
 import numpy as np
 import pyqtgraph as pg
 
-class PhotocurrentIVMeasurement(Measurement):
+class SlowIVMeasurement(Measurement):
     
-    name = "photocurrrent_iv"
+    name = "slow_iv"
     
     def setup(self):
 
         # logged quantities
-        self.source_voltage_min = self.add_logged_quantity("source_voltage_min", dtype=float, initial = -5, unit='V', vmin=-5, vmax=5, ro=False)
-        self.source_voltage_max = self.add_logged_quantity("source_voltage_max", dtype=float, initial = +5, unit='V', vmin=-5, vmax=5, ro=False)
+        self.source_voltage_min = self.add_logged_quantity("source_voltage_min", dtype=float, initial = -1, unit='V', vmin=-5, vmax=5, ro=False)
+        self.source_voltage_max = self.add_logged_quantity("source_voltage_max", dtype=float, initial = +1, unit='V', vmin=-5, vmax=5, ro=False)
         self.source_voltage_delta = self.add_logged_quantity("source_voltage_delta", dtype=float, initial=0.1, unit='V', vmin=-5, vmax=5, ro=False)
         self.source_voltage_steps = self.add_logged_quantity("source_voltage_steps", dtype=int, initial = 10, vmin=1, vmax=1000, ro=False)
         self.keithley_adc_int_time = self.add_logged_quantity("keithley_adc_int_time", dtype=float, initial = 1, vmin=.0001, vmax=25, spinbox_decimals=4, ro=False)
@@ -37,7 +36,7 @@ class PhotocurrentIVMeasurement(Measurement):
     
     def setup_figure(self):
         self.ui = self.graph_layout = pg.GraphicsLayoutWidget(border=(100,100,100))
-        self.plot = self.graph_layout.addPlot(title="Photocurrent IV")
+        self.plot = self.graph_layout.addPlot(title="Slow IV")
         self.plot_line = self.plot.plot()
         self.plot.setLabel('left', 'current', 'A')
         self.plot.setLabel('bottom', 'voltage', 'V')
@@ -52,13 +51,40 @@ class PhotocurrentIVMeasurement(Measurement):
         
         self.keithley.resetA()
         self.keithley.setAutoranges_A()
+        self.keithley.setV_A(0)
         self.keithley.switchV_A_on()
+        time.sleep(1)
         
         #measure IV
-        self.Iarray,self.Varray = self.keithley.measureIV_A(self.source_voltage_steps.val, 
-                             Vmin=self.source_voltage_min.val, 
-                             Vmax = self.source_voltage_max.val, 
-                             KeithleyADCIntTime=self.keithley_adc_int_time.val, delay=1)
+        
+        self.V_current = 0
+        self.I_current = self.keithley.getI_A()
+        
+        self.Iarray = []
+        self.Varray = []
+        
+        #self.plot_line.setData(self.Varray,self.Iarray)
+        
+        for x in np.arange(1,self.source_voltage_steps.val+1,1):
+            self.keithley.setV_A(x*self.source_voltage_delta.val/2)
+            time.sleep(0.5)
+            self.Varray.append(x*self.source_voltage_delta.val/2)
+            self.Iarray.append(self.keithley.getI_A())
+            self.plot_line.setData(self.Varray,self.Iarray)
+            
+        for x in np.arange(-self.source_voltage_steps.val,self.source_voltage_steps.val+1,1)[::-1]:
+            self.keithley.setV_A(x*self.source_voltage_delta.val/2)
+            time.sleep(0.5)
+            self.Varray.append(x*self.source_voltage_delta.val/2)
+            self.Iarray.append(self.keithley.getI_A())
+            self.plot_line.setData(self.Varray,self.Iarray)
+            
+        for x in np.arange(-self.source_voltage_steps.val,1,1):
+            self.keithley.setV_A(x*self.source_voltage_delta.val/2)
+            time.sleep(0.5)
+            self.Varray.append(x*self.source_voltage_delta.val/2)
+            self.Iarray.append(self.keithley.getI_A())
+            self.plot_line.setData(self.Varray,self.Iarray)
         
         self.keithley.switchV_A_off()
         
@@ -69,12 +95,12 @@ class PhotocurrentIVMeasurement(Measurement):
         self.h5_filename = self.h5_file.filename
         self.h5_file.attrs['time_id'] = self.t0
         H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)      
-        h5_io.h5_save_measurement_settings(self, H)
-        h5_io.h5_save_hardware_lq(self.gui, H)
-        H['V'] = self.Varray
-        H['I'] = self.Iarray
+        #h5_io.h5_save_measurement_settings(self, H)
+        #h5_io.h5_save_hardware_lq(self.gui, H)
+        H['V'] = np.array(self.Varray)
+        H['I'] = np.array(self.Iarray)
         self.h5_file.close()
         
         
-    def update_display(self):
-        self.plot_line.setData(self.Varray,self.Iarray)
+    #def update_display(self):
+    #    self.plot_line.setData(np.array(self.Varray),np.array(self.Iarray))
