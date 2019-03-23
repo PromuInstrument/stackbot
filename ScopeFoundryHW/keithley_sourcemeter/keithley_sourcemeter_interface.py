@@ -24,19 +24,17 @@ class KeithleySourceMeter(object):
         
         self.ser = serial.Serial(port=self.port, baudrate=self.KeithleyBaudRate, stopbits=1, xonxoff=0, rtscts=0, timeout=5.0)#,         
         self.ser.flush()
-
         time.sleep(0.1)        
-        
-
 
     def ask(self, cmd):
         self.send(cmd)
         resp = self.ser.readline()
-        
+        if self.debug: print('response', resp.decode().strip('\n'))
         return resp.decode().strip('\n')
     
     def send(self, cmd):
         cmd += '\r\n'
+        if self.debug: print('send', cmd)
         self.ser.write(cmd.encode())       
 
     def close(self):
@@ -123,12 +121,12 @@ class KeithleySourceMeter(object):
         resp = self.ask('print(status.measurement.instrument.smu{}.condition)'.format(channel))
         return bool(float(resp))
         
-    def measureIV_A(self,N,Vmin,Vmax,KeithleyADCIntTime=1, delay=0 ,channel = 'a'):
+    def measureIV_A(self, N, Vmin, Vmax, NPLC=1, delay=0,channel='a'):
         """
         sweeps voltage from Vmin to Vmax in N steps and measures current using channel A
         returns I,V arrays, where I is measured, V is sourced
-        KeithleyADCIntTime = 0.1 sets integration time in Keitheley ADC to 0.1/60 sec
-            Note: lowering KeithleyADCIntTime increases rate of measurements and decreases accuracy (0.001 is fastest and 25 slowest)
+        NPLC = 1 sets integration time in Keitheley ADC to 0.1/60 sec
+            Note: lowering NPLC increases rate of measurements and decreases accuracy (0.001 is fastest and 25 slowest)
         delay [sec]: delay between measurements
         """
         
@@ -149,7 +147,7 @@ class KeithleySourceMeter(object):
         # deleay/delayfactor seem to be 0 by default
         # nplc really does boost steed: nplc = 0.1 sets integration time in Keitheley ADC to 0.1/60
         #     Note: lowering nplc increases rate of measurements and decreases accuracy (0.001 is fastest and 25 slowest)   
-        self.write_ADC(KeithleyADCIntTime)        
+        self.write_NPLC(NPLC, 'a')   
         self.write_measure_delay(delay)
         
         # Make N measurements  
@@ -174,11 +172,9 @@ class KeithleySourceMeter(object):
         #return t,I 
 
     
-    def measureI_A(self,N,KeithleyADCIntTime,delay):
+    def measureI_A(self, N, NPLC=1, delay=0):
         """
         takes N current measurements and returns them as ndarray
-        KeithleyADCIntTime = 0.1 sets integration time in Keitheley ADC to 0.1/60 sec
-            Note: lowering KeithleyADCIntTime increases rate of measurements and decreases accuracy (0.001 is fastest and 25 slowest)
         delay [sec]: delay between measurements
         """
         
@@ -199,7 +195,7 @@ class KeithleySourceMeter(object):
         # autozero = 0 = off no significant speed boost
         # deleay/delayfactor seem to be 0 by default
         #     Note: lowering nplc increases rate of measurements and decreases accuracy (0.001 is fastest and 25 slowest)   
-        self.write_ADC(KeithleyADCIntTime)        
+        self.write_NPLC(NPLC, 'a')   
         self.write_measure_delay(delay)
         #self.send('smua.measure.delayfactor = 0')
         #self.send('smua.measure.autozero = 0')
@@ -247,10 +243,10 @@ class KeithleySourceMeter(object):
         Alternatively use setRanges_A(Vmeasure,Vsource,Imeasure,Isource) 
         to set ranges manually, which might be faster
         '''
-        self.write_auto_range('source', 'v', 'a')
-        self.write_auto_range('source', 'i', 'a')
-        self.write_auto_range('measure', 'v', 'a')
-        self.write_auto_range('measure', 'i', 'a')
+        self.write_autorange_on(True, 'source', 'v', 'a')
+        self.write_autorange_on(True, 'source', 'i', 'a')
+        self.write_autorange_on(True, 'measure', 'v', 'a')
+        self.write_autorange_on(True, 'measure', 'i', 'a')
 
     def setV_A(self,V):
         """
