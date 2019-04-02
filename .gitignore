@@ -41,3 +41,6 @@ enviro_logger/log/
 FoundryDataBrowser/dist
 ScopeFoundryHW/elgato_streamdeck/log
 ScopeFoundryHW/acton_spec/log/
+ScopeFoundryHW/oceanoptics_spec/log/
+ScopeFoundryHW/thorlabs_powermeter/log/
+uv_microscope/log/
