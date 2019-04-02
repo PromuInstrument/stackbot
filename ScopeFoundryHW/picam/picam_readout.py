@@ -134,4 +134,5 @@ class PicamReadoutMeasure(Measurement):
         elif wl_calib=='raman_shifts':
             x = self.raman_shifts            
             
-        self.spec_plot_line.setData(x,self.spec)
+        spec = np.average(self.roi_data[0], axis=0)
+        self.spec_plot_line.setData(x,spec)
