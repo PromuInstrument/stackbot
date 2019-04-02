@@ -72,11 +72,12 @@ class HyperSpecPicam2DScan(MCLStage2DSlowScan):
 
 
     def update_display(self):
-        super().update_display()
         
         if hasattr(self, 'roi_data'):
             self.app.measurements.picam_readout.roi_data = self.roi_data
             self.app.measurements.picam_readout.update_display()
+
+        super().update_display()
     
 
 class HyperSpecPicam3DStack(Measurement):

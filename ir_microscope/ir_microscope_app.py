@@ -117,15 +117,16 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         from ScopeFoundryHW.attocube_ecc100.attocube_home_axis_measurement import AttoCubeHomeAxisMeasurement
         self.add_measurement(AttoCubeHomeAxisMeasurement(self))
-        from measurements.stage_motion_measure import StageHomeAxesMeasure
-        self.add_measurement(StageHomeAxesMeasure(self))
+        
+        #from measurements.stage_motion_measure import StageHomeAxesMeasure
+        #self.add_measurement(StageHomeAxesMeasure(self))
         
         
-        from measurements.xbox_controller_measure import XboxControllerMeasure
-        self.add_measurement(XboxControllerMeasure(self))
+        #from measurements.xbox_controller_measure import XboxControllerMeasure
+        #self.add_measurement(XboxControllerMeasure(self))
         
-        from measurements.laser_line_writer import LaserLineWriter
-        self.add_measurement(LaserLineWriter(self))
+        #from measurements.laser_line_writer import LaserLineWriter
+        #self.add_measurement(LaserLineWriter(self))
         
         
         from ir_microscope.measurements.laser_power_feedback_control import LaserPowerFeedbackControl
@@ -146,8 +147,12 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(PicoharpApdScan(self, use_external_range_sync=True))
         
         
-        from ir_microscope.measurements.trpl_parallelogram_scan import TRPLParallelogramScan
-        self.add_measurement(TRPLParallelogramScan(self, use_external_range_sync=False))
+        from ir_microscope.measurements.calibration_sweep import CalibrationSweep
+        self.add_measurement(CalibrationSweep(self, spectrometer_hw_name='acton_spectrometer', 
+                                                    camera_readout_measure_name='winspec_readout') )
+        
+        #from ir_microscope.measurements.trpl_parallelogram_scan import TRPLParallelogramScan
+        #self.add_measurement(TRPLParallelogramScan(self, use_external_range_sync=False))
         
         
         #from ScopeFoundryHW.xbox_controller.xbox_controller_test_measure import 
@@ -156,6 +161,10 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         Q = self.quickbar
         
+        
+        #power mate
+        self.measurements['powermate_measure'].settings.fine.connect_to_widget(Q.fine_checkBox)
+
         # LED
         tenmaHW = self.hardware['tenma_powersupply']
         Q.tenma_power_on_pushButton.clicked.connect(lambda: tenmaHW.write_both(V=3.0,I=0.1,impose_connection=True))
@@ -283,14 +292,14 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
 
         ##########
-        # app level logged quantities
-        # 2d scan
-
+        # app level settings
+        S = self.settings
         
+        
+        # 2d scan
         _2D_scans = ['trpl_2d_scan', 'hyperspectral_2d_scan', 'apd_scan']
         
         #Create and connect logged quantities to widget and equivalent lqs measurements
-        S = self.settings        
         for ii,lq_name in enumerate(["h_axis","v_axis"]):
             S.New(lq_name, dtype=str, initial='xy'[ii], choices=("x", "y", "z"), ro=False)
             getattr(S, lq_name).connect_to_widget(\

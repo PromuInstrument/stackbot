@@ -32,20 +32,29 @@ class HiPMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.asi_stage.asi_stage_control_measure import ASIStageControlMeasure
         self.add_measurement(ASIStageControlMeasure(self))
 
-
+        from ScopeFoundryHW.pololu_servo.single_servo_hw import PololuMaestroServoHW
+        self.add_hardware(PololuMaestroServoHW(self, name='power_wheel'))
+        
         #from hardware_components.omega_pt_pid_controller import OmegaPtPIDControllerHardware        
         #self.add_hardware_component(OmegaPtPIDControllerHardware(self))
         
         #Add measurement components
         print("Create Measurement objects")
         from HiP_microscope.measure.hyperspec_picam_mcl import HyperSpecPicam2DScan, HyperSpecPicam3DStack
-        self.add_measurement_component(HyperSpecPicam2DScan(self))
+        self.add_measurement(HyperSpecPicam2DScan(self))
         #self.add_measurement_component(HiPMicroscopeDualTemperature(self))
-        self.add_measurement_component(HyperSpecPicam3DStack(self))
+        self.add_measurement(HyperSpecPicam3DStack(self))
         
         
         from HiP_microscope.measure.picam_calibration_sweep import PicamCalibrationSweep
         self.add_measurement(PicamCalibrationSweep(self))        
+        
+        from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW, PowerMeterOptimizerMeasure
+        self.add_hardware(ThorlabsPowerMeterHW(self))
+        self.add_measurement(PowerMeterOptimizerMeasure(self))
+
+
+
                 
         
         #set some default logged quantities
@@ -56,18 +65,23 @@ class HiPMicroscopeApp(BaseMicroscopeApp):
         # load default settings from file
         self.settings_load_ini("hip_settings.ini")
 
+
+    def setup_ui(self):
         self.hardware['mcl_xyz_stage'].settings['connected']=True
         self.hardware['picam'].settings['connected']=True
         time.sleep(0.5)
         self.hardware['picam'].settings['roi_y_bin'] = 100
         self.hardware['picam'].commit_parameters()
-        self.hardware['acton_spectrometer'].settings['connected']=True
         
-        self.set_subwindow_mode()
+        self.hardware['acton_spectrometer'].settings['connected']=True
+        self.hardware['asi_stage'].settings['connected'] = True
+        
+        
+        #self.set_subwindow_mode()
 
 
 if __name__ == '__main__':
 
     app = HiPMicroscopeApp(sys.argv)
-    app.tile_layout()
+    #app.tile_layout()
     sys.exit(app.exec_())
