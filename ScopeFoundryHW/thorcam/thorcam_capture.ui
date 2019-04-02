@@ -20,6 +20,13 @@
       <string>Run</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_3">
+      <item row="0" column="1">
+       <widget class="QPushButton" name="interrupt_pushButton">
+        <property name="text">
+         <string>Interrupt</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
        <widget class="QPushButton" name="start_pushButton">
         <property name="text">
@@ -27,17 +34,24 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0" colspan="2">
+      <item row="2" column="0" colspan="2">
        <widget class="QProgressBar" name="progressBar">
         <property name="value">
          <number>24</number>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
-       <widget class="QPushButton" name="interrupt_pushButton">
+      <item row="1" column="1">
+       <widget class="QPushButton" name="autowb_pushButton">
         <property name="text">
-         <string>Interrupt</string>
+         <string>Auto WB</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="save_pushButton">
+        <property name="text">
+         <string>Save Image</string>
         </property>
        </widget>
       </item>
@@ -49,7 +63,15 @@
      <property name="title">
       <string>Image</string>
      </property>
-     <layout class="QVBoxLayout" name="verticalLayout"/>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QPushButton" name="show_pushButton">
+        <property name="text">
+         <string>Show</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item row="0" column="0">
@@ -80,7 +102,14 @@
        </widget>
       </item>
       <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="exp_time_doubleSpinBox"/>
+       <widget class="QDoubleSpinBox" name="exp_time_doubleSpinBox">
+        <property name="maximum">
+         <double>450.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.300000000000000</double>
+        </property>
+       </widget>
       </item>
       <item row="3" column="1">
        <widget class="QCheckBox" name="save_tif_checkBox">
@@ -112,11 +141,18 @@
       <string>Cam Controls</string>
      </property>
      <layout class="QGridLayout" name="gridLayout" columnstretch="0,0">
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="pixel_clock_doubleSpinBox"/>
-      </item>
       <item row="0" column="1">
        <widget class="QDoubleSpinBox" name="gain_doubleSpinBox"/>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Pixel Clock</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QDoubleSpinBox" name="pixel_clock_doubleSpinBox"/>
       </item>
       <item row="0" column="0">
        <widget class="QLabel" name="label">
@@ -125,10 +161,23 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
+      <item row="2" column="1">
+       <widget class="QDoubleSpinBox" name="min_doubleSpinBox"/>
+      </item>
+      <item row="3" column="1">
+       <widget class="QDoubleSpinBox" name="max_doubleSpinBox"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_3">
         <property name="text">
-         <string>Pixel Clock</string>
+         <string>Min</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Max</string>
         </property>
        </widget>
       </item>

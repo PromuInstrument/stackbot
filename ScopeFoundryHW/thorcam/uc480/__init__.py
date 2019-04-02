@@ -218,8 +218,13 @@ class uc480:
         self._sheight = pInfo.nMaxHeight
         self._rgb = not (pInfo.nColorMode == IS_COLORMODE_MONOCHROME)
         if self._rgb:
-            self.call("is_SetColorMode", self._camID, IS_CM_RGB8_PACKED)
-            self._bitsperpixel = 24
+            #self.call("is_SetColorMode", self._camID, IS_CM_RGB8_PACKED)
+            #self._bitsperpixel = 24
+            self.call("is_SetColorMode", self._camID, IS_CM_RGBA8_PACKED)
+            self._bitsperpixel = 32
+            
+            self.call("is_SetColorCorrection", self._camID, IS_CCOR_ENABLE_HQ_ENHANCED)
+            
         else:
             self.call("is_SetColorMode", self._camID, IS_CM_MONO8)
             self._bitsperpixel = 8
@@ -233,7 +238,10 @@ class uc480:
         self.call("is_SetExternalTrigger", self._camID, IS_SET_TRIGGER_OFF)
         self.call("is_SetGainBoost", self._camID, IS_SET_GAINBOOST_OFF)
         self.call("is_SetHardwareGain", self._camID, 0, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER, IS_IGNORE_PARAMETER)
-        self.call("is_Blacklevel", self._camID, IS_BLACKLEVEL_CMD_SET_MODE, ptr(ctypes.c_int(IS_AUTO_BLACKLEVEL_OFF)), ctypes.sizeof(ctypes.c_int))
+        try: 
+            self.call("is_Blacklevel", self._camID, IS_BLACKLEVEL_CMD_SET_MODE, ptr(ctypes.c_int(IS_AUTO_BLACKLEVEL_OFF)), ctypes.sizeof(ctypes.c_int))
+        except uc480Error:
+            print('Black level feature not supported on this camera model.')
         self.call("is_Exposure", self._camID, IS_EXPOSURE_CMD_SET_EXPOSURE, ptr(ctypes.c_double(self.expmin)), ctypes.sizeof(ctypes.c_double()))
         self.call("is_SetDisplayMode", self._camID, IS_SET_DM_DIB)
 
@@ -388,6 +396,8 @@ class uc480:
         # create usable numpy array for frame data
         if(self._bitsperpixel == 8):
             _framedata = np.zeros((self._sheight, self._swidth), dtype=np.uint8)
+        elif(self._bitsperpixel == 32):
+            _framedata = np.zeros((self._sheight, self._swidth, 4), dtype=np.uint8)
         else:
             _framedata = np.zeros((self._sheight, self._swidth, 3), dtype=np.uint8)
 
@@ -449,7 +459,7 @@ class uc480:
                   - Row with maximum intensity (1d array).
         """
         data = self.acquire(N)
-        return data[np.argmax(np.data, axis=0), :], data[:, np.argmax(np.data, axis=1)]
+        return data[np.argmax(data, axis=0), :], data[:, np.argmax(data, axis=1)]
 
 
 if __name__ == "__main__":

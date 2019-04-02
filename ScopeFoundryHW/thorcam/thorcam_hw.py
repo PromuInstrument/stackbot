@@ -7,9 +7,9 @@ class ThorCamHW(HardwareComponent):
     
     def setup(self):
         
-        self.settings.New('exp_time', dtype=float, initial=1.0, unit='ms')
+        self.settings.New('exp_time', dtype=float, initial=50.0, unit='ms')
         self.settings.New('gain', dtype=int, initial=100, vmin=0, vmax=100)
-        self.settings.New('pixel_clock', dtype=int, initial=40, unit='MHz')
+        self.settings.New('pixel_clock', dtype=int, initial=10, unit='MHz')
         
     def connect(self):
         
