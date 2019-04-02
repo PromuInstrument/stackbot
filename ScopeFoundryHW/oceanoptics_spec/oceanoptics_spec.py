@@ -31,20 +31,19 @@ class OceanOpticsSpectrometerHW(HardwareComponent):
                                             unit = 'sec',
                                             initial = 0.1,
                                             )
+        self.settings.New('dev_id', dtype=int, initial=-1)
+        self.settings.New('dev_type', dtype=str, ro=True)
 
 
-        #connect GUI
-       #self.oo_spec_int_time.connect_
-        if hasattr(self.gui.ui, 'oo_spec_int_time_doubleSpinBox'):
-            self.oo_spec_int_time.connect_bidir_to_widget(
-                                  self.gui.ui.oo_spec_int_time_doubleSpinBox)
 
     def connect(self):
 
         #connect to hardware        
-        self.oo_spectrometer = OceanOpticsSpectrometer(debug=self.debug)
+        spec = self.oo_spectrometer = OceanOpticsSpectrometer(debug=self.debug)
         
-        
+        self.settings['dev_id'] = spec.dev_id
+        self.settings['dev_type'] = spec.dev_type
+                        
         # Connect logged quantities to hardware
         self.oo_spec_int_time.hardware_set_func=self.oo_spectrometer.set_integration_time_sec
 
