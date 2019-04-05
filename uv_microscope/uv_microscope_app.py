@@ -25,6 +25,9 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.flircam import FlirCamHW
         flircamhw = self.add_hardware(FlirCamHW(self))
         
+        from ScopeFoundryHW.thorlabs_dc4100 import ThorlabsDC4100HW
+        self.add_hardware(ThorlabsDC4100HW(self))
+        
 #         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW, PowerMeterOptimizerMeasure
 #         self.add_hardware(ThorlabsPowerMeterHW(self))
 #         self.add_measurement(PowerMeterOptimizerMeasure(self))
