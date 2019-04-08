@@ -14,10 +14,7 @@ class OOHyperSpecASIScan(ASIStage2DScan):
     def setup(self):
         ASIStage2DScan.setup(self)
     
-    def setup_figure(self):
-        BaseRaster2DScan.setup_figure(self)
-        self.pt_roi.setSize((0.2,0.2))
-        self.oo_spec.roi.sigRegionChanged.connect(self.recompute_image_map)
+
         
     def scan_specific_setup(self):
         #Hardware
@@ -27,6 +24,10 @@ class OOHyperSpecASIScan(ASIStage2DScan):
         self.set_details_widget(
             widget=self.settings.New_UI(include=['h_span','v_span','h_center','v_center']))
         
+    def setup_figure(self):
+        BaseRaster2DScan.setup_figure(self)
+        self.pt_roi.setSize((0.2,0.2))
+        self.oo_spec.roi.sigRegionChanged.connect(self.recompute_image_map)        
         
     def pre_scan_setup(self):
         self.oo_spec.settings['bg_subtract'] = False
@@ -41,7 +42,8 @@ class OOHyperSpecASIScan(ASIStage2DScan):
 
         self.oo_spec.settings['continuous'] = False
         self.oo_spec.settings['save_h5'] = False
-        self.oo_spec.run()
+        self.start_nested_measure_and_wait(self.oo_spec)
+        #self.oo_spec.run()
         
         #self.continuous_scan = self.settings.New("continuous_scan", dtype=bool, initial=False)
         #self.settings.New('save_h5', dtype=bool, initial=True, ro=False)
