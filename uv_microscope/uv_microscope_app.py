@@ -19,22 +19,22 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.oceanoptics_spec import OceanOpticsSpectrometerHW
         oo_spec = self.add_hardware(OceanOpticsSpectrometerHW(self))
         
-        from ScopeFoundryHW.thorcam import ThorCamHW
-        thorcamhw = self.add_hardware(ThorCamHW(self))
+#         from ScopeFoundryHW.thorcam import ThorCamHW
+#         thorcamhw = self.add_hardware(ThorCamHW(self))
         
         from ScopeFoundryHW.flircam import FlirCamHW
         flircamhw = self.add_hardware(FlirCamHW(self))
         
         from ScopeFoundryHW.thorlabs_dc4100 import ThorlabsDC4100HW
-        self.add_hardware(ThorlabsDC4100HW(self))
+        led_ctrl = self.add_hardware(ThorlabsDC4100HW(self))
         
 #         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW, PowerMeterOptimizerMeasure
 #         self.add_hardware(ThorlabsPowerMeterHW(self))
 #         self.add_measurement(PowerMeterOptimizerMeasure(self))
 
         #### MEASUREMENTS
-        from ScopeFoundryHW.thorcam import ThorCamCaptureMeasure
-        thorcam = self.add_measurement(ThorCamCaptureMeasure(self))
+#         from ScopeFoundryHW.thorcam import ThorCamCaptureMeasure
+#         thorcam = self.add_measurement(ThorCamCaptureMeasure(self))
         
         from ScopeFoundryHW.asi_stage import ASIStageControlMeasure
         asi_control = self.add_measurement(ASIStageControlMeasure(self))
@@ -93,11 +93,14 @@ class UVMicroscopeApp(BaseMicroscopeApp):
             asi_control.settings.jog_step_xy.update_value(stage_steps[Q.xy_step_comboBox.currentIndex()])
         Q.xy_step_comboBox.currentIndexChanged.connect(apply_xy_step_value)
          
-        def apply_z_step_value(self):   
+        def apply_z_step_value():   
             asi_control.settings.jog_step_z.update_value(stage_steps[Q.z_step_comboBox.currentIndex()])
         Q.z_step_comboBox.currentIndexChanged.connect(apply_z_step_value)
          
-        Q.stop_stage_pushButton.clicked.connect(asi_stage.halt_xy)
+        def halt_stage_motion():
+            asi_stage.halt_xy()
+            asi_stage.halt_z()
+        Q.stop_stage_pushButton.clicked.connect(halt_stage_motion)
      
         # OO Spectrometer
         oo_spec.settings.int_time.connect_to_widget(Q.oo_spec_int_time_doubleSpinBox)
@@ -127,6 +130,17 @@ class UVMicroscopeApp(BaseMicroscopeApp):
             flircam.imview.show() 
         Q.flircam_show_pushButton.clicked.connect(switch_camera_view)
         Q.groupBox_image.setLayout(self.imlayout)
+        
+        # Thorlabs DC4100 LED controller
+        led_ctrl.settings.LED1.connect_to_widget(Q.led1_checkBox)
+        led_ctrl.settings.get_lq('LED1 wavelength').connect_to_widget(Q.led1_lineEdit)
+        led_ctrl.settings.get_lq('LED1 brightness').connect_to_widget(Q.led1_doubleSpinBox)
+        led_ctrl.settings.get_lq('LED1 brightness').connect_to_widget(Q.led1_horizontalSlider)
+        led_ctrl.settings.LED2.connect_to_widget(Q.led2_checkBox)
+        led_ctrl.settings.get_lq('LED2 wavelength').connect_to_widget(Q.led2_lineEdit)
+        led_ctrl.settings.get_lq('LED2 brightness').connect_to_widget(Q.led2_doubleSpinBox)
+        led_ctrl.settings.get_lq('LED2 brightness').connect_to_widget(Q.led2_horizontalSlider)
+
         
         '''
         # Thorcam
