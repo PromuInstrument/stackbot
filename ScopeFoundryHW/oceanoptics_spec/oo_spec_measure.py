@@ -49,7 +49,7 @@ class OOSpecLive(Measurement):
             (rmin, rmax) = self.roi.getRegion()
             self.settings.roi_min.update_value(rmin)
             self.settings.roi_max.update_value(rmax)
-        self.roi.sigRegionChangeFinished.connect(update_roi)
+        self.roi.sigRegionChanged.connect(update_roi)
         
         ### Controls
         self.hw.settings.int_time.connect_to_widget(self.ui.int_time_doubleSpinBox)
@@ -73,26 +73,23 @@ class OOSpecLive(Measurement):
         self.settings.activation.update_value(new_val= ~self.settings.activation.val)
         
     def run(self):
-        self.oo_spec_dev = self.hw.oo_spectrometer
-        
         if self.settings['continuous']:
             while not self.interrupt_measurement_called:    
-                self.oo_spec_dev.acquire_spectrum()
+                self.hw.acquire_spectrum()
         else:
-            self.oo_spec_dev.acquire_spectrum()
+            self.hw.acquire_spectrum()
             if self.settings['save_h5']:
                 #print('Insert save h5 function here.')
                 self.save_data(self)
                 
     
     def update_display(self):
-        spec = self.oo_spec_dev.spectrum.copy()
-        spec[self.oo_spec_dev.dark_indices] = np.nan
-        #self.oo_spec_dev.spectrum[:10]=np.nan
-        #self.oo_spec_dev.spectrum[-10:]=np.nan
-#         self.plotline.setData(
-#                                    self.oo_spec_dev.wavelengths[10:-10],
-#                                    self.oo_spec_dev.spectrum[10:-10])
+        spec = self.hw.get_spectrum()
+        
+        if spec.sum() is None:
+            print('spec sum not a number')
+            
+        spec[self.hw.get_dark_indices()] = np.nan
 
         if self.settings['bg_subtract']:
             spec = spec - self.bg_spec
@@ -100,16 +97,10 @@ class OOSpecLive(Measurement):
         if self.settings['baseline_subtract']:
             spec = spec - self.settings.baseline_val.value
         
-        self.plotline.setData(
-                                   self.oo_spec_dev.wavelengths,
-                                   spec)
-        #ax.relim()
-        #ax.autoscale_view(scalex=True, scaley=True)
-        #self.fig.canvas.draw()       
+        self.plotline.setData(self.hw.wavelengths, spec)
 
     def set_current_spec_as_bg(self):
-        self.bg_spec = self.oo_spec_dev.spectrum.copy()
-        
+        self.bg_spec = self.hw.get_spectrum()
         
     def save_data(self):
         t0 = time.time()
@@ -117,6 +108,5 @@ class OOSpecLive(Measurement):
         with h5_io.h5_base_file(self.app,  fname = fname + ".h5") as H:
                 print("Saving " + fname + ".h5")
                 M = h5_io.h5_create_measurement_group(measurement=self, h5group=H)
-                M.create_dataset('spectrum', data=self.hw.oo_spectrometer.spectrum, compression='gzip')
-                M.create_dataset('wavelengths',data=self.oo_spec_dev.wavelengths, compression='gzip')
-                M.create
+                M.create_dataset('spectrum', data=self.hw.spectrum, compression='gzip')
+                M.create_dataset('wavelengths',data=self.hw.wavelengths, compression='gzip')

@@ -10,6 +10,7 @@ import pyqtgraph as pg
 import time
 from ScopeFoundry.helper_funcs import sibling_path, replace_widget_in_layout
 from ScopeFoundry import h5_io
+from math import nan, isnan
 
 
 class OOSpecOptimizerMeasure(Measurement):
@@ -92,20 +93,24 @@ class OOSpecOptimizerMeasure(Measurement):
             self.oo_spec.settings['continuous'] = False
             self.oo_spec.settings['save_h5'] = False
             
-            #if ~self.oo_spec.activation.val:
-            #    self.oo_spec.activation.update_value(True)
-            self.oo_spec.run()
-                
-            spec = self.oo_spec.oo_spec_dev.spectrum
+#             if ~self.oo_spec.activation.val:
+#                 self.oo_spec.activation.update_value(True)
+            #self.oo_spec.run()
+            self.start_nested_measure_and_wait(self.oo_spec)
+            spec = self.oo_spec.hw.spectrum.copy()
+            
             if self.oo_spec.settings['baseline_subtract']:
-                self.pow_reading.update_value((spec-self.oo_spec.settings['baseline_val']).sum())
+                new_value = (spec-self.oo_spec.settings['baseline_val']).sum()
             else:
-                self.pow_reading.update_value(spec.sum())
+                new_value = self.pow_reading.update_value(spec.sum())
+            
+            if isnan(new_value):
+                print('spec sum nan', self.optimize_ii)
+                self.pow_reading.update_value(self.optimize_history[self.optimize_ii-1])
+            else:
+                print('spec sum', self.optimize_ii, new_value)
+                self.pow_reading.update_value(new_value)
             self.optimize_history[self.optimize_ii] = self.pow_reading.val
-
-            if self.save_data.val:
-                self.full_optimize_history.append(pow_reading.val)
-                self.full_optimize_history_time.append(time.time() - self.t0)
             
             time.sleep(self.settings['update_period'])
             #time.sleep(0.02)
