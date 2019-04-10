@@ -5,7 +5,7 @@ import numpy as np
 
 
 BAUDRATE = 115200
-TIMEOUT = 1 
+TIMEOUT = 0.1 
 BYTESIZE = 8
 PARITY = 'N'
 STOPBITS = 1
