@@ -2,6 +2,7 @@ import numpy as np
 from ScopeFoundryHW.asi_stage.asi_stage_raster import ASIStage2DScan
 from ScopeFoundry.scanning import BaseRaster2DScan
 from ScopeFoundry import Measurement
+from qtpy.QtWidgets import QVBoxLayout, QWidget
 import time
 import math
 
@@ -21,8 +22,13 @@ class OOHyperSpecASIScan(ASIStage2DScan):
         self.stage = self.app.hardware['asi_stage']
         self.oo_spec = self.app.measurements['oo_spec_live']
         self.add_operation('center_on_pos',self.center_on_pos)
-        self.set_details_widget(
-            widget=self.settings.New_UI(include=['h_span','v_span','h_center','v_center']))
+        
+        details_widget = QWidget()
+        details = QVBoxLayout()
+        details.addWidget(self.app.settings.New_UI(include=['save_dir','sample']))
+        details.addWidget(self.settings.New_UI(include=['h_span','v_span']))
+        details_widget.setLayout(details)
+        self.set_details_widget(widget=details_widget)
         
     def setup_figure(self):
         BaseRaster2DScan.setup_figure(self)
