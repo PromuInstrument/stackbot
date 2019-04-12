@@ -32,7 +32,7 @@ class OOHyperSpecASIScan(ASIStage2DScan):
         
     def setup_figure(self):
         BaseRaster2DScan.setup_figure(self)
-        self.pt_roi.setSize((0.2,0.2))
+        #self.pt_roi.setSize((0.2,0.2))
         self.oo_spec.roi.sigRegionChanged.connect(self.recompute_image_map)        
         
     def pre_scan_setup(self):
