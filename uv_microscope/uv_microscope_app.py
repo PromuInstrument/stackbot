@@ -7,6 +7,13 @@ class UVMicroscopeApp(BaseMicroscopeApp):
 
     name = 'uv_microscope'
     
+    def __init__(self, *args, **kwargs):
+        if 'oo_not_andor' in kwargs.keys():
+            self.oo_not_andor = kwargs['oo_not_andor']
+        else:
+            self.oo_not_andor = True
+        BaseMicroscopeApp.__init__(self)
+    
     def setup(self):
         # - renamed libiomp5md.dll to libiomp5md.dll.bak in Spinnaker
         
@@ -27,6 +34,12 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         
         from ScopeFoundryHW.thorlabs_dc4100 import ThorlabsDC4100HW
         led_ctrl = self.add_hardware(ThorlabsDC4100HW(self))
+        
+        from ScopeFoundryHW.andor_camera import AndorCCDHW
+        self.add_hardware(AndorCCDHW(self))
+        
+        from ScopeFoundryHW.andor_spec.andor_spec_hw import AndorShamrockSpecHW
+        self.add_hardware(AndorShamrockSpecHW(self))
         
 #         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW, PowerMeterOptimizerMeasure
 #         self.add_hardware(ThorlabsPowerMeterHW(self))
@@ -49,23 +62,46 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.flircam import FlirCamLiveMeasure
         flircam = self.add_measurement(FlirCamLiveMeasure(self))
         
+        from ScopeFoundryHW.andor_camera import AndorCCDReadoutMeasure, AndorCCDKineticMeasure
+        self.add_measurement(AndorCCDReadoutMeasure)
+        self.add_measurement(AndorCCDKineticMeasure)
+
+        from confocal_measure.andor_asi_hyperspec_scan import AndorAsiHyperSpec2DScan
+        andor_scan = self.add_measurement(AndorAsiHyperSpec2DScan(self))
+
+        
         ###### Quickbar connections #################################
         Q = self.quickbar
          
         # 2D Scan Area
-        oo_scan.settings.h0.connect_to_widget(Q.h0_doubleSpinBox)
-        oo_scan.settings.h1.connect_to_widget(Q.h1_doubleSpinBox)
-        oo_scan.settings.v0.connect_to_widget(Q.v0_doubleSpinBox)
-        oo_scan.settings.v1.connect_to_widget(Q.v1_doubleSpinBox)
-        oo_scan.settings.h_span.connect_to_widget(Q.hspan_doubleSpinBox)
-        oo_scan.settings.v_span.connect_to_widget(Q.vspan_doubleSpinBox)
-        Q.center_pushButton.clicked.connect(oo_scan.center_on_pos)
+        if self.oo_not_andor:
+            oo_scan.settings.h0.connect_to_widget(Q.h0_doubleSpinBox)
+            oo_scan.settings.h1.connect_to_widget(Q.h1_doubleSpinBox)
+            oo_scan.settings.v0.connect_to_widget(Q.v0_doubleSpinBox)
+            oo_scan.settings.v1.connect_to_widget(Q.v1_doubleSpinBox)
+            oo_scan.settings.h_span.connect_to_widget(Q.hspan_doubleSpinBox)
+            oo_scan.settings.v_span.connect_to_widget(Q.vspan_doubleSpinBox)
+            Q.center_pushButton.clicked.connect(oo_scan.center_on_pos)
+        else:
+            andor_scan.settings.h0.connect_to_widget(Q.h0_doubleSpinBox)
+            andor_scan.settings.h1.connect_to_widget(Q.h1_doubleSpinBox)
+            andor_scan.settings.v0.connect_to_widget(Q.v0_doubleSpinBox)
+            andor_scan.settings.v1.connect_to_widget(Q.v1_doubleSpinBox)
+            andor_scan.settings.h_span.connect_to_widget(Q.hspan_doubleSpinBox)
+            andor_scan.settings.v_span.connect_to_widget(Q.vspan_doubleSpinBox)
+            Q.center_pushButton.clicked.connect(andor_scan.center_on_pos)
+            
         scan_steps = [5e-3, 3e-3, 1e-3, 5e-4]
         scan_steps_labels = ['5.0 um','3.0 um','1.0 um','0.5 um']
         Q.scan_step_comboBox.addItems(scan_steps_labels)
         def apply_scan_step_value():
-            oo_scan.settings.dh.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
-            oo_scan.settings.dv.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
+            if self.oo_not_andor:
+                oo_scan.settings.dh.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
+                oo_scan.settings.dv.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
+            else:
+                andor_scan.settings.dh.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
+                andor_scan.settings.dv.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
+        
         Q.scan_step_comboBox.currentIndexChanged.connect(apply_scan_step_value)
          
         # ASI Stage
@@ -164,5 +200,5 @@ class UVMicroscopeApp(BaseMicroscopeApp):
 
 if __name__ == '__main__':
     import sys
-    app = UVMicroscopeApp(sys.argv)
+    app = UVMicroscopeApp(sys.argv, oo_not_andor=False)
     sys.exit(app.exec_())
