@@ -2,6 +2,9 @@ import serial
 import threading
 import binascii
 from collections import OrderedDict
+import time
+
+WAIT_TIME = 0.1
 
 def replace_letters(inputstr):
     # output from Lakeshore is offset in hex by a value of ord('a') - 2 
@@ -39,18 +42,18 @@ def decode_garbage(garbagein):
 
 class Lakeshore331Interface(object):
     
-    def __init__(self, port='COM7', debug=False):
+    def __init__(self, port='COM6', debug=False):
         self.port = port
         self.debug = debug
+        self.lock = threading.Lock()
         self.ser = serial.Serial(port = self.port,
                         baudrate = 9600,
                         timeout = 1,
-                        bytesize = 8,
-                        parity = 'N',
+                        bytesize = 7,
+                        parity = serial.PARITY_ODD,
                         stopbits=1, xonxoff=0, rtscts=0)
         self.ask('*RST')
         self.ask('*CLS')
-        self.lock = threading.Lock()
     
     def info(self):
         resp = self.ask("*IDN?")
@@ -61,24 +64,25 @@ class Lakeshore331Interface(object):
         self.ser.close()
     
     def send_cmd(self, cmd):
-        with self.lock: 
-            self.ser.flush()
-            cmd_bytes = (cmd + '\r\n').encode()
-            if self.debug: print("Lakeshore 331 cmd: ", repr(cmd), repr(cmd_bytes))
-            self.ser.write(cmd_bytes)
+        self.ser.flush()
+        cmd_bytes = (cmd + '\r\n').encode()
+        if self.debug: print("Lakeshore 331 cmd: ", repr(cmd), repr(cmd_bytes))
+        self.ser.write(cmd_bytes)
+        time.sleep(WAIT_TIME)
         if self.debug: print("Lakeshore 331 done sending cmd")    
     
     def read_resp(self):
-        with self.lock:
-            self.ser.flush()
-            resp = self.ser.readline()
-            rresp = decode_garbage(resp)
-            if self.debug: print("Lakeshore 331 resp: ", repr(resp), repr(rresp))
-        return rresp
+        self.ser.flush()
+        resp = self.ser.readline()
+        time.sleep(WAIT_TIME)
+        if self.debug: print("Lakeshore 331 resp: ", repr(resp))
+        return str(resp, 'ASCII')
     
     def read_T(self, chan='B'):
-        self.send_cmd("KRDG? " + chan)
-        return float(self.read_resp())
+        resp = self.ask("KRDG? " + chan)
+        if resp == '':
+            return -1.0
+        return float(resp)
         
     def set_output_enabled(self,enable):
         assert isinstance(enable,bool)
@@ -127,32 +131,35 @@ class Lakeshore331Interface(object):
         return self.get_output()['min_0V']
         
     def set_output(self,enable=1,chan='A',vmax=100.0,vmin=0.0):
-        with self.lock:
-            self.ask('ANALOG 0,%d,%s,1,+%0.1f,+%0.1f,+0.0' % (enable, chan, vmax, vmin))
+        self.ask('ANALOG 0,%d,%s,1,+%0.1f,+%0.1f,+0.0' % (enable, chan, vmax, vmin))
             
     
     def get_output(self):
-        resp =self.ask('ANALOG?')
+        resp = self.ask('ANALOG?')
         if self.debug: print(resp)
-        
-        resp = resp.split(sep=',')
-        resp_dict = OrderedDict(
-            [('bipolar', int(resp[0])),
-            ('enable', int(resp[1])),
-            ('channel', resp[2]),
-            ('max_10V', float(resp[4])),
-            ('min_0V', float(resp[5])),
-            ('manual', float(resp[6])),])
-        if self.debug: 
-            print("Lakeshore 331 analog output setup: ")
-            for key, value in resp_dict.items():
-                print(key + ' ' + str(value))
-        
-        return resp_dict 
+        if resp == '':
+            raise Exception('Error - no output in',resp)
+            return None
+        else:
+            resp = resp.split(sep=',')
+            resp_dict = OrderedDict(
+                [('bipolar', int(resp[0])),
+                ('enable', int(resp[1])),
+                ('channel', resp[2]),
+                ('max_10V', float(resp[4])),
+                ('min_0V', float(resp[5])),
+                ('manual', float(resp[6])),])
+            if self.debug: 
+                print("Lakeshore 331 analog output setup: ")
+                for key, value in resp_dict.items():
+                    print(key + ' ' + str(value))
+            
+            return resp_dict 
     
     def ask(self,cmd):
-        self.send_cmd(cmd)
-        return self.get_resp()
+        with self.lock:
+            self.send_cmd(cmd)
+            return self.read_resp()
     
     def get_heater_range(self):
         return self.ask('RANGE?')

@@ -11,7 +11,7 @@ class Lakeshore331HW(HardwareComponent):
     
     name = 'lakeshore331'
     
-    def __init__(self,app,name=None,debug=False,port='COM7'):
+    def __init__(self,app,name=None,debug=False,port='COM6'):
         HardwareComponent.__init__(self,app,debug=debug,name=name)
         self.debug=debug
         S = self.settings
