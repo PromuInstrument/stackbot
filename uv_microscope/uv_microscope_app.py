@@ -41,6 +41,9 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.andor_spec.andor_spec_hw import AndorShamrockSpecHW
         self.add_hardware(AndorShamrockSpecHW(self))
         
+        from ScopeFoundryHW.lakeshore_331 import Lakeshore331HW
+        self.add_hardware(Lakeshore331HW(self))
+        
 #         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW, PowerMeterOptimizerMeasure
 #         self.add_hardware(ThorlabsPowerMeterHW(self))
 #         self.add_measurement(PowerMeterOptimizerMeasure(self))
@@ -55,6 +58,9 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.oceanoptics_spec import OOSpecLive, OOSpecOptimizerMeasure
         oo_spec_measure = self.add_measurement(OOSpecLive(self))
         oo_spec_opt = self.add_measurement(OOSpecOptimizerMeasure(self))
+        
+        from ScopeFoundryHW.andor_camera import AndorCCDReadoutMeasure
+        self.add_measurement(AndorCCDReadoutMeasure)
            
         from confocal_measure.oceanoptics_asi_hyperspec_scan import OOHyperSpecASIScan
         oo_scan = self.add_measurement(OOHyperSpecASIScan(self))
@@ -62,10 +68,6 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.flircam import FlirCamLiveMeasure
         flircam = self.add_measurement(FlirCamLiveMeasure(self))
         
-        from ScopeFoundryHW.andor_camera import AndorCCDReadoutMeasure, AndorCCDKineticMeasure
-        self.add_measurement(AndorCCDReadoutMeasure)
-        self.add_measurement(AndorCCDKineticMeasure)
-
         from confocal_measure.andor_asi_hyperspec_scan import AndorAsiHyperSpec2DScan
         andor_scan = self.add_measurement(AndorAsiHyperSpec2DScan(self))
 
@@ -200,5 +202,5 @@ class UVMicroscopeApp(BaseMicroscopeApp):
 
 if __name__ == '__main__':
     import sys
-    app = UVMicroscopeApp(sys.argv, oo_not_andor=False)
+    app = UVMicroscopeApp(sys.argv, oo_not_andor=True)
     sys.exit(app.exec_())
