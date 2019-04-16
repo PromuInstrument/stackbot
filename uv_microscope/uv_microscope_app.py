@@ -70,7 +70,9 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         
         from confocal_measure.andor_asi_hyperspec_scan import AndorAsiHyperSpec2DScan
         andor_scan = self.add_measurement(AndorAsiHyperSpec2DScan(self))
-
+        
+        from ScopeFoundryHW.lakeshore_331 import LakeshoreMeasure
+        self.add_measurement(LakeshoreMeasure(self))
         
         ###### Quickbar connections #################################
         Q = self.quickbar
