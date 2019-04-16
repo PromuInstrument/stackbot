@@ -5,6 +5,14 @@ from collections import OrderedDict
 import time
 
 WAIT_TIME = 0.1
+HEATER_RANGE_CHOICES = ['off','low (0.5W)', 'med (5W)', 'high (50W)']
+SENSOR_TYPES = ['Si diode', 'GaAlAs diode', '100 Ohm Pt/250', '100 Ohm Pt/500', '100 Ohm Pt',
+               'NTC RTD', 'TC 25mV', 'TC 50 mV', '2.5V, 1mA', '7.5V, 1mA']
+CONTROL_MODES = ['Manual PID','Zone','Open Loop','AutoTune PID','AutoTune PI','AutoTune P']
+SENSOR_CURVES = ['DT-470 1.4-475K', 'DT-670 1.4-500K', 'DT-500-D 1.4-365K', 'DT-500-E1 1.1-330K',
+                 '05 Reserved', 'PT-100 30-800K', 'PT-1000 30-800K', 'RX-102A-AA 0.05-40K',
+                 'RX-202A-AA 0.05-40K', '10 Reserved', '11 Reserved', 'Type K 3-1645K', 
+                 'Type E 3-1274K', 'Type T 3-670K', 'AuFe 0.03% 3.5-500K', 'AuFe 0.07% 3.15-610K']
 
 def replace_letters(inputstr):
     # output from Lakeshore is offset in hex by a value of ord('a') - 2 
@@ -52,7 +60,7 @@ class Lakeshore331Interface(object):
                         bytesize = 7,
                         parity = serial.PARITY_ODD,
                         stopbits=1, xonxoff=0, rtscts=0)
-        self.ask('*RST')
+        #self.ask('*RST')
         self.ask('*CLS')
     
     def info(self):
@@ -133,7 +141,6 @@ class Lakeshore331Interface(object):
     def set_output(self,enable=1,chan='A',vmax=100.0,vmin=0.0):
         self.ask('ANALOG 0,%d,%s,1,+%0.1f,+%0.1f,+0.0' % (enable, chan, vmax, vmin))
             
-    
     def get_output(self):
         resp = self.ask('ANALOG?')
         if self.debug: print(resp)
@@ -161,11 +168,9 @@ class Lakeshore331Interface(object):
             self.send_cmd(cmd)
             return self.read_resp()
     
-    def get_heater_range(self):
-        return self.ask('RANGE?')
-    
-    def set_heater_range(self,ind):
-        assert isinstance(ind, int) and ind >= 0 and ind <= 3
+    def set_heater_range(self,val):
+        assert val in HEATER_RANGE_CHOICES
+        ind = HEATER_RANGE_CHOICES.index(val)
         self.ask('RANGE %d' % ind)
         if self.debug: print('Lakeshore 331 heater range set to %d sent' % ind)
         
@@ -176,8 +181,102 @@ class Lakeshore331Interface(object):
         assert isinstance(ind,int) and ind >= 0 and ind <= 2
         self.ask('MODE %d' % ind)
         if self.debug: print('Lakeshore 331 remote mode set to %d sent' % ind)
-
+        
+    def get_input_type(self, inp='B'):
+        assert inp in ['A', 'B']
+        resp = self.ask('INTYPE? %s' % inp)
+        if self.debug: print('Lakeshore 331 input %s type %s' % (inp, resp))
+        [ind, comp] = resp.split(sep=',')
+        return [int(ind), int(comp)]
+    
+    def get_sensor_type(self, inp='B'):
+        ind, comp = self.get_input_type(inp=inp)
+        return SENSOR_TYPES[ind]
+    
+    def get_sensor_comp(self, inp='B'):
+        ind, comp = self.get_input_type(inp=inp)
+        return bool(comp)
+    
+    def set_sensor_type(self, val, inp='B',):
+        ind, comp = self.get_input_type(inp=inp)
+        self.ask('INTYPE %s, %d, %d' % (inp, SENSOR_TYPES.index(val), comp))
+        
+    def set_sensor_comp(self, val, inp='B'):
+        assert isinstance(val, bool)
+        ind, comp = self.get_input_type(inp=inp)
+        self.ask('INTYPE %s, %d, %d' % (inp, ind, int(val)))
+    
+    def get_heater_output(self):
+        resp = self.ask('HTR?')
+        if self.debug: print('Lakeshore 331 heater output at %s%' % resp)
+        return float(resp)
+    
+    def get_heater_status(self):
+        resp = self.ask('HTRST?')
+        if self.debug: print('Lakeshore 331 heater status %s' % resp)
+        return int(resp)
+    
+    def get_setpoint(self, loop=1):
+        resp = self.ask('SETP? %d' % loop)
+        if self.debug: print('Lakeshore 331 T setpoint %s' % resp)
+        return float(resp)
+    
+    def set_setpoint(self, Tset, loop=1):
+        assert Tset > 0 and isinstance(Tset, float)
+        self.ask('SETP %d, %0.2f' % (loop, Tset))
+    
+    def get_heater_range(self):
+        resp = self.ask('RANGE?')
+        if self.debug: print('Lakeshore 331 heater range %s' % resp)
+        return HEATER_RANGE_CHOICES[int(resp)]
+    
+    def set_cmode(self, val):
+        assert val in CONTROL_MODES
+        self.ask('CMODE 1, %d' % (CONTROL_MODES.index(val)+1))
+        
+    def get_cmode(self):
+        resp = self.ask('CMODE? 1')
+        return CONTROL_MODES[int(resp)-1]
+    
+    def set_ramp_params(self, loop=1, onoff=False, rate=10.0):
+        self.ask('RAMP %d, %d, %0.2f' % (loop, int(onoff), rate))
+        
+    def get_ramp_params(self, loop=1):
+        resp = self.ask('RAMP? %d' % loop)
+        [onoff, rate] = resp.split(sep=',')
+        return [bool(int(onoff)), float(rate)]
+    
+    def get_ramp_rate(self, loop=1):
+        onoff, rate = self.get_ramp_params(loop=loop)
+        return rate
+    
+    def get_ramp_onoff(self, loop=1):
+        onoff, rate = self.get_ramp_params(loop=loop)
+        return onoff
+        
+    def is_ramping(self, loop=1):
+        resp = self.ask('RAMPST? %d' % loop)
+        return bool(int(resp))
+    
+    def set_ramp_rate(self, loop=1, rate=10.0):
+        onoff, oldrate = self.get_ramp_params(loop=loop)
+        self.set_ramp_params(loop=loop, onoff=onoff, rate=rate)
+        
+    def set_ramp_onoff(self, loop=1, rate=10.0):
+        onoff, oldrate = self.get_ramp_params(loop=loop)
+        self.set_ramp_params(loop=loop, onoff=onoff, rate=rate)
+        
+    def set_input_curve(self, val, inp='A'):
+        self.ask('INCRV %s, %d' % (inp, SENSOR_CURVES.index(val)+1))
+        
+    def get_input_curve(self, inp='A'):
+        resp = self.ask('INCRV? %s' % inp)
+        return SENSOR_CURVES[int(resp)-1]
     #def get_setpoint(self):
+    
+    def reset(self):
+        self.ask('*CLS')
+        self.ask('*RST')
     
 if __name__ == '__main__':
     tctrl = Lakeshore331Interface(debug=False)
