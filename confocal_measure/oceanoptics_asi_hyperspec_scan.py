@@ -2,7 +2,7 @@ import numpy as np
 from ScopeFoundryHW.asi_stage.asi_stage_raster import ASIStage2DScan
 from ScopeFoundry.scanning import BaseRaster2DScan
 from ScopeFoundry import Measurement
-from qtpy.QtWidgets import QVBoxLayout, QWidget
+from qtpy.QtWidgets import QVBoxLayout, QWidget, QPushButton, QHBoxLayout
 import time
 import math
 
@@ -21,12 +21,21 @@ class OOHyperSpecASIScan(ASIStage2DScan):
         #Hardware
         self.stage = self.app.hardware['asi_stage']
         self.oo_spec = self.app.measurements['oo_spec_live']
-        self.add_operation('center_on_pos',self.center_on_pos)
+        self.add_operation('center scan on position',self.center_on_pos)
+        self.add_operation('center view on position', self.center_view_on_pos)
         
         details_widget = QWidget()
         details = QVBoxLayout()
         details.addWidget(self.app.settings.New_UI(include=['save_dir','sample']))
         details.addWidget(self.settings.New_UI(include=['h_span','v_span']))
+        pushButtons_widget = QWidget()
+        pushButtons = QHBoxLayout()
+        for key in list(self.operations.keys()):
+            op_pushButton = QPushButton(text=key)
+            op_pushButton.clicked.connect(self.operations[key])
+            pushButtons.addWidget(op_pushButton)
+        pushButtons_widget.setLayout(pushButtons)
+        details.addWidget(pushButtons_widget)
         details_widget.setLayout(details)
         self.set_details_widget(widget=details_widget)
         
@@ -117,6 +126,13 @@ class OOHyperSpecASIScan(ASIStage2DScan):
     def center_on_pos(self):
         self.settings.h_center.update_value(new_val=self.stage.settings.x_position.val)
         self.settings.v_center.update_value(new_val=self.stage.settings.y_position.val)
+        
+    def center_view_on_pos(self):
+        delta = 0.2
+        del_h = self.h_span.val*delta
+        del_v = self.v_span.val*delta
+        self.img_plot.setRange(xRange=(self.h0.val-del_h, self.h1.val+del_h), yRange=(self.v0.val-del_v, self.v1.val+del_v))
+        
         
     def interrupt(self):
         Measurement.interrupt(self)
