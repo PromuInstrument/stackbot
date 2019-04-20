@@ -1,18 +1,16 @@
 from ScopeFoundry import BaseMicroscopeApp
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
-from qtpy.QtWidgets import QVBoxLayout
+from qtpy.QtWidgets import QVBoxLayout, QPushButton, QDoubleSpinBox
 import numpy as np
+from ScopeFoundry.helper_funcs import replace_widget_in_layout
 
 class UVMicroscopeApp(BaseMicroscopeApp):
 
     name = 'uv_microscope'
     
     def __init__(self, *args, **kwargs):
-        if 'oo_not_andor' in kwargs.keys():
-            self.oo_not_andor = kwargs['oo_not_andor']
-        else:
-            self.oo_not_andor = True
         BaseMicroscopeApp.__init__(self)
+        
     
     def setup(self):
         # - renamed libiomp5md.dll to libiomp5md.dll.bak in Spinnaker
@@ -44,6 +42,9 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.lakeshore_331 import Lakeshore331HW
         self.add_hardware(Lakeshore331HW(self))
         
+        from ScopeFoundryHW.pygrabber_camera import PyGrabberCameraHW
+        pygrabhw = self.add_hardware(PyGrabberCameraHW(self))
+        
 #         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW, PowerMeterOptimizerMeasure
 #         self.add_hardware(ThorlabsPowerMeterHW(self))
 #         self.add_measurement(PowerMeterOptimizerMeasure(self))
@@ -74,40 +75,87 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.lakeshore_331 import LakeshoreMeasure
         self.add_measurement(LakeshoreMeasure(self))
         
+        from ScopeFoundryHW.pygrabber_camera import PyGrabberCameraLiveMeasure
+        pygrab = self.add_measurement(PyGrabberCameraLiveMeasure(self))
+        
         ###### Quickbar connections #################################
         Q = self.quickbar
+        S = self.settings
          
         # 2D Scan Area
-        if self.oo_not_andor:
-            oo_scan.settings.h0.connect_to_widget(Q.h0_doubleSpinBox)
-            oo_scan.settings.h1.connect_to_widget(Q.h1_doubleSpinBox)
-            oo_scan.settings.v0.connect_to_widget(Q.v0_doubleSpinBox)
-            oo_scan.settings.v1.connect_to_widget(Q.v1_doubleSpinBox)
-            oo_scan.settings.h_span.connect_to_widget(Q.hspan_doubleSpinBox)
-            oo_scan.settings.v_span.connect_to_widget(Q.vspan_doubleSpinBox)
-            Q.center_pushButton.clicked.connect(oo_scan.center_on_pos)
-        else:
-            andor_scan.settings.h0.connect_to_widget(Q.h0_doubleSpinBox)
-            andor_scan.settings.h1.connect_to_widget(Q.h1_doubleSpinBox)
-            andor_scan.settings.v0.connect_to_widget(Q.v0_doubleSpinBox)
-            andor_scan.settings.v1.connect_to_widget(Q.v1_doubleSpinBox)
-            andor_scan.settings.h_span.connect_to_widget(Q.hspan_doubleSpinBox)
-            andor_scan.settings.v_span.connect_to_widget(Q.vspan_doubleSpinBox)
-            Q.center_pushButton.clicked.connect(andor_scan.center_on_pos)
+        S.New('spectrometer', ro=False, dtype=str,choices=['Ocean Optics','Andor'], initial='Andor')
+        S.spectrometer.connect_to_widget(Q.scan_select_comboBox)
+        self.scan_hspan_doubleSpinBox = Q.hspan_doubleSpinBox
+        self.scan_vspan_doubleSpinBox = Q.vspan_doubleSpinBox
+        self.scan_center_pushButton = Q.center_pushButton
+        self.scan_center_view_pushButton = Q.center_view_pushButton
+        self.scan_start_pushButton = Q.start_pushButton
+        self.scan_interrupt_pushButton = Q.interrupt_pushButton
+        self.scan_show_UI_pushButton = Q.show_UI_pushButton
+        self.scan_save_h5_checkBox = Q.save_h5_checkBox
+        
+        if self.settings['spectrometer'] == 'Ocean Optics':
+            scan = oo_scan
+        elif self.settings['spectrometer'] == 'Andor':
+            scan = andor_scan
+             
+        self.connect_hspan = scan.settings.h_span.connect_to_widget(self.scan_hspan_doubleSpinBox)
+        self.connect_vspan = scan.settings.v_span.connect_to_widget(self.scan_vspan_doubleSpinBox)
+        self.connect_save_h5 = scan.settings.save_h5.connect_to_widget(self.scan_save_h5_checkBox)
+         
+        self.scan_center_pushButton.clicked.connect(scan.center_on_pos)
+         
+        self.scan_center_view_pushButton.clicked.connect(scan.center_view_on_pos)
+        self.scan_start_pushButton.clicked.connect(scan.operations['start'])
+        self.scan_interrupt_pushButton.clicked.connect(scan.operations['interrupt'])
+        self.scan_show_UI_pushButton.clicked.connect(scan.operations['show_ui'])
+        
+        
+        def connect_2D_scan():
+            if self.settings['spectrometer'] == 'Ocean Optics':
+                scan = oo_scan
+                old_scan = andor_scan
+            elif self.settings['spectrometer'] == 'Andor':
+                scan = andor_scan
+                old_scan = oo_scan
+             
+            self.scan_hspan_doubleSpinBox.disconnect()
+            self.scan_vspan_doubleSpinBox.disconnect()
+            old_scan.settings.h_span.updated_value[float].disconnect(self.connect_hspan)
+            old_scan.settings.v_span.updated_value[float].disconnect(self.connect_vspan)
+            self.connect_hspan = scan.settings.h_span.connect_to_widget(self.scan_hspan_doubleSpinBox)
+            self.connect_vspan = scan.settings.v_span.connect_to_widget(self.scan_vspan_doubleSpinBox)
+             
+            self.old_scan.settings.save_h5_checkBox.disconnect()
+            old_scan.settings.save_h5.updated_value[bool].disconnect(self.connect_save_h5)
+            self.connect_save_h5 = scan.settings.save_h5.connect_to_widget(self.scan_save_h5_checkBox)
             
+            self.scan_center_pushButton.disconnect()
+            self.scan_center_pushButton.clicked.connect(scan.center_on_pos)
+            self.scan_center_view_pushButton.disconnect()
+            self.scan_center_view_pushButton.clicked.connect(scan.center_view_on_pos)
+            self.scan_start_pushButton.disconnect()
+            self.scan_start_pushButton.clicked.connect(scan.operations['start'])
+            self.scan_interrupt_pushButton.disconnect()
+            self.scan_interrupt_pushButton.clicked.connect(scan.operations['interrupt'])
+            self.scan_show_UI_pushButton.disconnect()
+            self.scan_show_UI_pushButton.clicked.connect(scan.operations['show_ui'])
+        
+        Q.scan_select_comboBox.currentIndexChanged.connect(connect_2D_scan)
+             
         scan_steps = [5e-3, 3e-3, 1e-3, 5e-4]
         scan_steps_labels = ['5.0 um','3.0 um','1.0 um','0.5 um']
         Q.scan_step_comboBox.addItems(scan_steps_labels)
         def apply_scan_step_value():
-            if self.oo_not_andor:
-                oo_scan.settings.dh.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
-                oo_scan.settings.dv.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
-            else:
-                andor_scan.settings.dh.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
-                andor_scan.settings.dv.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
-        
+            if self.settings['spectrometer'] == 'Ocean Optics':
+                scan = oo_scan
+            elif self.settings['spectrometer'] == 'Andor':
+                scan = andor_scan
+                 
+            scan.settings.dh.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
+            scan.settings.dv.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
         Q.scan_step_comboBox.currentIndexChanged.connect(apply_scan_step_value)
-         
+           
         # ASI Stage
         asi_stage.settings.x_position.connect_to_widget(Q.x_pos_doubleSpinBox)
         Q.x_up_pushButton.clicked.connect(asi_control.x_up)
@@ -180,7 +228,33 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         led_ctrl.settings.get_lq('LED2 wavelength').connect_to_widget(Q.led2_lineEdit)
         led_ctrl.settings.get_lq('LED2 brightness').connect_to_widget(Q.led2_doubleSpinBox)
         led_ctrl.settings.get_lq('LED2 brightness').connect_to_widget(Q.led2_horizontalSlider)
-
+        
+        # Pygrabber
+        pygrabhw.settings.connected.connect_to_widget(Q.pygrabber_connect_checkBox)
+        pygrab.settings.activation.connect_to_widget(Q.pygrabber_acquire_checkBox)
+        Q.pygrabber_show_ui_pushButton.clicked.connect(pygrab.operations['show_ui'])
+        
+        # Spectrometer
+        aspec = self.hardware['andor_spec']
+        aspec.settings.center_wl.connect_to_widget(Q.andor_spec_center_wl_doubleSpinBox)
+        #aspec.settings.exit_mirror.connect_to_widget(Q.acton_spec_exitmirror_comboBox)
+        aspec.settings.grating_name.connect_to_widget(Q.andor_spec_grating_lineEdit)        
+        
+        # Andor CCD
+        andor = self.hardware['andor_ccd']
+        andor.settings.exposure_time.connect_to_widget(Q.andor_ccd_int_time_doubleSpinBox)
+        andor.settings.em_gain.connect_to_widget(Q.andor_ccd_emgain_doubleSpinBox)
+        andor.settings.temperature.connect_to_widget(Q.andor_ccd_temp_doubleSpinBox)
+        andor.settings.ccd_status.connect_to_widget(Q.andor_ccd_status_label)
+        andor.settings.shutter_open.connect_to_widget(Q.andor_ccd_shutter_open_checkBox)
+        andor.settings.output_amp.connect_to_widget(Q.andor_ccd_output_amp_comboBox)
+        
+        # Andor Readout
+        aro = self.measurements['andor_ccd_readout']
+        aro.settings.bg_subtract.connect_to_widget(Q.andor_ccd_bgsub_checkBox)
+        Q.andor_ccd_acquire_cont_checkBox.stateChanged.connect(aro.start_stop)
+        Q.andor_ccd_acq_bg_pushButton.clicked.connect(aro.acquire_bg_start)
+        Q.andor_ccd_read_single_pushButton.clicked.connect(aro.acquire_single_start)
         
         '''
         # Thorcam
