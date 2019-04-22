@@ -161,115 +161,231 @@
        <property name="maximumSize">
         <size>
          <width>16777215</width>
-         <height>150</height>
+         <height>175</height>
         </size>
        </property>
        <property name="title">
         <string>2D Scan Area</string>
        </property>
        <layout class="QGridLayout" name="gridLayout">
-        <item row="0" column="0" colspan="2">
-         <layout class="QGridLayout" name="gridLayout_2">
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_2">
-            <property name="text">
-             <string>Spectrometer</string>
+        <item row="0" column="0">
+         <widget class="QTabWidget" name="tabWidget">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>150</height>
+           </size>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab">
+           <attribute name="title">
+            <string>Ocean Optics Spectrometer</string>
+           </attribute>
+           <widget class="QWidget" name="gridLayoutWidget_2">
+            <property name="geometry">
+             <rect>
+              <x>9</x>
+              <y>9</y>
+              <width>351</width>
+              <height>106</height>
+             </rect>
             </property>
+            <layout class="QGridLayout" name="gridLayout_12">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>Dim. (H x V)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string>Step Size</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QDoubleSpinBox" name="oo_scan_hspan_doubleSpinBox"/>
+             </item>
+             <item row="0" column="2">
+              <widget class="QDoubleSpinBox" name="oo_scan_vspan_doubleSpinBox"/>
+             </item>
+             <item row="2" column="1">
+              <widget class="QPushButton" name="oo_scan_center_pushButton">
+               <property name="text">
+                <string>Center scan on position</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="oo_scan_step_comboBox"/>
+             </item>
+             <item row="2" column="2">
+              <widget class="QPushButton" name="oo_scan_center_view_pushButton">
+               <property name="text">
+                <string>Center view on scan</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QPushButton" name="oo_scan_start_pushButton">
+               <property name="text">
+                <string>Start</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QPushButton" name="oo_scan_interrupt_pushButton">
+               <property name="text">
+                <string>Interrupt</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QCheckBox" name="oo_scan_save_h5_checkBox">
+               <property name="text">
+                <string>save h5</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QDoubleSpinBox" name="oo_scan_step_doubleSpinBox"/>
+             </item>
+             <item row="2" column="0">
+              <widget class="QPushButton" name="oo_scan_show_UI_pushButton">
+               <property name="text">
+                <string>Show UI</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
            </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QPushButton" name="center_pushButton">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>19</height>
-             </size>
+          </widget>
+          <widget class="QWidget" name="tab_2">
+           <attribute name="title">
+            <string>Andor Spectrometer</string>
+           </attribute>
+           <widget class="QWidget" name="">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>351</width>
+              <height>101</height>
+             </rect>
             </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>19</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Center scan on position</string>
-            </property>
+            <layout class="QGridLayout" name="gridLayout_2">
+             <item row="3" column="1">
+              <widget class="QPushButton" name="andor_scan_center_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>19</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Center scan on position</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QDoubleSpinBox" name="andor_scan_vspan_doubleSpinBox"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="andor_scan_label_4">
+               <property name="text">
+                <string>Dim. (H x V)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QPushButton" name="andor_scan_center_view_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>19</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Center view on position</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QDoubleSpinBox" name="andor_scan_hspan_doubleSpinBox"/>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="andor_scan_label_9">
+               <property name="text">
+                <string>Step Size</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QComboBox" name="andor_scan_step_comboBox"/>
+             </item>
+             <item row="4" column="1">
+              <widget class="QPushButton" name="andor_scan_start_pushButton">
+               <property name="text">
+                <string>Start</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="2">
+              <widget class="QPushButton" name="andor_scan_interrupt_pushButton">
+               <property name="text">
+                <string>Interrupt</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QPushButton" name="andor_scan_show_UI_pushButton">
+               <property name="text">
+                <string>Show UI</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QCheckBox" name="andor_scan_save_h5_checkBox">
+               <property name="text">
+                <string>save h5</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QDoubleSpinBox" name="andor_scan_step_doubleSpinBox"/>
+             </item>
+            </layout>
+            <zorder>andor_scan_center_pushButton</zorder>
+            <zorder>andor_scan_label_4</zorder>
+            <zorder>andor_scan_center_view_pushButton</zorder>
+            <zorder>andor_scan_hspan_doubleSpinBox</zorder>
+            <zorder>andor_scan_label_9</zorder>
+            <zorder>andor_scan_step_comboBox</zorder>
+            <zorder>andor_scan_start_pushButton</zorder>
+            <zorder>andor_scan_interrupt_pushButton</zorder>
+            <zorder>andor_scan_vspan_doubleSpinBox</zorder>
+            <zorder>andor_scan_show_UI_pushButton</zorder>
+            <zorder>andor_scan_save_h5_checkBox</zorder>
+            <zorder>andor_scan_step_doubleSpinBox</zorder>
            </widget>
-          </item>
-          <item row="1" column="2">
-           <widget class="QDoubleSpinBox" name="vspan_doubleSpinBox"/>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_4">
-            <property name="text">
-             <string>Dim. (H x V)</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="2">
-           <widget class="QPushButton" name="center_view_pushButton">
-            <property name="minimumSize">
-             <size>
-              <width>0</width>
-              <height>19</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>19</height>
-             </size>
-            </property>
-            <property name="text">
-             <string>Center view on position</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="hspan_doubleSpinBox"/>
-          </item>
-          <item row="0" column="2">
-           <widget class="QPushButton" name="show_UI_pushButton">
-            <property name="text">
-             <string>Show UI</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_9">
-            <property name="text">
-             <string>Step Size</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QComboBox" name="scan_step_comboBox"/>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="scan_select_comboBox"/>
-          </item>
-          <item row="4" column="1">
-           <widget class="QPushButton" name="start_pushButton">
-            <property name="text">
-             <string>Start</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="2">
-           <widget class="QPushButton" name="interrupt_pushButton">
-            <property name="text">
-             <string>Interrupt</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="2">
-           <widget class="QCheckBox" name="save_h5_checkBox">
-            <property name="text">
-             <string>save h5</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+          </widget>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -316,8 +432,8 @@
                <rect>
                 <x>10</x>
                 <y>20</y>
-                <width>351</width>
-                <height>51</height>
+                <width>535</width>
+                <height>204</height>
                </rect>
               </property>
               <layout class="QGridLayout" name="gridLayout_6">
@@ -327,6 +443,9 @@
                <property name="spacing">
                 <number>3</number>
                </property>
+               <item row="1" column="3">
+                <widget class="QComboBox" name="z_step_comboBox"/>
+               </item>
                <item row="0" column="2">
                 <widget class="QDoubleSpinBox" name="z_pos_doubleSpinBox"/>
                </item>
@@ -336,23 +455,6 @@
                   <string>Z:</string>
                  </property>
                 </widget>
-               </item>
-               <item row="1" column="1">
-                <widget class="QLabel" name="label_8">
-                 <property name="text">
-                  <string>z step:</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="0" column="0">
-                <widget class="QPushButton" name="z_up_pushButton">
-                 <property name="text">
-                  <string>Away</string>
-                 </property>
-                </widget>
-               </item>
-               <item row="1" column="2">
-                <widget class="QDoubleSpinBox" name="z_step_doubleSpinBox"/>
                </item>
                <item row="1" column="0">
                 <widget class="QPushButton" name="z_down_pushButton">
@@ -368,8 +470,22 @@
                  </property>
                 </widget>
                </item>
-               <item row="1" column="3">
-                <widget class="QComboBox" name="z_step_comboBox"/>
+               <item row="1" column="2">
+                <widget class="QDoubleSpinBox" name="z_step_doubleSpinBox"/>
+               </item>
+               <item row="0" column="0">
+                <widget class="QPushButton" name="z_up_pushButton">
+                 <property name="text">
+                  <string>Away</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLabel" name="label_8">
+                 <property name="text">
+                  <string>z step:</string>
+                 </property>
+                </widget>
                </item>
               </layout>
              </widget>
@@ -379,8 +495,8 @@
               <rect>
                <x>10</x>
                <y>10</y>
-               <width>351</width>
-               <height>81</height>
+               <width>373</width>
+               <height>97</height>
               </rect>
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_2">
@@ -392,38 +508,6 @@
                 <property name="spacing">
                  <number>2</number>
                 </property>
-                <item row="1" column="2">
-                 <widget class="QPushButton" name="x_up_pushButton">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>0</height>
-                   </size>
-                  </property>
-                  <property name="maximumSize">
-                   <size>
-                    <width>23</width>
-                    <height>23</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>&gt;</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QPushButton" name="y_down_pushButton">
-                  <property name="maximumSize">
-                   <size>
-                    <width>23</width>
-                    <height>23</height>
-                   </size>
-                  </property>
-                  <property name="text">
-                   <string>v</string>
-                  </property>
-                 </widget>
-                </item>
                 <item row="0" column="1">
                  <widget class="QPushButton" name="y_up_pushButton">
                   <property name="maximumSize">
@@ -471,6 +555,38 @@
                    </size>
                   </property>
                  </spacer>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QPushButton" name="y_down_pushButton">
+                  <property name="maximumSize">
+                   <size>
+                    <width>23</width>
+                    <height>23</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>v</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QPushButton" name="x_up_pushButton">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>23</width>
+                    <height>23</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>&gt;</string>
+                  </property>
+                 </widget>
                 </item>
                </layout>
               </item>

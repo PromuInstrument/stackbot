@@ -80,81 +80,44 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         
         ###### Quickbar connections #################################
         Q = self.quickbar
-        S = self.settings
          
-        # 2D Scan Area
-        S.New('spectrometer', ro=False, dtype=str,choices=['Ocean Optics','Andor'], initial='Andor')
-        S.spectrometer.connect_to_widget(Q.scan_select_comboBox)
-        self.scan_hspan_doubleSpinBox = Q.hspan_doubleSpinBox
-        self.scan_vspan_doubleSpinBox = Q.vspan_doubleSpinBox
-        self.scan_center_pushButton = Q.center_pushButton
-        self.scan_center_view_pushButton = Q.center_view_pushButton
-        self.scan_start_pushButton = Q.start_pushButton
-        self.scan_interrupt_pushButton = Q.interrupt_pushButton
-        self.scan_show_UI_pushButton = Q.show_UI_pushButton
-        self.scan_save_h5_checkBox = Q.save_h5_checkBox
-        
-        if self.settings['spectrometer'] == 'Ocean Optics':
-            scan = oo_scan
-        elif self.settings['spectrometer'] == 'Andor':
-            scan = andor_scan
-             
-        self.connect_hspan = scan.settings.h_span.connect_to_widget(self.scan_hspan_doubleSpinBox)
-        self.connect_vspan = scan.settings.v_span.connect_to_widget(self.scan_vspan_doubleSpinBox)
-        self.connect_save_h5 = scan.settings.save_h5.connect_to_widget(self.scan_save_h5_checkBox)
-         
-        self.scan_center_pushButton.clicked.connect(scan.center_on_pos)
-         
-        self.scan_center_view_pushButton.clicked.connect(scan.center_view_on_pos)
-        self.scan_start_pushButton.clicked.connect(scan.operations['start'])
-        self.scan_interrupt_pushButton.clicked.connect(scan.operations['interrupt'])
-        self.scan_show_UI_pushButton.clicked.connect(scan.operations['show_ui'])
-        
-        
-        def connect_2D_scan():
-            if self.settings['spectrometer'] == 'Ocean Optics':
-                scan = oo_scan
-                old_scan = andor_scan
-            elif self.settings['spectrometer'] == 'Andor':
-                scan = andor_scan
-                old_scan = oo_scan
-             
-            self.scan_hspan_doubleSpinBox.disconnect()
-            self.scan_vspan_doubleSpinBox.disconnect()
-            old_scan.settings.h_span.updated_value[float].disconnect(self.connect_hspan)
-            old_scan.settings.v_span.updated_value[float].disconnect(self.connect_vspan)
-            self.connect_hspan = scan.settings.h_span.connect_to_widget(self.scan_hspan_doubleSpinBox)
-            self.connect_vspan = scan.settings.v_span.connect_to_widget(self.scan_vspan_doubleSpinBox)
-             
-            self.old_scan.settings.save_h5_checkBox.disconnect()
-            old_scan.settings.save_h5.updated_value[bool].disconnect(self.connect_save_h5)
-            self.connect_save_h5 = scan.settings.save_h5.connect_to_widget(self.scan_save_h5_checkBox)
-            
-            self.scan_center_pushButton.disconnect()
-            self.scan_center_pushButton.clicked.connect(scan.center_on_pos)
-            self.scan_center_view_pushButton.disconnect()
-            self.scan_center_view_pushButton.clicked.connect(scan.center_view_on_pos)
-            self.scan_start_pushButton.disconnect()
-            self.scan_start_pushButton.clicked.connect(scan.operations['start'])
-            self.scan_interrupt_pushButton.disconnect()
-            self.scan_interrupt_pushButton.clicked.connect(scan.operations['interrupt'])
-            self.scan_show_UI_pushButton.disconnect()
-            self.scan_show_UI_pushButton.clicked.connect(scan.operations['show_ui'])
-        
-        Q.scan_select_comboBox.currentIndexChanged.connect(connect_2D_scan)
-             
+        # 2D Scan Area - Ocean Optics
+        oo_scan.settings.h_span.connect_to_widget(Q.oo_scan_hspan_doubleSpinBox)
+        oo_scan.settings.v_span.connect_to_widget(Q.oo_scan_vspan_doubleSpinBox)
+        oo_scan.settings.save_h5.connect_to_widget(Q.oo_scan_save_h5_checkBox)
+        Q.oo_scan_center_pushButton.clicked.connect(oo_scan.center_on_pos)
+        Q.oo_scan_center_view_pushButton.clicked.connect(oo_scan.center_view_on_pos)
+        Q.oo_scan_start_pushButton.clicked.connect(oo_scan.operations['start'])
+        Q.oo_scan_interrupt_pushButton.clicked.connect(oo_scan.operations['interrupt'])
+        Q.oo_scan_show_UI_pushButton.clicked.connect(oo_scan.operations['show_ui'])
+                     
         scan_steps = [5e-3, 3e-3, 1e-3, 5e-4]
         scan_steps_labels = ['5.0 um','3.0 um','1.0 um','0.5 um']
-        Q.scan_step_comboBox.addItems(scan_steps_labels)
-        def apply_scan_step_value():
-            if self.settings['spectrometer'] == 'Ocean Optics':
-                scan = oo_scan
-            elif self.settings['spectrometer'] == 'Andor':
-                scan = andor_scan
-                 
-            scan.settings.dh.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
-            scan.settings.dv.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
-        Q.scan_step_comboBox.currentIndexChanged.connect(apply_scan_step_value)
+        Q.oo_scan_step_comboBox.addItems(scan_steps_labels)
+        def apply_oo_scan_step_value():
+            oo_scan.settings.dh.update_value(scan_steps[Q.oo_scan_step_comboBox.currentIndex()])
+            oo_scan.settings.dv.update_value(scan_steps[Q.oo_scan_step_comboBox.currentIndex()])
+        Q.oo_scan_step_comboBox.currentIndexChanged.connect(apply_oo_scan_step_value)
+        oo_scan.settings.dh.connect_to_widget(Q.oo_scan_step_doubleSpinBox)
+        
+        # 2D Scan Area - Andor
+        andor_scan.settings.h_span.connect_to_widget(Q.andor_scan_hspan_doubleSpinBox)
+        andor_scan.settings.v_span.connect_to_widget(Q.andor_scan_vspan_doubleSpinBox)
+        andor_scan.settings.save_h5.connect_to_widget(Q.andor_scan_save_h5_checkBox)
+        Q.andor_scan_center_pushButton.clicked.connect(andor_scan.center_on_pos)
+        Q.andor_scan_center_view_pushButton.clicked.connect(andor_scan.center_view_on_pos)
+        Q.andor_scan_start_pushButton.clicked.connect(andor_scan.operations['start'])
+        Q.andor_scan_interrupt_pushButton.clicked.connect(andor_scan.operations['interrupt'])
+        Q.andor_scan_show_UI_pushButton.clicked.connect(andor_scan.operations['show_ui'])
+                     
+        scan_steps = [5e-3, 3e-3, 1e-3, 5e-4]
+        scan_steps_labels = ['5.0 um','3.0 um','1.0 um','0.5 um']
+        Q.andor_scan_step_comboBox.addItems(scan_steps_labels)
+        def apply_andor_scan_step_value():
+            andor_scan.settings.dh.update_value(scan_steps[Q.andor_scan_step_comboBox.currentIndex()])
+            andor_scan.settings.dv.update_value(scan_steps[Q.andor_scan_step_comboBox.currentIndex()])
+        Q.andor_scan_step_comboBox.currentIndexChanged.connect(apply_andor_scan_step_value)
+        andor_scan.settings.dh.connect_to_widget(Q.andor_scan_step_doubleSpinBox)
            
         # ASI Stage
         asi_stage.settings.x_position.connect_to_widget(Q.x_pos_doubleSpinBox)
