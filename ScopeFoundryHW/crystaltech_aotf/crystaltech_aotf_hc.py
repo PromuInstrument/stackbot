@@ -1,34 +1,9 @@
-        ### AOTF #####################################
-        #print "Initializing AOTF functionality"
- #       self.dds = CrystalTechDDS(comm="serial", port="COM1", debug=self.HARDWARE_DEBUG)
-        
-        # Modulation property
-#        self.aotf_modulation = self.add_logged_quantity(name="aotf_modulation", dtype=bool, hardware_set_func=self.dds.set_modulation)
-#        self.aotf_modulation.updated_value[bool].connect(self.ui.aotf_mod_enable_checkBox.setChecked)
-#        self.ui.aotf_mod_enable_checkBox.stateChanged.connect(self.aotf_modulation.update_value)
-#        self.aotf_modulation.update_value(True)
-        
         # Frequency property
         # TODO:  only works on channel 0!
-#        self.aotf_freq = self.add_logged_quantity(name="aotf_freq", 
-#                                        dtype=np.float, 
-#                                       hardware_read_func=self.dds.get_frequency,
-#                                        hardware_set_func=self.dds.set_frequency,
-#                                        fmt = '%f')
-#        self.aotf_freq.updated_value[float].connect(self.ui.atof_freq_doubleSpinBox.setValue)
-#        self.ui.atof_freq_doubleSpinBox.valueChanged[float].connect(self.aotf_freq.update_value)
-#        self.ui.aotf_freq_set_lineEdit.returnPressed.connect(self.aotf_freq.update_value)
-#        self.aotf_freq.read_from_hardware()
         
         # Power property
         # TODO:  only works on channel 0!
-#        self.aotf_power = self.add_logged_quantity(name="aotf_power", 
-#                                         dtype=np.int, 
-#                                         hardware_read_func=self.dds.get_amplitude,
-#                                        hardware_set_func=self.dds.set_amplitude)
-#        self.aotf_power.updated_value[float].connect(self.ui.aotf_power_doubleSpinBox.setValue)
-#        self.ui.aotf_power_doubleSpinBox.valueChanged.connect(self.aotf_power.update_value)
-#        self.aotf_power.read_from_hardware()
+import numpy as np
 
 from ScopeFoundry import HardwareComponent
 try:
@@ -38,49 +13,31 @@ except Exception as err:
 
 class CrystalTechAOTF(HardwareComponent):
     
-    name = 'CrystalTechAOTF_DDS'
+    name = 'crystal_tech_aotf'
     
     def setup(self):
-        self.debug = True
-        
-        # Create logged quantities
-        #self.modulation_enable = self.add_logged_quantity(
-        #                               name="modulation_enable",
-        #                               dtype=bool, 
-        #                               ro=False)
-       
-        #self.freq0 = self.add_logged_quantity(name="freq0", 
-        #                                dtype=float, 
-        #                                unit= "MHz",
-        #                                vmin= 0,
-        #                                vmax = 200,
-        #                                si = False,
-        #                                fmt = '%f')
 
-        #self.pwr0 = self.add_logged_quantity(name="pwr0", 
-        #                                 dtype=int, 
-        #                                 vmin=0,
-        #                                 vmax=1<<16, # 2^16
-        #                                 si=False
-        #                                 )
-        
+        self.settings.New('port', str, initial='COM24')
+                
         self.settings.New('modulation_enable',
                           dtype=bool,
                           ro=False)
-        self.settings.New('freq0',
+        self.freq0 = self.settings.New('freq0',
                           dtype=float,
                           unit='MHz',
                           vmin=0,
                           vmax=200,
                           si=False,
                           fmt='%f')
+
         self.settings.New('pwr0',
                           dtype=int,
                           vmin=0,
                           vmax=1<<16,
                           si=False)
-
-
+        
+        self.deflected_wl  = self.settings.New('deflected_wl', dtype=float, unit='nm')
+                
         #connect GUI
         """
         self.modulation_enable.connect_bidir_to_widget(self.gui.ui.aotf_mod_enable_checkBox)
@@ -93,44 +50,49 @@ class CrystalTechAOTF(HardwareComponent):
     def connect(self):
 
         #connect to hardware
-        if self.debug:
-            print('Connecting...')   
-        self.dds = CrystalTechDDS(comm="serial", port="COM24", debug=self.debug)
-        
-        if self.debug:
-            print('Complete')
+        if self.debug_mode.val:print('Connecting...', self.name)   
+        self.dds = CrystalTechDDS(comm="serial", port=self.settings['port'], debug=self.debug_mode.val)
+        if self.debug_mode.val:print('Complete')
         
         # Connect logged quantities to hardware
-        #self.modulation_enable.hardware_set_func = self.dds.set_modulation
         self.settings.modulation_enable.connect_to_hardware(
-            write_func = self.dds.set_modulation)
+            write_func=self.dds.set_modulation)
         
-        #self.modulation_enable.hardware_read_func = self.dds.get_ # get_modulation is not defined
-
-        #self.freq0.hardware_read_func = self.dds.get_frequency
-        #self.freq0.hardware_set_func  = self.dds.set_frequency
         self.settings.freq0.connect_to_hardware(
             read_func=self.dds.get_frequency,
             write_func=self.dds.set_frequency)
         
-        
-        #self.pwr0.hardware_read_func = self.dds.get_amplitude
-        #self.pwr0.hardware_set_func = self.dds.set_amplitude
         self.settings.pwr0.connect_to_hardware(
             read_func=self.dds.get_amplitude,
             write_func=self.dds.set_amplitude)
-        
-#                                         hardware_read_func=self.dds.get_amplitude,
-#                                        hardware_set_func=self.dds.set_amplitude)
+
+        self.load_calibration_data()
+        self.deflected_wl.connect_lq_math(self.freq0, self.aotffreq2wls, reverse_func=self.wls2atoffreq)
+
 
     def disconnect(self):
         self.log.info('disconnect ' + self.name)
         
-               
         #disconnect logged quantities from hardware
         self.settings.disconnect_all_from_hardware()
         
         if hasattr(self, 'dds'):
             self.dds.close()
             del self.dds
-                
+            
+    def load_calibration_data(self, calibration_fname='crystaltech_aotf_calibration.txt'):
+        '''
+        loads calibration data from 'calibration_fname' .txt-file located in this folder
+        '''
+        path = '../ScopeFoundryHW/crystaltech_aotf/'
+        self.calib_aotf_freqs, self.calib_deflected_wls = np.loadtxt(path + calibration_fname).T
+        self.deflected_wl.change_min_max(self.calib_deflected_wls.min(), self.calib_deflected_wls.max())
+        #self.freq0.change_min_max(self.calib_aotf_freqs.min(), self.calib_aotf_freqs.max()) #may go further than calibrated?
+
+    def wls2atoffreq(self, wl):
+        argsort = np.argsort(self.calib_deflected_wls)
+        return np.interp(x=wl, xp=self.calib_deflected_wls[argsort], fp=self.calib_aotf_freqs[argsort])
+        
+    def aotffreq2wls(self, freq):
+        argsort = np.argsort(self.calib_aotf_freqs)
+        return np.interp(x=freq, xp=self.calib_aotf_freqs[argsort], fp=self.calib_deflected_wls[argsort])
