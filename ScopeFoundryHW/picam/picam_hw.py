@@ -14,7 +14,7 @@ class PicamHW(HardwareComponent):
 
     def setup(self):
         # Create logged quantities
-        self.status = self.add_logged_quantity(name='ccd_satus', dtype=str, fmt="%s",ro=True)
+        self.status = self.add_logged_quantity(name='ccd_status', dtype=str, fmt="%s",ro=True)
     
         # Single ROI settings
         self.settings.New('roi_x', dtype=int, initial=0, si=False)
