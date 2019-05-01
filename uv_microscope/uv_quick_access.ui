@@ -6,20 +6,20 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>450</width>
-    <height>950</height>
+    <width>412</width>
+    <height>1300</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
     <width>400</width>
-    <height>900</height>
+    <height>1300</height>
    </size>
   </property>
   <property name="maximumSize">
    <size>
     <width>500</width>
-    <height>950</height>
+    <height>2000</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -27,781 +27,1014 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QGroupBox" name="groupBox_scanarea">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>150</height>
-      </size>
-     </property>
-     <property name="title">
-      <string>2D Scan Area</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="3" column="0">
-       <widget class="QLabel" name="v_label">
-        <property name="text">
-         <string>y:</string>
+    <layout class="QVBoxLayout" name="verticalLayout_4">
+     <item>
+      <widget class="QGroupBox" name="groupBox_flircam">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>300</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>250</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Flircam</string>
+       </property>
+       <widget class="QWidget" name="verticalLayoutWidget_4">
+        <property name="geometry">
+         <rect>
+          <x>1</x>
+          <y>10</y>
+          <width>431</width>
+          <height>258</height>
+         </rect>
         </property>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <item>
+          <widget class="QGroupBox" name="groupBox_image">
+           <property name="minimumSize">
+            <size>
+             <width>350</width>
+             <height>200</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>380</width>
+             <height>361</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>Image</string>
+           </property>
+           <widget class="QPushButton" name="flircam_show_pushButton">
+            <property name="geometry">
+             <rect>
+              <x>140</x>
+              <y>90</y>
+              <width>75</width>
+              <height>23</height>
+             </rect>
+            </property>
+            <property name="text">
+             <string>Show</string>
+            </property>
+           </widget>
+          </widget>
+         </item>
+         <item>
+          <widget class="QGroupBox" name="groupBox_control">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="title">
+            <string>Control</string>
+           </property>
+           <widget class="QWidget" name="horizontalLayoutWidget_3">
+            <property name="geometry">
+             <rect>
+              <x>0</x>
+              <y>10</y>
+              <width>381</width>
+              <height>41</height>
+             </rect>
+            </property>
+            <layout class="QHBoxLayout" name="horizontalLayout_5">
+             <item>
+              <widget class="QCheckBox" name="flircam_autolevel_checkBox">
+               <property name="text">
+                <string>Autolvl</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QCheckBox" name="flircam_live_checkBox">
+               <property name="text">
+                <string>Live</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="label_3">
+               <property name="text">
+                <string>Exp. t</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QDoubleSpinBox" name="flircam_int_time_doubleSpinBox"/>
+             </item>
+             <item>
+              <widget class="QLabel" name="label">
+               <property name="text">
+                <string>Auto Exp:</string>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QComboBox" name="flircam_auto_exp_comboBox"/>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+         </item>
+        </layout>
        </widget>
-      </item>
-      <item row="3" column="2">
-       <widget class="QDoubleSpinBox" name="v1_doubleSpinBox">
-        <property name="decimals">
-         <number>3</number>
-        </property>
-        <property name="value">
-         <double>45.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="h0_doubleSpinBox">
-        <property name="decimals">
-         <number>3</number>
-        </property>
-        <property name="value">
-         <double>25.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>Dim. (H x V)</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="h_label">
-        <property name="text">
-         <string>x:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_11">
-        <property name="text">
-         <string>min</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="h1_doubleSpinBox">
-        <property name="decimals">
-         <number>3</number>
-        </property>
-        <property name="value">
-         <double>45.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1">
-       <widget class="QComboBox" name="scan_step_comboBox"/>
-      </item>
-      <item row="3" column="1">
-       <widget class="QDoubleSpinBox" name="v0_doubleSpinBox">
-        <property name="decimals">
-         <number>3</number>
-        </property>
-        <property name="value">
-         <double>25.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="2">
-       <widget class="QPushButton" name="center_pushButton">
-        <property name="text">
-         <string>Center on Pos</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>Step Size</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QDoubleSpinBox" name="hspan_doubleSpinBox"/>
-      </item>
-      <item row="4" column="2">
-       <widget class="QDoubleSpinBox" name="vspan_doubleSpinBox"/>
-      </item>
-      <item row="0" column="2">
-       <widget class="QLabel" name="label_13">
-        <property name="text">
-         <string>max</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox_stageposition">
-     <property name="minimumSize">
-      <size>
-       <width>0</width>
-       <height>200</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>200</height>
-      </size>
-     </property>
-     <property name="title">
-      <string>Current Position</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="0" column="1" rowspan="2" colspan="5">
-       <widget class="QGroupBox" name="groupBox">
-        <property name="title">
-         <string>xy</string>
-        </property>
-        <widget class="QPushButton" name="x_down_pushButton">
-         <property name="geometry">
-          <rect>
-           <x>0</x>
-           <y>30</y>
-           <width>41</width>
-           <height>41</height>
-          </rect>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>&lt;</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="y_up_pushButton">
-         <property name="geometry">
-          <rect>
-           <x>40</x>
-           <y>30</y>
-           <width>41</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>^</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="x_up_pushButton">
-         <property name="geometry">
-          <rect>
-           <x>80</x>
-           <y>30</y>
-           <width>41</width>
-           <height>41</height>
-          </rect>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="maximumSize">
-          <size>
-           <width>16777215</width>
-           <height>16777215</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>&gt;</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="y_down_pushButton">
-         <property name="geometry">
-          <rect>
-           <x>40</x>
-           <y>50</y>
-           <width>41</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>v</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_10">
-         <property name="geometry">
-          <rect>
-           <x>130</x>
-           <y>20</y>
-           <width>27</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>X:</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_12">
-         <property name="geometry">
-          <rect>
-           <x>130</x>
-           <y>50</y>
-           <width>27</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Y:</string>
-         </property>
-        </widget>
-        <widget class="QDoubleSpinBox" name="x_pos_doubleSpinBox">
-         <property name="geometry">
-          <rect>
-           <x>150</x>
-           <y>20</y>
-           <width>71</width>
-           <height>20</height>
-          </rect>
-         </property>
-        </widget>
-        <widget class="QDoubleSpinBox" name="y_pos_doubleSpinBox">
-         <property name="geometry">
-          <rect>
-           <x>150</x>
-           <y>50</y>
-           <width>71</width>
-           <height>20</height>
-          </rect>
-         </property>
-        </widget>
-        <widget class="QDoubleSpinBox" name="xy_step_doubleSpinBox">
-         <property name="geometry">
-          <rect>
-           <x>270</x>
-           <y>20</y>
-           <width>81</width>
-           <height>20</height>
-          </rect>
-         </property>
-        </widget>
-        <widget class="QComboBox" name="xy_step_comboBox">
-         <property name="geometry">
-          <rect>
-           <x>270</x>
-           <y>50</y>
-           <width>81</width>
-           <height>20</height>
-          </rect>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_7">
-         <property name="geometry">
-          <rect>
-           <x>230</x>
-           <y>20</y>
-           <width>47</width>
-           <height>21</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>xy step:</string>
-         </property>
-        </widget>
-       </widget>
-      </item>
-      <item row="7" column="1" rowspan="2" colspan="5">
-       <widget class="QGroupBox" name="groupBox_3">
-        <property name="title">
-         <string>z</string>
-        </property>
-        <widget class="QPushButton" name="z_up_pushButton">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>20</y>
-           <width>75</width>
-           <height>23</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Up</string>
-         </property>
-        </widget>
-        <widget class="QDoubleSpinBox" name="z_pos_doubleSpinBox">
-         <property name="geometry">
-          <rect>
-           <x>140</x>
-           <y>20</y>
-           <width>91</width>
-           <height>20</height>
-          </rect>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="z_down_pushButton">
-         <property name="geometry">
-          <rect>
-           <x>10</x>
-           <y>50</y>
-           <width>75</width>
-           <height>23</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Down</string>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_14">
-         <property name="geometry">
-          <rect>
-           <x>100</x>
-           <y>20</y>
-           <width>39</width>
-           <height>20</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Z:</string>
-         </property>
-        </widget>
-        <widget class="QComboBox" name="z_step_comboBox">
-         <property name="geometry">
-          <rect>
-           <x>270</x>
-           <y>50</y>
-           <width>81</width>
-           <height>20</height>
-          </rect>
-         </property>
-        </widget>
-        <widget class="QDoubleSpinBox" name="z_step_doubleSpinBox">
-         <property name="geometry">
-          <rect>
-           <x>140</x>
-           <y>50</y>
-           <width>91</width>
-           <height>20</height>
-          </rect>
-         </property>
-        </widget>
-        <widget class="QLabel" name="label_8">
-         <property name="geometry">
-          <rect>
-           <x>100</x>
-           <y>50</y>
-           <width>47</width>
-           <height>16</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>z step:</string>
-         </property>
-        </widget>
-        <widget class="QPushButton" name="stop_stage_pushButton">
-         <property name="geometry">
-          <rect>
-           <x>244</x>
-           <y>20</y>
-           <width>111</width>
-           <height>23</height>
-          </rect>
-         </property>
-         <property name="text">
-          <string>Stop Stage Motors</string>
-         </property>
-        </widget>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox_scancontrol">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>120</height>
-      </size>
-     </property>
-     <property name="title">
-      <string>Ocean Optics Spectrometer</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_4">
-      <item row="6" column="0">
-       <widget class="QPushButton" name="oo_spec_set_bg_pushButton">
-        <property name="text">
-         <string>Set background</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QPushButton" name="oo_spec_save_pushButton">
-        <property name="text">
-         <string>Save h5</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QPushButton" name="oo_spec_startstop_pushButton">
-        <property name="text">
-         <string>Start/Stop</string>
-        </property>
-       </widget>
-      </item>
-      <item row="6" column="1">
-       <widget class="QCheckBox" name="oo_spec_bgsub_checkBox">
-        <property name="text">
-         <string>BG Subtract</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QCheckBox" name="oo_spec_acquire_cont_checkBox">
-        <property name="text">
-         <string>Acquire Continuously</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="1">
-       <widget class="QDoubleSpinBox" name="oo_spec_int_time_doubleSpinBox">
-        <property name="keyboardTracking">
-         <bool>false</bool>
-        </property>
-        <property name="decimals">
-         <number>3</number>
-        </property>
-        <property name="minimum">
-         <double>0.001000000000000</double>
-        </property>
-        <property name="maximum">
-         <double>999.990000000000009</double>
-        </property>
-        <property name="singleStep">
-         <double>0.100000000000000</double>
-        </property>
-        <property name="value">
-         <double>1.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox_2">
-     <property name="maximumSize">
-      <size>
-       <width>16777215</width>
-       <height>60</height>
-      </size>
-     </property>
-     <property name="title">
-      <string>Ocean Optics Optimizer</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_9">
-      <item row="0" column="2">
-       <widget class="QCheckBox" name="power_meter_acquire_cont_checkBox">
-        <property name="enabled">
-         <bool>true</bool>
-        </property>
-        <property name="text">
-         <string>Acquire
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_scanarea">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>175</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>2D Scan Area</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="0" column="0">
+         <widget class="QTabWidget" name="tabWidget">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>150</height>
+           </size>
+          </property>
+          <property name="currentIndex">
+           <number>0</number>
+          </property>
+          <widget class="QWidget" name="tab">
+           <attribute name="title">
+            <string>Ocean Optics Spectrometer</string>
+           </attribute>
+           <widget class="QWidget" name="gridLayoutWidget_2">
+            <property name="geometry">
+             <rect>
+              <x>9</x>
+              <y>9</y>
+              <width>351</width>
+              <height>106</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_12">
+             <item row="0" column="0">
+              <widget class="QLabel" name="label_2">
+               <property name="text">
+                <string>Dim. (H x V)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="label_4">
+               <property name="text">
+                <string>Step Size</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QDoubleSpinBox" name="oo_scan_hspan_doubleSpinBox"/>
+             </item>
+             <item row="0" column="2">
+              <widget class="QDoubleSpinBox" name="oo_scan_vspan_doubleSpinBox"/>
+             </item>
+             <item row="2" column="1">
+              <widget class="QPushButton" name="oo_scan_center_pushButton">
+               <property name="text">
+                <string>Center scan on position</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="oo_scan_step_comboBox"/>
+             </item>
+             <item row="2" column="2">
+              <widget class="QPushButton" name="oo_scan_center_view_pushButton">
+               <property name="text">
+                <string>Center view on scan</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QPushButton" name="oo_scan_start_pushButton">
+               <property name="text">
+                <string>Start</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QPushButton" name="oo_scan_interrupt_pushButton">
+               <property name="text">
+                <string>Interrupt</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QCheckBox" name="oo_scan_save_h5_checkBox">
+               <property name="text">
+                <string>save h5</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QDoubleSpinBox" name="oo_scan_step_doubleSpinBox"/>
+             </item>
+             <item row="2" column="0">
+              <widget class="QPushButton" name="oo_scan_show_UI_pushButton">
+               <property name="text">
+                <string>Show UI</string>
+               </property>
+              </widget>
+             </item>
+            </layout>
+           </widget>
+          </widget>
+          <widget class="QWidget" name="tab_2">
+           <attribute name="title">
+            <string>Andor Spectrometer</string>
+           </attribute>
+           <widget class="QWidget" name="">
+            <property name="geometry">
+             <rect>
+              <x>10</x>
+              <y>10</y>
+              <width>351</width>
+              <height>101</height>
+             </rect>
+            </property>
+            <layout class="QGridLayout" name="gridLayout_2">
+             <item row="3" column="1">
+              <widget class="QPushButton" name="andor_scan_center_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>19</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Center scan on position</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="2">
+              <widget class="QDoubleSpinBox" name="andor_scan_vspan_doubleSpinBox"/>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="andor_scan_label_4">
+               <property name="text">
+                <string>Dim. (H x V)</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="2">
+              <widget class="QPushButton" name="andor_scan_center_view_pushButton">
+               <property name="minimumSize">
+                <size>
+                 <width>0</width>
+                 <height>19</height>
+                </size>
+               </property>
+               <property name="maximumSize">
+                <size>
+                 <width>16777215</width>
+                 <height>19</height>
+                </size>
+               </property>
+               <property name="text">
+                <string>Center view on position</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QDoubleSpinBox" name="andor_scan_hspan_doubleSpinBox"/>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="andor_scan_label_9">
+               <property name="text">
+                <string>Step Size</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QComboBox" name="andor_scan_step_comboBox"/>
+             </item>
+             <item row="4" column="1">
+              <widget class="QPushButton" name="andor_scan_start_pushButton">
+               <property name="text">
+                <string>Start</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="2">
+              <widget class="QPushButton" name="andor_scan_interrupt_pushButton">
+               <property name="text">
+                <string>Interrupt</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QPushButton" name="andor_scan_show_UI_pushButton">
+               <property name="text">
+                <string>Show UI</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="0">
+              <widget class="QCheckBox" name="andor_scan_save_h5_checkBox">
+               <property name="text">
+                <string>save h5</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="2">
+              <widget class="QDoubleSpinBox" name="andor_scan_step_doubleSpinBox"/>
+             </item>
+            </layout>
+            <zorder>andor_scan_center_pushButton</zorder>
+            <zorder>andor_scan_label_4</zorder>
+            <zorder>andor_scan_center_view_pushButton</zorder>
+            <zorder>andor_scan_hspan_doubleSpinBox</zorder>
+            <zorder>andor_scan_label_9</zorder>
+            <zorder>andor_scan_step_comboBox</zorder>
+            <zorder>andor_scan_start_pushButton</zorder>
+            <zorder>andor_scan_interrupt_pushButton</zorder>
+            <zorder>andor_scan_vspan_doubleSpinBox</zorder>
+            <zorder>andor_scan_show_UI_pushButton</zorder>
+            <zorder>andor_scan_save_h5_checkBox</zorder>
+            <zorder>andor_scan_step_doubleSpinBox</zorder>
+           </widget>
+          </widget>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_stageposition">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>200</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>200</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Current Position</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="1" column="1" colspan="2">
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QGroupBox" name="groupBox">
+            <property name="title">
+             <string>xy</string>
+            </property>
+            <widget class="QGroupBox" name="groupBox_3">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>90</y>
+               <width>372</width>
+               <height>80</height>
+              </rect>
+             </property>
+             <property name="title">
+              <string>z</string>
+             </property>
+             <widget class="QWidget" name="gridLayoutWidget_3">
+              <property name="geometry">
+               <rect>
+                <x>10</x>
+                <y>20</y>
+                <width>535</width>
+                <height>204</height>
+               </rect>
+              </property>
+              <layout class="QGridLayout" name="gridLayout_6">
+               <property name="sizeConstraint">
+                <enum>QLayout::SetFixedSize</enum>
+               </property>
+               <property name="spacing">
+                <number>3</number>
+               </property>
+               <item row="1" column="3">
+                <widget class="QComboBox" name="z_step_comboBox"/>
+               </item>
+               <item row="0" column="2">
+                <widget class="QDoubleSpinBox" name="z_pos_doubleSpinBox"/>
+               </item>
+               <item row="0" column="1">
+                <widget class="QLabel" name="label_14">
+                 <property name="text">
+                  <string>Z:</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="0">
+                <widget class="QPushButton" name="z_down_pushButton">
+                 <property name="text">
+                  <string>Towards</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="0" column="3">
+                <widget class="QPushButton" name="stop_stage_pushButton">
+                 <property name="text">
+                  <string>Stop Stage Motors</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="2">
+                <widget class="QDoubleSpinBox" name="z_step_doubleSpinBox"/>
+               </item>
+               <item row="0" column="0">
+                <widget class="QPushButton" name="z_up_pushButton">
+                 <property name="text">
+                  <string>Away</string>
+                 </property>
+                </widget>
+               </item>
+               <item row="1" column="1">
+                <widget class="QLabel" name="label_8">
+                 <property name="text">
+                  <string>z step:</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </widget>
+            <widget class="QWidget" name="horizontalLayoutWidget_4">
+             <property name="geometry">
+              <rect>
+               <x>10</x>
+               <y>10</y>
+               <width>373</width>
+               <height>97</height>
+              </rect>
+             </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <property name="spacing">
+               <number>0</number>
+              </property>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_10">
+                <property name="spacing">
+                 <number>2</number>
+                </property>
+                <item row="0" column="1">
+                 <widget class="QPushButton" name="y_up_pushButton">
+                  <property name="maximumSize">
+                   <size>
+                    <width>23</width>
+                    <height>23</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>^</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QPushButton" name="x_down_pushButton">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>23</width>
+                    <height>23</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>&lt;</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <spacer name="horizontalSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeType">
+                   <enum>QSizePolicy::Fixed</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>23</width>
+                    <height>23</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item row="2" column="1">
+                 <widget class="QPushButton" name="y_down_pushButton">
+                  <property name="maximumSize">
+                   <size>
+                    <width>23</width>
+                    <height>23</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>v</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="2">
+                 <widget class="QPushButton" name="x_up_pushButton">
+                  <property name="minimumSize">
+                   <size>
+                    <width>0</width>
+                    <height>0</height>
+                   </size>
+                  </property>
+                  <property name="maximumSize">
+                   <size>
+                    <width>23</width>
+                    <height>23</height>
+                   </size>
+                  </property>
+                  <property name="text">
+                   <string>&gt;</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QGridLayout" name="gridLayout_5">
+                <property name="sizeConstraint">
+                 <enum>QLayout::SetFixedSize</enum>
+                </property>
+                <item row="0" column="1">
+                 <widget class="QDoubleSpinBox" name="x_pos_doubleSpinBox"/>
+                </item>
+                <item row="1" column="3">
+                 <widget class="QComboBox" name="xy_step_comboBox"/>
+                </item>
+                <item row="0" column="0">
+                 <widget class="QLabel" name="label_10">
+                  <property name="text">
+                   <string>X:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="3">
+                 <widget class="QDoubleSpinBox" name="xy_step_doubleSpinBox"/>
+                </item>
+                <item row="1" column="0">
+                 <widget class="QLabel" name="label_12">
+                  <property name="text">
+                   <string>Y:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="0" column="2">
+                 <widget class="QLabel" name="label_7">
+                  <property name="text">
+                   <string>xy step:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item row="1" column="1">
+                 <widget class="QDoubleSpinBox" name="y_pos_doubleSpinBox"/>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_scancontrol">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>120</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Ocean Optics Spectrometer</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_4">
+        <item row="0" column="0" rowspan="3">
+         <layout class="QGridLayout" name="gridLayout_7">
+          <item row="0" column="1">
+           <widget class="QDoubleSpinBox" name="oo_spec_int_time_doubleSpinBox">
+            <property name="keyboardTracking">
+             <bool>false</bool>
+            </property>
+            <property name="decimals">
+             <number>3</number>
+            </property>
+            <property name="minimum">
+             <double>0.001000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>999.990000000000009</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QPushButton" name="oo_spec_save_pushButton">
+            <property name="text">
+             <string>Save h5</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QPushButton" name="oo_spec_startstop_pushButton">
+            <property name="text">
+             <string>Start/Stop</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QPushButton" name="oo_spec_set_bg_pushButton">
+            <property name="text">
+             <string>Set background</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QCheckBox" name="oo_spec_bgsub_checkBox">
+            <property name="text">
+             <string>BG Subtract</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QCheckBox" name="oo_spec_acquire_cont_checkBox">
+            <property name="text">
+             <string>Acquire Continuously</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_2">
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>60</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>Ocean Optics Optimizer</string>
+       </property>
+       <layout class="QGridLayout" name="gridLayout_9">
+        <item row="0" column="0">
+         <widget class="QLabel" name="power_meter_power_label">
+          <property name="font">
+           <font>
+            <pointsize>24</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>0.000 W</string>
+          </property>
+          <property name="textFormat">
+           <enum>Qt::PlainText</enum>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="2">
+         <widget class="QCheckBox" name="power_meter_acquire_cont_checkBox">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Acquire
 Continuously</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
+     </item>
+     <item>
+      <widget class="QGroupBox" name="groupBox_dc4100">
+       <property name="minimumSize">
+        <size>
+         <width>0</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>80</height>
+        </size>
+       </property>
+       <property name="title">
+        <string>LED Controller</string>
+       </property>
+       <widget class="QWidget" name="gridLayoutWidget_5">
+        <property name="geometry">
+         <rect>
+          <x>4</x>
+          <y>10</y>
+          <width>381</width>
+          <height>72</height>
+         </rect>
         </property>
+        <layout class="QGridLayout" name="gridLayout_8">
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="led2_checkBox">
+           <property name="text">
+            <string>LED2</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="2">
+          <widget class="QSlider" name="led1_horizontalSlider">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="tickPosition">
+            <enum>QSlider::TicksBothSides</enum>
+           </property>
+           <property name="tickInterval">
+            <number>25</number>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="led1_checkBox">
+           <property name="text">
+            <string>LED1</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QLineEdit" name="led1_lineEdit"/>
+         </item>
+         <item row="0" column="3">
+          <widget class="QDoubleSpinBox" name="led1_doubleSpinBox"/>
+         </item>
+         <item row="1" column="1">
+          <widget class="QLineEdit" name="led2_lineEdit"/>
+         </item>
+         <item row="1" column="2">
+          <widget class="QSlider" name="led2_horizontalSlider">
+           <property name="maximum">
+            <number>100</number>
+           </property>
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="tickPosition">
+            <enum>QSlider::TicksBothSides</enum>
+           </property>
+           <property name="tickInterval">
+            <number>25</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QDoubleSpinBox" name="led2_doubleSpinBox"/>
+         </item>
+        </layout>
        </widget>
-      </item>
-      <item row="0" column="0">
-       <widget class="QLabel" name="power_meter_power_label">
-        <property name="font">
-         <font>
-          <pointsize>24</pointsize>
-         </font>
-        </property>
-        <property name="text">
-         <string>0.000 W</string>
-        </property>
-        <property name="textFormat">
-         <enum>Qt::PlainText</enum>
-        </property>
-        <property name="alignment">
-         <set>Qt::AlignCenter</set>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_flircam">
+    <widget class="QGroupBox" name="groupBox_pygrabber">
      <property name="minimumSize">
       <size>
        <width>0</width>
-       <height>325</height>
+       <height>40</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>40</height>
       </size>
      </property>
      <property name="title">
-      <string>Flircam</string>
+      <string>Pygrabber</string>
      </property>
-     <widget class="QGroupBox" name="groupBox_image">
+     <widget class="QWidget" name="horizontalLayoutWidget">
       <property name="geometry">
        <rect>
         <x>10</x>
-        <y>20</y>
-        <width>380</width>
-        <height>251</height>
+        <y>10</y>
+        <width>381</width>
+        <height>25</height>
        </rect>
       </property>
-      <property name="minimumSize">
-       <size>
-        <width>350</width>
-        <height>251</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>380</width>
-        <height>361</height>
-       </size>
-      </property>
-      <property name="title">
-       <string>Image</string>
-      </property>
-      <widget class="QPushButton" name="flircam_show_pushButton">
-       <property name="geometry">
-        <rect>
-         <x>140</x>
-         <y>120</y>
-         <width>75</width>
-         <height>23</height>
-        </rect>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="spacing">
+        <number>2</number>
        </property>
-       <property name="text">
-        <string>Show</string>
+       <property name="sizeConstraint">
+        <enum>QLayout::SetMinAndMaxSize</enum>
        </property>
-      </widget>
-     </widget>
-     <widget class="QGroupBox" name="groupBox_control">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>270</y>
-        <width>361</width>
-        <height>50</height>
-       </rect>
-      </property>
-      <property name="minimumSize">
-       <size>
-        <width>0</width>
-        <height>50</height>
-       </size>
-      </property>
-      <property name="maximumSize">
-       <size>
-        <width>16777215</width>
-        <height>50</height>
-       </size>
-      </property>
-      <property name="title">
-       <string>Control</string>
-      </property>
-      <widget class="QDoubleSpinBox" name="flircam_int_time_doubleSpinBox">
-       <property name="geometry">
-        <rect>
-         <x>150</x>
-         <y>20</y>
-         <width>61</width>
-         <height>22</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label_3">
-       <property name="geometry">
-        <rect>
-         <x>110</x>
-         <y>20</y>
-         <width>31</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Exp. t</string>
-       </property>
-      </widget>
-      <widget class="QComboBox" name="flircam_auto_exp_comboBox">
-       <property name="geometry">
-        <rect>
-         <x>270</x>
-         <y>20</y>
-         <width>81</width>
-         <height>22</height>
-        </rect>
-       </property>
-      </widget>
-      <widget class="QLabel" name="label">
-       <property name="geometry">
-        <rect>
-         <x>220</x>
-         <y>20</y>
-         <width>51</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Auto Exp:</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="flircam_live_checkBox">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>20</y>
-         <width>70</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Live</string>
-       </property>
-      </widget>
-      <widget class="QCheckBox" name="flircam_autolevel_checkBox">
-       <property name="geometry">
-        <rect>
-         <x>50</x>
-         <y>20</y>
-         <width>61</width>
-         <height>21</height>
-        </rect>
-       </property>
-       <property name="text">
-        <string>Autolvl</string>
-       </property>
-      </widget>
+       <item>
+        <widget class="QCheckBox" name="pygrabber_connect_checkBox">
+         <property name="text">
+          <string>Connected</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="pygrabber_acquire_checkBox">
+         <property name="text">
+          <string>Acquire</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pygrabber_show_ui_pushButton">
+         <property name="text">
+          <string>Show UI</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_dc4100">
-     <property name="title">
-      <string>LED Controller</string>
+    <widget class="QGroupBox" name="groupBox_andor">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>275</height>
+      </size>
      </property>
-     <widget class="QCheckBox" name="led1_checkBox">
+     <property name="title">
+      <string>Andor CCD</string>
+     </property>
+     <widget class="QWidget" name="gridLayoutWidget">
       <property name="geometry">
        <rect>
         <x>10</x>
         <y>20</y>
-        <width>70</width>
-        <height>21</height>
+        <width>371</width>
+        <height>241</height>
        </rect>
       </property>
-      <property name="text">
-       <string>LED1</string>
-      </property>
-     </widget>
-     <widget class="QSlider" name="led1_horizontalSlider">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>20</y>
-        <width>160</width>
-        <height>22</height>
-       </rect>
-      </property>
-      <property name="maximum">
-       <number>100</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="tickPosition">
-       <enum>QSlider::TicksBothSides</enum>
-      </property>
-      <property name="tickInterval">
-       <number>25</number>
-      </property>
-     </widget>
-     <widget class="QDoubleSpinBox" name="led1_doubleSpinBox">
-      <property name="geometry">
-       <rect>
-        <x>310</x>
-        <y>20</y>
-        <width>62</width>
-        <height>22</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="led1_lineEdit">
-      <property name="geometry">
-       <rect>
-        <x>60</x>
-        <y>20</y>
-        <width>71</width>
-        <height>20</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QCheckBox" name="led2_checkBox">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>50</y>
-        <width>70</width>
-        <height>21</height>
-       </rect>
-      </property>
-      <property name="text">
-       <string>LED2</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="led2_lineEdit">
-      <property name="geometry">
-       <rect>
-        <x>60</x>
-        <y>50</y>
-        <width>71</width>
-        <height>20</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QSlider" name="led2_horizontalSlider">
-      <property name="geometry">
-       <rect>
-        <x>140</x>
-        <y>50</y>
-        <width>160</width>
-        <height>22</height>
-       </rect>
-      </property>
-      <property name="maximum">
-       <number>100</number>
-      </property>
-      <property name="orientation">
-       <enum>Qt::Horizontal</enum>
-      </property>
-      <property name="tickPosition">
-       <enum>QSlider::TicksBothSides</enum>
-      </property>
-      <property name="tickInterval">
-       <number>25</number>
-      </property>
-     </widget>
-     <widget class="QDoubleSpinBox" name="led2_doubleSpinBox">
-      <property name="geometry">
-       <rect>
-        <x>310</x>
-        <y>50</y>
-        <width>62</width>
-        <height>22</height>
-       </rect>
-      </property>
+      <layout class="QGridLayout" name="gridLayout_11">
+       <item row="0" column="0">
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Exposure time</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QLabel" name="label_15">
+         <property name="text">
+          <string>Grating</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0">
+        <widget class="QPushButton" name="andor_ccd_read_single_pushButton">
+         <property name="text">
+          <string>read single</string>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QLabel" name="label_11">
+         <property name="text">
+          <string>Temperature</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2">
+        <widget class="QComboBox" name="andor_spec_exitmirror_comboBox"/>
+       </item>
+       <item row="1" column="1">
+        <widget class="QDoubleSpinBox" name="andor_ccd_emgain_doubleSpinBox"/>
+       </item>
+       <item row="5" column="1">
+        <widget class="QCheckBox" name="andor_ccd_shutter_open_checkBox">
+         <property name="text">
+          <string>shutter open</string>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QLineEdit" name="andor_spec_grating_lineEdit">
+         <property name="maximumSize">
+          <size>
+           <width>120</width>
+           <height>16777215</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QDoubleSpinBox" name="andor_ccd_temp_doubleSpinBox"/>
+       </item>
+       <item row="3" column="0">
+        <widget class="QLabel" name="label_13">
+         <property name="text">
+          <string>Center WL</string>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QComboBox" name="andor_ccd_output_amp_comboBox"/>
+       </item>
+       <item row="0" column="2">
+        <widget class="QLabel" name="andor_ccd_status_label">
+         <property name="text">
+          <string>Status</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QDoubleSpinBox" name="andor_spec_center_wl_doubleSpinBox"/>
+       </item>
+       <item row="0" column="1">
+        <widget class="QDoubleSpinBox" name="andor_ccd_int_time_doubleSpinBox"/>
+       </item>
+       <item row="5" column="2">
+        <widget class="QCheckBox" name="andor_ccd_acquire_cont_checkBox">
+         <property name="text">
+          <string>acquire continuously</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QPushButton" name="andor_ccd_acq_bg_pushButton">
+         <property name="text">
+          <string>acq bg</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="1">
+        <widget class="QPushButton" name="andor_ccd_abort_bg_pushButton">
+         <property name="text">
+          <string>abort bg</string>
+         </property>
+        </widget>
+       </item>
+       <item row="6" column="2">
+        <widget class="QCheckBox" name="andor_ccd_bgsub_checkBox">
+         <property name="text">
+          <string>bg subtract</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>

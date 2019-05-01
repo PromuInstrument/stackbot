@@ -11,7 +11,6 @@ class OOSpecLive(Measurement):
     name = "oo_spec_live"
     
     def setup(self):
-        
         self.display_update_period = 0.050 #seconds
         self.hw = self.app.hardware['ocean_optics_spec']
         
@@ -76,20 +75,22 @@ class OOSpecLive(Measurement):
         if self.settings['continuous']:
             while not self.interrupt_measurement_called:    
                 self.hw.acquire_spectrum()
+                self.wls = self.hw.wavelengths
+                self.spectrum = self.hw.get_spectrum()
         else:
             self.hw.acquire_spectrum()
+            self.wls = self.hw.wavelengths
+            self.spectrum = self.hw.get_spectrum()
             if self.settings['save_h5']:
-                #print('Insert save h5 function here.')
                 self.save_data(self)
                 
     
     def update_display(self):
-        spec = self.hw.get_spectrum()
+        spec = np.array(self.spectrum)
         
+        spec[self.hw.get_dark_indices()] = np.nan
         if spec.sum() is None:
             print('spec sum not a number')
-            
-        spec[self.hw.get_dark_indices()] = np.nan
 
         if self.settings['bg_subtract']:
             spec = spec - self.bg_spec
@@ -108,5 +109,5 @@ class OOSpecLive(Measurement):
         with h5_io.h5_base_file(self.app,  fname = fname + ".h5") as H:
                 print("Saving " + fname + ".h5")
                 M = h5_io.h5_create_measurement_group(measurement=self, h5group=H)
-                M.create_dataset('spectrum', data=self.hw.spectrum, compression='gzip')
-                M.create_dataset('wavelengths',data=self.hw.wavelengths, compression='gzip')
+                M.create_dataset('spectrum', data=self.spectrum, compression='gzip')
+                M.create_dataset('wavelengths',data=self.wavelengths, compression='gzip')

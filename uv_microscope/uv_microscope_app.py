@@ -1,11 +1,16 @@
 from ScopeFoundry import BaseMicroscopeApp
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
-from qtpy.QtWidgets import QVBoxLayout
+from qtpy.QtWidgets import QVBoxLayout, QPushButton, QDoubleSpinBox
 import numpy as np
+from ScopeFoundry.helper_funcs import replace_widget_in_layout
 
 class UVMicroscopeApp(BaseMicroscopeApp):
 
     name = 'uv_microscope'
+    
+    def __init__(self, *args, **kwargs):
+        BaseMicroscopeApp.__init__(self)
+        
     
     def setup(self):
         # - renamed libiomp5md.dll to libiomp5md.dll.bak in Spinnaker
@@ -28,6 +33,18 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorlabs_dc4100 import ThorlabsDC4100HW
         led_ctrl = self.add_hardware(ThorlabsDC4100HW(self))
         
+        from ScopeFoundryHW.andor_camera import AndorCCDHW
+        self.add_hardware(AndorCCDHW(self))
+        
+        from ScopeFoundryHW.andor_spec.andor_spec_hw import AndorShamrockSpecHW
+        self.add_hardware(AndorShamrockSpecHW(self))
+        
+        from ScopeFoundryHW.lakeshore_331 import Lakeshore331HW
+        self.add_hardware(Lakeshore331HW(self))
+        
+        from ScopeFoundryHW.pygrabber_camera import PyGrabberCameraHW
+        pygrabhw = self.add_hardware(PyGrabberCameraHW(self))
+        
 #         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW, PowerMeterOptimizerMeasure
 #         self.add_hardware(ThorlabsPowerMeterHW(self))
 #         self.add_measurement(PowerMeterOptimizerMeasure(self))
@@ -42,6 +59,9 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.oceanoptics_spec import OOSpecLive, OOSpecOptimizerMeasure
         oo_spec_measure = self.add_measurement(OOSpecLive(self))
         oo_spec_opt = self.add_measurement(OOSpecOptimizerMeasure(self))
+        
+        from ScopeFoundryHW.andor_camera import AndorCCDReadoutMeasure
+        self.add_measurement(AndorCCDReadoutMeasure)
            
         from confocal_measure.oceanoptics_asi_hyperspec_scan import OOHyperSpecASIScan
         oo_scan = self.add_measurement(OOHyperSpecASIScan(self))
@@ -49,25 +69,56 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.flircam import FlirCamLiveMeasure
         flircam = self.add_measurement(FlirCamLiveMeasure(self))
         
+        from confocal_measure.andor_asi_hyperspec_scan import AndorAsiHyperSpec2DScan
+        andor_scan = self.add_measurement(AndorAsiHyperSpec2DScan(self))
+        
+        from ScopeFoundryHW.lakeshore_331 import LakeshoreMeasure
+        self.add_measurement(LakeshoreMeasure(self))
+        
+        from ScopeFoundryHW.pygrabber_camera import PyGrabberCameraLiveMeasure
+        pygrab = self.add_measurement(PyGrabberCameraLiveMeasure(self))
+        
         ###### Quickbar connections #################################
         Q = self.quickbar
          
-        # 2D Scan Area
-        oo_scan.settings.h0.connect_to_widget(Q.h0_doubleSpinBox)
-        oo_scan.settings.h1.connect_to_widget(Q.h1_doubleSpinBox)
-        oo_scan.settings.v0.connect_to_widget(Q.v0_doubleSpinBox)
-        oo_scan.settings.v1.connect_to_widget(Q.v1_doubleSpinBox)
-        oo_scan.settings.h_span.connect_to_widget(Q.hspan_doubleSpinBox)
-        oo_scan.settings.v_span.connect_to_widget(Q.vspan_doubleSpinBox)
-        Q.center_pushButton.clicked.connect(oo_scan.center_on_pos)
+        # 2D Scan Area - Ocean Optics
+        oo_scan.settings.h_span.connect_to_widget(Q.oo_scan_hspan_doubleSpinBox)
+        oo_scan.settings.v_span.connect_to_widget(Q.oo_scan_vspan_doubleSpinBox)
+        oo_scan.settings.save_h5.connect_to_widget(Q.oo_scan_save_h5_checkBox)
+        Q.oo_scan_center_pushButton.clicked.connect(oo_scan.center_on_pos)
+        Q.oo_scan_center_view_pushButton.clicked.connect(oo_scan.center_view_on_pos)
+        Q.oo_scan_start_pushButton.clicked.connect(oo_scan.operations['start'])
+        Q.oo_scan_interrupt_pushButton.clicked.connect(oo_scan.operations['interrupt'])
+        Q.oo_scan_show_UI_pushButton.clicked.connect(oo_scan.operations['show_ui'])
+                     
         scan_steps = [5e-3, 3e-3, 1e-3, 5e-4]
         scan_steps_labels = ['5.0 um','3.0 um','1.0 um','0.5 um']
-        Q.scan_step_comboBox.addItems(scan_steps_labels)
-        def apply_scan_step_value():
-            oo_scan.settings.dh.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
-            oo_scan.settings.dv.update_value(scan_steps[Q.scan_step_comboBox.currentIndex()])
-        Q.scan_step_comboBox.currentIndexChanged.connect(apply_scan_step_value)
-         
+        Q.oo_scan_step_comboBox.addItems(scan_steps_labels)
+        def apply_oo_scan_step_value():
+            oo_scan.settings.dh.update_value(scan_steps[Q.oo_scan_step_comboBox.currentIndex()])
+            oo_scan.settings.dv.update_value(scan_steps[Q.oo_scan_step_comboBox.currentIndex()])
+        Q.oo_scan_step_comboBox.currentIndexChanged.connect(apply_oo_scan_step_value)
+        oo_scan.settings.dh.connect_to_widget(Q.oo_scan_step_doubleSpinBox)
+        
+        # 2D Scan Area - Andor
+        andor_scan.settings.h_span.connect_to_widget(Q.andor_scan_hspan_doubleSpinBox)
+        andor_scan.settings.v_span.connect_to_widget(Q.andor_scan_vspan_doubleSpinBox)
+        andor_scan.settings.save_h5.connect_to_widget(Q.andor_scan_save_h5_checkBox)
+        Q.andor_scan_center_pushButton.clicked.connect(andor_scan.center_on_pos)
+        Q.andor_scan_center_view_pushButton.clicked.connect(andor_scan.center_view_on_pos)
+        Q.andor_scan_start_pushButton.clicked.connect(andor_scan.operations['start'])
+        Q.andor_scan_interrupt_pushButton.clicked.connect(andor_scan.operations['interrupt'])
+        Q.andor_scan_show_UI_pushButton.clicked.connect(andor_scan.operations['show_ui'])
+                     
+        scan_steps = [5e-3, 3e-3, 1e-3, 5e-4]
+        scan_steps_labels = ['5.0 um','3.0 um','1.0 um','0.5 um']
+        Q.andor_scan_step_comboBox.addItems(scan_steps_labels)
+        def apply_andor_scan_step_value():
+            andor_scan.settings.dh.update_value(scan_steps[Q.andor_scan_step_comboBox.currentIndex()])
+            andor_scan.settings.dv.update_value(scan_steps[Q.andor_scan_step_comboBox.currentIndex()])
+        Q.andor_scan_step_comboBox.currentIndexChanged.connect(apply_andor_scan_step_value)
+        andor_scan.settings.dh.connect_to_widget(Q.andor_scan_step_doubleSpinBox)
+           
         # ASI Stage
         asi_stage.settings.x_position.connect_to_widget(Q.x_pos_doubleSpinBox)
         Q.x_up_pushButton.clicked.connect(asi_control.x_up)
@@ -140,7 +191,33 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         led_ctrl.settings.get_lq('LED2 wavelength').connect_to_widget(Q.led2_lineEdit)
         led_ctrl.settings.get_lq('LED2 brightness').connect_to_widget(Q.led2_doubleSpinBox)
         led_ctrl.settings.get_lq('LED2 brightness').connect_to_widget(Q.led2_horizontalSlider)
-
+        
+        # Pygrabber
+        pygrabhw.settings.connected.connect_to_widget(Q.pygrabber_connect_checkBox)
+        pygrab.settings.activation.connect_to_widget(Q.pygrabber_acquire_checkBox)
+        Q.pygrabber_show_ui_pushButton.clicked.connect(pygrab.operations['show_ui'])
+        
+        # Spectrometer
+        aspec = self.hardware['andor_spec']
+        aspec.settings.center_wl.connect_to_widget(Q.andor_spec_center_wl_doubleSpinBox)
+        #aspec.settings.exit_mirror.connect_to_widget(Q.acton_spec_exitmirror_comboBox)
+        aspec.settings.grating_name.connect_to_widget(Q.andor_spec_grating_lineEdit)        
+        
+        # Andor CCD
+        andor = self.hardware['andor_ccd']
+        andor.settings.exposure_time.connect_to_widget(Q.andor_ccd_int_time_doubleSpinBox)
+        andor.settings.em_gain.connect_to_widget(Q.andor_ccd_emgain_doubleSpinBox)
+        andor.settings.temperature.connect_to_widget(Q.andor_ccd_temp_doubleSpinBox)
+        andor.settings.ccd_status.connect_to_widget(Q.andor_ccd_status_label)
+        andor.settings.shutter_open.connect_to_widget(Q.andor_ccd_shutter_open_checkBox)
+        andor.settings.output_amp.connect_to_widget(Q.andor_ccd_output_amp_comboBox)
+        
+        # Andor Readout
+        aro = self.measurements['andor_ccd_readout']
+        aro.settings.bg_subtract.connect_to_widget(Q.andor_ccd_bgsub_checkBox)
+        Q.andor_ccd_acquire_cont_checkBox.stateChanged.connect(aro.start_stop)
+        Q.andor_ccd_acq_bg_pushButton.clicked.connect(aro.acquire_bg_start)
+        Q.andor_ccd_read_single_pushButton.clicked.connect(aro.acquire_single_start)
         
         '''
         # Thorcam
@@ -164,5 +241,5 @@ class UVMicroscopeApp(BaseMicroscopeApp):
 
 if __name__ == '__main__':
     import sys
-    app = UVMicroscopeApp(sys.argv)
+    app = UVMicroscopeApp(sys.argv, oo_not_andor=True)
     sys.exit(app.exec_())

@@ -5,25 +5,20 @@ import pyqtgraph as pg
 from .scalebars import ConfocalScaleBar
 
 
-class HyperSpecH5View(HyperSpectralBaseView):
+class HyperSpec3DH5View(HyperSpectralBaseView):
 
-    name = 'hyperspec_h5'
+    name = 'hyperspec_3d_h5'
 
-    supported_measurements = ['m4_hyperspectral_2d_scan',
-                              'andor_hyperspec_scan',
-                              'hyperspectral_2d_scan',
-                              'fiber_winspec_scan',
-                              'hyperspec_picam_mcl.h5',
-                              'asi_hyperspec_scan',
-                              'asi_OO_hyperspec_scan',
-                              'oo_asi_hyperspec_scan',
-                              'andor_asi_hyperspec_scan',]
+    supported_measurements = ['oo_asi_hyperspec_3d_scan',
+                              'andor_asi_hyperspec_3d_scan',]
 
     def scan_specific_setup(self):
         pass
 
     def setup(self):
         self.settings.New('sample', dtype=str, initial='')
+        self.settings.New('z_slice', dtype=float, choices=[0.0], initial=0.0)
+        self.settings.z_slice.updated_choice_index_value.connect(self.on_update_zslice_choice)
         HyperSpectralBaseView.setup(self)
 
     def is_file_supported(self, fname):
@@ -34,7 +29,10 @@ class HyperSpecH5View(HyperSpectralBaseView):
         if hasattr(self, 'dat'):
             self.dat.close()
             del self.dat
-
+        
+        if hasattr(self, 'spec_map'):
+            del self.spec_map    
+        
         if hasattr(self,'scalebar'):
             self.imview.getView().removeItem(self.scalebar)
             del self.scalebar
@@ -49,18 +47,27 @@ class HyperSpecH5View(HyperSpectralBaseView):
             if map_name in self.M:
                 self.spec_map = np.array(self.M[map_name])
                 self.h_span = self.M['settings'].attrs['h_span']
+                self.z_array = np.array(self.M['z_array'])
                 units = self.M['settings/units'].attrs['h_span']
                 if units == 'mm':
                     self.h_span = self.h_span*1e-3
-                if len(self.spec_map.shape) == 4:
-                    self.spec_map = self.spec_map[0, :, :, :]
+                    self.z_span = self.z_array*1e-3
+                    self.settings.z_slice.change_unit('mm')
+                
                 if 'dark_indices' in list(self.M.keys()):
-                    self.spec_map = np.delete(self.spec_map,
-                                              self.M['dark_indices'],
-                                              -1)
-
-        self.hyperspec_data = self.spec_map
+                    print('dark indices found')
+                    dark_indices = self.M['dark_indices']
+                    if dark_indices.len() == 0:
+                        self.spec_map = np.delete(self.spec_map, list(dark_indices.shape), -1)
+                    else:
+                        self.spec_map = np.delete(self.spec_map, np.array(dark_indices), -1)
+                else: 
+                    print('no dark indices')
+                    
+        self.hyperspec_data = self.spec_map[0,:,:,:]
         self.display_image = self.hyperspec_data.sum(axis=-1)
+        self.settings.z_slice.change_choice_list(self.z_array.tolist())
+        self.settings.z_slice.update_value(self.z_array[0])
         self.spec_x_array = np.arange(self.hyperspec_data.shape[-1])
 
         for x_axis_name in ['wavelength', 'wls', 'wave_numbers',
@@ -68,15 +75,31 @@ class HyperSpecH5View(HyperSpectralBaseView):
             if x_axis_name in self.M:
                 x_array = np.array(self.M[x_axis_name])
                 if 'dark_indices' in list(self.M.keys()):
-                    x_array = np.delete(x_array,
-                                        np.array(self.M['dark_indices']),
-                                        0)
+                    dark_indices = self.M['dark_indices']
+                    # The following is to read a dataset I initialized incorrectly for dark pixels
+                    # This can be replaced with the else statement entirely now that the measurement
+                    # is fixed, but I still have a long measurement that will benefit from this.   
+                    if dark_indices.len() == 0:
+                        x_array = np.delete(x_array, list(dark_indices.shape), 0)
+                    else:
+                        x_array = np.delete(x_array, np.array(dark_indices), 0)
                 self.add_spec_x_array(x_axis_name, x_array)
                 self.x_axis.update_value(x_axis_name)
                 
         sample = self.dat['app/settings'].attrs['sample']
         self.settings.sample.update_value(sample)
-
+        
+    def on_update_zslice_choice(self, index):
+        if hasattr(self, 'spec_map'):
+            self.hyperspec_data = self.spec_map[index,:,:,:]
+            self.display_images['default'] = self.hyperspec_data
+            self.display_images['sum'] = self.hyperspec_data.sum(axis=-1)
+            self.spec_x_arrays['default'] = self.spec_x_array
+            self.spec_x_arrays['index'] = np.arange(self.hyperspec_data.shape[-1])
+            self.recalc_bandpass_map()
+            self.recalc_median_map()
+            self.update_display()
+            
     def update_display(self):
         if hasattr(self, 'scalebar'):
             self.imview.getView().removeItem(self.scalebar)

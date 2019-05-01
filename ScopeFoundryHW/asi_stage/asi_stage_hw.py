@@ -95,15 +95,15 @@ class ASIStageHW(HardwareComponent):
         S.backlash_xy.connect_to_hardware(
             write_func = self.stage.set_backlash_xy
             )
+        S.backlash_xy.write_to_hardware()
         S.speed_xy.connect_to_hardware(
             write_func = self.set_speed_xy
             )
-        S.backlash_xy.connect_to_hardware(
-            write_func = self.stage.set_backlash_xy
-            )
+        S.speed_xy.write_to_hardware()
         S.acc_xy.connect_to_hardware(
             write_func = self.set_acc_xy
             )
+        S.acc_xy.write_to_hardware()
 
         
         if self.enable_z:
@@ -117,9 +117,12 @@ class ASIStageHW(HardwareComponent):
             S.backlash_z.connect_to_hardware(
                 write_func = self.stage.set_backlash_z
                 )
+            S.backlash_z.write_to_hardware()
         
         S.x_position.read_from_hardware()
         S.y_position.read_from_hardware()
+        
+        
         
         # if other observer is actively reading position,
         # don't update as frequently in update_thread
@@ -243,6 +246,9 @@ class ASIStageHW(HardwareComponent):
     
     def is_busy_xy(self):
         return self.attempt_10_times(self.stage.is_busy_xy)
+    
+    def is_busy_z(self):
+        return self.attempt_10_times(self.stage.is_busy_z)
     
     def correct_backlash(self,backlash):
         self.move_x_rel(-backlash)
