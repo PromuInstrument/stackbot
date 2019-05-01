@@ -66,8 +66,8 @@ class HyperSpecPicam2DScan(MCLStage2DSlowScan):
         #H['spec_map'] = self.h_array
         
         print(self.name, "post_scan_cleanup")
-        import scipy.io
-        scipy.io.savemat(file_name=self.h5_filename +".mat", mdict=dict(spec_map=self.spec_map))
+        #import scipy.io
+        #scipy.io.savemat(file_name=self.h5_filename +".mat", mdict=dict(spec_map=self.spec_map))
 
 
 
