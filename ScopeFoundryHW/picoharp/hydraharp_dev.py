@@ -25,72 +25,79 @@ class HydraHarp400(object):
         
         self.hhlib = ctypes.WinDLL("hhlib64.dll")
 
-        # HH_GetLibraryVersion
-        lib_version = create_string_buffer(8)
-        self._err(self.hhlib.HH_GetLibraryVersion(lib_version))
-        self.lib_version = lib_version.value
-        if self.debug: print("HHLib Version: '%s'" % self.lib_version)
+        try:
+
+            # HH_GetLibraryVersion
+            lib_version = create_string_buffer(8)
+            self._err(self.hhlib.HH_GetLibraryVersion(lib_version))
+            self.lib_version = lib_version.value
+            if self.debug: print("HHLib Version: '%s'" % self.lib_version)
+            
+            # HH_OpenDevice
+            hw_serial = create_string_buffer(8)
+            with self.lock:
+                self._err(self.hhlib.HH_OpenDevice(self.devnum, hw_serial)) 
+            self.hw_serial = hw_serial.value
+            
         
-        # HH_OpenDevice
-        hw_serial = create_string_buffer(8)
-        with self.lock:
-            self._err(self.hhlib.HH_OpenDevice(self.devnum, hw_serial)) 
-        self.hw_serial = hw_serial.value
-        
+            # HH_Initialize
+            mode_id_dict = {"HIST":0, "T2":2, "T3":3, "CONT": 8}
+            refsrc_id_dict = {'internal':0, 'external':1}
+            with self.lock:
+                self._err(self.hhlib.HH_Initialize(self.devnum, 
+                                                   mode_id_dict[self.mode],
+                                                   refsrc_id_dict[self.refsource]))
     
-        # HH_Initialize
-        mode_id_dict = {"HIST":0, "T2":2, "T3":3, "CONT": 8}
-        refsrc_id_dict = {'internal':0, 'external':1}
-        with self.lock:
-            self._err(self.hhlib.HH_Initialize(self.devnum, 
-                                               mode_id_dict[self.mode],
-                                               refsrc_id_dict[self.refsource]))
-
-        # HH_GetHardwareInfo
-        hw_model   = create_string_buffer(16)
-        hw_partno  = create_string_buffer(8)
-        with self.lock:
-            self._err(self.hhlib.HH_GetHardwareInfo(self.devnum,hw_model,hw_partno)) #/*this is only for information*/
-        self.hw_model   = hw_model.value
-        self.hw_partno  = hw_partno.value
-        if self.debug: print("Found Model %s Part No %s" % (self.hw_model, self.hw_partno))
+            # HH_GetHardwareInfo
+            hw_model   = create_string_buffer(16)
+            hw_partno  = create_string_buffer(8)
+#             with self.lock:
+#                 self._err(self.hhlib.HH_GetHardwareInfo(self.devnum,hw_model,hw_partno)) #/*this is only for information*/
+#             self.hw_model   = hw_model.value
+#             self.hw_partno  = hw_partno.value
+#             if self.debug: print("Found Model %s Part No %s" % (self.hw_model, self.hw_partno))
+            
+            # HH_GetBaseResolution
+            r = c_double()
+            s = c_int()
+            with self.lock:
+                self._err(self.hhlib.HH_GetBaseResolution(self.devnum, byref(r), byref(s)))
+            self.base_resolution = r.value # in picoseconds
+            self.max_bin_steps = s.value
+            
+            # HH_GetNumOfInputChannels
+            x = c_int()
+            self._err(self.hhlib.HH_GetNumOfInputChannels(self.devnum, byref(x)))
+            self.num_input_channels = x.value
+            
+            # HH_GetNumOfModules
+            x = c_int()
+            self._err(self.hhlib.HH_GetNumOfModules(self.devnum, byref(x)))
+            self.num_modules = x.value
+            
+            ## SKIP: HH_GetModuleInfo
+            ## SKIP: HH_GetModuleIndex
+            ## SKIP: HH_GetHardwareDebugInfo
+            
+            # HH_Calibrate
+            if self.debug: print( "HydraHarp Calibrating..." )
+            with self.lock:
+                self._err(self.hhlib.HH_Calibrate(self.devnum) )
+    
+    
+            #self.CFDLevel     = [None,]*self.num_input_channels
+            #self.CFDZeroCross = [None,]*self.num_input_channels
+    
+            
+            ## HIST mode
+            if mode == 'HIST':
+                self.hist_len = self.SetHistoLen() #default length
+                self.hist_data = [None]*self.num_input_channels
         
-        # HH_GetBaseResolution
-        r = c_double()
-        s = c_int()
-        with self.lock:
-            self._err(self.hhlib.HH_GetBaseResolution(self.devnum, byref(r), byref(s)))
-        self.base_resolution = r.value # in picoseconds
-        self.max_bin_steps = s.value
-        
-        # HH_GetNumOfInputChannels
-        x = c_int()
-        self._err(self.hhlib.HH_GetNumOfInputChannels(self.devnum, byref(x)))
-        self.num_input_channels = x.value
-        
-        # HH_GetNumOfModules
-        x = c_int()
-        self._err(self.hhlib.HH_GetNumOfModules(self.devnum, byref(x)))
-        self.num_modules = x.value
-        
-        ## SKIP: HH_GetModuleInfo
-        ## SKIP: HH_GetModuleIndex
-        ## SKIP: HH_GetHardwareDebugInfo
-        
-        # HH_Calibrate
-        if self.debug: print( "HydraHarp Calibrating..." )
-        with self.lock:
-            self._err(self.hhlib.HH_Calibrate(self.devnum) )
-
-
-        #self.CFDLevel     = [None,]*self.num_input_channels
-        #self.CFDZeroCross = [None,]*self.num_input_channels
-
-        
-        ## HIST mode
-        if mode == 'HIST':
-            self.hist_len = self.SetHistoLen() #default length
-            self.hist_data = [None]*self.num_input_channels
+        except Exception as err:
+            print("Failed to connect!!!", err)
+            self.close()
+            raise err
 
     def close(self):
         with self.lock:
@@ -100,7 +107,7 @@ class HydraHarp400(object):
         if retcode < 0:
             err_buffer = create_string_buffer(40)
             self.hhlib.HH_GetErrorString(err_buffer, retcode)
-            self.err_message = err_buffer.value
+            self.err_message = err_buffer.value.decode()
             raise IOError("HydraHarp Error {}: {}".format(retcode, self.err_message))
         return retcode
 
@@ -224,20 +231,13 @@ class HydraHarp400(object):
     
     def read_histogram_data(self, channel=0, clear_after=False):
         channel = int(channel)
-        if self.debug: print( "read_histogram_data channel %i" % channel)
-                
+        if self.debug: print( "read_histogram_data channel %i" % channel)                
         self.hist_data[channel] = numpy.zeros(self.hist_len, dtype=numpy.uint32)
-        if self.debug: print( "read_histogram_data channel %i before" %channel, self.hist_data[channel].sum())
-        print(self.hist_data[channel].ctypes.data_as(ctypes.POINTER(c_uint32)))
-        #counts = (ctypes.c_uint * self.hist_len)()
-
         with self.lock:
             self._err(self.hhlib.HH_GetHistogram(self.devnum, 
                                         self.hist_data[channel].ctypes.data_as(ctypes.POINTER(c_uint32)), 
-                                        #byref(counts),
                                         channel,
                                         int(bool(clear_after))))
-        if self.debug: print( "read_histogram_data channel %i after" % channel, numpy.sum(self.hist_data[channel]))
         return self.hist_data[channel]
     
     def GetResolution(self):

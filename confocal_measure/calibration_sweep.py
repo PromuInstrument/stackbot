@@ -40,6 +40,7 @@ class CalibrationSweep(Measurement):
         
         self.spectra = []
         self.center_wls = [] #center wls read from spectrometer
+        self.wls = [] #intended for intensity calibration 
         
         N = len(self.center_wl_range.array)
         i = 0
@@ -58,11 +59,16 @@ class CalibrationSweep(Measurement):
             
             self.spectra.append(self.spec_readout.spec)
             self.center_wls.append(self.spec_center_wl.val)
-
-
+            try:
+                self.wls.append(self.spec_readout.get_wavelengths())
+            except:
+                print(self.spec_readout, 'has no get_wavelengths() method: wls will not be saved')
+                
         self.h5_file = h5_io.h5_base_file(self.app, measurement=self )
         self.h5_file.attrs['time_id'] = self.t0
         H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
         H['spectra'] = np.array(self.spectra)
         H['center_wls'] = np.array(self.center_wls)
+        H['wls'] = np.array(self.wls) #intended for intensity calibration 
+        
         self.h5_file.close()

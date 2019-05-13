@@ -4,8 +4,10 @@ import numpy as np
 import time
 import pyqtgraph as pg
 from ScopeFoundry import h5_io
+from matplotlib.backends.qt_compat import QtWidgets
+import warnings
 
-class HydrHarpHistogramMeasure(Measurement):    
+class HydraHarpHistogramMeasure(Measurement):    
     name = "hydraharp_histogram"
     
     hardware_requirements = ['hydraharp']
@@ -17,14 +19,13 @@ class HydrHarpHistogramMeasure(Measurement):
 
         S.New('save_h5', dtype=bool, initial=True)
         S.New('continuous', dtype=bool, initial=False)
-        S.New('use_calc_hist_chans', dtype=bool, initial=True)
+        S.New('auto_HistogramChannels', dtype=bool, initial=True)
         
         # hardware
         hw = self.hw = self.app.hardware['hydraharp']
-
         
         # UI 
-        self.ui_filename = sibling_path(__file__,"picoharp_hist_measure.ui")
+        self.ui_filename = sibling_path(__file__,"hydraharp_hist_measure.ui")
         self.ui = load_qt_ui_file(self.ui_filename)
         self.ui.setWindowTitle(self.name)
         
@@ -36,13 +37,10 @@ class HydrHarpHistogramMeasure(Measurement):
         
         S.continuous.connect_to_widget(self.ui.continuous_checkBox)
         
-        S.use_calc_hist_chans.connect_to_widget(self.ui.use_calc_hist_chans_checkBox)
+        S.auto_HistogramChannels.connect_to_widget(self.ui.auto_HistogramChannels_checkBox)
         hw.settings.Tacq.connect_to_widget(self.ui.picoharp_tacq_doubleSpinBox)
         hw.settings.Binning.connect_to_widget(self.ui.Binning_comboBox)
-        #hw.settings.histogram_channels.connect_to_widget(self.ui.histogram_channels_doubleSpinBox)
-        #hw.settings.count_rate0.connect_to_widget(self.ui.ch0_doubleSpinBox)
-        #hw.settings.count_rate1.connect_to_widget(self.ui.ch1_doubleSpinBox)
-        
+        hw.settings.HistogramChannels.connect_to_widget(self.ui.HistogramChannels_doubleSpinBox)        
         
         S.save_h5.connect_to_widget(self.ui.save_h5_checkBox)
 
@@ -50,16 +48,20 @@ class HydrHarpHistogramMeasure(Measurement):
     def setup_figure(self):
         self.graph_layout = pg.GraphicsLayoutWidget()    
         self.plot = self.graph_layout.addPlot()
-        
-        
-        self.infline = pg.InfiniteLine(movable=False, angle=90, label='stored_hist_chans', 
-                       labelOpts={'position':0.8, 'color': (200,200,100), 'fill': (200,200,200,50), 'movable': True}) 
-        self.plot.addItem(self.infline)
-        
+           
+    
         #self.plotdata = self.plot.plot(pen='r')
         self.plot.setLogMode(False, True)
         self.plot.enableAutoRange('y',True)
         self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
+        
+        channels_layout = self.ui.channels.layout()
+        for chan in ['SyncRate','CountRate0', 'CountRate1']:
+            label = QtWidgets.QLabel(chan)
+            sp = pg.widgets.SpinBox.SpinBox()
+            getattr(self.hw.settings, chan).connect_to_widget(sp)
+            channels_layout.addRow(label,sp)
+        
                 
     def run(self):
         
@@ -68,8 +70,9 @@ class HydrHarpHistogramMeasure(Measurement):
         self.hw = hw = self.app.hardware['hydraharp']
         Tacq = hw.settings['Tacq']
 
-#         if self.settings['use_calc_hist_chans']:
-#             self.ph_hw.settings['histogram_channels'] = self.hw.calc_num_hist_chans() 
+        if self.settings['auto_HistogramChannels']:
+            self.hw.update_HistogramChannels()
+            
         
         self.sleep_time = min((max(0.1*Tacq, 0.010), 0.100))
         self.t0 = time.time()
@@ -87,15 +90,13 @@ class HydrHarpHistogramMeasure(Measurement):
                     self.hist_data = hw.read_histogram_data(clear_after=False)
                     time.sleep(self.sleep_time)
             hw.stop_histogram()
-            #self.hist_data = hw.read_histogram_data(clear_after=True)
+            self.hist_data = hw.read_histogram_data(clear_after=True)
         
             if not self.settings['continuous']:
                 break
             
     
-        #self.data_slice = slice(0,self.ph_hw.settings['histogram_channels'])
-        #histogram_data = self.hist_data[:, self.data_slice]
-        #time_array = self.ph.time_array[self.data_slice]
+        data_slice = slice(0,self.hw.settings['HistogramChannels'])
         elapsed_meas_time = hw.settings.ElapsedMeasTime.read_from_hardware()
         
         if self.settings['save_h5']:
@@ -103,25 +104,30 @@ class HydrHarpHistogramMeasure(Measurement):
             self.h5_file.attrs['time_id'] = self.t0
             
             H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
-            #H['time_histogram'] = histogram_data
-            #H['time_array'] = time_array
+            H['time_histogram'] = self.hist_data[:,data_slice]
+            H['time_array'] = self.hw.time_array[data_slice]
             H['elapsed_meas_time'] = elapsed_meas_time
             
             self.h5_file.close()
 
                    
     def update_display(self):
-        
+        time_array = self.hw.time_array*1e-12        
         if not self.display_ready:
             self.plot.clear()
             self.plot.setLabel('bottom', text="Time", units='s')
             self.plotlines = []
             for i in range(self.hw.n_channels):
-                self.plotlines.append(self.plot.plot(label=i))
+                self.plotlines.append(self.plot.plot(label = i, name='histogram' + str(i)))
+
+            #Marker in time_array.
+            pos_x = time_array[self.hw.settings['HistogramChannels']-1]                        
+            self.infline = pg.InfiniteLine(movable=False, angle=90, label='Histogram Channels stored', 
+                           labelOpts={'position':0.95, 'color':(200,200,100), 'fill':(200,200,200,50), 'movable':True})
+            self.plot.addItem(self.infline)                    
+            self.infline.setPos([pos_x,0])
+            self.plot.setRange(xRange=(0,1.0*pos_x))
             self.display_ready = True
-                        
-        #pos_x = time_array[self.ph_hw.settings['histogram_channels']]
-        #self.plot.setRange(xRange=(0,1.2*pos_x))
-        #self.infline.setPos([pos_x,0])
+            
         for i in range(self.hw.n_channels):      
-            self.plotlines[i].setData(self.hw.time_array*1e-12, self.hist_data[i,:]+1)
+            self.plotlines[i].setData(time_array, self.hist_data[i,:]+1)

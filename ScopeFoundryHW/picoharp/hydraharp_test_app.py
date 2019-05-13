@@ -1,7 +1,7 @@
 from ScopeFoundry.base_app import BaseMicroscopeApp
 from ScopeFoundryHW.picoharp.hydraharp_hw import HydraHarpHW
 from ScopeFoundryHW.picoharp.hydraharp_optimizer import HydraHarpOptimizerMeasure
-from ScopeFoundryHW.picoharp.hydraharp_hist_measure import HydrHarpHistogramMeasure
+from ScopeFoundryHW.picoharp.hydraharp_hist_measure import HydraHarpHistogramMeasure
 
 class HydraHarpTestApp(BaseMicroscopeApp):
     
@@ -11,7 +11,7 @@ class HydraHarpTestApp(BaseMicroscopeApp):
         
         self.add_hardware(HydraHarpHW(self))
         self.add_measurement(HydraHarpOptimizerMeasure(self))
-        self.add_measurement(HydrHarpHistogramMeasure(self))
+        self.add_measurement(HydraHarpHistogramMeasure(self))
 
 app = HydraHarpTestApp()
 app.exec_()
