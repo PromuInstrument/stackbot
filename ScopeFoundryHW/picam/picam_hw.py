@@ -37,6 +37,10 @@ class PicamHW(HardwareComponent):
                     enum_obj = getattr(picam_ctypes, enum_name)
                     choice_names = enum_obj.bysname.keys()
                     self.add_logged_quantity(name=param.short_name, dtype=str, choices=choice_names)
+                    
+                    
+        # Customize auto-generated parameters
+        self.settings.ExposureTime.change_unit('ms')
 
 
         # operations
@@ -69,6 +73,8 @@ class PicamHW(HardwareComponent):
                 
         for lqname in ['roi_x', 'roi_w', 'roi_x_bin', 'roi_y', 'roi_h', 'roi_y_bin']:
             self.settings.get_lq(lqname).updated_value.connect(self.write_roi)
+            
+        self.write_roi()
 
 
     def write_roi(self, a=None):
