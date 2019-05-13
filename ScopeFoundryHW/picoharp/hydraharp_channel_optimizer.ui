@@ -42,7 +42,7 @@
        <item>
         <layout class="QVBoxLayout" name="control">
          <item>
-          <widget class="QGroupBox" name="control_groupBox">
+          <widget class="QGroupBox" name="Connection_groupBox">
            <property name="maximumSize">
             <size>
              <width>16777215</width>
@@ -328,7 +328,7 @@
        <item>
         <layout class="QVBoxLayout" name="timing0">
          <item>
-          <widget class="QGroupBox" name="verticalGroupBox">
+          <widget class="QGroupBox" name="Channel0_GroupBox">
            <property name="enabled">
             <bool>true</bool>
            </property>
@@ -417,7 +417,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QGroupBox" name="gridGroupBox">
+          <widget class="QGroupBox" name="Channel1_GroupBox">
            <property name="enabled">
             <bool>true</bool>
            </property>
@@ -502,9 +502,9 @@
      </widget>
     </item>
     <item>
-     <widget class="QGroupBox" name="optimizer_GroupBox">
+     <widget class="QGroupBox" name="channel_optimizer_GroupBox">
       <property name="title">
-       <string>channel optimizer</string>
+       <string>Channel Optimizer</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
@@ -593,7 +593,20 @@
     </rect>
    </property>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
+  <widget class="QStatusBar" name="statusbar">
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="autoFillBackground">
+    <bool>false</bool>
+   </property>
+   <property name="sizeGripEnabled">
+    <bool>true</bool>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>
@@ -616,7 +629,7 @@
   <connection>
    <sender>connected_checkBox</sender>
    <signal>toggled(bool)</signal>
-   <receiver>verticalGroupBox</receiver>
+   <receiver>Channel0_GroupBox</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -632,7 +645,7 @@
   <connection>
    <sender>connected_checkBox</sender>
    <signal>toggled(bool)</signal>
-   <receiver>gridGroupBox</receiver>
+   <receiver>Channel1_GroupBox</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">

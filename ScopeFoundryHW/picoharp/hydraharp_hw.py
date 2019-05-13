@@ -1,6 +1,8 @@
 from ScopeFoundry.hardware import HardwareComponent
 import time
 import numpy as np
+import warnings
+
 
 class HydraHarpHW(HardwareComponent):
     
@@ -22,10 +24,9 @@ class HydraHarpHW(HardwareComponent):
         S.New("StopOnOverflow", dtype=bool)
         S.New("StopCount", dtype=int, initial=4294967295, vmin=1, vmax=4294967295)
         S.New("HistogramChannels", dtype=int, ro=False, vmin=0, vmax=2**16, initial=2**16, si=False)
-       
 
         S.New("Tacq", dtype=float, unit="s", si=True, initial=1, vmin=1e-3, vmax=100*60*60)
-        S.New("Binning", dtype=int, choices=[(str(x), x) for x in range(0,8)])
+        S.New("Binning", dtype=int, initial=2, choices=[(str(x), x) for x in range(0,8)])
         S.New("Resolution", dtype=int, unit="ps", ro=True, si=False)
         S.New("ElapsedMeasTime", dtype=float, unit="s", si=True)
 
@@ -37,7 +38,7 @@ class HydraHarpHW(HardwareComponent):
         S.New("CFDZeroCrossSync", dtype=int,  unit="mV", vmin=0, vmax=20, initial=10, si=False)
 
         S.New("SyncRate", dtype=int, ro=True, si=True, unit='Hz')
-        S.New("SyncPeriod", dtype=float, unit='ps')
+        S.New("SyncPeriod", dtype=float, unit='ps', ro=True, spinbox_decimals=6)
 
 
         # Channels
@@ -48,6 +49,7 @@ class HydraHarpHW(HardwareComponent):
             S.New("ChanOffset{}".format(i), dtype=int, unit='ps')
             
             S.New("CountRate{}".format(i), dtype=int, ro=True, vmin=0, vmax=100e6)
+
 
     def connect(self):
         from .hydraharp_dev import HydraHarp400
@@ -72,7 +74,7 @@ class HydraHarpHW(HardwareComponent):
                         dev.SetStopOverflow(stop_ofl=S['StopOnOverflow'], stopcount=stopcount))
         
         S.Binning.change_choice_list(tuple(range(0,dev.max_bin_steps)))
-        S.Binning.connect_to_hardware(write_func = self.set_binning)
+        S.Binning.connect_to_hardware(write_func = self.dev.SetBinning)
         S.Resolution.connect_to_hardware(read_func = self.dev.GetResolution)
         S.ElapsedMeasTime.connect_to_hardware(
             read_func= lambda dev=dev: 1e-3*dev.GetElapsedMeasTime())
@@ -128,12 +130,12 @@ class HydraHarpHW(HardwareComponent):
             S.get_lq("CountRate{}".format(i)).connect_to_hardware(
                 read_func = lambda chan=i, dev=dev:
                                 dev.GetCountRate(chan))
-    
-    def set_binning(self, binning):
-        self.dev.SetBinning(binning)
+            
         self.settings.Resolution.read_from_hardware()
+        S.Binning.add_listener(self.settings.Resolution.read_from_hardware)
         
-        
+                    
+                    
     def set_stop_overflow(self, overflow):
         self.dev.SetStopOverflow(self.settings["StopOnOverflow"], overflow)
         
@@ -151,7 +153,6 @@ class HydraHarpHW(HardwareComponent):
             self.dev.close()
             del self.dev
 
-    
     def threaded_update(self):
         self.settings.SyncRate.read_from_hardware()
         self.settings.ElapsedMeasTime.read_from_hardware()
@@ -159,9 +160,6 @@ class HydraHarpHW(HardwareComponent):
             lq = self.settings.get_lq("CountRate{}".format(i))
             lq.read_from_hardware()
         time.sleep(0.100)
-        
-        
-        
         
     def start_histogram(self):
         assert self.settings["Mode"] == "HIST"
@@ -184,3 +182,16 @@ class HydraHarpHW(HardwareComponent):
     
     def check_done_scanning(self):
         return self.dev.check_done_scanning()
+    
+    def update_HistogramChannels(self):
+        '''sets HistogramChannels to minimum needed to cover the SyncPeriod'''
+        self.settings.Resolution.read_from_hardware()
+        S = self.settings
+        sync_period = 1.0/10#S['SyncRate']
+        HistogramChannels = int( np.ceil( sync_period/S['Resolution']*1e12 ) )
+        if HistogramChannels > S.HistogramChannels.vmax:
+            warnings.warn("Can not cover whole SyncPeriod with current Resolution: Increase Binning!", UserWarning)
+        else:
+            S['HistogramChannels'] = HistogramChannels
+        return S['HistogramChannels']
+    

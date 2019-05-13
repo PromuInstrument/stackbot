@@ -86,7 +86,7 @@ class HydraHarpOptimizerMeasure(Measurement):
         self.settings.history_len.connect_to_widget(self.ui.history_len_doubleSpinBox)
         
         self.graph_layout=pg.GraphicsLayoutWidget()
-        self.ui.optimizer_GroupBox.layout().addWidget(self.graph_layout)
+        self.ui.channel_optimizer_GroupBox.layout().addWidget(self.graph_layout)
 
         self.plot = self.graph_layout.addPlot(title="Hydraharp Channel Optimizer")
 
