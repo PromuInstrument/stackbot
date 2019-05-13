@@ -180,7 +180,7 @@ class HiPMicroscopeApp(BaseMicroscopeApp):
         self.hardware['mcl_xyz_stage'].settings['connected']=True
         #self.hardware['picam'].settings['connected']=True
         #time.sleep(0.5)
-        #self.hardware['picam'].settings['roi_y_bin'] = 100
+        self.hardware['picam'].settings['roi_y_bin'] = 100
         #self.hardware['picam'].commit_parameters()
         
         #self.hardware['acton_spectrometer'].settings['connected']=True
