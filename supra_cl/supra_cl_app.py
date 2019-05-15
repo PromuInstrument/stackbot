@@ -3,6 +3,7 @@ from ScopeFoundry import BaseMicroscopeApp
 
 import logging
 # logging.basicConfig(level='DEBUG')
+from qtpy import QtWidgets
 # logging.getLogger('').setLevel(logging.DEBUG)
 # logging.getLogger("ipykernel").setLevel(logging.WARNING)
 # logging.getLogger('PyQt4').setLevel(logging.WARNING)
@@ -112,6 +113,11 @@ class SupraCLApp(BaseMicroscopeApp):
         #logging.getLogger('LoggedQuantity').setLevel(logging.DEBUG)
         
     def setup_ui(self):
+        ### move mirror_recipe_control ui into mirror_position_measure
+        self.measurements.mirror_recipe_control.subwin.setWidget(QtWidgets.QWidget())
+        self.measurements.mirror_position.ui.recipes_groupBox.layout().addWidget(
+            self.measurements.mirror_recipe_control.ui)
+
         self.load_window_positions_json("default_window_pos.json")
 
         

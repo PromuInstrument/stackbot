@@ -21,14 +21,16 @@ class ASIStageHW(HardwareComponent):
         ('6_', 6),
         ('7_', 7),])
     
-    def __init__(self, app, debug=False, name=None, enable_xy=True, enable_z=True, enable_fw=True):
+    def __init__(self, app, debug=False, name=None, enable_xy=True, enable_z=True, enable_fw=True, swap_xy=False, invert_x=False,invert_y=False):
         self.enable_xy = enable_xy
         self.enable_z = enable_z
+        self.swap_xy = swap_xy
+        self.invert_x = invert_x
+        self.invert_y = invert_y
+
         HardwareComponent.__init__(self, app, debug=debug, name=name)
     
     def setup(self):
-    
-    
         xy_kwargs = dict(initial = 0,
                           dtype=float,
                           unit='mm',
@@ -40,21 +42,22 @@ class ASIStageHW(HardwareComponent):
         x_target = self.settings.New('x_target', ro=False, **xy_kwargs)        
         y_target = self.settings.New('y_target', ro=False, **xy_kwargs)
         
-        xy_speed = self.settings.New('xy_speed', ro=False, initial = 0.2, dtype=float, unit='mm/s', spinbox_decimals = 1,spinbox_step=0.1)
-        
-        
-        
+        self.settings.New("speed_xy", ro=False, initial=0.2, unit='mm/s', spinbox_decimals=1, spinbox_step=0.1)
+        self.settings.New("acc_xy", ro=False, initial=10, unit='ms', spinbox_decimals=1)
+        self.settings.New("backlash_xy", ro=False, initial=0.00, unit='mm', spinbox_decimals=3)
         
         if self.enable_z:
             z_pos = self.settings.New('z_position', ro=True, **xy_kwargs)
-            z_target = self.settings.New('z_target', ro=False, **xy_kwargs)        
-
-        
-        #self.settings.New('filter_wheel', dtype=str, ro=False)
+            z_target = self.settings.New('z_target', ro=False, **xy_kwargs)  
+            backlash_z = self.settings.New('backlash_z', ro=False, initial=0.00, unit='mm', spinbox_decimals=3)
         
         self.settings.New('port', dtype=str, initial='COM4')
         
         self.add_operation("Halt XY", self.halt_xy)
+        if self.enable_z: self.add_operation("Halt Z", self.halt_z)
+        self.add_operation("Home XY", self.home_xy)
+        if self.enable_z: self.add_operation("Home Z", self.home_z)
+        
         
     def connect(self):
         S = self.settings
@@ -63,12 +66,16 @@ class ASIStageHW(HardwareComponent):
         self.stage = ASIXYStage(port=S['port'], debug=S['debug_mode'])
                       
         # connect logged quantities
-        
         S.x_position.connect_to_hardware(
             read_func = self.read_pos_x)
         S.y_position.connect_to_hardware(
             read_func = self.read_pos_y)
         
+        def set_debug_mode(val):
+            self.stage.debug = val
+        S.debug_mode.connect_to_hardware(
+            write_func = set_debug_mode)
+            
         try:
             S.x_position.read_from_hardware()
             S.y_position.read_from_hardware()
@@ -77,6 +84,7 @@ class ASIStageHW(HardwareComponent):
             
         S['x_target'] = S['x_position']
         S['y_target'] = S['y_position']
+        
 
         S.x_target.connect_to_hardware(
             write_func = self.move_x
@@ -84,12 +92,20 @@ class ASIStageHW(HardwareComponent):
         S.y_target.connect_to_hardware(
             write_func = self.move_y
             )
-
-        S.xy_speed.connect_to_hardware(
-            write_func = self.set_speed_xy,
-            read_func = self.stage.get_speed_x
+        S.backlash_xy.connect_to_hardware(
+            write_func = self.stage.set_backlash_xy
             )
+        S.backlash_xy.write_to_hardware()
+        S.speed_xy.connect_to_hardware(
+            write_func = self.set_speed_xy
+            )
+        S.speed_xy.write_to_hardware()
+        S.acc_xy.connect_to_hardware(
+            write_func = self.set_acc_xy
+            )
+        S.acc_xy.write_to_hardware()
 
+        
         if self.enable_z:
             S.z_position.connect_to_hardware(
                 read_func = self.stage.read_pos_z)
@@ -98,23 +114,16 @@ class ASIStageHW(HardwareComponent):
             S.z_target.connect_to_hardware(
                 write_func = self.stage.move_z
                 )
-
-
-                
-#         S.filter_wheel.connect_to_hardware(
-#             write_func = self.write_fw_position
-#             )
-#         
-#         S['filter_wheel'] = '5_Closed'
+            S.backlash_z.connect_to_hardware(
+                write_func = self.stage.set_backlash_z
+                )
+            S.backlash_z.write_to_hardware()
         
         S.x_position.read_from_hardware()
         S.y_position.read_from_hardware()
         
         
-        # set reasonable values for moving the stage
-        self.stage.set_speed_xy(S['xy_speed'], S['xy_speed']) # in mm, standard 7mm/s, this is more reasonable
-        self.stage.set_backlash_xy(0.0, 0.0) # disable backlash correction
-        self.stage.set_acc(0,0) #in ms
+        
         # if other observer is actively reading position,
         # don't update as frequently in update_thread
         self.other_observer = False
@@ -147,39 +156,99 @@ class ASIStageHW(HardwareComponent):
         
     def update_thread_run(self):
         while not self.update_thread_interrupted:
+            self.settings.y_position.read_from_hardware()
+            self.settings.x_position.read_from_hardware()
+            if self.enable_z:
+                    self.settings.z_position.read_from_hardware()
             if self.other_observer:
-                time.sleep(1.0)
                 # it's better not to query the asi stage while it's being observed by e.g the scanning app
+                time.sleep(1)
             else:
-                # the stage communication is old and slow, so use longer times here
-                self.settings.x_position.read_from_hardware()
-                self.settings.y_position.read_from_hardware()
                 time.sleep(0.2)
 
     def halt_xy(self):
         self.stage.halt_xy()
+    def halt_z(self):
+        self.stage.halt_z()
+    def home_xy(self):
+        self.stage.home_and_center_xy()
+    def home_z(self):
+        self.stage.home_and_wait_z()
+        
     def set_speed_xy(self, speed):
         self.stage.set_speed_xy(speed,speed)
         
+    def set_acc_xy(self, acc):
+        self.stage.set_acc_xy(acc,acc)
+        
     def read_pos_x(self):
-        return self.attempt_10_times(self.stage.read_pos_x)
+        if not self.swap_xy and not self.invert_x:
+            return self.attempt_10_times(self.stage.read_pos_x)
+        elif not self.swap_xy:
+            return -self.attempt_10_times(self.stage.read_pos_x)
+        elif not self.invert_x:
+            return self.attempt_10_times(self.stage.read_pos_y)
+        else:
+            return -self.attempt_10_times(self.stage.read_pos_y)
 
     def read_pos_y(self):
-        return self.attempt_10_times(self.stage.read_pos_y)
+        if not self.swap_xy and not self.invert_y:
+            return self.attempt_10_times(self.stage.read_pos_y)
+        elif not self.swap_xy:
+            return -self.attempt_10_times(self.stage.read_pos_y)
+        elif not self.invert_y:
+            return self.attempt_10_times(self.stage.read_pos_x)
+        else:
+            return -self.attempt_10_times(self.stage.read_pos_x)
 
     def move_x(self, x):
-        return self.attempt_10_times(self.stage.move_x, x)
-
-    def move_y(self, y):
-        return self.attempt_10_times(self.stage.move_y, y)
+        if not self.swap_xy and not self.invert_x:
+            return self.attempt_10_times(self.stage.move_x, x)
+        elif not self.swap_xy:
+            return self.attempt_10_times(self.stage.move_x,-x)
+        elif not self.invert_x:
+            return self.attempt_10_times(self.stage.move_y, x)
+        else:
+            return self.attempt_10_times(self.stage.move_y, -x)
         
-    def move_x_rel(self,x):
-        return self.stage.move_x_rel(x)
-    def move_y_rel(self,y):
-        return self.stage.move_y_rel(y)
+    def move_x_rel(self, x):
+        if not self.swap_xy and not self.invert_x:
+            return self.attempt_10_times(self.stage.move_x_rel, x)
+        elif not self.swap_xy:
+            return self.attempt_10_times(self.stage.move_x_rel, -x)
+        elif not self.invert_x:
+            return self.attempt_10_times(self.stage.move_y_rel, -x)
+        else:
+            return self.attempt_10_times(self.stage.move_y_rel, x)
+    
+    def move_y(self, x):
+        if not self.swap_xy and not self.invert_y:
+            return self.attempt_10_times(self.stage.move_y, x)
+        elif not self.swap_xy:
+            return self.attempt_10_times(self.stage.move_y, -x)
+        elif not self.invert_y:
+            return self.attempt_10_times(self.stage.move_x, x)
+        else:
+            return self.attempt_10_times(self.stage.move_x, -x)
+        
+    def move_y_rel(self, x):
+        if not self.swap_xy and not self.invert_y:
+            return self.attempt_10_times(self.stage.move_y_rel, x)
+        elif not self.swap_xy:
+            return self.attempt_10_times(self.stage.move_y_rel, -x)
+        elif not self.invert_y:
+            return self.attempt_10_times(self.stage.move_x_rel, -x)
+        else: 
+            return self.attempt_10_times(self.stage.move_x_rel, x)
+    
+    def move_z_rel(self, x):
+        return self.attempt_10_times(self.stage.move_z_rel, x)
     
     def is_busy_xy(self):
         return self.attempt_10_times(self.stage.is_busy_xy)
+    
+    def is_busy_z(self):
+        return self.attempt_10_times(self.stage.is_busy_z)
     
     def correct_backlash(self,backlash):
         self.move_x_rel(-backlash)
@@ -190,7 +259,7 @@ class ASIStageHW(HardwareComponent):
         self.move_y_rel(backlash)    
         while self.stage.is_busy_xy():
             time.sleep(0.03)
-            
+    
         
     def attempt_10_times(self, func, *args,**kwargs):
         attempts = 0
@@ -201,4 +270,3 @@ class ASIStageHW(HardwareComponent):
             except:
                 attempts +=1
     
-        

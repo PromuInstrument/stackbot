@@ -28,8 +28,7 @@ class MKS_146_Measure(Measurement):
         self.mks = self.app.hardware['mks_146_hw']
         
     def run(self):
-        dt=0.05
+        dt=0.5
         while not self.interrupt_measurement_called:
             self.mks.read_from_hardware()
-
             time.sleep(dt)

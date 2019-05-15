@@ -1,6 +1,10 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource prefix='/'>
-    <file>icons/green-led-on.png</file>
-    <file>icons/led-red-on.png</file>
+    <file>icons/BlueLED.png</file>
+    <file>icons/GreenLED.png</file>
+    <file>icons/OrangeLED.png</file>
+    <file>icons/RedLED.png</file>
+    <file>icons/VioletLED.png</file>
+    <file>icons/YellowLED.png</file>
 </qresource>
 </RCC>

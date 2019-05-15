@@ -116,11 +116,11 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         
     def run(self):
         
-        self.winspec_hc.settings['connected'] = False
-        time.sleep(0.2)
-        self.winspec_hc.settings['connected'] = True
-        time.sleep(0.2)
-        
+#         self.winspec_hc.settings['connected'] = False
+#         time.sleep(0.2)
+#         self.winspec_hc.settings['connected'] = True
+#         time.sleep(0.2)
+#         
         
         
         while not self.interrupt_measurement_called:

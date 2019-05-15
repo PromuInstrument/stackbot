@@ -103,7 +103,13 @@ app.load_view(HyperSpecCLH5View(app))
 from viewers.hyperspec_h5 import HyperSpecH5View
 app.load_view(HyperSpecH5View(app))
 
+from viewers.hyperspec_3d_h5 import HyperSpec3DH5View
+app.load_view(HyperSpec3DH5View(app))
+
 from viewers.trpl_h5 import TRPLH5View
 app.load_view(TRPLH5View(app))
+
+from viewers.power_spec_logger_view import PowerSpectrumLoggerView
+app.load_view(PowerSpectrumLoggerView(app))
 
 sys.exit(app.exec_())

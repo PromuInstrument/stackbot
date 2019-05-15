@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class ShutterServoArduino(object):
 
     CLOSE_POSITION = 0
-    OPEN_POSITION = 45
+    OPEN_POSITION = 90
 
     def __init__(self, port="COM22", debug = False):
         self.port = port
@@ -35,6 +35,7 @@ class ShutterServoArduino(object):
         if self.debug: logger.debug( "send_cmd:" + repr(cmd))
         full_cmd = cmd + "\r\n"
         with self.lock:
+#             self.ser.write(full_cmd)
             self.ser.write(full_cmd.encode())
     
     def ask(self, cmd):

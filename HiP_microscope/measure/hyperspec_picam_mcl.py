@@ -10,13 +10,19 @@ class HyperSpecPicam2DScan(MCLStage2DSlowScan):
     
     def scan_specific_setup(self):
         #Hardware
-        self.picam = self.app.hardware['picam']    
+        self.picam = self.app.hardware['picam']
+
     
     def pre_scan_setup(self):
         # FIXME hard-coded CCD dimension
         self.spec_map = np.zeros(self.scan_shape + (1340,), dtype=np.float)
-        self.spec_map_h5 = self.h5_meas_group.create_dataset('spec_map', self.scan_shape + (1340,), dtype=np.float)
+        if self.settings['save_h5']:
+            self.spec_map_h5 = self.h5_meas_group.create_dataset('spec_map', self.scan_shape + (1340,), dtype=np.float)
         self.app.measurements.picam_readout.interrupt()
+
+        self.picam.commit_parameters()
+
+
         
     def collect_pixel(self, pixel_num, k, j, i):
         # collect data
@@ -25,26 +31,53 @@ class HyperSpecPicam2DScan(MCLStage2DSlowScan):
         dat = self.picam.cam.acquire(readout_count=1, readout_timeout=-1)
             
         self.roi_data = self.picam.cam.reshape_frame_data(dat)
-        self.spec_map[k,j,i, :] = spec =  self.roi_data[0].sum(axis=0)
+        self.spec_map[k,j,i, :] = self.spec =  self.roi_data[0].sum(axis=0)
         
-        self.spec_map_h5[k,j,i,:] = spec
+        if self.settings['save_h5']:
+            self.spec_map_h5[k,j,i,:] = self.spec
         
-        self.display_image_map[k,j,i] = np.sum(spec)
+        self.display_image_map[k,j,i] = np.sum(self.spec)
+
+        tot_sec_to_go = (1.0 - self.settings.progress.val / 100) * self.Npixels * self.picam.settings['ExposureTime'] / 1000
+        h_left = tot_sec_to_go / 3600
+        min_left = (tot_sec_to_go % 3600) / 60
+        sec_left = (tot_sec_to_go % 3600 ) % 60
+        
+        print('{0:1.0f}h {1:2.0f}min {2:2.0f}s left'.format(h_left, min_left, sec_left) )
+        
+
+        if pixel_num == 0:
+            self.log.info("pixel 0: creating data arrays")
+
+            self.picam_measure = self.app.measurements['picam_readout']
+
+            self.wls = np.array(self.picam_measure.wls)
+            self.wave_numbers = np.array(self.picam_measure.wave_numbers)
+            self.raman_shifts = np.array(self.picam_measure.raman_shifts)
+
+            if self.settings['save_h5']:
+                self.h5_meas_group['wls'] = self.wls
+                self.h5_meas_group['wave_numbers'] = self.wave_numbers
+                self.h5_meas_group['raman_shifts'] = self.raman_shifts
+
+
 
     def post_scan_cleanup(self):
         #H['spec_map'] = self.h_array
         
         print(self.name, "post_scan_cleanup")
-        import scipy.io
-        print(self.h5_filename)
-        scipy.io.savemat(file_name=self.h5_filename +".mat", mdict=dict(spec_map=self.spec_map))
+        #import scipy.io
+        #scipy.io.savemat(file_name=self.h5_filename +".mat", mdict=dict(spec_map=self.spec_map))
+
+
 
     def update_display(self):
-        super().update_display()
         
         if hasattr(self, 'roi_data'):
             self.app.measurements.picam_readout.roi_data = self.roi_data
             self.app.measurements.picam_readout.update_display()
+
+        super().update_display()
     
 
 class HyperSpecPicam3DStack(Measurement):

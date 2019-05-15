@@ -37,15 +37,14 @@ class MKS_146_Interface(object):
                                 'E131': "Bad checksum"}
 
     def read_cmd_nd(self, cmd, param):
-#         if self.ser.in_waiting > 0:
-#             self.ser.flush()
         if cmd < 100:
             cmd_header = "0"+str(cmd)
         else:
             cmd_header = str(cmd)
         message = '@'+cmd_header+str(param)+'?\r'
         with self.lock:
-            self.ser.write(message)
+#             self.ser.write(message)
+            self.ser.write(message.encode())
             resp = self.ser.readline().decode().strip().split(':')
         print('read_cmd_nd:', resp)
         if self.debug:
@@ -56,10 +55,6 @@ class MKS_146_Interface(object):
         return resp
     
     def read_cmd(self, cmd, param):
-#         if self.ser.in_waiting > 0:
-#             self.ser.flush()
-#         if self.debug: 
-#             logger.debug("ask_cmd: {}".format(cmd))
         if cmd < 100:
             cmd_header = "0"+str(cmd)
         else:
@@ -74,8 +69,6 @@ class MKS_146_Interface(object):
             return resp
     
     def write_cmd(self, cmd, param, data=None):
-#         if self.ser.in_waiting > 0:
-#             self.ser.flush()
         if cmd < 100:
             cmd_head = "0"+str(cmd)
         else:

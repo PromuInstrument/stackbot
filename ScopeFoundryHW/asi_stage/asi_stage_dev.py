@@ -1,7 +1,6 @@
 import serial
 import time
 import threading
-import numpy as np
 
 class ASIXYStage(object):
     
@@ -37,6 +36,7 @@ class ASIXYStage(object):
         if self.debug: print("ASI XY cmd:", repr(cmd), repr(cmd_bytes))
         self.ser.write(cmd_bytes)
         if self.debug: print ("ASI XY done sending cmd")
+    
     def info(self,axis):
         with self.lock:
             self.send_cmd("2HI "+axis)
@@ -61,12 +61,12 @@ class ASIXYStage(object):
     def ask(self, cmd): # format: '2HW X' -> ':A 355'
         with self.lock:
             self.send_cmd(cmd)
-            time.sleep(0.010)
+            time.sleep(0.020)
             resp1 = self.ser.readline()
             if self.debug: print("ASI XY ask resp1:", repr(resp1))
             #read until end-of-text is received
             t0 = time.time()
-            timeout = 0.5
+            timeout = 1
             while True:
                 resp2 = self.ser.readline()
                 if self.debug: print("ASI XY ask resp2:", repr(resp2))
@@ -126,14 +126,14 @@ class ASIXYStage(object):
     def wait_until_not_busy_xy(self, timeout=10):    
         t0 = time.time()
         while self.is_busy_xy():
-            time.sleep(0.010)
+            time.sleep(0.020)
             if time.time() - t0 > timeout:
                 raise IOError("ASI stage took too long during wait")
 
     def wait_until_not_busy_z(self, timeout=10):    
         t0 = time.time()
         while self.is_busy_z():
-            time.sleep(0.010)
+            time.sleep(0.020)
             if time.time() - t0 > timeout:
                 raise IOError("ASI stage took too long during wait")
 
@@ -194,6 +194,9 @@ class ASIXYStage(object):
     def halt_xy(self):
         self.ask("2HHALT")
         
+    def halt_z(self):
+        self.ask("1HHALT")
+        
     def set_limits_xy(self, xl, xu, yl, yu): # x in [xl, xu], y in [yl, yu]
         self.ask("2HSL X= {:f} Y= {:f}".format(xl, yl))
         self.ask("2HSU X=" + str(xu) + " Y=" + str(yu))
@@ -206,12 +209,30 @@ class ASIXYStage(object):
         if step!=0:
             self.ask("2HR Y={:d}".format(int(step*self.unit_scale)))
 
+    def set_backlash_xy(self, backlash_x, backlash_y=None):
+        if backlash_y is None:
+            backlash_y = backlash_x
+        
+        """
+        set the amount of distance in millimeters to travel to
+        absorb the backlash in the axis' gearing. This backlash value works with an antibacklash
+        routine built into the controller. The routine ensures that the controller
+        always approaches the final target from the same direction. A value of zero (0)
+        disables the anti-backlash algorithm for that axis
+        """
+        self.ask("2HB X= {:1.4f} Y= {:1.4f}".format(backlash_x,backlash_y))
+        
+    def set_backlash_z(self, backlash_z):
+        self.ask("1HB Z= {:1.4f}".format(backlash_z))
+    
     def move_z_rel(self, step):
         if step!=0:
             self.ask("1HR Z={:d}".format(int(step*self.unit_scale)))
 
-    def set_backlash_xy(self, backlash_x, backlash_y):
-        self.ask("2HB X= {:1.4f} Y= {:1.4f}".format(backlash_x,backlash_y)) 
+        
+#     def get_speed_xy(self):
+#         print(self.ask("2HSPEED X? Y?"))
+#     
 
     def get_speed_x(self):
         speed = float(self.ask("2HSPEED X?").split("=")[1])
@@ -225,10 +246,26 @@ class ASIXYStage(object):
         speed = float(self.ask("1HSPEED Z?").split("=")[1])
         return speed  
         
-    def set_speed_xy(self, speed_x, speed_y):
+    def set_speed_xy(self, speed_x, speed_y=None):
+        if speed_y is None:
+            speed_y = speed_x
+        """
+        Sets the maximum speed at which the stage will move. Speed is set in millimeters
+        per second. Maximum speed is = 7.5 mm/s for standard 6.5 mm pitch leadscrews.
+        """
         self.ask("2HSPEED X= {:1.4f} Y= {:1.4f}".format(speed_x,speed_y))
         
-    def set_acc(self, acc_x, acc_y):
+    def set_acc_xy(self, acc_x, acc_y=None):
+        if acc_y is None:
+            acc_y = acc_x
+        """
+        This command sets the amount of time in milliseconds that it takes an axis motor
+        speed to go from the start velocity to the maximum velocity and then back down
+        again at the end of the move. At a minimum, this acceleration / deceleration time
+        must be greater than t_step (the amount of time it takes for the controller to go
+        through one loop of its main execution code. Use the INFO command to
+        determine the t_step).
+        """
         self.ask("2HAC X= {:1.4f} Y= {:1.4f}".format(acc_x,acc_y))    
         
     def _scale(self, val):
@@ -237,7 +274,7 @@ class ASIXYStage(object):
         
         scale_int = int(val*self.unit_scale)
         # stage bug: positions can't end in 3
-        if scale_int % 10 == 3:
+        if abs(scale_int) % 10 == 3: # -3 mod 10 = 7!!!
             scale_int +=1
         return scale_int
     

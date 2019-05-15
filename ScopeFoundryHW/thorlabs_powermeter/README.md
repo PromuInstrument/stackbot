@@ -25,6 +25,12 @@ Edward S. Barnard <esbarnard@lbl.gov>
 Requirements
 ------------
 
-	* ScopeFoundry
-	* [PyVisa](https://pyvisa.readthedocs.io/en/stable/)
-	* [Thorlabs driver](https://www.thorlabs.com/software_pages/viewsoftwarepage.cfm?code=PM100x)
+ * ScopeFoundry
+ *  [PyVisa](https://pyvisa.readthedocs.io/en/stable/)
+ * [Legacy Thorlabs driver](https://www.thorlabs.com/software_pages/viewsoftwarepage.cfm?code=PM100x)
+
+ 
+How to Install
+---------------
+
+pip install pyvisa
