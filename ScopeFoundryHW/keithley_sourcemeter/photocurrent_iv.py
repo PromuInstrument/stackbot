@@ -21,7 +21,7 @@ class PhotocurrentIVMeasurement(Measurement):
         # logged quantities
         kwargs = {'unit':'V', 'vmin':-5, 'vmax':5, 'spinbox_decimals':3}
         self.voltage_range = self.settings.New_Range('source_voltage',  initials = [-1, 1, 0.1], 
-                                                     include_sweep_mode = False, **kwargs)
+                                                     include_sweep_type = False, **kwargs)
 
         self.save_h5 = self.settings.New('save_h5', bool, initial = True)
         
