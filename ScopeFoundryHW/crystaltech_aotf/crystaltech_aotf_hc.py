@@ -13,8 +13,8 @@ except Exception as err:
 
 class CrystalTechAOTF(HardwareComponent):
     
-    name = 'crystal_tech_aotf'
-    
+    name = 'CrystalTechAOTF_DDS'
+        
     def setup(self):
 
         self.settings.New('port', str, initial='COM24')
