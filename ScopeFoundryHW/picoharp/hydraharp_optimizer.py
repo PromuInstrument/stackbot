@@ -22,9 +22,9 @@ class HydraHarpOptimizerMeasure(Measurement):
         self.n_channels = 2
         
         self.settings.New('history_len', dtype=int, initial=300)
-        self.settings.New('sync_visible', dtype=bool, initial=True)        
-        self.settings.New('c0_visible', dtype=bool, initial=True)
-        self.settings.New('c1_visible', dtype=bool, initial=True)
+        self.settings.New('SyncRate_visible', dtype=bool, initial=True)        
+        self.settings.New('CountRate0_visible', dtype=bool, initial=True)
+        self.settings.New('CountRate1_visible', dtype=bool, initial=True)
         
         self.on_new_history_len()
         self.settings.history_len.add_listener(self.on_new_history_len)
@@ -43,7 +43,7 @@ class HydraHarpOptimizerMeasure(Measurement):
         hh_hw = self.hydraharp_hw
         HS = hh_hw.settings
         
-        spinboxes = ['DeviceIndex', 'HistogramChannels', 'Tacq', 'Resolution',
+        spinboxes = ['DeviceIndex', 'HistogramBins', 'Tacq', 'Resolution',
                      'StopCount',
                      'SyncOffset', 'CFDLevelSync', 'CFDZeroCrossSync',
                      'SyncRate', 'SyncPeriod',]
@@ -75,14 +75,12 @@ class HydraHarpOptimizerMeasure(Measurement):
         HS.StopOnOverflow.connect_to_widget(self.ui.StopOnOverflow_checkBox)
         HS.Binning.connect_to_widget(self.ui.Binning_comboBox)
 
-                
-
 
         #Optimizer Measurement
         self.settings.activation.connect_to_widget(self.ui.run_checkBox)
-        self.settings.sync_visible.connect_to_widget(self.ui.sync_visible_checkBox)
-        self.settings.c0_visible.connect_to_widget(self.ui.c0_visible_checkBox)
-        self.settings.c1_visible.connect_to_widget(self.ui.c1_visible_checkBox)
+        self.settings.SyncRate_visible.connect_to_widget(self.ui.SyncRate_visible_checkBox)
+        self.settings.CountRate0_visible.connect_to_widget(self.ui.CountRate0_visible_checkBox)
+        self.settings.CountRate1_visible.connect_to_widget(self.ui.CountRate1_visible_checkBox)
         self.settings.history_len.connect_to_widget(self.ui.history_len_doubleSpinBox)
         
         self.graph_layout=pg.GraphicsLayoutWidget()
@@ -90,13 +88,15 @@ class HydraHarpOptimizerMeasure(Measurement):
 
         self.plot = self.graph_layout.addPlot(title="Hydraharp Channel Optimizer")
 
-        self.sync_plotline = self.plot.plot()
-        self.c0_plotline = self.plot.plot(pen='b')
-        self.c1_plotline = self.plot.plot(pen='g')
+        
+        self.CountRate0_plotline = self.plot.plot(pen='r')
+        self.CountRate1_plotline = self.plot.plot(pen='g')
+        self.SyncRate_plotline = self.plot.plot()
+        
+        self.settings.CountRate0_visible.add_listener(self.CountRate0_plotline.setVisible, bool)
+        self.settings.CountRate1_visible.add_listener(self.CountRate1_plotline.setVisible, bool)
+        self.settings.SyncRate_visible.add_listener(self.SyncRate_plotline.setVisible, bool)
 
-        self.settings.sync_visible.add_listener(self.sync_plotline.setVisible, bool)
-        self.settings.c0_visible.add_listener(self.c0_plotline.setVisible, bool)
-        self.settings.c1_visible.add_listener(self.c1_plotline.setVisible, bool)
         
         self.vline = pg.InfiniteLine(angle=90, movable=False)
         self.plot.addItem(self.vline, ignoreBounds=True)
@@ -110,13 +110,13 @@ class HydraHarpOptimizerMeasure(Measurement):
             self.optimize_ii += 1
             self.optimize_ii %= self.OPTIMIZE_HISTORY_LEN
 
-            sync = hh_hw.settings['SyncRate']
             cr0 = hh_hw.settings['CountRate0']
             cr1 = hh_hw.settings['CountRate1']
+            sync = hh_hw.settings['SyncRate']
 
-            self.optimize_history[self.optimize_ii,:] = (sync, cr0, cr1)
+            self.optimize_history[self.optimize_ii,:] = (cr0, cr1, sync)
             self.optimize_history_std[self.optimize_ii,:] = np.std(self.optimize_history, (0,1) )
-            time.sleep(0.100) 
+            time.sleep(0.08) 
             
     def on_new_history_len(self):
         N = self.settings['history_len']
@@ -126,8 +126,10 @@ class HydraHarpOptimizerMeasure(Measurement):
         self.OPTIMIZE_HISTORY_LEN = N
         
     def update_display(self):
-        self.sync_plotline.setData(self.optimize_history[:,0])
-        self.c0_plotline.setData(self.optimize_history[:,1])
-        self.c1_plotline.setData(self.optimize_history[:,2])
+        s = np.s_[1:]
+        self.CountRate0_plotline.setData(self.optimize_history[s,0])
+        self.CountRate1_plotline.setData(self.optimize_history[s,1])
+        self.SyncRate_plotline.setData(self.optimize_history[s,2])
+
         self.vline.setPos(self.optimize_ii)
         

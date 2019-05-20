@@ -23,7 +23,7 @@ class HydraHarpHW(HardwareComponent):
         # Acquisition Settings        
         S.New("StopOnOverflow", dtype=bool)
         S.New("StopCount", dtype=int, initial=4294967295, vmin=1, vmax=4294967295)
-        S.New("HistogramChannels", dtype=int, ro=False, vmin=0, vmax=2**16, initial=2**16, si=False)
+        S.New("HistogramBins", dtype=int, ro=False, vmin=0, vmax=2**16, initial=2**16, si=False)
 
         S.New("Tacq", dtype=float, unit="s", si=True, initial=1, vmin=1e-3, vmax=100*60*60)
         S.New("Binning", dtype=int, initial=2, choices=[(str(x), x) for x in range(0,8)])
@@ -183,15 +183,31 @@ class HydraHarpHW(HardwareComponent):
     def check_done_scanning(self):
         return self.dev.check_done_scanning()
     
-    def update_HistogramChannels(self):
-        '''sets HistogramChannels to minimum needed to cover the SyncPeriod'''
+    def update_HistogramBins(self):
+        '''sets HistogramBins to minimum needed to cover the SyncPeriod'''
         self.settings.Resolution.read_from_hardware()
         S = self.settings
-        sync_period = 1.0/10#S['SyncRate']
-        HistogramChannels = int( np.ceil( sync_period/S['Resolution']*1e12 ) )
-        if HistogramChannels > S.HistogramChannels.vmax:
+        sync_period = 1.0/S['SyncRate']
+        HistogramBins = int( np.ceil( sync_period/ (S['Resolution']*1e-12) ) )
+        if HistogramBins > S.HistogramBins.vmax:
             warnings.warn("Can not cover whole SyncPeriod with current Resolution: Increase Binning!", UserWarning)
         else:
-            S['HistogramChannels'] = HistogramChannels
-        return S['HistogramChannels']
+            S['HistogramBins'] = HistogramBins
+        return S['HistogramBins']
     
+    @property
+    def hist_shape(self):
+        channels_enabled = 0
+        for i in range(self.n_channels):
+            if self.settings["ChanEnable{}".format(i)]:
+                channels_enabled += 1
+        return (channels_enabled, self.settings['HistogramBins'])
+    
+    @property
+    def hist_slice(self):
+        stop_channels, stop_hist_channels = self.hist_shape
+        return np.s_[0:stop_channels, 0:stop_hist_channels]
+        
+    @property
+    def sliced_time_array(self):
+        return self.time_array[:self.settings['HistogramBins']]

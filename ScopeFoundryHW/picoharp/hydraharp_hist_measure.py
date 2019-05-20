@@ -19,7 +19,7 @@ class HydraHarpHistogramMeasure(Measurement):
 
         S.New('save_h5', dtype=bool, initial=True)
         S.New('continuous', dtype=bool, initial=False)
-        S.New('auto_HistogramChannels', dtype=bool, initial=True)
+        S.New('auto_HistogramBins', dtype=bool, initial=True)
         
         # hardware
         hw = self.hw = self.app.hardware['hydraharp']
@@ -37,10 +37,10 @@ class HydraHarpHistogramMeasure(Measurement):
         
         S.continuous.connect_to_widget(self.ui.continuous_checkBox)
         
-        S.auto_HistogramChannels.connect_to_widget(self.ui.auto_HistogramChannels_checkBox)
+        S.auto_HistogramBins.connect_to_widget(self.ui.auto_HistogramBins_checkBox)
         hw.settings.Tacq.connect_to_widget(self.ui.picoharp_tacq_doubleSpinBox)
         hw.settings.Binning.connect_to_widget(self.ui.Binning_comboBox)
-        hw.settings.HistogramChannels.connect_to_widget(self.ui.HistogramChannels_doubleSpinBox)        
+        hw.settings.HistogramBins.connect_to_widget(self.ui.HistogramBins_doubleSpinBox)        
         
         S.save_h5.connect_to_widget(self.ui.save_h5_checkBox)
 
@@ -70,8 +70,8 @@ class HydraHarpHistogramMeasure(Measurement):
         self.hw = hw = self.app.hardware['hydraharp']
         Tacq = hw.settings['Tacq']
 
-        if self.settings['auto_HistogramChannels']:
-            self.hw.update_HistogramChannels()
+        if self.settings['auto_HistogramBins']:
+            self.hw.update_HistogramBins()
             
         
         self.sleep_time = min((max(0.1*Tacq, 0.010), 0.100))
@@ -96,7 +96,7 @@ class HydraHarpHistogramMeasure(Measurement):
                 break
             
     
-        data_slice = slice(0,self.hw.settings['HistogramChannels'])
+        data_slice = slice(0,self.hw.settings['HistogramBins'])
         elapsed_meas_time = hw.settings.ElapsedMeasTime.read_from_hardware()
         
         if self.settings['save_h5']:
@@ -121,8 +121,8 @@ class HydraHarpHistogramMeasure(Measurement):
                 self.plotlines.append(self.plot.plot(label = i, name='histogram' + str(i)))
 
             #Marker in time_array.
-            pos_x = time_array[self.hw.settings['HistogramChannels']-1]                        
-            self.infline = pg.InfiniteLine(movable=False, angle=90, label='Histogram Channels stored', 
+            pos_x = time_array[self.hw.settings['HistogramBins']-1]                        
+            self.infline = pg.InfiniteLine(movable=False, angle=90, label='Histogram Bins stored', 
                            labelOpts={'position':0.95, 'color':(200,200,100), 'fill':(200,200,200,50), 'movable':True})
             self.plot.addItem(self.infline)                    
             self.infline.setPos([pos_x,0])
