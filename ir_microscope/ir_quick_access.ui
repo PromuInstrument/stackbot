@@ -2,37 +2,152 @@
 <ui version="4.0">
  <class>Form</class>
  <widget class="QWidget" name="Form">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>372</width>
-    <height>1322</height>
+    <width>364</width>
+    <height>1246</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Maximum" vsizetype="Preferred">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>300</width>
+    <height>0</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>398</width>
+    <height>16777215</height>
+   </size>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QGroupBox" name="groupBox">
+    <widget class="QGroupBox" name="groupBox_3">
      <property name="title">
-      <string>Power mate</string>
+      <string>Beam Path &amp;&amp; Powermate &amp;&amp; AOTF</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_6">
-      <item row="1" column="0">
-       <widget class="QCheckBox" name="fine_checkBox">
-        <property name="text">
-         <string>Fine</string>
-        </property>
-       </widget>
+     <layout class="QVBoxLayout" name="verticalLayout_5">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_5">
+        <item>
+         <widget class="QComboBox" name="thorlabs_MFF_comboBox"/>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="fine_checkBox">
+          <property name="text">
+           <string>Power mate fine update</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="shutter_open_checkBox">
+          <property name="text">
+           <string>open shutter</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
-      <item row="1" column="1">
-       <widget class="QLabel" name="label_9">
-        <property name="text">
-         <string>decrease update to 10%</string>
-        </property>
-       </widget>
+      <item>
+       <layout class="QHBoxLayout" name="aotf_horizontalLayout">
+        <item>
+         <widget class="QCheckBox" name="aotf_connected_checkBox">
+          <property name="minimumSize">
+           <size>
+            <width>13</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>13</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="aotf_label">
+          <property name="minimumSize">
+           <size>
+            <width>60</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>AOTF  freq:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="aotf_freq0_doubleSpinBox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="prefix">
+           <string/>
+          </property>
+          <property name="suffix">
+           <string> MHz</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_3">
+          <property name="maximumSize">
+           <size>
+            <width>70</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>wl deflected:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="aotf_deflected_wl_doubleSpinBox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="prefix">
+           <string/>
+          </property>
+          <property name="suffix">
+           <string> nm</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -40,26 +155,42 @@
    <item>
     <widget class="QGroupBox" name="acton_spectrometer_groupBox">
      <property name="title">
-      <string>Acton Spectrometer</string>
+      <string>Acton Spectrometer: Grating / center wavelength</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_4">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_17">
-        <property name="text">
-         <string>Center wavelength: </string>
+      <item row="0" column="2">
+       <widget class="QDoubleSpinBox" name="center_wl_doubleSpinBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="prefix">
+         <string>center: </string>
+        </property>
+        <property name="suffix">
+         <string> nm</string>
+        </property>
+        <property name="decimals">
+         <number>1</number>
         </property>
        </widget>
       </item>
-      <item row="2" column="1">
-       <widget class="QComboBox" name="grating_id_comboBox"/>
-      </item>
       <item row="0" column="1">
-       <widget class="QDoubleSpinBox" name="center_wl_doubleSpinBox"/>
+       <widget class="QComboBox" name="grating_id_comboBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
       </item>
-      <item row="2" column="0">
-       <widget class="QLabel" name="label_18">
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="spectrometer_connected_checkBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="text">
-         <string>Grating:</string>
+         <string/>
         </property>
        </widget>
       </item>
@@ -67,93 +198,177 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="gridGroupBox">
+    <widget class="QGroupBox" name="groupBox_stageposition">
      <property name="title">
-      <string>LED</string>
+      <string>Stage: current position / target position</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="4" column="5">
-       <widget class="QPushButton" name="tenma_power_current_plus_pushButton">
-        <property name="text">
-         <string>+</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="1">
-       <widget class="QDoubleSpinBox" name="tenma_power_current_doubleSpinBox">
-        <property name="suffix">
-         <string> Amps</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="2">
-       <widget class="QLineEdit" name="tenma_power_voltage_lineEdit"/>
-      </item>
-      <item row="4" column="8">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string/>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="2">
-       <widget class="QLineEdit" name="tenma_power_current_lineEdit"/>
-      </item>
-      <item row="5" column="5">
-       <widget class="QPushButton" name="tenma_power_voltage_plus_pushButton">
-        <property name="text">
-         <string>+</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="1">
-       <widget class="QDoubleSpinBox" name="tenma_power_voltage_doubleSpinBox">
-        <property name="suffix">
-         <string> V</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="4">
-       <widget class="QPushButton" name="tenma_power_voltage_minus_pushButton">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="3">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>V</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="4">
-       <widget class="QPushButton" name="tenma_power_current_minus_pushButton">
-        <property name="text">
-         <string>-</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="3">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>A</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1" colspan="6">
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QPushButton" name="tenma_power_off_pushButton">
+         <widget class="QCheckBox" name="stage_connected_checkBox">
           <property name="text">
-           <string>LED off</string>
+           <string>connected</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QPushButton" name="tenma_power_on_pushButton">
+         <widget class="QCheckBox" name="stage_live_update_checkBox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
           <property name="text">
-           <string>LED on</string>
+           <string>Live Update</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QCheckBox" name="stage_wobble_checkBox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>wobble</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="zero_stage_pushButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>zero stage</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="gridLayout_3">
+        <item row="3" column="1">
+         <widget class="QDoubleSpinBox" name="cz_doubleSpinBox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="keyboardTracking">
+           <bool>false</bool>
+          </property>
+          <property name="decimals">
+           <number>5</number>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>X:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QLineEdit" name="y_set_lineEdit">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QDoubleSpinBox" name="cy_doubleSpinBox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="keyboardTracking">
+           <bool>false</bool>
+          </property>
+          <property name="decimals">
+           <number>5</number>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QLineEdit" name="x_set_lineEdit">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QDoubleSpinBox" name="cx_doubleSpinBox">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="focusPolicy">
+           <enum>Qt::NoFocus</enum>
+          </property>
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="keyboardTracking">
+           <bool>false</bool>
+          </property>
+          <property name="decimals">
+           <number>5</number>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_12">
+          <property name="text">
+           <string>Y:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0">
+         <widget class="QLabel" name="label_14">
+          <property name="text">
+           <string>Z:</string>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2">
+         <widget class="QLineEdit" name="z_set_lineEdit">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
          </widget>
         </item>
@@ -273,7 +488,7 @@
       <item row="13" column="1" colspan="2">
        <widget class="QPushButton" name="copy_current_position_to_2d_scan_center_pushButton">
         <property name="text">
-         <string>copy current position (rounded) to center position</string>
+         <string>current position as center</string>
         </property>
        </widget>
       </item>
@@ -337,260 +552,85 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_3">
-     <property name="title">
-      <string>Beam path</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_7">
-      <item row="0" column="2">
-       <widget class="QLabel" name="label_8">
-        <property name="text">
-         <string>Shutter</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="1">
-       <widget class="QComboBox" name="thorlabs_MFF_comboBox"/>
-      </item>
-      <item row="1" column="2">
-       <widget class="QCheckBox" name="shutter_open_checkBox">
-        <property name="text">
-         <string>OPEN</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_6">
-        <property name="text">
-         <string>Detector</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox_stageposition">
-     <property name="title">
-      <string>Current Position</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_3">
-      <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="cx_doubleSpinBox">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::NoButtons</enum>
-        </property>
-        <property name="keyboardTracking">
-         <bool>false</bool>
-        </property>
-        <property name="decimals">
-         <number>5</number>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="0">
-       <widget class="QCheckBox" name="stage_live_update_checkBox">
-        <property name="text">
-         <string>Live Update</string>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="3">
-       <widget class="QLineEdit" name="y_set_lineEdit">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_10">
-        <property name="text">
-         <string>X:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="3">
-       <widget class="QPushButton" name="load_position_pushButton">
-        <property name="text">
-         <string>L</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2">
-       <widget class="QPushButton" name="pushButton_2">
-        <property name="text">
-         <string>H</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLabel" name="label_14">
-        <property name="text">
-         <string>Z:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="3">
-       <widget class="QLineEdit" name="z_set_lineEdit">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
-       <widget class="QLineEdit" name="x_set_lineEdit">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_12">
-        <property name="text">
-         <string>Y:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="2">
-       <widget class="QDoubleSpinBox" name="cz_doubleSpinBox">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::NoButtons</enum>
-        </property>
-        <property name="keyboardTracking">
-         <bool>false</bool>
-        </property>
-        <property name="decimals">
-         <number>5</number>
-        </property>
-       </widget>
-      </item>
-      <item row="3" column="2">
-       <widget class="QDoubleSpinBox" name="cy_doubleSpinBox">
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::NoButtons</enum>
-        </property>
-        <property name="keyboardTracking">
-         <bool>false</bool>
-        </property>
-        <property name="decimals">
-         <number>5</number>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="2">
-       <widget class="QPushButton" name="zero_stage_pushButton">
-        <property name="text">
-         <string>zero stage</string>
-        </property>
-       </widget>
-      </item>
-      <item row="5" column="3">
-       <widget class="QCheckBox" name="stage_wobble_checkBox">
-        <property name="text">
-         <string>wobble</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="gridGroupBox">
-     <property name="title">
-      <string>Filter Wheel</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_8">
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>filter num</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="3">
-       <widget class="QDoubleSpinBox" name="current_filter_doubleSpinBox">
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-        <property name="buttonSymbols">
-         <enum>QAbstractSpinBox::NoButtons</enum>
-        </property>
-        <property name="suffix">
-         <string/>
-        </property>
-        <property name="decimals">
-         <number>0</number>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="4" colspan="2">
-       <widget class="QPushButton" name="move_filter_bkwd_pushButton">
-        <property name="text">
-         <string>bkwd filter</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="2">
-       <widget class="QPushButton" name="zero_filter_pushButton">
-        <property name="text">
-         <string>zero_filter</string>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="5">
-       <widget class="QLineEdit" name="target_filter_lineEdit"/>
-      </item>
-      <item row="0" column="0" colspan="3">
-       <widget class="QPushButton" name="move_filter_fwd_pushButton">
-        <property name="text">
-         <string>fwd filter</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
     <widget class="QGroupBox" name="power_wheel_groupBox">
      <property name="title">
       <string>Power Wheel</string>
      </property>
-     <layout class="QGridLayout" name="gridLayout_16" columnstretch="0,0,0,0,0">
+     <layout class="QHBoxLayout" name="horizontalLayout">
       <property name="sizeConstraint">
        <enum>QLayout::SetMinimumSize</enum>
       </property>
-      <property name="horizontalSpacing">
-       <number>0</number>
-      </property>
-      <item row="1" column="3">
+      <item>
+       <widget class="QCheckBox" name="power_wheel_connected_checkBox">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>18</width>
+          <height>23</height>
+         </size>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="power_wheel_encoder_pos_doubleSpinBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>112</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="prefix">
+         <string>pos </string>
+        </property>
+        <property name="suffix">
+         <string/>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="powerwheel_move_bkwd_pushButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>30</width>
+          <height>23</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>30</width>
+          <height>23</height>
+         </size>
+        </property>
+        <property name="text">
+         <string>-</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="powerwheel_move_fwd_pushButton">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -599,8 +639,14 @@
         </property>
         <property name="minimumSize">
          <size>
-          <width>10</width>
-          <height>0</height>
+          <width>30</width>
+          <height>23</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>30</width>
+          <height>23</height>
          </size>
         </property>
         <property name="text">
@@ -614,32 +660,382 @@
         </property>
        </widget>
       </item>
-      <item row="1" column="2">
-       <widget class="QDoubleSpinBox" name="powerwheel_move_steps_doubleSpinBox"/>
+      <item>
+       <widget class="QDoubleSpinBox" name="powerwheel_move_steps_doubleSpinBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>112</width>
+          <height>16777215</height>
+         </size>
+        </property>
+        <property name="prefix">
+         <string>delta </string>
+        </property>
+       </widget>
       </item>
-      <item row="1" column="4">
-       <widget class="QPushButton" name="powerwheel_move_bkwd_pushButton">
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Picoharp</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="2">
+       <widget class="QLCDNumber" name="picoharp_count_rate0_lcdNumber">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>150</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <family>MS Shell Dlg 2</family>
+          <pointsize>35</pointsize>
+          <weight>75</weight>
+          <italic>false</italic>
+          <bold>true</bold>
+          <strikeout>false</strikeout>
+         </font>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="inputMethodHints">
+         <set>Qt::ImhNone</set>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
+        <property name="midLineWidth">
+         <number>0</number>
+        </property>
+        <property name="smallDecimalPoint">
+         <bool>false</bool>
+        </property>
+        <property name="digitCount">
+         <number>10</number>
+        </property>
+        <property name="segmentStyle">
+         <enum>QLCDNumber::Flat</enum>
+        </property>
+        <property name="value" stdset="0">
+         <double>0.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="count_rate0_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>60</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::RightToLeft</enum>
+        </property>
         <property name="text">
-         <string>-</string>
+         <string>count_rate0</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
       <item row="1" column="1">
-       <widget class="QLabel" name="label_25">
+       <widget class="QLabel" name="count_rate1_label">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>60</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::RightToLeft</enum>
+        </property>
         <property name="text">
-         <string>Move Delta</string>
+         <string>count_rate1</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
        </widget>
       </item>
-      <item row="0" column="2" colspan="3">
-       <widget class="QDoubleSpinBox" name="power_wheel_encoder_pos_doubleSpinBox"/>
-      </item>
-      <item row="0" column="1">
-       <widget class="QLabel" name="label_29">
-        <property name="text">
-         <string>Encoder</string>
+      <item row="1" column="0">
+       <widget class="QDoubleSpinBox" name="picoharp_Tacq_doubleSpinBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="prefix">
+         <string>Tacq: </string>
+        </property>
+        <property name="decimals">
+         <number>3</number>
         </property>
        </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QLCDNumber" name="picoharp_count_rate1_lcdNumber">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>150</width>
+          <height>30</height>
+         </size>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>35</pointsize>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
+        <property name="cursor">
+         <cursorShape>ArrowCursor</cursorShape>
+        </property>
+        <property name="whatsThis">
+         <string/>
+        </property>
+        <property name="layoutDirection">
+         <enum>Qt::RightToLeft</enum>
+        </property>
+        <property name="autoFillBackground">
+         <bool>false</bool>
+        </property>
+        <property name="frameShape">
+         <enum>QFrame::NoFrame</enum>
+        </property>
+        <property name="lineWidth">
+         <number>1</number>
+        </property>
+        <property name="digitCount">
+         <number>10</number>
+        </property>
+        <property name="segmentStyle">
+         <enum>QLCDNumber::Flat</enum>
+        </property>
+        <property name="value" stdset="0">
+         <double>987654321.000000000000000</double>
+        </property>
+        <property name="intValue" stdset="0">
+         <number>987654321</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="picoharp_connected_checkBox">
+        <property name="text">
+         <string>connected</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="filter_wheel_gridGroupBox">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>16777215</height>
+      </size>
+     </property>
+     <property name="title">
+      <string>Filter Wheel</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="spacing">
+       <number>0</number>
+      </property>
+      <property name="leftMargin">
+       <number>0</number>
+      </property>
+      <property name="topMargin">
+       <number>0</number>
+      </property>
+      <property name="rightMargin">
+       <number>0</number>
+      </property>
+      <property name="bottomMargin">
+       <number>0</number>
+      </property>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <property name="spacing">
+         <number>6</number>
+        </property>
+        <property name="leftMargin">
+         <number>9</number>
+        </property>
+        <property name="topMargin">
+         <number>9</number>
+        </property>
+        <property name="rightMargin">
+         <number>9</number>
+        </property>
+        <property name="bottomMargin">
+         <number>9</number>
+        </property>
+        <item>
+         <widget class="QCheckBox" name="filter_wheel_connected_checkBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>20</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="zero_filter_pushButton">
+          <property name="text">
+           <string>zero filter</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="current_filter_doubleSpinBox">
+          <property name="readOnly">
+           <bool>true</bool>
+          </property>
+          <property name="buttonSymbols">
+           <enum>QAbstractSpinBox::NoButtons</enum>
+          </property>
+          <property name="prefix">
+           <string>current filter: </string>
+          </property>
+          <property name="suffix">
+           <string/>
+          </property>
+          <property name="decimals">
+           <number>0</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="text">
+           <string>target:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="target_filter_lineEdit">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>40</width>
+            <height>23</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="move_filter_bkwd_pushButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>23</width>
+            <height>23</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>-1</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="move_filter_fwd_pushButton">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>23</width>
+            <height>23</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>+1</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -659,6 +1055,9 @@
       </item>
       <item row="2" column="1">
        <widget class="QDoubleSpinBox" name="power_meter_wl_doubleSpinBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
         </property>
@@ -685,7 +1084,7 @@
       <item row="2" column="2">
        <widget class="QCheckBox" name="power_meter_acquire_cont_checkBox">
         <property name="enabled">
-         <bool>true</bool>
+         <bool>false</bool>
         </property>
         <property name="text">
          <string>Acquire
@@ -714,43 +1113,63 @@ Continuously</string>
         </property>
        </widget>
       </item>
+      <item row="0" column="0">
+       <widget class="QCheckBox" name="power_meter_connected_checkBox">
+        <property name="text">
+         <string/>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
    <item>
     <widget class="QGroupBox" name="gridGroupBox">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="title">
-      <string>laser_power_feedback_control</string>
+      <string>Laser Power Feedback Control</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_10">
-      <item row="2" column="1">
-       <widget class="QCheckBox" name="laser_power_feedback_control_activation_checkBox">
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_11">
         <property name="text">
-         <string>Run</string>
+         <string>set point</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="1">
+      <item row="1" column="1">
+       <widget class="QLabel" name="label_13">
+        <property name="text">
+         <string>p gain</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="laser_power_feedback_control_p_gain_doubleSpinBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
        <widget class="QDoubleSpinBox" name="laser_power_feedback_control_setpoint_doubleSpinBox">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
         <property name="decimals">
          <number>6</number>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
-       <widget class="QDoubleSpinBox" name="laser_power_feedback_control_p_gain_doubleSpinBox"/>
-      </item>
       <item row="0" column="0">
-       <widget class="QLabel" name="label_11">
-        <property name="text">
-         <string>set power</string>
+       <widget class="QCheckBox" name="laser_power_feedback_control_activation_checkBox">
+        <property name="enabled">
+         <bool>false</bool>
         </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_13">
         <property name="text">
-         <string>p_gain</string>
+         <string>activate</string>
         </property>
        </widget>
       </item>
@@ -758,473 +1177,142 @@ Continuously</string>
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_apd">
-     <property name="title">
-      <string>APD Counter</string>
+    <widget class="QGroupBox" name="tenma_verticalGroupBox">
+     <property name="enabled">
+      <bool>true</bool>
      </property>
-     <layout class="QGridLayout" name="gridLayout_5">
-      <item row="0" column="3">
-       <widget class="QCheckBox" name="apd_optimize_startstop_checkBox">
-        <property name="text">
-         <string>APD Optimizer</string>
-        </property>
-       </widget>
+     <property name="acceptDrops">
+      <bool>false</bool>
+     </property>
+     <property name="title">
+      <string>Tenma LED</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <layout class="QHBoxLayout" name="on_off">
+        <item>
+         <widget class="QPushButton" name="tenma_power_off_pushButton">
+          <property name="text">
+           <string>LED off</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="tenma_power_on_pushButton">
+          <property name="text">
+           <string>LED on</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
-      <item row="1" column="3">
-       <widget class="QDoubleSpinBox" name="apd_counter_int_doubleSpinBox">
-        <property name="suffix">
-         <string/>
-        </property>
-        <property name="decimals">
-         <number>4</number>
-        </property>
-        <property name="minimum">
-         <double>1.000000000000000</double>
-        </property>
-        <property name="maximum">
-         <double>1000.000000000000000</double>
-        </property>
-        <property name="value">
-         <double>50.000000000000000</double>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="0" rowspan="2" colspan="2">
-       <widget class="QLineEdit" name="apd_counter_output_lineEdit">
-        <property name="palette">
-         <palette>
-          <active>
-           <colorrole role="WindowText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Button">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Light">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>255</red>
-              <green>232</green>
-              <blue>225</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Midlight">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>243</red>
-              <green>189</green>
-              <blue>172</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Dark">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>116</red>
-              <green>73</green>
-              <blue>60</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Mid">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>155</red>
-              <green>97</green>
-              <blue>80</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Text">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="BrightText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>255</red>
-              <green>255</green>
-              <blue>255</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="ButtonText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Base">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Window">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Shadow">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="AlternateBase">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>243</red>
-              <green>200</green>
-              <blue>187</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="ToolTipBase">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>255</red>
-              <green>255</green>
-              <blue>220</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="ToolTipText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-          </active>
-          <inactive>
-           <colorrole role="WindowText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Button">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Light">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>255</red>
-              <green>232</green>
-              <blue>225</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Midlight">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>243</red>
-              <green>189</green>
-              <blue>172</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Dark">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>116</red>
-              <green>73</green>
-              <blue>60</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Mid">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>155</red>
-              <green>97</green>
-              <blue>80</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Text">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="BrightText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>255</red>
-              <green>255</green>
-              <blue>255</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="ButtonText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Base">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Window">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Shadow">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="AlternateBase">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>243</red>
-              <green>200</green>
-              <blue>187</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="ToolTipBase">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>255</red>
-              <green>255</green>
-              <blue>220</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="ToolTipText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-          </inactive>
-          <disabled>
-           <colorrole role="WindowText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>116</red>
-              <green>73</green>
-              <blue>60</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Button">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Light">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>255</red>
-              <green>232</green>
-              <blue>225</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Midlight">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>243</red>
-              <green>189</green>
-              <blue>172</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Dark">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>116</red>
-              <green>73</green>
-              <blue>60</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Mid">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>155</red>
-              <green>97</green>
-              <blue>80</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Text">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>116</red>
-              <green>73</green>
-              <blue>60</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="BrightText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>255</red>
-              <green>255</green>
-              <blue>255</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="ButtonText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>116</red>
-              <green>73</green>
-              <blue>60</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Base">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Window">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="Shadow">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="AlternateBase">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>232</red>
-              <green>146</green>
-              <blue>120</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="ToolTipBase">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>255</red>
-              <green>255</green>
-              <blue>220</blue>
-             </color>
-            </brush>
-           </colorrole>
-           <colorrole role="ToolTipText">
-            <brush brushstyle="SolidPattern">
-             <color alpha="255">
-              <red>0</red>
-              <green>0</green>
-              <blue>0</blue>
-             </color>
-            </brush>
-           </colorrole>
-          </disabled>
-         </palette>
-        </property>
-        <property name="font">
-         <font>
-          <pointsize>12</pointsize>
-         </font>
-        </property>
-        <property name="focusPolicy">
-         <enum>Qt::NoFocus</enum>
-        </property>
-        <property name="readOnly">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="2" rowspan="2">
-       <widget class="QLabel" name="label_16">
-        <property name="text">
-         <string>Hz</string>
-        </property>
-       </widget>
+      <item>
+       <layout class="QGridLayout" name="tenma_settings">
+        <item row="1" column="0">
+         <widget class="QDoubleSpinBox" name="tenma_power_voltage_doubleSpinBox">
+          <property name="suffix">
+           <string> V</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="4" alignment="Qt::AlignRight">
+         <widget class="QPushButton" name="tenma_power_current_plus_pushButton">
+          <property name="maximumSize">
+           <size>
+            <width>23</width>
+            <height>23</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>+</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QDoubleSpinBox" name="tenma_power_current_doubleSpinBox">
+          <property name="suffix">
+           <string> Amps</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3" alignment="Qt::AlignRight">
+         <widget class="QPushButton" name="tenma_power_current_minus_pushButton">
+          <property name="maximumSize">
+           <size>
+            <width>23</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="sizeIncrement">
+           <size>
+            <width>0</width>
+            <height>10</height>
+           </size>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>10</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>-</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="3" alignment="Qt::AlignRight">
+         <widget class="QPushButton" name="tenma_power_voltage_minus_pushButton">
+          <property name="maximumSize">
+           <size>
+            <width>23</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>-</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="4" alignment="Qt::AlignRight">
+         <widget class="QPushButton" name="tenma_power_voltage_plus_pushButton">
+          <property name="maximumSize">
+           <size>
+            <width>23</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>+</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QLineEdit" name="tenma_power_voltage_lineEdit"/>
+        </item>
+        <item row="0" column="2">
+         <widget class="QLineEdit" name="tenma_power_current_lineEdit"/>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>target Amps:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLabel" name="label_6">
+          <property name="text">
+           <string>target V:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -1232,18 +1320,8 @@ Continuously</string>
   </layout>
  </widget>
  <tabstops>
-  <tabstop>center_wl_doubleSpinBox</tabstop>
   <tabstop>grating_id_comboBox</tabstop>
-  <tabstop>tenma_power_off_pushButton</tabstop>
-  <tabstop>tenma_power_on_pushButton</tabstop>
-  <tabstop>tenma_power_current_doubleSpinBox</tabstop>
-  <tabstop>tenma_power_current_lineEdit</tabstop>
-  <tabstop>tenma_power_current_minus_pushButton</tabstop>
-  <tabstop>tenma_power_current_plus_pushButton</tabstop>
-  <tabstop>tenma_power_voltage_doubleSpinBox</tabstop>
-  <tabstop>tenma_power_voltage_lineEdit</tabstop>
-  <tabstop>tenma_power_voltage_minus_pushButton</tabstop>
-  <tabstop>tenma_power_voltage_plus_pushButton</tabstop>
+  <tabstop>center_wl_doubleSpinBox</tabstop>
   <tabstop>h_axis_comboBox</tabstop>
   <tabstop>v_axis_comboBox</tabstop>
   <tabstop>h0_doubleSpinBox</tabstop>
@@ -1259,33 +1337,481 @@ Continuously</string>
   <tabstop>h_center_doubleSpinBox</tabstop>
   <tabstop>v_center_doubleSpinBox</tabstop>
   <tabstop>copy_current_position_to_2d_scan_center_pushButton</tabstop>
-  <tabstop>thorlabs_MFF_comboBox</tabstop>
-  <tabstop>shutter_open_checkBox</tabstop>
-  <tabstop>pushButton_2</tabstop>
-  <tabstop>load_position_pushButton</tabstop>
-  <tabstop>x_set_lineEdit</tabstop>
-  <tabstop>y_set_lineEdit</tabstop>
-  <tabstop>z_set_lineEdit</tabstop>
-  <tabstop>stage_live_update_checkBox</tabstop>
-  <tabstop>zero_stage_pushButton</tabstop>
-  <tabstop>stage_wobble_checkBox</tabstop>
-  <tabstop>move_filter_fwd_pushButton</tabstop>
-  <tabstop>move_filter_bkwd_pushButton</tabstop>
+  <tabstop>power_wheel_encoder_pos_doubleSpinBox</tabstop>
+  <tabstop>powerwheel_move_bkwd_pushButton</tabstop>
+  <tabstop>powerwheel_move_steps_doubleSpinBox</tabstop>
+  <tabstop>picoharp_connected_checkBox</tabstop>
+  <tabstop>picoharp_Tacq_doubleSpinBox</tabstop>
   <tabstop>zero_filter_pushButton</tabstop>
   <tabstop>current_filter_doubleSpinBox</tabstop>
   <tabstop>target_filter_lineEdit</tabstop>
-  <tabstop>power_wheel_encoder_pos_doubleSpinBox</tabstop>
-  <tabstop>powerwheel_move_steps_doubleSpinBox</tabstop>
-  <tabstop>powerwheel_move_fwd_pushButton</tabstop>
-  <tabstop>powerwheel_move_bkwd_pushButton</tabstop>
+  <tabstop>move_filter_bkwd_pushButton</tabstop>
+  <tabstop>move_filter_fwd_pushButton</tabstop>
   <tabstop>power_meter_wl_doubleSpinBox</tabstop>
   <tabstop>power_meter_acquire_cont_checkBox</tabstop>
+  <tabstop>laser_power_feedback_control_activation_checkBox</tabstop>
   <tabstop>laser_power_feedback_control_setpoint_doubleSpinBox</tabstop>
   <tabstop>laser_power_feedback_control_p_gain_doubleSpinBox</tabstop>
-  <tabstop>laser_power_feedback_control_activation_checkBox</tabstop>
-  <tabstop>apd_optimize_startstop_checkBox</tabstop>
-  <tabstop>apd_counter_int_doubleSpinBox</tabstop>
+  <tabstop>tenma_power_off_pushButton</tabstop>
+  <tabstop>tenma_power_on_pushButton</tabstop>
+  <tabstop>tenma_power_current_doubleSpinBox</tabstop>
+  <tabstop>tenma_power_current_lineEdit</tabstop>
+  <tabstop>tenma_power_current_minus_pushButton</tabstop>
+  <tabstop>tenma_power_current_plus_pushButton</tabstop>
+  <tabstop>tenma_power_voltage_doubleSpinBox</tabstop>
+  <tabstop>tenma_power_voltage_lineEdit</tabstop>
+  <tabstop>tenma_power_voltage_minus_pushButton</tabstop>
+  <tabstop>tenma_power_voltage_plus_pushButton</tabstop>
  </tabstops>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>spectrometer_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>grating_id_comboBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>31</x>
+     <y>137</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>151</x>
+     <y>141</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>spectrometer_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>center_wl_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>31</x>
+     <y>137</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>344</x>
+     <y>141</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>picoharp_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>picoharp_Tacq_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>70</x>
+     <y>700</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>73</x>
+     <y>738</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>power_meter_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>power_meter_wl_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>45</x>
+     <y>888</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>240</x>
+     <y>932</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>power_meter_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>power_meter_acquire_cont_checkBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>90</x>
+     <y>888</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>344</x>
+     <y>937</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>power_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>power_wheel_encoder_pos_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>36</x>
+     <y>629</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>96</x>
+     <y>628</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>power_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>powerwheel_move_bkwd_pushButton</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>36</x>
+     <y>629</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>190</x>
+     <y>629</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>power_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>powerwheel_move_fwd_pushButton</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>36</x>
+     <y>629</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>226</x>
+     <y>629</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>power_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>powerwheel_move_steps_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>36</x>
+     <y>629</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>344</x>
+     <y>628</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stage_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>x_set_lineEdit</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>80</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>343</x>
+     <y>243</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stage_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>y_set_lineEdit</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>94</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>343</x>
+     <y>269</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stage_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>z_set_lineEdit</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>94</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>343</x>
+     <y>295</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stage_live_update_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>cx_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>180</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>204</x>
+     <y>243</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stage_live_update_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>cy_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>180</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>204</x>
+     <y>269</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stage_live_update_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>cz_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>180</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>204</x>
+     <y>295</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stage_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>stage_wobble_checkBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>94</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>262</x>
+     <y>212</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stage_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>stage_live_update_checkBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>94</x>
+     <y>212</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>180</x>
+     <y>212</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>picoharp_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>picoharp_count_rate0_lcdNumber</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>107</x>
+     <y>700</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>344</x>
+     <y>707</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>picoharp_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>picoharp_count_rate1_lcdNumber</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>107</x>
+     <y>700</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>344</x>
+     <y>743</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>filter_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>zero_filter_pushButton</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>31</x>
+     <y>809</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>109</x>
+     <y>814</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>filter_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>current_filter_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>31</x>
+     <y>809</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>200</x>
+     <y>812</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>filter_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>target_filter_lineEdit</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>31</x>
+     <y>809</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>286</x>
+     <y>814</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>filter_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>move_filter_bkwd_pushButton</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>31</x>
+     <y>809</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>315</x>
+     <y>814</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>filter_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>move_filter_fwd_pushButton</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>31</x>
+     <y>809</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>344</x>
+     <y>814</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>filter_wheel_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>label_2</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>31</x>
+     <y>809</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>240</x>
+     <y>823</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>power_meter_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>laser_power_feedback_control_activation_checkBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>117</x>
+     <y>888</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>57</x>
+     <y>994</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>aotf_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>aotf_deflected_wl_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>94</x>
+     <y>1087</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>251</x>
+     <y>1083</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>aotf_connected_checkBox</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>aotf_freq0_doubleSpinBox</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>114</x>
+     <y>1083</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>143</x>
+     <y>1076</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
