@@ -1,0 +1,675 @@
+
+
+<!doctype html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>ALD.MKS_600 package &#8212; scopefoundry  documentation</title>
+    <link rel="stylesheet" href="_static/bizstyle.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/bizstyle.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <!--[if lt IE 9]>
+    <script type="text/javascript" src="_static/css3-mediaqueries.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scopefoundry  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">ALD.MKS_600 package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-ALD.MKS_600.mks_600_hw">ALD.MKS_600.mks_600_hw module</a></li>
+<li><a class="reference internal" href="#module-ALD.MKS_600.mks_600_interface">ALD.MKS_600.mks_600_interface module</a></li>
+<li><a class="reference internal" href="#module-ALD.MKS_600.mks_600_measure">ALD.MKS_600.mks_600_measure module</a></li>
+<li><a class="reference internal" href="#module-ALD.MKS_600">Module contents</a></li>
+</ul>
+</li>
+</ul>
+
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/ALD.MKS_600.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="ald-mks-600-package">
+<h1>ALD.MKS_600 package<a class="headerlink" href="#ald-mks-600-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-ALD.MKS_600.mks_600_hw">
+<span id="ald-mks-600-mks-600-hw-module"></span><h2>ALD.MKS_600.mks_600_hw module<a class="headerlink" href="#module-ALD.MKS_600.mks_600_hw" title="Permalink to this headline">¶</a></h2>
+<p>Created on Nov 20, 2017</p>
+<dl class="docutils">
+<dt>&#64;author: Alan Buckley &lt;<a class="reference external" href="mailto:alanbuckley&#37;&#52;&#48;berkeley&#46;edu">alanbuckley<span>&#64;</span>berkeley<span>&#46;</span>edu</a>&gt;</dt>
+<dd>&lt;<a class="reference external" href="mailto:alanbuckley&#37;&#52;&#48;lbl&#46;gov">alanbuckley<span>&#64;</span>lbl<span>&#46;</span>gov</a>&gt;</dd>
+</dl>
+<dl class="class">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware">
+<em class="property">class </em><code class="descclassname">ALD.MKS_600.mks_600_hw.</code><code class="descname">MKS_600_Hardware</code><span class="sig-paren">(</span><em>app</em>, <em>debug=False</em>, <em>name=None</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ScopeFoundry.hardware.HardwareComponent</span></code></p>
+<dl class="attribute">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.assign">
+<code class="descname">assign</code><em class="property"> = {'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'Open': 6, 'Close': 7}</em><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.assign" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.connect">
+<code class="descname">connect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.connect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Connects MKS 600 to software suite and opens serial connection.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.disconnect">
+<code class="descname">disconnect</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.disconnect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Disconnects MKS 600 from software suite and closes serial connection.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.name">
+<code class="descname">name</code><em class="property"> = 'mks_600_hw'</em><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.read_pressure">
+<code class="descname">read_pressure</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.read_pressure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads pressure from MKS 600 manometer and expresses
+the quantity in the desired units.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Pressure in units specified by <em>self.settings.units</em>.         Original read quantity is scaled by unit conversions contained in this function.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.read_sp">
+<code class="descname">read_sp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.read_sp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads set point value from active/selected preset channel</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.read_valve_position">
+<code class="descname">read_valve_position</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.read_valve_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads valve percentage open.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">Valve percentage open as a float</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.set_control_mode">
+<code class="descname">set_control_mode</code><span class="sig-paren">(</span><em>control</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.set_control_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Switches active channel’s control mode. Each preset channel can be set
+to either of the following control modes:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Pressure set point</li>
+<li>Position</li>
+</ul>
+</div></blockquote>
+<p>Position mode allows the user to manually specify the throttle valve’s 
+percentage open value</p>
+<p>Pressure set point allows the hardware to act as necessary to adjust the
+throttle valve to meet a specified pressure.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="72%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+</tr>
+<tr class="row-even"><td>control</td>
+<td>str</td>
+<td>String describing the desired control mode.
+Can be either ‘Pressure’ or ‘Position’</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.set_position_sp">
+<code class="descname">set_position_sp</code><span class="sig-paren">(</span><em>pct</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.set_position_sp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets set point channel position manually.
+Checks if channel is set to position mode 
+before attempting to set throttle valve position.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="11%" />
+<col width="58%" />
+<col width="16%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+<td><strong>Valid Range</strong></td>
+</tr>
+<tr class="row-even"><td>pct</td>
+<td>int</td>
+<td>Position (percentage open) to set on throttle valve.</td>
+<td>(0, 1)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.set_sp_defaults">
+<code class="descname">set_sp_defaults</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.set_sp_defaults" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets all channel set points to pre-defined defaults in 
+<code class="xref py py-attr docutils literal"><span class="pre">self.sp_defaults</span></code></p>
+<p>Connected to operation <em>Force SP defaults</em>
+Sets active channel specified in 
+<code class="xref py py-attr docutils literal"><span class="pre">self.settings.sp_channel</span></code> to ‘Open’</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.sp_defaults">
+<code class="descname">sp_defaults</code><em class="property"> = {'A': 0.015, 'B': 0.0002, 'C': 0, 'D': 0, 'E': 0}</em><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.sp_defaults" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.switch_sp">
+<code class="descname">switch_sp</code><span class="sig-paren">(</span><em>choice</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.switch_sp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handles calls to change device set point channels.</p>
+<p>Possible channels are listed in the keys of
+<code class="xref py py-attr docutils literal"><span class="pre">self.assign</span></code></p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="72%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+</tr>
+<tr class="row-even"><td>choice</td>
+<td>str</td>
+<td><dl class="first last docutils">
+<dt>Name of channel</dt>
+<dd><ul class="first last simple">
+<li>Open/Close</li>
+<li>SP Channel (A/B/C/D/E)</li>
+</ul>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_hw.MKS_600_Hardware.write_sp">
+<code class="descname">write_sp</code><span class="sig-paren">(</span><em>pct</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_hw.MKS_600_Hardware.write_sp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes set point value to active/selected preset channel.
+Writes percentage of full scale pressure value or percentage position to selected preset channel.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="72%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+</tr>
+<tr class="row-even"><td>pct</td>
+<td>int</td>
+<td>Position (percentage open) to set on throttle valve.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ALD.MKS_600.mks_600_interface">
+<span id="ald-mks-600-mks-600-interface-module"></span><h2>ALD.MKS_600.mks_600_interface module<a class="headerlink" href="#module-ALD.MKS_600.mks_600_interface" title="Permalink to this headline">¶</a></h2>
+<p>Created on Nov 20, 2017</p>
+<dl class="docutils">
+<dt>&#64;author: Alan Buckley &lt;<a class="reference external" href="mailto:alanbuckley&#37;&#52;&#48;berkeley&#46;edu">alanbuckley<span>&#64;</span>berkeley<span>&#46;</span>edu</a>&gt;</dt>
+<dd>&lt;<a class="reference external" href="mailto:alanbuckley&#37;&#52;&#48;lbl&#46;gov">alanbuckley<span>&#64;</span>lbl<span>&#46;</span>gov</a>&gt;</dd>
+</dl>
+<dl class="class">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface">
+<em class="property">class </em><code class="descclassname">ALD.MKS_600.mks_600_interface.</code><code class="descname">MKS_600_Interface</code><span class="sig-paren">(</span><em>port='COM5'</em>, <em>debug=False</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Communications library for the MKS 600 series pressure/throttle valve controller.
+Please refer to the manual for your MKS 600 series device for details regarding the 
+device’s operation.</p>
+<p><strong>IMPORTANT:</strong> For the commands in this module to work over the unit’s RS232 connection, 
+The key included with the unit must be turned to “Remote” as opposed to “Local”</p>
+<p>On the front of the controller are 5 set point channels as well as open and close 
+mode listed. In the corner of each of these buttons are green LEDs which indicate which 
+of the 7 possible modes are active.</p>
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.ask_cmd">
+<code class="descname">ask_cmd</code><span class="sig-paren">(</span><em>cmd</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.ask_cmd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sends serial command to MKS 600 unit with proper formatting. 
+Retrieves response from the unit.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="72%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+</tr>
+<tr class="row-even"><td>cmd</td>
+<td>str</td>
+<td>Command or query to be sent to MKS 600 unit.</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(str) Unit’s response to query.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.close">
+<code class="descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Properly closes serial connection to throttle valve controller.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.enable_position_mode">
+<code class="descname">enable_position_mode</code><span class="sig-paren">(</span><em>ch</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.enable_position_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable position mode on targeted preset channel.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="41%" />
+<col width="31%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+<td><strong>Valid Range</strong></td>
+</tr>
+<tr class="row-even"><td>ch</td>
+<td>int</td>
+<td>Preset channel on which position
+mode is to be enabled.</td>
+<td>(1, 6)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.enable_pressure_mode">
+<code class="descname">enable_pressure_mode</code><span class="sig-paren">(</span><em>ch</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.enable_pressure_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Enable pressure regulation mode on active preset channel.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="41%" />
+<col width="31%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+<td><strong>Valid Range</strong></td>
+</tr>
+<tr class="row-even"><td>ch</td>
+<td>int</td>
+<td>Preset channel on which pressure
+mode is to be enabled.</td>
+<td>(1, 6)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.halt_valve">
+<code class="descname">halt_valve</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.halt_valve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Halt valve at current position</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.name">
+<code class="descname">name</code><em class="property"> = 'mks_600_interface'</em><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_control_mode">
+<code class="descname">read_control_mode</code><span class="sig-paren">(</span><em>ch</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_control_mode" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads the control mode of specified preset channel</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="41%" />
+<col width="31%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+<td><strong>Valid Range</strong></td>
+</tr>
+<tr class="row-even"><td>ch</td>
+<td>int</td>
+<td>Preset channel to read control
+mode from.</td>
+<td>(1, 6)</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(boolean int) value representing which control mode is active.<ul class="simple">
+<li>0 indicates control by position</li>
+<li>1 indicates control by pressure set point</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_pressure">
+<code class="descname">read_pressure</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_pressure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads system pressure as detected by the attached capacitance manometer.
+Queries the full scale range percentage and converts this to a pressure value.</p>
+<p>Local variable
+<code class="xref py py-attr docutils literal"><span class="pre">fs</span></code> is the full scale range and reads full range off of attached manometer.
+:returns: (float) Pressure value as measured by attached manometer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_sensor_range">
+<code class="descname">read_sensor_range</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_sensor_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads range of attached capacitance manometer.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">float. Manometer full range value in Torr.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_set_point">
+<code class="descname">read_set_point</code><span class="sig-paren">(</span><em>ch</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_set_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads set point value of active preset channel.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="53%" />
+<col width="19%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+<td><strong>Valid Range</strong></td>
+</tr>
+<tr class="row-even"><td>ch</td>
+<td>int</td>
+<td>Preset channel to read set point from.</td>
+<td>(1,6)</td>
+</tr>
+</tbody>
+</table>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(float) Percentage value of full scale pressure value or position percentage of active preset channel.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_valve_position">
+<code class="descname">read_valve_position</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.read_valve_position" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads valve position</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">(float) Valve percentage open on active preset channel.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.switch_sp">
+<code class="descname">switch_sp</code><span class="sig-paren">(</span><em>ch</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.switch_sp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Switches preset channels. Each channel has a set point value set by the controller’s user.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="41%" />
+<col width="31%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+<td><strong>Valid Range</strong></td>
+</tr>
+<tr class="row-even"><td>ch</td>
+<td>int</td>
+<td>Preset channel to mark as active.</td>
+<td>(1, 6)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.valve_full_open">
+<code class="descname">valve_full_open</code><span class="sig-paren">(</span><em>open_valve</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.valve_full_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fully opens or closes valve.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="16%" />
+<col width="12%" />
+<col width="72%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+</tr>
+<tr class="row-even"><td>open</td>
+<td>bool</td>
+<td>Valve opens to 100% if True,
+Closes to 0% if False.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_interface.MKS_600_Interface.write_set_point">
+<code class="descname">write_set_point</code><span class="sig-paren">(</span><em>ch</em>, <em>pct</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_interface.MKS_600_Interface.write_set_point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes set point value of selected preset channel.
+Writes percentage of full scale pressure value or percentage position to selected preset channel.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="15%" />
+<col width="12%" />
+<col width="55%" />
+<col width="19%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>Arguments</strong></td>
+<td><strong>Type</strong></td>
+<td><strong>Description</strong></td>
+<td><strong>Valid Range</strong></td>
+</tr>
+<tr class="row-even"><td>ch</td>
+<td>int</td>
+<td>Preset channel to read set point from.</td>
+<td>(1, 6)</td>
+</tr>
+<tr class="row-odd"><td>pct</td>
+<td>int</td>
+<td>Percentage open to write to preset channel</td>
+<td>(0, 100)</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ALD.MKS_600.mks_600_measure">
+<span id="ald-mks-600-mks-600-measure-module"></span><h2>ALD.MKS_600.mks_600_measure module<a class="headerlink" href="#module-ALD.MKS_600.mks_600_measure" title="Permalink to this headline">¶</a></h2>
+<p>Created on Nov 21, 2017</p>
+<dl class="docutils">
+<dt>&#64;author: Alan Buckley &lt;<a class="reference external" href="mailto:alanbuckley&#37;&#52;&#48;berkeley&#46;edu">alanbuckley<span>&#64;</span>berkeley<span>&#46;</span>edu</a>&gt;</dt>
+<dd>&lt;<a class="reference external" href="mailto:alanbuckley&#37;&#52;&#48;lbl&#46;gov">alanbuckley<span>&#64;</span>lbl<span>&#46;</span>gov</a>&gt;</dd>
+</dl>
+<dl class="class">
+<dt id="ALD.MKS_600.mks_600_measure.MKS_600_Measure">
+<em class="property">class </em><code class="descclassname">ALD.MKS_600.mks_600_measure.</code><code class="descname">MKS_600_Measure</code><span class="sig-paren">(</span><em>app</em><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_measure.MKS_600_Measure" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">ScopeFoundry.measurement.Measurement</span></code></p>
+<dl class="attribute">
+<dt id="ALD.MKS_600.mks_600_measure.MKS_600_Measure.name">
+<code class="descname">name</code><em class="property"> = 'mks_600_measure'</em><a class="headerlink" href="#ALD.MKS_600.mks_600_measure.MKS_600_Measure.name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_measure.MKS_600_Measure.run">
+<code class="descname">run</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_measure.MKS_600_Measure.run" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ALD.MKS_600.mks_600_measure.MKS_600_Measure.setup">
+<code class="descname">setup</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#ALD.MKS_600.mks_600_measure.MKS_600_Measure.setup" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-ALD.MKS_600">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-ALD.MKS_600" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">scopefoundry  documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2018, Alan Buckley.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.3.
+    </div>
+  </body>
+</html>

@@ -4,112 +4,87 @@ import time
 from ScopeFoundry import h5_io
 from ScopeFoundry.helper_funcs import sibling_path
 import pyqtgraph as pg
-from ScopeFoundryHW import shutter_servo_arduino
+from matplotlib.backends.qt_compat import QtWidgets
+from ScopeFoundry.logged_quantity import LQRange
+from _operator import pos
 
 class PowerScanMeasure(Measurement):
     
     name = 'power_scan'
     
-    def __init__(self, app):
+    def __init__(self, app, shutter_open_lq_path = None):
         self.ui_filename = sibling_path(__file__, "power_scan.ui")
         Measurement.__init__(self, app)
+        if shutter_open_lq_path != None:
+            self.shutter_open = app.lq_path(shutter_open_lq_path)
         
     def setup(self):
-        
-        self.power_wheel_min = self.settings.New("power_wheel_min", dtype=float, unit='', initial=0, vmin=0, vmax=280, ro=False)
-        self.power_wheel_max = self.settings.New("power_wheel_max", dtype=float, unit='', initial=280, vmin=0, vmax=+280, ro=False)
-        self.power_wheel_ndatapoints = self.settings.New("power_wheel_ndatapoints", dtype=int, unit='', initial=100, vmin=1, vmax=3200, ro=False)
-        
-        self.up_and_down_sweep    = self.settings.New("up_and_down_sweep",dtype=bool, initial=True)
+               
+        self.power_wheel_range = self.settings.New_Range('power_wheel', include_sweep_type = True,
+                                                         initials = [0, 280, 28])
+        self.power_wheel_range.sweep_type.update_value('up_down')
+        self.acq_mode = self.settings.New('acq_mode', dtype=str, initial = 'const_time', 
+                                          choices=('const_time', 'const_dose', 'manual_acq_times'))
 
-        self.collect_apd      = self.settings.New("collect_apd",      dtype=bool, initial=True)
-        self.collect_spectrum = self.settings.New("collect_spectrum", dtype=bool, initial=False)
-        self.collect_lifetime = self.settings.New("collect_lifetime", dtype=bool, initial=True)
-        self.collect_ascom_img = self.settings.New('collect_ascom_img', dtype=bool, initial=False)
+                                               
+        #possible hardware components and their integration times setting:
+        self.hws = { 'picoharp': 'Tacq',
+                     'hydraharp': 'Tacq',
+                     'ascom_img': 'exp_time',
+                     'andor_ccd': 'exposure_time',
+                     'winspec_remote_client': 'acq_time', 
+                     'apd_counter': 'int_time',}
+                
+        for key in self.hws.keys():
+            self.settings.New('collect_{}'.format(key), dtype=bool, initial=False)
         
-        self.open_shutter_on_start = self.settings.New('open_shutter_on_start', dtype=bool, initial=True) # adding an object that can have a call back func
-        self.close_shutter_on_finish = self.settings.New('close_shutter_on_finish', dtype=bool, initial=True) # adding an object that can have a call back func
+        self.settings.New("x_axis", dtype=str, initial='pm_power', 
+                                        choices=('power_wheel_positions', 'power'))
+        self.settings.New('use_shutter', dtype=bool, initial=True)
         
-        self.settings.New("x_axis", dtype=str, initial='power_wheel', choices=('power_wheel', 'pm_power'))
-    
-    
-    
+            
     def setup_figure(self):
         
         self.ui.start_pushButton.clicked.connect(self.start)
         self.ui.interrupt_pushButton.clicked.connect(self.interrupt)
-
-        self.power_wheel_min.connect_to_widget(self.ui.powerwheel_min_doubleSpinBox)
-        self.power_wheel_max.connect_to_widget(self.ui.powerwheel_max_doubleSpinBox)
-        self.power_wheel_ndatapoints.connect_to_widget(self.ui.num_datapoints_doubleSpinBox)
-
-        self.up_and_down_sweep.connect_bidir_to_widget(self.ui.updown_sweep_checkBox)
-
-        self.collect_apd.connect_to_widget(self.ui.collect_apd_checkBox)
-        self.collect_spectrum.connect_to_widget(self.ui.collect_spectrum_checkBox)
-        self.collect_lifetime.connect_to_widget(self.ui.collect_picoharp_checkBox)
-        self.collect_ascom_img.connect_to_widget(self.ui.collect_ascom_img_checkBox)
+        self.settings.x_axis.connect_to_widget(self.ui.x_axis_comboBox)
+        self.settings.x_axis.add_listener(self.update_display)
+        self.acq_mode.connect_to_widget(self.ui.acq_mode_comboBox)
         
-        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
-        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+        if hasattr(self, 'shutter_open'):
+            CB_widget = QtWidgets.QCheckBox('use shutter')
+            self.settings.use_shutter.connect_to_widget(CB_widget)
+            self.ui.gridGroupBox.layout().addWidget(CB_widget)
+        else:
+            self.settings['use_shutter'] = False
+            self.settings.use_shutter.change_readonly(True)            
 
-        
-        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
-        
-        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
-        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
+        self.power_wheel_range.min.connect_to_widget(self.ui.power_wheel_min_doubleSpinBox)
+        self.power_wheel_range.max.connect_to_widget(self.ui.power_wheel_max_doubleSpinBox)
+        self.power_wheel_range.num.connect_to_widget(self.ui.power_wheel_num_doubleSpinBox)
+        self.power_wheel_range.step.connect_to_widget(self.ui.power_wheel_step_doubleSpinBox)
+        self.power_wheel_range.sweep_type.connect_to_widget(self.ui.sweep_type_comboBox)
 
-        
-        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
-        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
-
-        
-        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
-        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
-
-        
-        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
-        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
-
-        
-        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
-        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
-
-        
-        self.open_shutter_on_start.connect_to_widget(self.ui.open_shutter_on_start_checkBox)# connect UI graphics to callback tag name
-        self.close_shutter_on_finish.connect_to_widget(self.ui.close_shutter_on_finish_checkBox)# connect UI graphics to callback tag name
-
-        
-        
         # Hardware connections
-        if 'apd_counter' in self.app.hardware.keys():
-            self.app.hardware.apd_counter.settings.int_time.connect_bidir_to_widget(
-                                                                    self.ui.apd_int_time_doubleSpinBox)
-        else:
-            self.collect_apd.update_value(False)
-            self.collect_apd.change_readonly(True)
+        layout = self.ui.collect_groupBox.layout()
+        hw_list = self.app.hardware.keys()
+        self.installed_hw = {}
         
-        if 'winspec_remote_client' in self.app.hardware.keys():
-            self.app.hardware['winspec_remote_client'].settings.acq_time.connect_bidir_to_widget(
-                                                                    self.ui.spectrum_int_time_doubleSpinBox)
-        else:
-            self.collect_spectrum.update_value(False)
-            self.collect_spectrum.change_readonly(True)
+        for key in self.hws.keys():
+            if key in hw_list:
+                CB_widget = QtWidgets.QCheckBox(key)
+                lq = getattr(self.settings, 'collect_{}'.format(key))
+                lq.connect_to_widget(CB_widget)
 
-        if 'ascom_camera' in self.app.hardware.keys():
-            self.app.hardware.ascom_camera.settings.exp_time.connect_bidir_to_widget(
-                self.ui.ascom_img_int_time_doubleSpinBox)
-        else:
-            self.collect_ascom_img.update_value(False)
-            self.collect_ascom_img.change_readonly(True)
-            
-        if 'picoharp' in self.app.hardware.keys():
-            self.app.hardware['picoharp'].settings.Tacq.connect_to_widget(
-                self.ui.picoharp_int_time_doubleSpinBox)
-        else:
-            self.collect_lifetime.update_value(False)
-            self.collect_lifetime.change_readonly(True)
-            
+                SP_widget = QtWidgets.QDoubleSpinBox()                
+                Tacq_lq = getattr(self.app.hardware[key].settings, self.hws[key])
+                Tacq_lq.connect_to_widget(SP_widget)
+                
+                layout.addRow(CB_widget, SP_widget)
+                
+                self.installed_hw.update({key: Tacq_lq})
+        
+                
             
         # Plot
         if hasattr(self, 'graph_layout'):
@@ -117,153 +92,225 @@ class PowerScanMeasure(Measurement):
             del self.graph_layout
         self.graph_layout=pg.GraphicsLayoutWidget()
         self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
-        
         self.plot1 = self.graph_layout.addPlot(title="Power Scan")
+        self.display_ready = False
 
-        self.plot_line1 = self.plot1.plot([0])
 
-    def update_display(self):
-        ii = self.ii
-        if self.settings['x_axis'] == 'power_wheel':
-            X = self.power_wheel_position[:ii]
-        else:
-            X = self.pm_powers[:self.ii]
+
+    def pre_run(self):
         
-        if self.settings['collect_apd']:
-            self.plot_line1.setData(X, self.apd_count_rates[:ii])
-        elif self.settings['collect_lifetime']:
-            self.plot_line1.setData(X, self.picoharp_histograms[:ii, :].sum(axis=1)/self.picoharp_elapsed_time[:ii])
-        elif self.settings['collect_spectrum']:
-            self.plot_line1.setData(X, self.integrated_spectra[:ii])
-            self.winspec_readout.update_display()
-        elif self.settings['collect_ascom_img']:
-            self.plot_line1.setData(X, self.ascom_img_integrated[:ii])
-            self.ascom_camera_capture.update_display()
-        else: # no detectors set, show pm_powers
-            self.plot_line1.setData(X, self.pm_powers[:ii])
-
-
-    def run(self):
-        # hardware and delegate measurements
-        self.power_wheel_hw = self.app.hardware['pololu_maestro_servo']
-        shutter_servo_hw = self.app.hardware['shutter_servo']
+        self.display_ready = False
         
-        if self.settings['open_shutter_on_start']:
-            shutter_servo_hw.settings['shutter_open'] = True
-        
-        if self.settings['collect_apd']:
-            self.apd_counter_hw = self.app.hardware.apd_counter
-            self.apd_count_rate_lq = self.apd_counter_hw.settings.count_rate     
+        # Prepare data arrays and links to components:
+        self.power_wheel_position = self.power_wheel_range.sweep_array
+        self.Np = Np = len(self.power_wheel_position)
 
-        if self.settings['collect_lifetime']:
-            self.ph_hw = self.app.hardware['picoharp']
-
-        if self.settings['collect_spectrum']:
-            self.winspec_readout = self.app.measurements['winspec_readout']
-            self.winspec_readout.settings['save_h5'] = False
-                   
-        if self.settings['collect_ascom_img']:
-            self.ascom_camera_capture = self.app.measurements.ascom_camera_capture
-            self.ascom_camera_capture.settings['continuous'] = False
-            
-            
-        
-        #####
-        self.Np = Np = self.power_wheel_ndatapoints.val
-#        self.step_size = int( (self.power_wheel_max.val-self.power_wheel_min.val)/Np )
-        
-        self.power_wheel_position = np.linspace(self.settings['power_wheel_min'], self.settings['power_wheel_max'], self.Np)
-        self.step_size = self.power_wheel_position[1] - self.power_wheel_position[0]
-    
-        if self.settings['up_and_down_sweep']:
-            self.direction = np.ones(Np*2) # step up
-            self.direction[Np] = 0 # don't step at the top!
-            self.direction[Np+1:] = -1 # step down
-            Np = self.Np = 2*Np
-            
-            self.power_wheel_position = np.concatenate([self.power_wheel_position, self.power_wheel_position[::-1]])
-            
-        else:
-            self.direction = np.ones(Np)
-    
-        # Create Data Arrays    
-        #self.power_wheel_position = np.zeros(Np, dtype=float)      
-
-        
         self.pm_powers = np.zeros(Np, dtype=float)
         self.pm_powers_after = np.zeros(Np, dtype=float)
-
-        if self.settings['collect_apd']:
+        
+        self.power_wheel_hw = self.app.hardware['power_wheel']
+        self.power_wheel_hw.settings['connected'] = True
+        self.pm_hw = self.app.hardware['thorlabs_powermeter']
+        self.pm_hw.settings['connected'] = True        
+        
+        self.used_hws = {}
+        
+        if self.settings['collect_apd_counter']:
+            self.apd_counter_hw = self.app.hardware.apd_counter
+            self.apd_count_rate_lq = self.apd_counter_hw.settings.count_rate            
             self.apd_count_rates = np.zeros(Np, dtype=float)
-        if self.settings['collect_lifetime']:
-            Nt = self.num_hist_chans = self.ph_hw.calc_num_hist_chans()
+            self.used_hws.update( {'apd_counter':self.installed_hw['apd_counter']} )
+            
+        if self.settings['collect_picoharp']:
+            self.ph_hw = self.app.hardware['picoharp']
+            self.ph_hw.settings['connected'] = True
+            Nt = self.ph_hw.settings['histogram_channels']
             self.picoharp_time_array = np.zeros(Nt, dtype=float)
             self.picoharp_elapsed_time = np.zeros(Np, dtype=float)
             self.picoharp_histograms = np.zeros((Np,Nt ), dtype=int)
-        if self.settings['collect_spectrum']:
+            self.used_hws.update( {'picoharp':self.installed_hw['picoharp']} )
+            
+        if self.settings['collect_hydraharp']:
+            self.hh_hw = self.app.hardware['hydraharp']
+            self.hh_hw.update_HistogramBins()
+            self.hh_hw.settings['connected'] = True
+            shape = self.hh_hw.hist_shape
+            self.hydraharp_time_array = np.zeros(shape[-1], dtype=float)
+            self.hydraharp_elapsed_time = np.zeros(Np, dtype=float)
+            self.hydraharp_histograms = np.zeros((Np,)+shape, dtype=int)
+            self.used_hws.update( {'hydraharp':self.installed_hw['hydraharp']} )
+
+        #TODO: Can not currently take spectra from different cameras
+        if self.settings['collect_winspec_remote_client']:
+            self.spec_readout = self.app.measurements['winspec_remote_client']
             self.spectra = [] # don't know size of ccd until after measurement
             self.integrated_spectra = []
+            self.used_hws.update( {'winspec_remote_client':self.installed_hw['winspec_remote_client']} )
+
+        if self.settings['collect_andor_ccd']:
+            self.spec_readout = self.app.measurements['collect_andor_ccd']
+            self.spectra = [] # don't know size of ccd until after measurement
+            self.integrated_spectra = []
+            self.used_hws.update( {'andor_ccd':self.installed_hw['andor_ccd']} )
+
         if self.settings['collect_ascom_img']:
+            self.ascom_camera_capture = self.app.measurements.ascom_camera_capture
+            self.ascom_camera_capture.settings['continuous'] = False
             self.ascom_img_stack = []
             self.ascom_img_integrated = []
+            self.used_hws.update( {'ascom_img':self.installed_hw['ascom_img']} )
+
+
+        # Prepare for different acquisition modes        
+        #if self.settings['acq_mode'] == 'const_SNR':
+        #    self.spec_acq_times_array = self.spec_acq_time.val / np.exp(2*self.log_power_index)
+        #    self.lifetime_acq_times_array = self.lifetime_acq_time.val / np.exp(2*self.log_power_index) 
+
+        if self.settings['use_shutter']:
+            self.shutter_open.update_value(True)
             
+            
+        total_acquisition_time = 0
+        self.Tacq_arrays = [] 
         
-        ### Acquire data
+        if self.settings['acq_mode'] == 'const_dose':
+            self.dose_calibration_data = self.acquire_dose_calibration_data()
+            for hw,Tacq_lq in self.used_hws.items():
+                acq_time_array = self.calc_times_const_dose_calibrated(Tacq_lq.val, self.dose_calibration_data)
+                self.Tacq_arrays.append( (hw, Tacq_lq, acq_time_array) )
+                print(hw, 'acquisition time', acq_time_array.sum())
+                total_acquisition_time += acq_time_array.sum()
         
-        self.move_to_min_pos()
+        elif self.settings['acq_mode'] == 'manual_acq_times':    
+            #list of (p,t) where p is the lowest position with acquisition time t
+            #Note: all hw will us the same list
+            #Not tested for zigzak sweep
+            
+            pos_vs_acqtime = [(0,5),(260,4),(120,3),(200,2)] 
+            
+            for hw,Tacq_lq in self.used_hws.items():
+                acq_time_array = self.calc_acq_time_array_manual_input(pos_vs_acqtime)
+                self.Tacq_arrays.append( (hw, Tacq_lq, acq_time_array) )    
+                total_acquisition_time += acq_time_array.sum()      
         
+        elif self.settings['acq_mode'] == 'const_time': 
+            for hw,Tacq_lq in self.used_hws.items():
+                acq_time_array = np.ones_like(self.power_wheel_position) * Tacq_lq.val #easy peasy const time array.
+                self.Tacq_arrays.append( (hw, Tacq_lq, acq_time_array) )
+                total_acquisition_time += acq_time_array.sum()      
+        
+        print(self.name, self.settings['acq_mode'], 'total_acquisition_time (s)', total_acquisition_time)
+                    
         self.ii = 0
+
+        # prepare plot curves
+        self.plot1.clear()
+        self.plot_lines = []
+        N_plot_lines = len(self.used_hws.keys())
+        for i in range(N_plot_lines):
+            c = (i+1)/N_plot_lines
+            self.plot_lines.append(self.plot1.plot([0], symbol='o', pen=(c,c,c)))
+        self.plot1.setTitle('Power Scan')
+        self.display_ready = True
+
         
-        # loop through power wheel positions
+
+            
+    def post_run(self):
+        self.display_ready = False
+        if self.settings['use_shutter']:
+            self.shutter_open.update_value(False)        
+
+    def run(self):
+        if len(self.used_hws) == 0: 
+            print('Nothing selected to collect data from.')
+            self.interrupt_measurement_called = True #self.interrupt() #This causes problems?
+            
+        self.move_to_min_pos()
+                
+        # loop through power wheel positions and measure active components.
         for ii in range(self.Np):
             self.ii = ii
             self.settings['progress'] = 100.*ii/self.Np
-            
             if self.interrupt_measurement_called:
                 break
-            
-            # record power wheel position
-            #self.power_wheel_position[ii] = self.power_wheel_hw.encoder_pos.read_from_hardware()
-            #self.power_wheel_hw.settings.raw_position.read_from_hardware()
+                        
+            for hw, Tacq_lq, Tacq_array in self.Tacq_arrays:
+                print("power scan {} of {}, {} acq_time {}".format(ii + 1, self.Np, hw, Tacq_array[ii]))
+                Tacq_lq.update_value(Tacq_array[ii])
+
+
+            print("moving power wheel to", self.power_wheel_hw.settings['position'])            
             self.power_wheel_hw.settings['position'] = self.power_wheel_position[ii]
-            print("moving power wheel", "now at ", self.power_wheel_hw.settings['position'])
-            time.sleep(0.050)
+            time.sleep(0.25)
 
             
             # collect power meter value
             self.pm_powers[ii]=self.collect_pm_power_data()
             
+            
             # read detectors
-            if self.settings['collect_apd']:
+            if self.settings['collect_apd_counter']:
                 time.sleep(self.apd_counter_hw.settings['int_time'])
                 self.apd_count_rates[ii] = \
                     self.apd_counter_hw.settings.count_rate.read_from_hardware()
                 
-            if self.settings['collect_lifetime']:
+                
+            if self.settings['collect_picoharp']:
                 ph = self.ph_hw.picoharp
                 ph.start_histogram()
                 while not ph.check_done_scanning():
                     if self.interrupt_measurement_called:
                         break
                     ph.read_histogram_data()
-                    self.ph_hw.settings.count_rate0.read_from_hardware()
-                    self.ph_hw.settings.count_rate1.read_from_hardware()
                     time.sleep(0.1)        
                 ph.stop_histogram()
                 ph.read_histogram_data()
+                Nt = self.ph_hw.settings['histogram_channels']
+                self.picoharp_elapsed_time[ii] = ph.read_elapsed_meas_time()
                 self.picoharp_histograms[ii,:] = ph.histogram_data[0:Nt]
                 self.picoharp_time_array =  ph.time_array[0:Nt]
-                self.picoharp_elapsed_time[ii] = ph.read_elapsed_meas_time()
-            if self.settings['collect_spectrum']:
-                self.winspec_readout.interrupt_measurement_called = False
-                self.winspec_readout.run()
-                spec = np.array(self.winspec_readout.data)
-                self.spectra.append( spec )
+                
+                
+            if self.settings['collect_hydraharp']:
+                self.hydraharp_histograms[ii,:] = self.aquire_histogram(self.hh_hw)
+                self.hydraharp_time_array = self.hh_hw.sliced_time_array
+                self.hydraharp_elapsed_time[ii] = self.hh_hw.settings['ElapsedMeasTime']
+                
+                
+            if self.settings['collect_winspec_remote_client']:
+                #self.spec_readout.run()
+                self.spec_readout.settings['read_single'] = True
+                self.spec_readout.settings['save_h5'] = True
+                
+                self.spec_readout.settings['activation'] = True
+                time.sleep(0.5)
+                time.sleep(self.spec_acq_time.val)
+                spec = np.array(self.spec_readout.spectrum)
+                self.integrated_spectra.append(spec.sum())/self.spec_readout.settings['acq_time'] 
+                self.spec_readout.settings['read_single'] = True
+                
+                
+            if self.settings['collect_andor_ccd']:
+                #self.spec_readout.run()
+                self.spec_readout.settings['read_single'] = True
+                self.spec_readout.settings['save_h5'] = True
+                #self.start_nested_measure_and_wait(self.spec_readout)
+                
+                self.spec_readout.settings['activation'] = True
+                time.sleep(0.5)
+                time.sleep(self.spec_acq_time.val)
+                spec = np.array(self.spec_readout.spectrum)
+                spec = spec/self.spec_readout.settings['exposure_time'] 
+                self.spectra.append(spec)
                 self.integrated_spectra.append(spec.sum())
+                self.spec_readout.settings['read_single'] = True
+                                
+                                
             if self.settings['collect_ascom_img']:
                 self.ascom_camera_capture.interrupt_measurement_called = False
                 self.ascom_camera_capture.run()
-                img = self.ascom_camera_capture.img.copy()
+                img = self.ascom_camera_capture.img.copy()/self.ascom_camera_capture.settings['exp_time']
                 self.ascom_img_stack.append(img)
                 self.ascom_img_integrated.append(img.astype(float).sum())
                 
@@ -271,36 +318,31 @@ class PowerScanMeasure(Measurement):
             # collect power meter value after measurement
             self.pm_powers_after[ii]=self.collect_pm_power_data()
 
-            # move to new power wheel position
-            #self.power_wheel_dev.write_steps_and_wait(self.step_size*self.direction[ii])
-            #time.sleep(0.5)
-            #self.power_wheel_hw.encoder_pos.read_from_hardware()
-            #delta = self.step_size*self.direction[ii]
-            #print("moving power wheel", delta)
-            #self.power_wheel_hw.settings['position'] += delta
-            #print("moving power wheel", delta, "now at ", self.power_wheel_hw.settings['position'])
             
-            
-        # write data to h5 file on disk
-        
+
+        # write data to h5 file on disk        
         self.t0 = time.time()
-        #self.fname = "%i_%s.h5" % (self.t0, self.name)
-        #self.h5_file = h5_io.h5_base_file(self.app, self.fname )
         self.h5_file = h5_io.h5_base_file(app=self.app,measurement=self)
         try:
             self.h5_file.attrs['time_id'] = self.t0
-            H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
-        
-            #create h5 data arrays
-    
-            if self.settings['collect_apd']:
+            
+            H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)    
+            if self.settings['collect_apd_counter']:
                 H['apd_count_rates'] = self.apd_count_rates
-            if self.settings['collect_lifetime']:
+            if self.settings['collect_picoharp']:
                 H['picoharp_elapsed_time'] = self.picoharp_elapsed_time
                 H['picoharp_histograms'] = self.picoharp_histograms
                 H['picoharp_time_array'] = self.picoharp_time_array
-            if self.settings['collect_spectrum']:
-                H['wls'] = self.winspec_readout.wls
+            if self.settings['collect_hydraharp']:
+                H['hydraharp_elapsed_time'] = self.hydraharp_elapsed_time
+                H['hydraharp_histograms'] = self.hydraharp_histograms
+                H['hydraharp_time_array'] = self.hydraharp_time_array                
+            if self.settings['collect_winspec_remote_client']:
+                H['wls'] = self.spec_readout.wls
+                H['spectra'] = np.squeeze(np.array(self.spectra))
+                H['integrated_spectra'] = np.array(self.integrated_spectra)
+            if self.settings['collect_andor_ccd']:
+                H['wls'] = self.spec_readout.wls
                 H['spectra'] = np.squeeze(np.array(self.spectra))
                 H['integrated_spectra'] = np.array(self.integrated_spectra)
             if self.settings['collect_ascom_img']:
@@ -310,27 +352,84 @@ class PowerScanMeasure(Measurement):
             H['pm_powers'] = self.pm_powers
             H['pm_powers_after'] = self.pm_powers_after
             H['power_wheel_position'] = self.power_wheel_position
-            H['direction'] = self.direction
+            
+            for hw, Tacq_lq, acq_time_array in self.Tacq_arrays:
+                H[hw + '_acquisition_times'] = acq_time_array
+                print('saving ' + hw + '_acquisition_times')
+                
         finally:
             self.log.info("data saved "+self.h5_file.filename)
             self.h5_file.close()
         
 
-
-        """    def move_to_min_pos(self):
-        self.power_wheel_dev.read_status()
+        self.update_display()
         
-        delta_steps = self.power_wheel_min.val - self.power_wheel_hw.encoder_pos.read_from_hardware()
-        if delta_steps != 0:
-            #print 'moving to min pos'
-            self.power_wheel_dev.write_steps_and_wait(delta_steps)
-            #print 'done moving to min pos'
-"""
+
+    def update_display(self):
+
+        if self.display_ready:
+        
+            ii = self.ii + 1
+            if self.settings['x_axis'] == 'power':
+                X = self.pm_powers[:ii]            
+            else:
+                X = self.power_wheel_position[:ii]
+
+            jj = 0          
+            if self.settings['collect_apd_counter']:
+                self.plot_lines[jj].setData(X, self.apd_count_rates[:ii])
+                jj += 1
+                
+            if self.settings['collect_picoharp']:
+                self.plot_lines[jj].setData(X, self.picoharp_histograms[:ii, :].sum(axis=1)/self.picoharp_elapsed_time[:ii])
+                jj += 1
+    
+            if self.settings['collect_hydraharp']:
+                Y = self.hydraharp_histograms[:ii].sum(axis=(1,2))/self.hydraharp_elapsed_time[:ii]
+                self.plot_lines[jj].setData(X,Y)
+                #print('update_display', ii, X, self.hydraharp_histograms[:ii].sum(axis=(1,2)))
+                jj += 1
+    
+            elif self.settings['collect_andor_ccd']:
+                self.plot_lines[jj].setData(X, self.integrated_spectra[:ii])
+                jj += 1
+    
+            elif self.settings['collect_winspec_remote_client']:
+                self.plot_lines[jj].setData(X, self.integrated_spectra[:ii])
+                jj += 1
+    
+            elif self.settings['collect_ascom_img']:
+                self.plot_lines[jj].setData(X, self.ascom_img_integrated[:ii])
+                self.ascom_camera_capture.update_display()
+                jj += 1
+        
+            else: # no detectors set, show pm_powers
+                self.plot1.setTitle('No Detector')
+
+
+    def aquire_histogram(self, hw): 
+        hw.start_histogram()
+        while not hw.check_done_scanning():
+            if self.interrupt_measurement_called:
+                break
+            self.hist_data = np.array(hw.read_histogram_data(clear_after=False) )
+            time.sleep(5e-3)
+        hw.stop_histogram()
+        self.hist_data = np.array(hw.read_histogram_data(clear_after=True))
+
+        print(self.hist_data.shape, hw.hist_slice)
+        hist_data = self.hist_data[hw.hist_slice]
+
+        print('aquire_histogram', hw.name, hist_data.sum())
+        return hist_data
+
+
     def move_to_min_pos(self):
         self.power_wheel_hw.settings['position'] = self.settings['power_wheel_min']
         time.sleep(2.0)
+
     
-    def collect_pm_power_data(self):
+    def collect_pm_power_data(self):        
         PM_SAMPLE_NUMBER = 10
 
         # Sample the power at least one time from the power meter.
@@ -343,7 +442,7 @@ class PowerScanMeasure(Measurement):
             #print "samp", ii, samp, try_count, samp_count, pm_power
             while not self.interrupt_measurement_called:
                 try:
-                    pm_power = pm_power + self.app.hardware['thorlabs_powermeter'].power.read_from_hardware(send_signal=True)
+                    pm_power = pm_power + self.pm_hw.power.read_from_hardware(send_signal=True)
                     samp_count = samp_count + 1
                     break 
                 except Exception as err:
@@ -358,6 +457,51 @@ class PowerScanMeasure(Measurement):
         else:
             print("  Failed to read power")
             pm_power = 10000.  
-
         
         return pm_power    
+
+    
+    def acquire_dose_calibration_data(self):
+        print('calibrating dose')
+        dose_calibration_data = np.zeros_like(self.power_wheel_position)        
+        for ii,pos in enumerate(self.power_wheel_position):
+            self.power_wheel_hw.settings['position'] = pos
+            time.sleep(0.20)
+            dose_calibration_data[ii] = self.collect_pm_power_data()
+            time.sleep(0.20)
+        return dose_calibration_data
+    
+            
+    def calc_times_const_dose_calibrated(self, t0, dose_calibration_data):
+        '''predicts the acq times needed to have the same dose at every wheel position 
+        based on calibration data'''
+        dose = dose_calibration_data[0] * t0 #this the targed dose.
+        print('calc_times_const_dose_calibrated() dose is:', dose)
+        acq_times_array =  np.array([round(item,4) for item in dose/dose_calibration_data]) 
+        return acq_times_array
+
+
+    def calc_times_const_dose_specs(self, t0, OD_MAX = 4.3 ,OD_MAX_POS = 270.):
+        '''predicts the acq times needed to have the same dose at every wheel position 
+        based on specification of the power wheel'''
+        theta = self.power_wheel_position
+        OD = OD_MAX * (theta - theta[0]) / OD_MAX_POS         
+        acq_times_array = np.array([round(item,4) for item in (t0 * 10**(-OD))])
+        print('Estimated time {}'.format(np.sum(acq_times_array)))
+        return acq_times_array
+        
+
+    def calc_acq_time_array_manual_input(self, manual_pos_vs_times):
+        pos,time = np.array(manual_pos_vs_times).T
+        x = self.power_wheel_position
+        # lowest position
+        assert len(x) >= 2
+        acq_time_array =  np.piecewise(x, [x < pos[1],   x >= pos[1]], [ time[0], 0]) 
+        # highest position
+        acq_time_array += np.piecewise(x, [x >= pos[-1], x < pos[-1]], [time[-1], 0])
+        # all other
+        for i in range(1,len(pos)-1):
+            t = np.piecewise(x, [x < pos[i], x >= pos[i], x >= pos[i+1]], [0, time[i], 0])
+            acq_time_array += t    
+        return acq_time_array
+    

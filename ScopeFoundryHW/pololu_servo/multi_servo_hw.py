@@ -1,3 +1,7 @@
+'''
+@author: Edward Barnard and Benedikt Ursprung
+'''
+
 from ScopeFoundry import HardwareComponent
 from ScopeFoundryHW.pololu_servo.pololu_interface import PololuMaestroDevice
 
@@ -8,7 +12,7 @@ class PololuMaestroHW(HardwareComponent):
     def __init__(self, app, debug=False, name=None, servo_names=None):
         self.servo_names = servo_names
         if not self.servo_names:
-            self.servo_names = [(i, "ch{}".i) for i in range(6)]
+            self.servo_names = [(i, "ch{}".format(i)) for i in range(6)]
         HardwareComponent.__init__(self, app, debug=debug, name=name)
     
     def setup(self):        
@@ -20,7 +24,7 @@ class PololuMaestroHW(HardwareComponent):
             raw = S.New(name + "_raw", dtype=int,  ro=False) # raw value of servo position output (in units of 1/4 us for PWM pulses)
             raw_min = S.New(name + '_raw_min', dtype=float, initial=2000, ro=False)
             raw_max = S.New(name + '_raw_max', dtype=float, initial=10000, ro=False)
-            pos_scale = S.New(name + '_pos_scale', dtype=float, initial=180, ro=False)
+            pos_scale = S.New(name + '_pos_scale', dtype=float, initial=280, ro=False)
             pos = S.New(name + '_position', dtype=float, ro=False)
         
             def pos_rev_func(new_pos, old_vals):
@@ -59,7 +63,6 @@ class PololuMaestroHW(HardwareComponent):
             self.dev.close()
             del self.dev
     
-    
     def jog_fwd(self, servo_name):
         S = self.settings
         S[servo_name+'_position'] += S[servo_name + '_jog_step']
@@ -68,3 +71,107 @@ class PololuMaestroHW(HardwareComponent):
         S = self.settings
         S[servo_name+'_position'] -= S[servo_name + '_jog_step']
 
+
+class PololuMaestroBaseServoHW(HardwareComponent):
+    '''
+    requires multi_servo_hw.PololuMaestroHW
+    '''
+    name = 'polulu_maestro_base_servo'
+    
+    def __init__(self, app, debug=False, name=None, channel=0, pololu_maestro_hw_name='pololu_maestro'):
+        self.channel = channel
+        self.pololu_maestro_hw_name = pololu_maestro_hw_name
+        if name is not None:
+            self.name = name
+        HardwareComponent.__init__(self, app, debug=debug, name=name)
+            
+            
+    def setup(self):
+        S = self.settings
+        self.raw = S.New("raw", dtype=int,  ro=False) # raw value of servo position output (in units of 1/4 us for PWM pulses)
+        self.raw_min = S.New('raw_min', dtype=float, initial=2000, ro=False)
+        self.raw_max = S.New('raw_max', dtype=float, initial=10000, ro=False)
+        self.pos_scale = S.New('pos_scale', dtype=float, initial=180, ro=False)
+        self.position = S.New('position', dtype=float, ro=False)
+        self.jog_step = S.New('jog_step', dtype=float, initial=10.0)
+                
+        self.add_operation("Jog +", self.jog_fwd)
+        self.add_operation("Jog -", self.jog_bkwd)
+
+        
+    def connect(self):
+        self.multi_servo_hw = self.app.hardware[self.pololu_maestro_hw_name]
+        self.multi_servo_hw.settings.connected.connect_to_lq(self.settings.connected)
+        for _lq_name in ['raw', 'raw_min', 'raw_max', 'pos_scale', 'position', 'jog_step']:
+            print(getattr(self.settings, _lq_name))
+            self.get_pololu_maestro_hw_lq(_lq_name).connect_to_lq(getattr(self.settings, _lq_name))
+        if not self.settings['connected']:
+            self.settings['connected'] = True
+        self.post_connect()
+
+
+    def disconnect(self):
+        if self.settings['connected']:
+            self.settings['connected'] = False
+            
+            
+    def jog_fwd(self):
+        self.multi_servo_hw.jog_fwd('ch{}'.format(self.channel)) 
+
+    
+    def jog_bkwd(self):
+        self.multi_servo_hw.jog_bkwd('ch{}'.format(self.channel))
+
+
+    def get_pololu_maestro_hw_lq(self, _multi_servo_lq_name):
+        '''
+        convience function: 
+        Note: `ch{self.channel}_` is prefixed to _multi_servo_lq_name
+        '''
+        path = 'hardware/{}/ch{}_{}'.format(self.pololu_maestro_hw_name, self.channel, _multi_servo_lq_name)
+        return self.app.lq_path(path)
+
+
+    def post_connect(self):
+        '''
+        override me to connect to settings
+        '''
+        pass
+    
+    
+
+class PololuMaestroWheelServoHW(PololuMaestroBaseServoHW):
+    '''
+    requires multi_servo_hw.PololuMaestroHW
+    '''
+    name = 'polulo_maestro_wheel' 
+
+            
+
+class PololuMaestroShutterServoHW(PololuMaestroBaseServoHW):
+    '''
+    requires multi_servo_hw.PololuMaestroHW
+    '''
+    name = 'polulo_maestro_shutter'
+    
+    def setup(self):
+        PololuMaestroBaseServoHW.setup(self)
+        linear_defaults = {'raw_min':2000,
+                           'raw_max':10000,
+                           'pos_scale':100,
+                            'jog_step':10}
+        for k,v in linear_defaults.items():
+            self.settings[k] = v        
+
+        self.open = self.settings.New('open', bool, initial=False)
+        self.open_position = self.settings.New('open_position', int, initial=0)
+        self.closed_position = self.settings.New('closed_position', int, initial=100)
+        self.open.add_listener(self.on_open_change)
+        
+    def on_open_change(self):
+        S = self.settings
+        if S['open']:
+            S['position'] = S['open_position']
+        else:
+            S['position'] = S['closed_position']
+            

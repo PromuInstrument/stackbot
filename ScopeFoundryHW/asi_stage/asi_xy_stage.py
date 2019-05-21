@@ -23,7 +23,7 @@ class ASIXYStage(object):
         self.ser = serial.Serial(port=self.port,
                                  baudrate=115200,
                                  # waiting time for response [s]
-                                 timeout=0.1,
+                                 timeout=0.2,
                                  bytesize=8, parity='N', 
                                  stopbits=1, xonxoff=0, rtscts=0)
         self.ser.write(b'\b') # <del>  or  <bs>- Abort current command and flush input buffer
@@ -289,7 +289,8 @@ class ASIXYStage(object):
     def homeXY(self):
         self.ask("2HHOME X Y")
         
-    
+    def homeZ(self):
+        self.ask("1HHOME Z")
     
     def workaroundASIStageBug(self, a, *b):
         # Some positions cannot be processed by ASI stage,

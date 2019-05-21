@@ -30,7 +30,7 @@ except:
 from .core import lib, TOUPCAM_EVENT_IMAGE, TOUPCAM_EVENT_STILLIMAGE, success, HToupCam
 
 def get_number_cameras():
-    x = lib.Toupcam_Enum(None)
+    x = lib.Toupcam_EnumV2(None)
     return x
 
 class ToupCamCamera(object):
@@ -39,7 +39,7 @@ class ToupCamCamera(object):
     _temptint_cb = None
     _save_path = None
 
-    def __init__(self, resolution=2, bits=32, cam_index=0):
+    def __init__(self, resolution=1, bits=32, cam_index=0):
         if bits not in (32,):
             raise ValueError('Bits needs to by 8 or 32')
         # bits = 8
@@ -72,11 +72,11 @@ class ToupCamCamera(object):
         return s.getvalue()
 
     def get_pil_image(self, data=None):
-        # im = self._data
         if data is None:
             data = self._data
-
+        # 32 bit image is returned and split
         raw = data.view(uint8).reshape(data.shape + (-1,))
+        #on windows it's bgr, on linux it's rgb
         bgr = raw[..., :3]
         image = Image.fromarray(bgr, 'RGB')
         b, g, r = image.split()
@@ -96,7 +96,7 @@ class ToupCamCamera(object):
         if not args:
             return
 
-        h, w = args[1].value, args[0].value
+        h, w = args[1], args[0]
 
         shape = (h, w)
         if self.bits == 8:
@@ -122,7 +122,6 @@ class ToupCamCamera(object):
 
                 still = zeros((h, w), dtype=uint32)
                 lib.Toupcam_PullStillImage(self.cam, ctypes.c_void_p(still.ctypes.data), bits, None, None)
-                self._do_save(still)
 
         callback = ctypes.CFUNCTYPE(None, ctypes.c_uint, ctypes.c_void_p)
         self._frame_fn = callback(get_frame)
@@ -249,11 +248,12 @@ class ToupCamCamera(object):
             return hw.value
 
     def get_size(self):
-        w, h = ctypes.c_long(), ctypes.c_long()
-
-        result = lib.Toupcam_get_Size(self.cam, ctypes.byref(w), ctypes.byref(h))
-        if success(result):
-            return w, h
+        w, h = ctypes.c_int(), ctypes.c_int()
+        if self._lib_func('get_Size', ctypes.byref(w), ctypes.byref(h)):
+            return w.value, h.value
+        #result = lib.Toupcam_get_Size(self.cam, ctypes.byref(w), ctypes.byref(h))
+        #if success(result):
+        #    return w.value, h.value
 
     def get_esize(self):
         res = ctypes.c_long()
@@ -263,15 +263,19 @@ class ToupCamCamera(object):
 
     def set_esize(self, nres):
         lib.Toupcam_put_eSize(self.cam, ctypes.c_ulong(nres))
-
-
-if __name__ == '__main__':
-    import time
-    cam = ToupCamCamera()
-    cam.open()
-    time.sleep(1)
-
-    cam.save('foo.jpg')
-
-
+        
+    def set_gain(self, gain):
+        lib.Toupcam_put_ExpoAGain(self.cam, gain)
+        
+    def get_gain(self):
+        res = ctypes.c_ushort()
+        if self._lib_func('get_ExpoAGain', ctypes.byref(res)):
+            return res.value
+        
+    def get_gain_range(self):
+        min_gain = ctypes.c_ushort()
+        max_gain = ctypes.c_ushort()
+        def_gain = ctypes.c_ushort()
+        if self._lib_func('get_ExpoAGain', ctypes.byref(min_gain), ctypes.byref(max_gain), ctypes.byref(def_gain)):
+            return min_gain.value, max_gain.value, def_gain.value
 # ============= EOF =============================================

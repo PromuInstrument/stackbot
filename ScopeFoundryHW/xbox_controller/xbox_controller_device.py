@@ -7,10 +7,21 @@ import logging
 
 logger = logging.getLogger(__name__)
 class XboxControllerDevice(object):
-        
+    
+    """
+    Creates initializes pygame objects needed to interface with hardware 
+    and autodetects hardware characteristics such as the number of buttons, hats, or sticks.
+    """
+    
     def __init__(self):
-        """Creates and initializes pygame.joystick object and creates 
-        subordinate pygame.joystick.Joystick module"""
+        """Creates and initializes 
+        :attr:`pygame.joystick` object and creates subordinate 
+        :attr:`pygame.joystick.Joystick` module.
+        
+        Initializes joystick hardware.
+        Autodetects controller inputs such as hats, sticks and buttons."""
+        
+        
         self.debug = True
         pygame.init()
         pygame.joystick.init()
@@ -21,8 +32,7 @@ class XboxControllerDevice(object):
         self.joystick = pygame.joystick.Joystick(0)
         logger.debug("Joystick instance created.")
         
-        """Initializes joystick hardware and scans for number of 
-        available HID features such as hats, sticks and buttons."""
+
         self.joystick.init()
         if self.joystick.get_init():
             print("Joystick initialized:", self.joystick.get_name())
@@ -32,7 +42,9 @@ class XboxControllerDevice(object):
         
     def close(self):
         """Disconnects and removes modules upon closing application.
-        Included are the pygame.joystick and pygame.joystick.Joystick modules."""
+        Included in the list of modules to be removed are the 
+        :attr:`pygame.joystick` and 
+        :attr:`pygame.joystick.Joystick` modules."""
         self.joystick.quit()
         del self.joystick
         pygame.joystick.quit()

@@ -38,7 +38,7 @@ class ToupCamMultiViewApp(BaseApp):
         for i in range(self.num_cams):
             im = np.array(self.cams[i].get_image_data())
             #print(im.shape, np.max(im))
-            self.imviews[i].setImage(im)
+            self.imviews[i].setImage(np.transpose(im))
             
 
 if __name__ == '__main__':

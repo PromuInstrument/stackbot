@@ -7,19 +7,80 @@
     <x>0</x>
     <y>0</y>
     <width>777</width>
-    <height>698</height>
+    <height>752</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,1" rowminimumheight="0,0">
+  <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0">
+   <item row="1" column="0">
+    <widget class="QGroupBox" name="plot_groupBox">
+     <property name="title">
+      <string>Ocean Optics Spectrometer Spectrum</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout"/>
+    </widget>
+   </item>
    <item row="0" column="0">
     <widget class="QGroupBox" name="groupBox">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>120</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>120</height>
+      </size>
+     </property>
      <property name="title">
       <string>Controls</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="2">
+       <widget class="QCheckBox" name="save_h5_checkBox">
+        <property name="enabled">
+         <bool>true</bool>
+        </property>
+        <property name="text">
+         <string>Save H5</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="4">
+       <widget class="QDoubleSpinBox" name="int_time_doubleSpinBox"/>
+      </item>
+      <item row="1" column="4">
+       <widget class="QPushButton" name="set_bg_pushButton">
+        <property name="text">
+         <string>Use Current Spec as BG</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="5">
+       <widget class="QCheckBox" name="hw_connect_checkBox">
+        <property name="text">
+         <string>HW Connect</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="3">
+       <widget class="QCheckBox" name="bg_subtract_checkBox">
+        <property name="text">
+         <string>Background Subtract</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Integration Time</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="0">
        <widget class="QCheckBox" name="run_checkBox">
         <property name="text">
@@ -27,10 +88,30 @@
         </property>
        </widget>
       </item>
+      <item row="1" column="2">
+       <widget class="QDoubleSpinBox" name="baseline_val_doubleSpinBox">
+        <property name="maximum">
+         <double>10000.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>100.000000000000000</double>
+        </property>
+        <property name="value">
+         <double>2000.000000000000000</double>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QCheckBox" name="baseline_sub_checkBox">
+        <property name="text">
+         <string>Baseline Subtract</string>
+        </property>
+       </widget>
+      </item>
       <item row="0" column="1">
-       <widget class="QCheckBox" name="continous_checkBox">
+       <widget class="QCheckBox" name="continuous_checkBox">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="text">
          <string>Continuous</string>
@@ -43,42 +124,14 @@
         </property>
        </widget>
       </item>
-      <item row="0" column="2">
-       <widget class="QCheckBox" name="save_h5_checkBox">
-        <property name="enabled">
-         <bool>false</bool>
-        </property>
+      <item row="1" column="0">
+       <widget class="QPushButton" name="save_h5_pushButton">
         <property name="text">
          <string>Save H5</string>
         </property>
        </widget>
       </item>
-      <item row="0" column="3">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Integration Time</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="4">
-       <widget class="QDoubleSpinBox" name="int_time_doubleSpinBox"/>
-      </item>
-      <item row="0" column="5">
-       <widget class="QCheckBox" name="hw_connect_checkBox">
-        <property name="text">
-         <string>Connect</string>
-        </property>
-       </widget>
-      </item>
      </layout>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QGroupBox" name="plot_groupBox">
-     <property name="title">
-      <string>Ocean Optics Spectrometer Spectrum</string>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout"/>
     </widget>
    </item>
   </layout>

@@ -44,6 +44,9 @@ app.load_view(PicoHarpNPZView(app))
 from viewers.picoharp_histogram_h5 import PicoHarpHistogramH5View
 app.load_view(PicoHarpHistogramH5View(app))
 
+from viewers.harp_histogram_h5 import HarpHistogramH5View
+app.load_view(HarpHistogramH5View(app))
+
 from viewers.hyperspec_npz import HyperSpecNPZView
 app.load_view(HyperSpecNPZView(app))
 
@@ -66,6 +69,9 @@ app.load_view(FiberPicoharpScanView(app))
 from viewers.APD_MCL_2DSlowScanView import APD_MCL_2DSlowScanView, APD_MCL_3DSlowScanView
 app.load_view(APD_MCL_2DSlowScanView(app))
 app.load_view(APD_MCL_3DSlowScanView(app))
+
+from viewers.APD_ASI_2DSlowScanView import APD_ASI_2DSlowScanView
+app.load_view(APD_ASI_2DSlowScanView(app))
 
 from viewers.WinSpecMCL2DSlowScanView import WinSpecMCL2DSlowScanView
 app.load_view(WinSpecMCL2DSlowScanView(app))
@@ -100,7 +106,13 @@ app.load_view(HyperSpecCLH5View(app))
 from viewers.hyperspec_h5 import HyperSpecH5View
 app.load_view(HyperSpecH5View(app))
 
+from viewers.hyperspec_3d_h5 import HyperSpec3DH5View
+app.load_view(HyperSpec3DH5View(app))
+
 from viewers.trpl_h5 import TRPLH5View
 app.load_view(TRPLH5View(app))
+
+from viewers.power_spec_logger_view import PowerSpectrumLoggerView
+app.load_view(PowerSpectrumLoggerView(app))
 
 sys.exit(app.exec_())

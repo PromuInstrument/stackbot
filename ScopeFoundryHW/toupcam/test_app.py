@@ -8,6 +8,9 @@ cam.open()
 time.sleep(1)
 
 im = cam.get_pil_image()
+
 print(im.size)
 
+print(cam.get_exposure_time())
 
+cam.save('C:/data/_test/foo.jpg')
