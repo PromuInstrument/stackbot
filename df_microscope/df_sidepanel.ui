@@ -742,6 +742,20 @@ Continuously</string>
         </property>
        </widget>
       </item>
+      <item row="1" column="0">
+       <widget class="QCheckBox" name="open_shutter_on_run_checkBox">
+        <property name="text">
+         <string>open shutter before xy scans</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QCheckBox" name="close_shutter_after_scan_checkBox">
+        <property name="text">
+         <string>close shutter after xy scans</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>
