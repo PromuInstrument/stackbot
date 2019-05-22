@@ -224,7 +224,7 @@ class PowerScanMeasure(Measurement):
     def run(self):
         if len(self.used_hws) == 0: 
             print('Nothing selected to collect data from.')
-            self.interrupt_measurement_called = True #self.interrupt() #This causes problems?
+            return
             
         self.move_to_min_pos()
                 
@@ -356,17 +356,16 @@ class PowerScanMeasure(Measurement):
             for hw, Tacq_lq, acq_time_array in self.Tacq_arrays:
                 H[hw + '_acquisition_times'] = acq_time_array
                 print('saving ' + hw + '_acquisition_times')
+        except:
+            pass
                 
         finally:
             self.log.info("data saved "+self.h5_file.filename)
             self.h5_file.close()
         
 
-        self.update_display()
-        
-
     def update_display(self):
-
+        pass
         if self.display_ready:
         
             ii = self.ii + 1
