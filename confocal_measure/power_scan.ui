@@ -37,11 +37,28 @@
         <number>0</number>
        </property>
        <item>
-        <widget class="QGroupBox" name="gridGroupBox">
+        <widget class="QGroupBox" name="power_scan_GroupBox">
          <property name="title">
           <string>Power Scan</string>
          </property>
          <layout class="QGridLayout" name="controls">
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>plot x</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QComboBox" name="x_axis_comboBox"/>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>aquisition mode:</string>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="0">
            <widget class="QPushButton" name="start_pushButton">
             <property name="text">
@@ -59,22 +76,12 @@
           <item row="3" column="1">
            <widget class="QComboBox" name="acq_mode_comboBox"/>
           </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>aquisition mode:</string>
+          <item row="4" column="0" colspan="2">
+           <widget class="QLineEdit" name="manual_acq_times_lineEdit">
+            <property name="whatsThis">
+             <string>enter a list in the form of: pos0,Tacq0; pos1,Tacq1; pos2,Tacq2; ..</string>
             </property>
            </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>plot x</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1">
-           <widget class="QComboBox" name="x_axis_comboBox"/>
           </item>
          </layout>
         </widget>
