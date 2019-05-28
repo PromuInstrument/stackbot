@@ -47,8 +47,7 @@ class HydraHarpHW(HardwareComponent):
             S.New("CFDLevel{}".format(i), dtype=int, unit="mV", vmin=0, vmax=800, initial=100, si=False)
             S.New("CFDZeroCross{}".format(i), dtype=int,  unit="mV", vmin=0, vmax=20, initial=10, si=False)
             S.New("ChanOffset{}".format(i), dtype=int, unit='ps')
-            
-            S.New("CountRate{}".format(i), dtype=int, ro=True, vmin=0, vmax=100e6)
+            S.New("CountRate{}".format(i), dtype=int, ro=True, vmin=0, vmax=100e6, si=True, unit='Hz')
 
 
     def connect(self):
@@ -171,8 +170,19 @@ class HydraHarpHW(HardwareComponent):
     def stop_histogram(self):
         self.dev.StopMeas()
     
-    def read_histogram_data(self, channel='all', clear_after=False):
-        if channel == 'all':
+    def read_histogram_data(self, channel='enabled', clear_after=False):
+        '''
+        channel     'enabled': returns histograms of enabled channels.
+                    'all':     returns histograms of all channels.
+                    <int> i:   returns histogram of channel i.
+        '''
+        if channel == 'enabled':
+            hist_data = []
+            for i in range(self.n_channels):
+                if self.settings["ChanEnable{}".format(i)]:
+                    hist_data.append(self.dev.read_histogram_data(i, clear_after))
+            return np.array(hist_data)
+        elif channel == 'all':
             hist_data = []
             for i in range(self.n_channels):
                 hist_data.append(self.dev.read_histogram_data(i, clear_after))
@@ -196,17 +206,21 @@ class HydraHarpHW(HardwareComponent):
         return S['HistogramBins']
     
     @property
-    def hist_shape(self):
-        channels_enabled = 0
+    def enabled_channels(self):
+        enabled_channels = 0
         for i in range(self.n_channels):
             if self.settings["ChanEnable{}".format(i)]:
-                channels_enabled += 1
-        return (channels_enabled, self.settings['HistogramBins'])
+                enabled_channels += 1
+        return enabled_channels
+    
+    @property
+    def hist_shape(self):
+        return (self.enabled_channels, self.settings['HistogramBins'])
     
     @property
     def hist_slice(self):
-        stop_channels, stop_hist_channels = self.hist_shape
-        return np.s_[0:stop_channels, 0:stop_hist_channels]
+        enabled_channels, HistogramBins = self.hist_shape
+        return np.s_[0:enabled_channels, 0:HistogramBins]
         
     @property
     def sliced_time_array(self):

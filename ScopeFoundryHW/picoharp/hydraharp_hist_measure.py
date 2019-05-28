@@ -47,20 +47,15 @@ class HydraHarpHistogramMeasure(Measurement):
     
     def setup_figure(self):
         self.graph_layout = pg.GraphicsLayoutWidget()    
-        self.plot = self.graph_layout.addPlot()
-           
-    
-        #self.plotdata = self.plot.plot(pen='r')
+        self.plot = self.graph_layout.addPlot()    
         self.plot.setLogMode(False, True)
         self.plot.enableAutoRange('y',True)
         self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
         
-        channels_layout = self.ui.channels.layout()
-        for chan in ['SyncRate','CountRate0', 'CountRate1']:
-            label = QtWidgets.QLabel(chan)
-            sp = pg.widgets.SpinBox.SpinBox()
-            getattr(self.hw.settings, chan).connect_to_widget(sp)
-            channels_layout.addRow(label,sp)
+        hh_widget = self.app.hardware['hydraharp'].settings.New_UI(
+                include=['connected','ChanEnable0','ChanEnable1','SyncRate','CountRate0',
+                         'CountRate1','SyncDivider'])
+        self.ui.counting_device_GroupBox.layout().addWidget(hh_widget)
         
                 
     def run(self):
@@ -96,7 +91,6 @@ class HydraHarpHistogramMeasure(Measurement):
                 break
             
     
-        data_slice = slice(0,self.hw.settings['HistogramBins'])
         elapsed_meas_time = hw.settings.ElapsedMeasTime.read_from_hardware()
         
         if self.settings['save_h5']:
@@ -104,8 +98,8 @@ class HydraHarpHistogramMeasure(Measurement):
             self.h5_file.attrs['time_id'] = self.t0
             
             H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
-            H['time_histogram'] = self.hist_data[:,data_slice]
-            H['time_array'] = self.hw.time_array[data_slice]
+            H['time_histogram'] = self.hist_data[self.hw.hist_slice]
+            H['time_array'] = self.hw.time_array[self.hw.hist_slice[-1]]
             H['elapsed_meas_time'] = elapsed_meas_time
             
             self.h5_file.close()
@@ -117,7 +111,7 @@ class HydraHarpHistogramMeasure(Measurement):
             self.plot.clear()
             self.plot.setLabel('bottom', text="Time", units='s')
             self.plotlines = []
-            for i in range(self.hw.n_channels):
+            for i in range(self.hw.enabled_channels):
                 self.plotlines.append(self.plot.plot(label = i, name='histogram' + str(i)))
 
             #Marker in time_array.
@@ -129,5 +123,5 @@ class HydraHarpHistogramMeasure(Measurement):
             self.plot.setRange(xRange=(0,1.0*pos_x))
             self.display_ready = True
             
-        for i in range(self.hw.n_channels):      
+        for i in range(self.hw.enabled_channels):      
             self.plotlines[i].setData(time_array, self.hist_data[i,:]+1)
