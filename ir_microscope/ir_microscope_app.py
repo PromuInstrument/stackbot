@@ -2,12 +2,14 @@ from __future__ import division, print_function
 from ScopeFoundry import BaseMicroscopeApp
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 import logging
-from ScopeFoundryHW import attocube_ecc100
-import ScopeFoundryHW
-from ir_microscope.measurements import apd_scan, hyperspectral_scan, trpl_scan, trpl_scan_hh
-from ir_microscope import measurements
+#from ScopeFoundryHW import attocube_ecc100
+from ir_microscope.measurements import apd_scan, hyperspectral_scan, trpl_scan, ir_microscope_base_scans
+
 import numpy as np
 from ScopeFoundry import LQRange
+from ScopeFoundry.scanning.base_raster_slow_scan import BaseRaster2DSlowScan
+import ir_microscope
+
 
 
 logging.basicConfig(level='DEBUG')#, filename='m3_log.txt')
@@ -32,11 +34,11 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         import ScopeFoundryHW.picoharp as ph
         self.add_hardware(ph.PicoHarpHW(self))
 
-        from ScopeFoundryHW.picoharp.hydraharp_hw import HydraHarpHW
+        from ScopeFoundryHW.picoquant.hydraharp_hw import HydraHarpHW
         self.add_hardware(HydraHarpHW(self))
 
-        from ScopeFoundryHW.winspec_remote import WinSpecRemoteClientHW
-        self.add_hardware_component(WinSpecRemoteClientHW(self))
+        #from ScopeFoundryHW.winspec_remote import WinSpecRemoteClientHW
+        #self.add_hardware_component(WinSpecRemoteClientHW(self))
         
         from ScopeFoundryHW.acton_spec import ActonSpectrometerHW
         self.add_hardware(ActonSpectrometerHW(self))
@@ -82,24 +84,33 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         #from ScopeFoundryHW.keithley_sourcemeter.keithley_sourcemeter_hc import KeithleySourceMeterComponent
         #self.add_hardware(KeithleySourceMeterComponent(self))
         
+        from ScopeFoundryHW.andor_camera import AndorCCDHW, AndorCCDReadoutMeasure
+        self.add_hardware(AndorCCDHW(self))        
+        self.add_measurement(AndorCCDReadoutMeasure)
         
+        
+
+
         
         print("Adding Measurement Components")
+
+        from ir_microscope.measurements.hyperspectral_scan import AndorHyperSpec2DScan
+        self.add_measurement(AndorHyperSpec2DScan(self))
+
 
         #self.add_measurement(ph.PicoHarpChannelOptimizer(self))
         #self.add_measurement(ph.PicoHarpHistogramMeasure(self))
         #self.add_measurement(trpl_scan.TRPL2DScan(self, shutter_open_lq_path='hardware/shutter/open'))
 
-        from ScopeFoundryHW.picoharp.hydraharp_optimizer import HydraHarpOptimizerMeasure
+        from ScopeFoundryHW.picoquant.hydraharp_optimizer import HydraHarpOptimizerMeasure
         self.add_measurement(HydraHarpOptimizerMeasure(self))
-        self.add_measurement(trpl_scan_hh.TRPL2DScan(self, shutter_open_lq_path='hardware/shutter/open'))
-        from ScopeFoundryHW.picoharp.hydraharp_hist_measure import HydraHarpHistogramMeasure
+        from ir_microscope.measurements.trpl_scan import TRPL2DScan
+        self.add_measurement(TRPL2DScan(self))
+        from ScopeFoundryHW.picoquant.hydraharp_hist_measure import HydraHarpHistogramMeasure
         self.add_measurement(HydraHarpHistogramMeasure(self))
-        
-        
-        from ScopeFoundryHW.winspec_remote import WinSpecRemoteReadoutMeasure
-        self.add_measurement(WinSpecRemoteReadoutMeasure(self))
-        self.add_measurement(hyperspectral_scan.Hyperspectral2DScan(self))
+
+        #from ScopeFoundryHW.winspec_remote import WinSpecRemoteReadoutMeasure
+        #self.add_measurement(WinSpecRemoteReadoutMeasure(self))
         
         
         from confocal_measure.power_scan import PowerScanMeasure
@@ -145,9 +156,9 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         #from ir_microscope.measurements.apd_scan import PicoharpApdScan
         #self.add_measurement(PicoharpApdScan(self, use_external_range_sync=True))
         
-        #from confocal_measure.calibration_sweep import CalibrationSweep
-        #self.add_measurement(CalibrationSweep(self, spectrometer_hw_name='acton_spectrometer', 
-        #                                            camera_readout_measure_name='winspec_readout') )
+        from confocal_measure.calibration_sweep import CalibrationSweep
+        self.add_measurement(CalibrationSweep(self, spectrometer_hw_name='acton_spectrometer', 
+                                                    camera_readout_measure_name='andor_ccd_readout') )
         
         #from ir_microscope.measurements.trpl_parallelogram_scan import TRPLParallelogramScan
         #self.add_measurement(TRPLParallelogramScan(self, use_external_range_sync=False))
@@ -319,7 +330,9 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         
         # 2d scan
-        _2D_scans = ['trpl_2d_scan', 'hyperspectral_2d_scan', ]
+        _2D_scans = ['trpl_2d_scan', 
+                     'andor_hyperspec_scan',
+                      ]
         
         #Create and connect logged quantities to widget and equivalent lqs measurements
         for ii,lq_name in enumerate(["h_axis","v_axis"]):
