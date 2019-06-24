@@ -20,8 +20,8 @@ class OceanOpticsAsiHyperSpec2DScan(ASIHyperSpec2DScan):
         self.display_image_map[k,j,i] = self.spec_map[k,j,i,ind_min:ind_max].sum()
         if self.spec.settings['baseline_subtract']:
             self.display_image_map[k,j,i] -= self.spec.settings.baseline_val.val*(ind_max-ind_min)
-        if pixel_num == 0:
-            self.h5_meas_group.create_dataset('dark_indices', self.spec.hw.get_dark_indices())
+        if pixel_num == 0 and self.settings['save_h5']:
+            self.h5_meas_group.create_dataset('dark_indices', data=self.spec.hw.get_dark_indices())
             
     
     def recompute_image_map(self):
@@ -56,8 +56,8 @@ class OceanOpticsAsiHyperSpec3DScan(ASIHyperSpec3DScan):
         self.display_image_map[k,j,i] = self.spec_map[k,j,i,ind_min:ind_max].sum()
         if self.spec.settings['baseline_subtract']:
             self.display_image_map[k,j,i] -= self.spec.settings.baseline_val.val*(ind_max-ind_min)
-        if pixel_num == 0:
-            self.h5_meas_group.create_dataset('dark_indices', self.spec.hw.get_dark_indices())
+        if pixel_num == 0 and self.settings['save_h5']:
+            self.h5_meas_group.create_dataset('dark_indices', data=self.spec.hw.get_dark_indices())
     
     def recompute_image_map(self):
         if not hasattr(self, 'display_image_map'):
