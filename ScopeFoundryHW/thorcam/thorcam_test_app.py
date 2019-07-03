@@ -33,6 +33,9 @@ class ThorCamTestApp(BaseMicroscopeApp):
         from ScopeFoundryHW.thorcam.thorcam_capture import ThorCamCaptureMeasure
         self.add_measurement(ThorCamCaptureMeasure(self))
         
+        from ScopeFoundryHW.thorcam.thorcam_time_series import ThorCamTimeSeries
+        self.add_measurement(ThorCamTimeSeries(self))
+        
         
         # load side panel UI        
         #quickbar_ui_filename = sibling_path(__file__, "quickbar.ui")        
