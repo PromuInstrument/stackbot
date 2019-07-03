@@ -25,7 +25,8 @@ class PowerScanMeasure(Measurement):
         self.power_wheel_range.sweep_type.update_value('up_down')
         self.acq_mode = self.settings.New('acq_mode', dtype=str, initial = 'const_time', 
                                           choices=('const_time', 'const_dose', 'manual_acq_times'))
-
+        
+        self.settings.New('manual_acq_times', str, initial = '0,5; 20,2; 100,1')
                                                
         #possible hardware components and their integration times setting:
         self.hws = { 'picoharp': 'Tacq',
@@ -54,11 +55,15 @@ class PowerScanMeasure(Measurement):
         if hasattr(self, 'shutter_open'):
             CB_widget = QtWidgets.QCheckBox('use shutter')
             self.settings.use_shutter.connect_to_widget(CB_widget)
-            self.ui.gridGroupBox.layout().addWidget(CB_widget)
+            self.ui.power_scan_GroupBox.layout().addWidget(CB_widget)
         else:
             self.settings['use_shutter'] = False
             self.settings.use_shutter.change_readonly(True)            
 
+        self.settings.manual_acq_times.connect_to_widget(self.ui.manual_acq_times_lineEdit)
+        self.ui.manual_acq_times_lineEdit.setVisible(False)
+        self.settings.acq_mode.add_listener(self.on_change_acq_mode)
+        
         self.power_wheel_range.min.connect_to_widget(self.ui.power_wheel_min_doubleSpinBox)
         self.power_wheel_range.max.connect_to_widget(self.ui.power_wheel_max_doubleSpinBox)
         self.power_wheel_range.num.connect_to_widget(self.ui.power_wheel_num_doubleSpinBox)
@@ -92,9 +97,16 @@ class PowerScanMeasure(Measurement):
             del self.graph_layout
         self.graph_layout=pg.GraphicsLayoutWidget()
         self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
-        self.plot1 = self.graph_layout.addPlot(title="Power Scan")
+        self.power_plot = self.graph_layout.addPlot(title="Power Scan")
         self.display_ready = False
 
+
+    def on_change_acq_mode(self):
+        if self.settings['acq_mode'] == 'manual_acq_times':
+            self.ui.manual_acq_times_lineEdit.setVisible(True)
+        else:
+            self.ui.manual_acq_times_lineEdit.setVisible(False)
+                       
 
 
     def pre_run(self):
@@ -137,10 +149,11 @@ class PowerScanMeasure(Measurement):
             shape = self.hh_hw.hist_shape
             self.hydraharp_time_array = np.zeros(shape[-1], dtype=float)
             self.hydraharp_elapsed_time = np.zeros(Np, dtype=float)
-            self.hydraharp_histograms = np.zeros((Np,)+shape, dtype=int)
+            self.hydraharp_histograms = np.zeros((Np,)+shape, dtype=float)
             self.used_hws.update( {'hydraharp':self.installed_hw['hydraharp']} )
 
-        #TODO: Can not currently take spectra from different cameras
+        #TODO: Can not currently take spectra from different cameras simultaneously because arrays are
+        # are named the same for all cameras...
         if self.settings['collect_winspec_remote_client']:
             self.spec_readout = self.app.measurements['winspec_remote_client']
             self.spectra = [] # don't know size of ccd until after measurement
@@ -176,41 +189,40 @@ class PowerScanMeasure(Measurement):
         if self.settings['acq_mode'] == 'const_dose':
             self.dose_calibration_data = self.acquire_dose_calibration_data()
             for hw,Tacq_lq in self.used_hws.items():
-                acq_time_array = self.calc_times_const_dose_calibrated(Tacq_lq.val, self.dose_calibration_data)
-                self.Tacq_arrays.append( (hw, Tacq_lq, acq_time_array) )
-                print(hw, 'acquisition time', acq_time_array.sum())
-                total_acquisition_time += acq_time_array.sum()
+                acq_times_array = self.calc_acq_times_array_const_dose_calibrated(Tacq_lq.val, self.dose_calibration_data)
+                self.Tacq_arrays.append( (hw, Tacq_lq, acq_times_array) )
+                print(hw, 'acquisition time', acq_times_array.sum())
+                total_acquisition_time += acq_times_array.sum()
         
         elif self.settings['acq_mode'] == 'manual_acq_times':    
-            #list of (p,t) where p is the lowest position with acquisition time t
-            #Note: all hw will us the same list
-            #Not tested for zigzak sweep
-            
-            pos_vs_acqtime = [(0,5),(260,4),(120,3),(200,2)] 
-            
+            #Note: all hw will use the same list and hence same acquisition times.
+            #        Simple fix idea: scale acq_times_array with Tacq_lq.val
+            string = self.settings['manual_acq_times']
+            pos_vs_acqtime = np.array( np.matrix(string) )
             for hw,Tacq_lq in self.used_hws.items():
-                acq_time_array = self.calc_acq_time_array_manual_input(pos_vs_acqtime)
-                self.Tacq_arrays.append( (hw, Tacq_lq, acq_time_array) )    
-                total_acquisition_time += acq_time_array.sum()      
+                acq_times_array = self.calc_acq_times_array_manual_input(pos_vs_acqtime)
+                #acq_times_array *= Tacq.val
+                self.Tacq_arrays.append( (hw, Tacq_lq, acq_times_array) )    
+                total_acquisition_time += acq_times_array.sum()      
         
         elif self.settings['acq_mode'] == 'const_time': 
             for hw,Tacq_lq in self.used_hws.items():
-                acq_time_array = np.ones_like(self.power_wheel_position) * Tacq_lq.val #easy peasy const time array.
-                self.Tacq_arrays.append( (hw, Tacq_lq, acq_time_array) )
-                total_acquisition_time += acq_time_array.sum()      
+                acq_times_array = np.ones_like(self.power_wheel_position) * Tacq_lq.val #easy peasy const time array.
+                self.Tacq_arrays.append( (hw, Tacq_lq, acq_times_array) )
+                total_acquisition_time += acq_times_array.sum()      
         
         print(self.name, self.settings['acq_mode'], 'total_acquisition_time (s)', total_acquisition_time)
                     
         self.ii = 0
 
         # prepare plot curves
-        self.plot1.clear()
+        self.power_plot.clear()
         self.plot_lines = []
         N_plot_lines = len(self.used_hws.keys())
         for i in range(N_plot_lines):
             c = (i+1)/N_plot_lines
-            self.plot_lines.append(self.plot1.plot([0], symbol='o', pen=(c,c,c)))
-        self.plot1.setTitle('Power Scan')
+            self.plot_lines.append(self.power_plot.plot([1,3,2,4], symbol='o', pen=(c,c,c)))
+        self.power_plot.setTitle('Power Scan')
         self.display_ready = True
 
         
@@ -224,7 +236,7 @@ class PowerScanMeasure(Measurement):
     def run(self):
         if len(self.used_hws) == 0: 
             print('Nothing selected to collect data from.')
-            self.interrupt_measurement_called = True #self.interrupt() #This causes problems?
+            return
             
         self.move_to_min_pos()
                 
@@ -235,9 +247,9 @@ class PowerScanMeasure(Measurement):
             if self.interrupt_measurement_called:
                 break
                         
-            for hw, Tacq_lq, Tacq_array in self.Tacq_arrays:
-                print("power scan {} of {}, {} acq_time {}".format(ii + 1, self.Np, hw, Tacq_array[ii]))
-                Tacq_lq.update_value(Tacq_array[ii])
+            for hw, Tacq_lq, acq_times_array in self.Tacq_arrays:
+                print("power scan {} of {}, {} acq_times {}".format(ii + 1, self.Np, hw, acq_times_array[ii]))
+                Tacq_lq.update_value(acq_times_array[ii])
 
 
             print("moving power wheel to", self.power_wheel_hw.settings['position'])            
@@ -353,16 +365,13 @@ class PowerScanMeasure(Measurement):
             H['pm_powers_after'] = self.pm_powers_after
             H['power_wheel_position'] = self.power_wheel_position
             
-            for hw, Tacq_lq, acq_time_array in self.Tacq_arrays:
-                H[hw + '_acquisition_times'] = acq_time_array
-                print('saving ' + hw + '_acquisition_times')
+            for hw, Tacq_lq, acq_times_array in self.Tacq_arrays:
+                H[hw + '_acq_times_array'] = acq_times_array
+                print('saving ' + hw + '_acq_times_array')
                 
         finally:
-            self.log.info("data saved "+self.h5_file.filename)
+            self.log.info("data saved " + self.h5_file.filename)
             self.h5_file.close()
-        
-
-        self.update_display()
         
 
     def update_display(self):
@@ -390,22 +399,27 @@ class PowerScanMeasure(Measurement):
                 #print('update_display', ii, X, self.hydraharp_histograms[:ii].sum(axis=(1,2)))
                 jj += 1
     
-            elif self.settings['collect_andor_ccd']:
+            if self.settings['collect_andor_ccd']:
                 self.plot_lines[jj].setData(X, self.integrated_spectra[:ii])
                 jj += 1
     
-            elif self.settings['collect_winspec_remote_client']:
+            if self.settings['collect_winspec_remote_client']:
                 self.plot_lines[jj].setData(X, self.integrated_spectra[:ii])
                 jj += 1
     
-            elif self.settings['collect_ascom_img']:
+            if self.settings['collect_ascom_img']:
                 self.plot_lines[jj].setData(X, self.ascom_img_integrated[:ii])
                 self.ascom_camera_capture.update_display()
                 jj += 1
         
-            else: # no detectors set, show pm_powers
-                self.plot1.setTitle('No Detector')
+            if jj != 0: # no detectors set, show pm_powers
+                self.power_plot.setTitle('Select a Collection', color='r')
+            else:
+                self.power_plot.setTitle('Collecting power scans ...', color='g')
 
+        #else:
+        #    self.power_plot.setTitle('Select a Collection Option and press Start', color='r')
+            
 
     def aquire_histogram(self, hw): 
         hw.start_histogram()
@@ -472,18 +486,18 @@ class PowerScanMeasure(Measurement):
         return dose_calibration_data
     
             
-    def calc_times_const_dose_calibrated(self, t0, dose_calibration_data):
+    def calc_acq_times_array_const_dose_calibrated(self, t0, dose_calibration_data):
         '''predicts the acq times needed to have the same dose at every wheel position 
         based on calibration data'''
-        dose = dose_calibration_data[0] * t0 #this the targed dose.
-        print('calc_times_const_dose_calibrated() dose is:', dose)
+        dose = dose_calibration_data[0] * t0  #this the targeted dose.
+        print('calc_acq_times_array_const_dose_calibrated() dose is:', dose)
         acq_times_array =  np.array([round(item,4) for item in dose/dose_calibration_data]) 
         return acq_times_array
 
 
-    def calc_times_const_dose_specs(self, t0, OD_MAX = 4.3 ,OD_MAX_POS = 270.):
+    def calc_acq_times_array_const_dose_wheel_specs(self, t0, OD_MAX = 4.3 ,OD_MAX_POS = 270.):
         '''predicts the acq times needed to have the same dose at every wheel position 
-        based on specification of the power wheel'''
+        based on specification of the power wheel. Author: C. Kastel'''
         theta = self.power_wheel_position
         OD = OD_MAX * (theta - theta[0]) / OD_MAX_POS         
         acq_times_array = np.array([round(item,4) for item in (t0 * 10**(-OD))])
@@ -491,17 +505,17 @@ class PowerScanMeasure(Measurement):
         return acq_times_array
         
 
-    def calc_acq_time_array_manual_input(self, manual_pos_vs_times):
+    def calc_acq_times_array_manual_input(self, manual_pos_vs_times):
         pos,time = np.array(manual_pos_vs_times).T
         x = self.power_wheel_position
         # lowest position
         assert len(x) >= 2
-        acq_time_array =  np.piecewise(x, [x < pos[1],   x >= pos[1]], [ time[0], 0]) 
+        acq_times_array =  np.piecewise(x, [x < pos[1],   x >= pos[1]], [ time[0], 0]) 
         # highest position
-        acq_time_array += np.piecewise(x, [x >= pos[-1], x < pos[-1]], [time[-1], 0])
+        acq_times_array += np.piecewise(x, [x >= pos[-1], x < pos[-1]], [time[-1], 0])
         # all other
         for i in range(1,len(pos)-1):
             t = np.piecewise(x, [x < pos[i], x >= pos[i], x >= pos[i+1]], [0, time[i], 0])
-            acq_time_array += t    
-        return acq_time_array
+            acq_times_array += t    
+        return acq_times_array
     

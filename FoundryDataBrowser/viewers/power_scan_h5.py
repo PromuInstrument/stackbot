@@ -29,22 +29,19 @@ class PowerScanH5View(DataBrowserView):
         
         self.graph_layout = pg.GraphicsLayoutWidget()
         self.ui.layout().addWidget(self.graph_layout)
-        
+
         self.power_plot = self.graph_layout.addPlot()
         self.power_plot.setLogMode(x=True, y=True)
-        
-        self.power_plotcurve = self.power_plot.plot([1],[1], name='Data', symbol='+', symbolBrush='m')
-
-        self.power_plot_current_pos = self.power_plot.plot(symbol='o', symbolBrush='r',)
+        self.power_plotcurve = self.power_plot.plot([1,3,2,4], name='Data', symbol='+', symbolBrush='m')
+        self.power_plot_current_pos = self.power_plot.plot([1,3,2,4],symbol='o', symbolBrush='r',)
         self.power_plot_current_pos.setZValue(10)
-
-        self.power_fit_plotcurve = self.power_plot.plot([1],[1],pen='g', name='Fit')
-        self.power_plotcurve_selected = self.power_plot.plot([1],[1],symbol='o', pen=None, symbolPen='g') 
+        self.power_fit_plotcurve = self.power_plot.plot([1,3,2,4],pen='g', name='Fit')
+        self.power_plotcurve_selected = self.power_plot.plot([1,3,2,4],symbol='o', pen=None, symbolPen='g') 
 
         self.graph_layout.nextRow()
         self.spec_plot = self.graph_layout.addPlot()
-        self.spec_plotcurve = self.spec_plot.plot([0], pen='r' )
-        self.spec_plotcurve_mean = self.spec_plot.plot([0], name='mean')
+        self.spec_plotcurve = self.spec_plot.plot([1,3,2,4], pen='r' )
+        self.spec_plotcurve_mean = self.spec_plot.plot([1,3,2,4], name='mean')
 
         settings_layout = QtWidgets.QGridLayout()
         self.ui.layout().addLayout(settings_layout)
@@ -71,11 +68,18 @@ class PowerScanH5View(DataBrowserView):
                                               )        
         settings_layout.addWidget(self.power_plot_slicer.New_UI(),3,0)
 
-        self.spec_x_slicer = RegionSlicer(self.spec_plotcurve, name='slicer',
+        self.spec_x_slicer = RegionSlicer(self.spec_plotcurve, name='spec_x_slicer',
                                      slicer_updated_func=self.update_power_plotcurve,
                                      activated = False,
                                     )
         settings_layout.addWidget(self.spec_x_slicer.New_UI(),3,1)
+        
+        self.bg_slicer = RegionSlicer(self.spec_plotcurve, name='bg subtract',
+                                     slicer_updated_func=self.update_power_plotcurve,
+                                     activated = False,
+                                    )
+        settings_layout.addWidget(self.bg_slicer.New_UI(),3,2)
+        
     
         
     def on_change_data_filename(self, fname=None):
@@ -104,23 +108,33 @@ class PowerScanH5View(DataBrowserView):
               
             #Provide  spec_x_array and hyperspec_data for each.
             '''self.spec_x_array has shape (N_wls,) [dim=1]
-            self.hyperspec_data has shape (Np, N_channels, N_wls)  [dim=3]'''
+            self.hyperspec_data has shape (Np, N_channels, N_wls)  [dim=3] e.g.'''
             self.spec_x_array = np.arange(512) 
             self.hyperspec_data = 0.5*np.arange(512*Np*1).reshape((Np, 1, 512))
+            
+            #Also, if present override the following array which will be used
+            # to normalize the cts:
+            acq_times_array = np.ones_like(H['pm_powers'])
 
                                     
             if 'integrated_spectra' in H:
+                for k in H.keys():
+                    if 'acq_times_array' in k:
+                        acq_times_array = H[k][:]
                 self.spec_x_array = H['wls'][:] 
                 self.hyperspec_data = H['spectra'][:].reshape(Np,1,-1)
-                    
+
+                
             for harp in ['picoharp','hydraharp']:
                 if '{}_histograms'.format(harp) in H:
                     histograms = H['{}_histograms'.format(harp)][:]
-                    elapsed_time = H['{}_elapsed_time'.format(harp)][:]
+                    acq_times_array = elapsed_time = H['{}_elapsed_time'.format(harp)][:]
                     self.spec_x_array = H['{}_time_array'.format(harp)][:]
                     if np.ndim(histograms) == 2:
                         histograms = histograms.reshape(Np,1,-1)
-                    self.hyperspec_data = (histograms.T/elapsed_time).T
+                    self.hyperspec_data = histograms
+                    
+            self.hyperspec_data = (self.hyperspec_data.T/acq_times_array).T
                     
             self.h5file.close()
             
@@ -139,25 +153,41 @@ class PowerScanH5View(DataBrowserView):
 
         except Exception as err:
             self.databrowser.ui.statusbar.showMessage("failed to load {}:\n{}".format(fname, err) )
-            raise(err)
+            #raise(err)
     
     
     def on_spec_index_change(self):
         ii = self.settings['spec_index']
         self.power_plot_current_pos.setData(self.X[ii:ii+1], self.Y[ii:ii+1])
-        spectrum = self.hyperspec_data[ii,self.settings['chan'],:]
-        self.spec_plotcurve.setData(self.spec_x_array,spectrum)
+        _,spectra = self.get_power_xhyperspecdata(apply_x_slicer=False)
+        print(spectra.shape)
+        self.spec_plotcurve.setData(self.spec_x_array,spectra[ii,:])
+        
+        #show power wheel position
+        power_wheel_position = self.power_arrays['power_wheel_position'][ii]
+        self.databrowser.ui.statusbar.showMessage("power_wheel_position: {:1.1f}".format(power_wheel_position))
+        self.spec_plot.setTitle("power_wheel_position: {:1.1f}".format(power_wheel_position), color='r')
         
     def on_change_power_x_axis(self):
         self.update_power_plotcurve()
-    
-    def get_power_xhyperspecdata(self):
+        
+    def get_bg(self):
+        if self.bg_slicer.activated.val:
+            bg = self.hyperspec_data[:,self.settings['chan'],self.bg_slicer.slice].mean()
+        else:
+            bg = 0
+        return bg    
+ 
+    def get_power_xhyperspecdata(self, apply_x_slicer=True):
+        bg = self.get_bg()
         power_plot_x = self.power_arrays[self.settings['power_x_axis']]
-        hyperspec = self.hyperspec_data[:,self.settings['chan'],self.spec_x_slicer.s_]
-        return (power_plot_x, hyperspec)
+        hyperspec_data = self.hyperspec_data[:,self.settings['chan'],:]
+        if apply_x_slicer:
+            hyperspec_data = hyperspec_data[:,self.spec_x_slicer.s_]
+        return (power_plot_x, hyperspec_data-bg)
                 
     def get_power_xy(self):
-        power_plot_x,hyperspec = self.get_power_xhyperspecdata()
+        power_plot_x,hyperspec = self.get_power_xhyperspecdata(apply_x_slicer=True)
         power_plot_y  = hyperspec.sum(axis=1)
         if np.any(power_plot_y < 0): 
             power_plot_y -= np.min(power_plot_y) - 1        
@@ -176,4 +206,17 @@ class PowerScanH5View(DataBrowserView):
         fit_data = 10**(np.poly1d((m,b))(np.log10(self.X)))
         self.power_fit_plotcurve.setData(self.X[s], fit_data[s])
         self.power_plotcurve_selected.setData(self.X[s], self.Y[s])
-        self.power_plot_slicer.set_label("<h1>{:1.2f}+I<sup>{:1.2f}</sup></h1>".format(b,m))       
+        self.power_plot_slicer.set_label("<h1>{:1.2f} * I<sup>{:1.2f}</sup></h1>".format(b,m)) 
+        
+        
+if __name__ == '__main__':
+    import sys
+    from ScopeFoundry.data_browser import DataBrowser
+    app = DataBrowser(sys.argv)
+
+    
+    from FoundryDataBrowser.viewers.h5_tree import H5TreeSearchView
+    app.load_view(H5TreeSearchView(app))    
+    app.load_view(PowerScanH5View(app))
+    
+    sys.exit(app.exec_()) 
