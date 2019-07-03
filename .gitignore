@@ -54,3 +54,5 @@ ScopeFoundryHW/acton_spec/log/
 ALS_microCT/log
 foundry_scope.egg-info/
 ScopeFoundryHW/picoharp/log/
+ScopeFoundryHW/sync_stream_scan/log/
+thor_lsc_microscope/log/
