@@ -6,6 +6,7 @@ import os
 from ScopeFoundry import h5_io
 import time
 
+
 class OOSpecLive(Measurement):
 
     name = "oo_spec_live"
@@ -104,8 +105,9 @@ class OOSpecLive(Measurement):
         self.bg_spec = self.hw.get_spectrum()
         
     def save_data(self):
-        t0 = time.time()
-        fname = os.path.join(self.app.settings['save_dir'], "%i_%s" % (t0, self.name))
+        t = time.localtime(time.time())
+        t_string = "{:02d}{:02d}{:02d}_{:02d}{:02d}{:02d}".format(int(str(t[0])[:-2]), t[1], t[2], t[3], t[4], t[5])
+        fname = os.path.join(self.app.settings['save_dir'], "%s_%s" % (t_string, self.name))
         with h5_io.h5_base_file(self.app,  fname = fname + ".h5") as H:
                 print("Saving " + fname + ".h5")
                 M = h5_io.h5_create_measurement_group(measurement=self, h5group=H)
