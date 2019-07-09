@@ -7,6 +7,7 @@ import pyqtgraph as pg
 from matplotlib.backends.qt_compat import QtWidgets
 from ScopeFoundry.logged_quantity import LQRange
 from _operator import pos
+import datetime
 
 class PowerScanMeasure(Measurement):
     
@@ -99,6 +100,7 @@ class PowerScanMeasure(Measurement):
         self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
         self.power_plot = self.graph_layout.addPlot(title="Power Scan")
         self.display_ready = False
+        self.status = {'title':'starting power scan', 'color':'y'}
 
 
     def on_change_acq_mode(self):
@@ -106,11 +108,9 @@ class PowerScanMeasure(Measurement):
             self.ui.manual_acq_times_lineEdit.setVisible(True)
         else:
             self.ui.manual_acq_times_lineEdit.setVisible(False)
-                       
 
 
-    def pre_run(self):
-        
+    def pre_run(self):    
         self.display_ready = False
         
         # Prepare data arrays and links to components:
@@ -155,13 +155,16 @@ class PowerScanMeasure(Measurement):
         #TODO: Can not currently take spectra from different cameras simultaneously because arrays are
         # are named the same for all cameras...
         if self.settings['collect_winspec_remote_client']:
-            self.spec_readout = self.app.measurements['winspec_remote_client']
+            self.spec_readout = self.app.measurements['winspec_readout']
+            self.spec_readout.settings['save_h5'] = False
             self.spectra = [] # don't know size of ccd until after measurement
             self.integrated_spectra = []
             self.used_hws.update( {'winspec_remote_client':self.installed_hw['winspec_remote_client']} )
 
         if self.settings['collect_andor_ccd']:
-            self.spec_readout = self.app.measurements['collect_andor_ccd']
+            self.andor_readout = self.app.measurements['andor_ccd_readout']
+            self.andor_readout.start_stop(False)
+            self.andor_readout.settings['save_h5'] = False
             self.spectra = [] # don't know size of ccd until after measurement
             self.integrated_spectra = []
             self.used_hws.update( {'andor_ccd':self.installed_hw['andor_ccd']} )
@@ -183,7 +186,7 @@ class PowerScanMeasure(Measurement):
             self.shutter_open.update_value(True)
             
             
-        total_acquisition_time = 0
+        self.total_acquisition_time = 0
         self.Tacq_arrays = [] 
         
         if self.settings['acq_mode'] == 'const_dose':
@@ -192,7 +195,7 @@ class PowerScanMeasure(Measurement):
                 acq_times_array = self.calc_acq_times_array_const_dose_calibrated(Tacq_lq.val, self.dose_calibration_data)
                 self.Tacq_arrays.append( (hw, Tacq_lq, acq_times_array) )
                 print(hw, 'acquisition time', acq_times_array.sum())
-                total_acquisition_time += acq_times_array.sum()
+                self.total_acquisition_time += acq_times_array.sum()
         
         elif self.settings['acq_mode'] == 'manual_acq_times':    
             #Note: all hw will use the same list and hence same acquisition times.
@@ -203,15 +206,15 @@ class PowerScanMeasure(Measurement):
                 acq_times_array = self.calc_acq_times_array_manual_input(pos_vs_acqtime)
                 #acq_times_array *= Tacq.val
                 self.Tacq_arrays.append( (hw, Tacq_lq, acq_times_array) )    
-                total_acquisition_time += acq_times_array.sum()      
+                self.total_acquisition_time += acq_times_array.sum()      
         
         elif self.settings['acq_mode'] == 'const_time': 
             for hw,Tacq_lq in self.used_hws.items():
                 acq_times_array = np.ones_like(self.power_wheel_position) * Tacq_lq.val #easy peasy const time array.
                 self.Tacq_arrays.append( (hw, Tacq_lq, acq_times_array) )
-                total_acquisition_time += acq_times_array.sum()      
+                self.total_acquisition_time += acq_times_array.sum()      
         
-        print(self.name, self.settings['acq_mode'], 'total_acquisition_time (s)', total_acquisition_time)
+        print(self.name, self.settings['acq_mode'], 'total_acquisition_time (s)', self.total_acquisition_time)
                     
         self.ii = 0
 
@@ -221,23 +224,24 @@ class PowerScanMeasure(Measurement):
         N_plot_lines = len(self.used_hws.keys())
         for i in range(N_plot_lines):
             c = (i+1)/N_plot_lines
-            self.plot_lines.append(self.power_plot.plot([1,3,2,4], symbol='o', pen=(c,c,c)))
-        self.power_plot.setTitle('Power Scan')
+            self.plot_lines.append( self.power_plot.plot([1,3,2,4], symbol='o') )
         self.display_ready = True
-
-        
 
             
     def post_run(self):
         self.display_ready = False
         if self.settings['use_shutter']:
-            self.shutter_open.update_value(False)        
-
+            self.shutter_open.update_value(False)     
+        self.update_display()  
+            
     def run(self):
         if len(self.used_hws) == 0: 
-            print('Nothing selected to collect data from.')
+            self.status = {'title':'Select a Collection Option and press Start', 'color':'r'}
             return
-            
+        else:
+            ETA = datetime.timedelta(seconds=int(self.total_acquisition_time) )
+            self.status = {'title':'Power scan total acquisition time in h:mm:ss {}'.format(str(ETA)), 'color':'g'}
+        
         self.move_to_min_pos()
                 
         # loop through power wheel positions and measure active components.
@@ -252,7 +256,7 @@ class PowerScanMeasure(Measurement):
                 Tacq_lq.update_value(acq_times_array[ii])
 
 
-            print("moving power wheel to", self.power_wheel_hw.settings['position'])            
+            print("moving power wheel to " + str(self.power_wheel_hw.settings['position']) )            
             self.power_wheel_hw.settings['position'] = self.power_wheel_position[ii]
             time.sleep(0.25)
 
@@ -292,31 +296,25 @@ class PowerScanMeasure(Measurement):
                 
             if self.settings['collect_winspec_remote_client']:
                 #self.spec_readout.run()
-                self.spec_readout.settings['read_single'] = True
-                self.spec_readout.settings['save_h5'] = True
+                self.spec_readout.settings['continuous'] = False
+                self.spec_readout.settings['save_h5'] = False
                 
-                self.spec_readout.settings['activation'] = True
+                self.spec_readout.interrupt_measurement_called = False
+                self.spec_readout.run()
                 time.sleep(0.5)
-                time.sleep(self.spec_acq_time.val)
-                spec = np.array(self.spec_readout.spectrum)
-                self.integrated_spectra.append(spec.sum())/self.spec_readout.settings['acq_time'] 
-                self.spec_readout.settings['read_single'] = True
-                
+                Tacq_lq = self.installed_hw['winspec_remote_client']
+                #time.sleep(Tacq_lq.val)
+                spec = np.array(self.spec_readout.data)
+                self.spectra.append(spec)
+                self.integrated_spectra.append(spec.sum()) 
+
                 
             if self.settings['collect_andor_ccd']:
-                #self.spec_readout.run()
-                self.spec_readout.settings['read_single'] = True
-                self.spec_readout.settings['save_h5'] = True
-                #self.start_nested_measure_and_wait(self.spec_readout)
-                
-                self.spec_readout.settings['activation'] = True
-                time.sleep(0.5)
-                time.sleep(self.spec_acq_time.val)
-                spec = np.array(self.spec_readout.spectrum)
-                spec = spec/self.spec_readout.settings['exposure_time'] 
+                self.andor_readout.settings['read_single'] = True            
+                self.start_nested_measure_and_wait(self.andor_readout)
+                spec = self.andor_readout.get_spectrum()
                 self.spectra.append(spec)
-                self.integrated_spectra.append(spec.sum())
-                self.spec_readout.settings['read_single'] = True
+                self.integrated_spectra.append(spec.sum()) 
                                 
                                 
             if self.settings['collect_ascom_img']:
@@ -330,7 +328,8 @@ class PowerScanMeasure(Measurement):
             # collect power meter value after measurement
             self.pm_powers_after[ii]=self.collect_pm_power_data()
 
-            
+        self.status = {'title':'Power scan finished', 'color':'y'}
+
 
         # write data to h5 file on disk        
         self.t0 = time.time()
@@ -354,7 +353,7 @@ class PowerScanMeasure(Measurement):
                 H['spectra'] = np.squeeze(np.array(self.spectra))
                 H['integrated_spectra'] = np.array(self.integrated_spectra)
             if self.settings['collect_andor_ccd']:
-                H['wls'] = self.spec_readout.wls
+                H['wls'] = self.andor_readout.wls
                 H['spectra'] = np.squeeze(np.array(self.spectra))
                 H['integrated_spectra'] = np.array(self.integrated_spectra)
             if self.settings['collect_ascom_img']:
@@ -372,55 +371,53 @@ class PowerScanMeasure(Measurement):
         finally:
             self.log.info("data saved " + self.h5_file.filename)
             self.h5_file.close()
+
+
         
 
     def update_display(self):
 
+        self.power_plot.setTitle(**self.status)
+
         if self.display_ready:
-        
+
             ii = self.ii + 1
             if self.settings['x_axis'] == 'power':
                 X = self.pm_powers[:ii]            
             else:
                 X = self.power_wheel_position[:ii]
 
-            jj = 0          
-            if self.settings['collect_apd_counter']:
-                self.plot_lines[jj].setData(X, self.apd_count_rates[:ii])
-                jj += 1
-                
+            jj = 0 
+            # update curves (order matters, as acq_times_array = self.Tacq_arrays[jj][2] is used)
             if self.settings['collect_picoharp']:
                 self.plot_lines[jj].setData(X, self.picoharp_histograms[:ii, :].sum(axis=1)/self.picoharp_elapsed_time[:ii])
                 jj += 1
-    
+                
             if self.settings['collect_hydraharp']:
                 Y = self.hydraharp_histograms[:ii].sum(axis=(1,2))/self.hydraharp_elapsed_time[:ii]
                 self.plot_lines[jj].setData(X,Y)
-                #print('update_display', ii, X, self.hydraharp_histograms[:ii].sum(axis=(1,2)))
-                jj += 1
-    
-            if self.settings['collect_andor_ccd']:
-                self.plot_lines[jj].setData(X, self.integrated_spectra[:ii])
-                jj += 1
-    
-            if self.settings['collect_winspec_remote_client']:
-                self.plot_lines[jj].setData(X, self.integrated_spectra[:ii])
                 jj += 1
     
             if self.settings['collect_ascom_img']:
                 self.plot_lines[jj].setData(X, self.ascom_img_integrated[:ii])
                 self.ascom_camera_capture.update_display()
                 jj += 1
+    
+            if self.settings['collect_andor_ccd']:
+                acq_times_array = self.Tacq_arrays[jj][2]
+                self.plot_lines[jj].setData(X, self.integrated_spectra[:ii]/acq_times_array[:ii])
+                jj += 1
+
+            if self.settings['collect_winspec_remote_client']:
+                acq_times_array = self.Tacq_arrays[jj][2]
+                self.plot_lines[jj].setData(X, self.integrated_spectra[:ii]/acq_times_array[:ii])
+                jj += 1
+                               
+            if self.settings['collect_apd_counter']:
+                self.plot_lines[jj].setData(X, self.apd_count_rates[:ii])
+                jj += 1 
+
         
-            if jj != 0: # no detectors set, show pm_powers
-                self.power_plot.setTitle('Select a Collection', color='r')
-            else:
-                self.power_plot.setTitle('Collecting power scans ...', color='g')
-
-        #else:
-        #    self.power_plot.setTitle('Select a Collection Option and press Start', color='r')
-            
-
     def aquire_histogram(self, hw): 
         hw.start_histogram()
         while not hw.check_done_scanning():

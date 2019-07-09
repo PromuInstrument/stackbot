@@ -1,16 +1,43 @@
-from __future__ import print_function, absolute_import, division
-from ScopeFoundryHW.mcl_stage import MCLStage2DSlowScan
-import ScopeFoundry
 from ScopeFoundry.helper_funcs import sibling_path
 
-import numpy as np
 import time
 import pyqtgraph as pg
 from ir_microscope.measurements.ir_microscope_base_scans import IRMicroscopeBase2DScan
+from ScopeFoundryHW.picoquant.trpl_2d_scan_base import TRPL2DScanBase 
 import datetime
 
+class TRPL2DScan(IRMicroscopeBase2DScan, TRPL2DScanBase):
+    
+    name = 'trpl_2d_scan'
+        
+    def __init__(self, app):
+        IRMicroscopeBase2DScan.__init__(self, app)
+        TRPL2DScanBase.__init__(self, app, None)
+    
+    def setup(self):
+        IRMicroscopeBase2DScan.setup(self)
+        TRPL2DScanBase.setup(self)
+    
+    def setup_figure(self):
+        TRPL2DScanBase.setup_figure(self)
 
-class TRPL2DScan(IRMicroscopeBase2DScan):
+    def pre_scan_setup(self):
+        IRMicroscopeBase2DScan.pre_scan_setup(self)
+        TRPL2DScanBase.pre_scan_setup(self)
+    
+    def collect_pixel(self, pixel_num, k, j, i):
+        IRMicroscopeBase2DScan.collect_pixel(self, pixel_num, k, j, i)   
+        TRPL2DScanBase.collect_pixel(self, pixel_num, k, j, i)
+
+    def post_scan_cleanup(self):
+        IRMicroscopeBase2DScan.post_scan_cleanup(self)
+        TRPL2DScanBase.post_scan_cleanup(self)
+        
+    def update_display(self):
+        IRMicroscopeBase2DScan.update_display(self)
+        TRPL2DScanBase.update_display(self)
+
+class TRPL2DScan_old(IRMicroscopeBase2DScan):
     
     name = 'trpl_2d_scan'
     
@@ -18,7 +45,6 @@ class TRPL2DScan(IRMicroscopeBase2DScan):
         IRMicroscopeBase2DScan.__init__(self, app)
         self.shutter_open_lq_path = shutter_open_lq_path
 
-        
     
     def setup(self):
         IRMicroscopeBase2DScan.setup(self)
@@ -43,6 +69,7 @@ class TRPL2DScan(IRMicroscopeBase2DScan):
         self.settings.New('dark_counts', int, initial = 40000, unit = 'Hz')
         self.settings.New('total_signal_counts', int, initial = 90000, unit='cts')
         self.settings.New('dark_histograms_accumulations', int, initial=5)
+
 
 
     def pre_scan_setup(self):

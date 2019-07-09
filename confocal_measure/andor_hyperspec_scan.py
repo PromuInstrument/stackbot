@@ -1,21 +1,32 @@
 import numpy as np
 from ScopeFoundryHW.mcl_stage.mcl_stage_slowscan import MCLStage2DSlowScan
+from ScopeFoundry.scanning import BaseRaster2DSlowScan
 import time
 
-class AndorHyperSpec2DScan(MCLStage2DSlowScan):
-    
-    name = "andor_hyperspec_scan"
+
+
+class AndorHyperSpec2DScanBase(BaseRaster2DSlowScan):
+    '''
+    Base class for a hyper-spectral scan with an Andor CCD.
+    Derived class requires second inheritance of a <confocal_measure.BaseRaster2DSlowScan> 
+    derivative. For example:
+        `class AndorHyperSpec2DScan(AndorHyperSpec2DScanBase, MCLStage2DSlowScan):
+            ...`
+    Note: Order of Inheritance matters!            
+    '''
+
+    name = "andor_base_hyperspec_scan"
+
     
     def scan_specific_setup(self):
-        #Hardware
-        self.stage = self.app.hardware['mcl_xyz_stage']
-
+        # Measurement
         self.andor_ccd_readout = self.app.measurements['andor_ccd_readout']
 
-
-        #self.andor_ccd_hw = self.gui.andor_ccd_hc
-        #ccd = self.andor_ccd = self.andor_ccd_hw.andor_ccd
-
+        # add to base ui
+        self.andor_ccd_hw = self.app.hardware['andor_ccd']
+        device_ui = self.andor_ccd_hw.settings.New_UI(include=[
+            'connected','exposure_time','temperature', 'ccd_status'])
+        self.ui.device_details_layout.addWidget(device_ui)
 
     def pre_scan_setup(self):
         self.andor_ccd_readout.settings['acquire_bg'] = False
@@ -29,12 +40,8 @@ class AndorHyperSpec2DScan(MCLStage2DSlowScan):
 
         self.andor_ccd_readout.settings['read_single'] = True
         self.andor_ccd_readout.settings['save_h5'] = False
-        #self.andor_ccd_readout.settings['activation'] = True
-        # wait until done
-        #while self.andor_ccd_readout.is_measuring():
-        #    self.andor_ccd_readout.interrupt_measurement_called = self.interrupt_measurement_called
-        #    time.sleep(0.01)
-        self.andor_ccd_readout.run()
+                
+        self.start_nested_measure_and_wait(self.andor_ccd_readout)
         
         if pixel_num == 0:
             self.log.info("pixel 0: creating data arrays")
@@ -58,8 +65,29 @@ class AndorHyperSpec2DScan(MCLStage2DSlowScan):
 
     def post_scan_cleanup(self):
         self.andor_ccd_readout.settings['save_h5'] = True
+
+
+class AndorHyperSpec2DScan(AndorHyperSpec2DScanBase, MCLStage2DSlowScan):
+    
+    name = "andor_hyperspec_scan"
+    
+    def setup(self):
+        MCLStage2DSlowScan.setup(self)
+    
+    def scan_specific_setup(self):
+        AndorHyperSpec2DScanBase.scan_specific_setup(self)
         
+    def pre_scan_setup(self):
+        AndorHyperSpec2DScanBase.pre_scan_setup(self)
+        MCLStage2DSlowScan.pre_scan_setup(self)
+        
+    def post_scan_cleanup(self):
+        AndorHyperSpec2DScanBase.post_scan_cleanup(self)
+        MCLStage2DSlowScan.post_scan_cleanup(self)
+        
+    def collect_pixel(self, pixel_num, k, j, i):
+        MCLStage2DSlowScan.collect_pixel(self, pixel_num, k, j, i)
+        AndorHyperSpec2DScanBase.collect_pixel(self, pixel_num, k, j, i)
+
     def update_display(self):
         MCLStage2DSlowScan.update_display(self)
-        self.andor_ccd_readout.update_display()
-        

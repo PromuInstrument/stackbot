@@ -23,7 +23,6 @@ ScopeFoundryHW/andor_camera/log/
 trpl_microscope/log/
 plimg_microscope/log/
 ir_microscope/log/
-HiP_microscope/log/
 .metadata/
 df_microscope/log/
 ScopeFoundryHW/xbox_controller/log/
@@ -54,5 +53,6 @@ ScopeFoundryHW/acton_spec/log/
 ALS_microCT/log
 foundry_scope.egg-info/
 ScopeFoundryHW/picoharp/log/
+ScopeFoundryHW/picoquant/log/
 ScopeFoundryHW/sync_stream_scan/log/
 thor_lsc_microscope/log/
