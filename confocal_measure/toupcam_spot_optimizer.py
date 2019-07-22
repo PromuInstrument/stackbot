@@ -62,7 +62,6 @@ class ToupCamSpotOptimizer(ToupCamLiveMeasure):
         self.linear_region_item.setVisible(False)
     
         self.marker = pg.CircleROI((0,0), (1,1) , movable=False, pen=pg.mkPen('r', width=3))
-        self.marker.removeHandle(0)
         self.plot.addItem(self.marker)
         
         self.marker_label = pg.TextItem('', color='r')
