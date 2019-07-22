@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Form</class>
- <widget class="QWidget" name="Form">
+ <class>main_QWidget</class>
+ <widget class="QWidget" name="main_QWidget">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>274</width>
-    <height>910</height>
+    <width>268</width>
+    <height>694</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -52,11 +52,47 @@
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>289</height>
+         </size>
+        </property>
         <property name="title">
          <string>Camera Connect</string>
         </property>
         <layout class="QGridLayout" name="gridLayout">
+         <item row="4" column="3">
+          <widget class="QDoubleSpinBox" name="mag_doubleSpinBox"/>
+         </item>
+         <item row="5" column="0" colspan="2">
+          <widget class="QCheckBox" name="cam_connect_checkBox">
+           <property name="text">
+            <string>HW Connect</string>
+           </property>
+          </widget>
+         </item>
          <item row="2" column="3">
+          <widget class="QDoubleSpinBox" name="res_mode_doubleSpinBox"/>
+         </item>
+         <item row="1" column="3">
+          <widget class="QDoubleSpinBox" name="cam_index_doubleSpinBox"/>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QLabel" name="res_mode_label">
+           <property name="text">
+            <string>Resolution Mode</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="3">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>calibration: (micron/pixel) * Mag.</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="3">
           <widget class="QDoubleSpinBox" name="calibration_doubleSpinBox">
            <property name="suffix">
             <string> um</string>
@@ -66,65 +102,35 @@
            </property>
           </widget>
          </item>
-         <item row="3" column="3">
-          <widget class="QDoubleSpinBox" name="mag_doubleSpinBox"/>
-         </item>
-         <item row="1" column="0" colspan="2">
-          <widget class="QLabel" name="res_mode_label">
-           <property name="text">
-            <string>Resolution Mode</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="3">
-          <widget class="QDoubleSpinBox" name="res_mode_doubleSpinBox"/>
-         </item>
-         <item row="2" column="0" colspan="3">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>calibration: (micron/pixel) * Mag.</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0" colspan="2">
-          <widget class="QCheckBox" name="cam_connect_checkBox">
-           <property name="text">
-            <string>HW Connect</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="0">
+         <item row="4" column="0">
           <widget class="QLabel" name="camera_index_label_2">
            <property name="text">
             <string>Mag.</string>
            </property>
           </widget>
          </item>
-         <item row="0" column="3">
-          <widget class="QDoubleSpinBox" name="cam_index_doubleSpinBox"/>
-         </item>
-         <item row="0" column="0">
+         <item row="1" column="0">
           <widget class="QLabel" name="camera_index_label">
            <property name="text">
             <string>Camera #</string>
            </property>
           </widget>
          </item>
-         <item row="6" column="0" colspan="4">
+         <item row="7" column="0" colspan="4">
           <widget class="QPushButton" name="snap_pushButton">
            <property name="text">
             <string>Snap</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="2">
+         <item row="5" column="2">
           <widget class="QCheckBox" name="live_checkBox">
            <property name="text">
             <string>Live</string>
            </property>
           </widget>
          </item>
-         <item row="4" column="3">
+         <item row="5" column="3">
           <widget class="QPushButton" name="defaults_pushButton">
            <property name="text">
             <string>default settings</string>
@@ -141,6 +147,12 @@
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>481</height>
+         </size>
         </property>
         <property name="title">
          <string>Exposure Control</string>
@@ -334,20 +346,6 @@
            </item>
           </layout>
          </item>
-         <item row="1" column="1">
-          <widget class="QCheckBox" name="auto_level_checkBox">
-           <property name="text">
-            <string>Auto Level display</string>
-           </property>
-          </widget>
-         </item>
-         <item row="1" column="0">
-          <widget class="QCheckBox" name="auto_exp_checkBox">
-           <property name="text">
-            <string>Auto Exposure</string>
-           </property>
-          </widget>
-         </item>
          <item row="2" column="0" colspan="2">
           <layout class="QHBoxLayout" name="horizontalLayout_4">
            <item>
@@ -375,18 +373,19 @@
            </item>
           </layout>
          </item>
-         <item row="17" column="0" colspan="2">
-          <spacer name="verticalSpacer">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
+         <item row="1" column="1">
+          <widget class="QCheckBox" name="auto_level_checkBox">
+           <property name="text">
+            <string>Auto Level display</string>
            </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>40</height>
-            </size>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QCheckBox" name="auto_exp_checkBox">
+           <property name="text">
+            <string>Auto Exposure</string>
            </property>
-          </spacer>
+          </widget>
          </item>
         </layout>
        </widget>

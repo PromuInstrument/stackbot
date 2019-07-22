@@ -31,7 +31,7 @@ class ToupCamSpotOptimizer(ToupCamLiveMeasure):
         self.settings.New('spot_px_y', int, initial=385)
         
         self.settings.New('img_chan', str, choices=self.gamut_dimensions, initial='grayscale_ITU-R_601-2')
-        self.settings.New('img_slicing', int, choices=(('avg_horizontally',0), ('avg_vertically',1),
+        self.settings.New('img_slicing', int, choices=(('avg_along_horizontal',0), ('avg_along_vertical',1),
                                                     ('slice_spot_vertically',2), ('slice_spot_horizontally',3)), 
                                         initial=1)
         
@@ -51,7 +51,7 @@ class ToupCamSpotOptimizer(ToupCamLiveMeasure):
         self.ui.settings_verticalLayout.addWidget(U)
                 
         self.hist_plot = self.graph_layout.addPlot(row=1, col=0)
-        self.hist_plot.setMinimumHeight(220)
+        self.hist_plot.setMinimumHeight(240)
         self.hist_plot.setMaximumHeight(250)
         self.hist_plot.enableAutoRange()
         self.hist_line = self.hist_plot.plot()
@@ -62,6 +62,7 @@ class ToupCamSpotOptimizer(ToupCamLiveMeasure):
         self.linear_region_item.setVisible(False)
     
         self.marker = pg.CircleROI((0,0), (1,1) , movable=False, pen=pg.mkPen('r', width=3))
+        self.marker.removeHandle(0)
         self.plot.addItem(self.marker)
         
         self.marker_label = pg.TextItem('', color='r')
@@ -150,7 +151,13 @@ class ToupCamSpotOptimizer(ToupCamLiveMeasure):
             a,mean,sigma = self.fit_gaus(y, baseline_deg=2)
             FWHM = 2.355 * sigma
             off_dif_limited = FWHM / dif_limited_spot_px
-            info_text = 'Gaus fit FWHM {:3.1f} pxs <br>{:3.0f}% of diffraction limited spot size'.format(FWHM, off_dif_limited*100)        
+            info_text = 'Gaus fit: FWHM {:3.0f}% of diffraction limited spot size'.format(off_dif_limited*100)
+            if S['img_slicing'] in (1,3):
+                d = mean - S['spot_px_x'] 
+                info_text += '<br> horizontal beam offset {:0.1f}px'.format(d)
+            else:
+                d = mean - S['spot_px_y']
+                info_text += '<br> vertical beam offset {:0.1f}px'.format(d)
             self.linear_region_item.setRegion( (mean - 0.5*FWHM, mean + 0.5*FWHM) )
             S['inv_FWHM'] = 1/FWHM
 
