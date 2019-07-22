@@ -24,9 +24,6 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.oceanoptics_spec import OceanOpticsSpectrometerHW
         oo_spec = self.add_hardware(OceanOpticsSpectrometerHW(self))
         
-#         from ScopeFoundryHW.thorcam import ThorCamHW
-#         thorcamhw = self.add_hardware(ThorCamHW(self))
-        
         from ScopeFoundryHW.flircam import FlirCamHW
         flircamhw = self.add_hardware(FlirCamHW(self))
         
@@ -45,29 +42,32 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.pygrabber_camera import PyGrabberCameraHW
         pygrabhw = self.add_hardware(PyGrabberCameraHW(self))
         
-#         from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW, PowerMeterOptimizerMeasure
-#         self.add_hardware(ThorlabsPowerMeterHW(self))
-#         self.add_measurement(PowerMeterOptimizerMeasure(self))
+        from ScopeFoundryHW.thorlabs_powermeter import ThorlabsPowerMeterHW
+        self.add_hardware(ThorlabsPowerMeterHW(self))
 
         #### MEASUREMENTS
-#         from ScopeFoundryHW.thorcam import ThorCamCaptureMeasure
-#         thorcam = self.add_measurement(ThorCamCaptureMeasure(self))
+        from ScopeFoundryHW.flircam import FlirCamLiveMeasure
+        flircam = self.add_measurement(FlirCamLiveMeasure(self))
         
-        from ScopeFoundryHW.asi_stage import ASIStageControlMeasure
+        from ScopeFoundryHW.pygrabber_camera import PyGrabberCameraLiveMeasure
+        pygrab = self.add_measurement(PyGrabberCameraLiveMeasure(self))
+        
+        from ScopeFoundryHW.asi_stage import ASIStageControlMeasure, ASIStagePositionList
         asi_control = self.add_measurement(ASIStageControlMeasure(self))
+        self.add_measurement(ASIStagePositionList(self))
         
         from ScopeFoundryHW.oceanoptics_spec import OOSpecLive, OOSpecOptimizerMeasure
         oo_spec_measure = self.add_measurement(OOSpecLive(self))
         oo_spec_opt = self.add_measurement(OOSpecOptimizerMeasure(self))
-        
-        from ScopeFoundryHW.andor_camera import AndorCCDReadoutMeasure
+           
+        from confocal_measure.oceanoptics_asi_hyperspec_scan import OceanOpticsAsiHyperSpec2DScan, OceanOpticsAsiHyperSpec3DScan
+        oo_scan = self.add_measurement(OceanOpticsAsiHyperSpec2DScan(self))
+        self.add_measurement(OceanOpticsAsiHyperSpec3DScan(self))
+           
+        from ScopeFoundryHW.andor_camera import AndorCCDReadoutMeasure, AndorSpecCalibMeasure, AndorCCDStepAndGlue
         self.add_measurement(AndorCCDReadoutMeasure)
-           
-        from confocal_measure.oceanoptics_asi_hyperspec_scan import OOHyperSpecASIScan
-        oo_scan = self.add_measurement(OOHyperSpecASIScan(self))
-           
-        from ScopeFoundryHW.flircam import FlirCamLiveMeasure
-        flircam = self.add_measurement(FlirCamLiveMeasure(self))
+        self.add_measurement(AndorCCDStepAndGlue)
+        self.add_measurement(AndorSpecCalibMeasure)
         
         from confocal_measure.andor_asi_hyperspec_scan import AndorAsiHyperSpec2DScan
         andor_scan = self.add_measurement(AndorAsiHyperSpec2DScan(self))
@@ -75,8 +75,10 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.lakeshore_331 import LakeshoreMeasure
         self.add_measurement(LakeshoreMeasure(self))
         
-        from ScopeFoundryHW.pygrabber_camera import PyGrabberCameraLiveMeasure
-        pygrab = self.add_measurement(PyGrabberCameraLiveMeasure(self))
+        from ScopeFoundryHW.thorlabs_powermeter import PowerMeterOptimizerMeasure
+        self.add_measurement(PowerMeterOptimizerMeasure(self))
+        
+
         
         ###### Quickbar connections #################################
         Q = self.quickbar
@@ -85,8 +87,8 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         oo_scan.settings.h_span.connect_to_widget(Q.oo_scan_hspan_doubleSpinBox)
         oo_scan.settings.v_span.connect_to_widget(Q.oo_scan_vspan_doubleSpinBox)
         oo_scan.settings.save_h5.connect_to_widget(Q.oo_scan_save_h5_checkBox)
-        Q.oo_scan_center_pushButton.clicked.connect(oo_scan.center_on_pos)
-        Q.oo_scan_center_view_pushButton.clicked.connect(oo_scan.center_view_on_pos)
+        Q.oo_scan_center_pushButton.clicked.connect(oo_scan.center_scan_on_pos)
+        Q.oo_scan_center_view_pushButton.clicked.connect(oo_scan.center_view_on_scan)
         Q.oo_scan_start_pushButton.clicked.connect(oo_scan.operations['start'])
         Q.oo_scan_interrupt_pushButton.clicked.connect(oo_scan.operations['interrupt'])
         Q.oo_scan_show_UI_pushButton.clicked.connect(oo_scan.operations['show_ui'])
@@ -104,8 +106,8 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         andor_scan.settings.h_span.connect_to_widget(Q.andor_scan_hspan_doubleSpinBox)
         andor_scan.settings.v_span.connect_to_widget(Q.andor_scan_vspan_doubleSpinBox)
         andor_scan.settings.save_h5.connect_to_widget(Q.andor_scan_save_h5_checkBox)
-        Q.andor_scan_center_pushButton.clicked.connect(andor_scan.center_on_pos)
-        Q.andor_scan_center_view_pushButton.clicked.connect(andor_scan.center_view_on_pos)
+        Q.andor_scan_center_pushButton.clicked.connect(andor_scan.center_scan_on_pos)
+        Q.andor_scan_center_view_pushButton.clicked.connect(andor_scan.center_view_on_scan)
         Q.andor_scan_start_pushButton.clicked.connect(andor_scan.operations['start'])
         Q.andor_scan_interrupt_pushButton.clicked.connect(andor_scan.operations['interrupt'])
         Q.andor_scan_show_UI_pushButton.clicked.connect(andor_scan.operations['show_ui'])
@@ -218,28 +220,10 @@ class UVMicroscopeApp(BaseMicroscopeApp):
         Q.andor_ccd_acquire_cont_checkBox.stateChanged.connect(aro.start_stop)
         Q.andor_ccd_acq_bg_pushButton.clicked.connect(aro.acquire_bg_start)
         Q.andor_ccd_read_single_pushButton.clicked.connect(aro.acquire_single_start)
-        
-        '''
-        # Thorcam
-        Q.thorcam_start_pushButton.clicked.connect(thorcam.start)
-        Q.thorcam_stop_pushButton.clicked.connect(thorcam.interrupt)
-        thorcam.settings.img_max.connect_to_widget(Q.thorcam_max_doubleSpinBox)
-        thorcam.settings.img_min.connect_to_widget(Q.thorcam_min_doubleSpinBox)
-        thorcamhw.settings.exp_time.connect_to_widget(Q.thorcam_int_time_doubleSpinBox)
-        thorcamhw.settings.gain.connect_to_widget(Q.thorcam_gain_doubleSpinBox)
-        thorcamhw.settings.pixel_clock.connect_to_widget(Q.thorcam_clock_doubleSpinBox)
-         
-        self.imlayout = QVBoxLayout()
-        def switch_camera_view():
-            self.imlayout.addWidget(thorcam.imview)
-            thorcam.imview.show() 
-        Q.thorcam_show_pushButton.clicked.connect(switch_camera_view)
-        Q.groupBox_image.setLayout(self.imlayout)
-        '''
                  
         self.settings_load_ini('uv_defaults.ini')
 
 if __name__ == '__main__':
     import sys
-    app = UVMicroscopeApp(sys.argv, oo_not_andor=True)
+    app = UVMicroscopeApp(sys.argv)
     sys.exit(app.exec_())

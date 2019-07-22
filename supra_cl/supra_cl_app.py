@@ -84,6 +84,12 @@ class SupraCLApp(BaseMicroscopeApp):
 #         self.add_measurement(SyncRasterScanQuadView(self))
 
 
+        ### Static beam position
+        from supra_cl.static_beam_pos_hw import StaticBeamPositionHW
+        self.add_hardware(StaticBeamPositionHW(self))
+        
+        from supra_cl.beam_dwell_measure import BeamDwellMeasure
+        self.add_measurement(BeamDwellMeasure(self))
         
         #### Camera and Spectrometer
         from ScopeFoundryHW import andor_camera

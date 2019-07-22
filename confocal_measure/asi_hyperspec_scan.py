@@ -1,6 +1,6 @@
 import numpy as np
 from ScopeFoundryHW.asi_stage.asi_stage_raster import ASIStage2DScan, ASIStage3DScan
-from qtpy.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QPushButton
+from qtpy.QtWidgets import QWidget, QVBoxLayout, QGridLayout, QPushButton, QLabel
 import math
 import time
 from h5py import h5
@@ -28,20 +28,9 @@ class ASIHyperSpec2DScan(ASIStage2DScan):
         details_widget = QWidget()
         details = QVBoxLayout()
         details.addWidget(self.app.settings.New_UI(include=['save_dir','sample']))
-        details.addWidget(self.settings.New_UI(include=['h_span','v_span']))
-        pushButtons_widget = QWidget()
-        pushButtons = QGridLayout()
-        ii = 1
-        ni = 3
-        for key in list(self.operations.keys()):
-            col = (ii - 1) % ni
-            row = math.ceil(ii / ni) - 1
-            op_pushButton = QPushButton(text=key)
-            op_pushButton.clicked.connect(self.operations[key])
-            pushButtons.addWidget(op_pushButton,row,col)
-            ii += 1
-        pushButtons_widget.setLayout(pushButtons)
-        details.addWidget(pushButtons_widget)
+        scan_params_settings = ['h_span', 'pixel_time', 'v_span',  'frame_time']
+        details.addWidget(create_grid_layout_widget(self.settings, scan_params_settings))
+        details.addWidget(create_operation_grid(self.operations))
         details_widget.setLayout(details)
         self.set_details_widget(widget=details_widget)
         
@@ -56,14 +45,15 @@ class ASIHyperSpec2DScan(ASIStage2DScan):
     def collect_pixel(self, pixel_num, k, j, i):
         if self.settings['debug']: print("collect_pixel", pixel_num, k,j,i)
         self.spec.interrupt_measurement_called = self.interrupt_measurement_called
-
-        self.start_nested_measure_and_wait(self.spec)
-        # self.spec.run()
-        
+        # self.start_nested_measure_and_wait(self.spec)
+        self.spec.run()
+        print('spectrometer run complete')
         if pixel_num == 0:
             self.log.info("pixel 0: creating data arrays")
+            if self.settings['debug']: print("pixel 0: creating data arrays")
+            self.time_array = np.zeros(self.scan_h_positions.shape)
             spec_map_shape = self.scan_shape + self.spec.spectrum.shape
-              
+            
             self.spec_map = np.zeros(spec_map_shape, dtype=np.float)
             if self.settings['save_h5']:
                 self.spec_map_h5 = self.h5_meas_group.create_dataset(
@@ -76,16 +66,44 @@ class ASIHyperSpec2DScan(ASIStage2DScan):
                 self.h5_meas_group['wls'] = self.wls
 
         # store in arrays
+        t = self.time_array[pixel_num] = time.time()
+        print('time', t)
         spec = np.array(self.spec.spectrum)
         self.spec_map[k,j,i,:] = spec
         self.spec_map_h5[k,j,i,:] = spec
-        self.display_image_map[k,j,i] = spec.sum()
+        s = self.display_image_map[k,j,i] = spec.sum()
+        if self.settings['debug']: print('time', t, 'sum', s)
         
     def post_scan_cleanup(self):
         self.settings.save_h5.change_readonly(False)
         self.stage.other_observer = False
+        self.ui.setWindowTitle(self.name)
 
-        
+    def update_time(self):
+        if self.settings['running'] and hasattr(self, 'time_array'):
+            
+            if self.time_array[2] != 0:
+                print(len(self.time_array))
+                px_times = np.diff(self.time_array)
+                print(np.nonzero(px_times)[0])
+                num_px = len(np.nonzero(px_times)[0])
+                avg_pixel_time = np.average(px_times[0:(num_px-1)])
+                print(avg_pixel_time)
+                self.settings.pixel_time.update_value(avg_pixel_time)
+                
+                total_time = np.sum(px_times[0:num_px-1])
+                total_time_str = seconds_to_time_string(total_time)
+                elapsed_time_str = seconds_to_time_string(self.settings['total_time'] - total_time)
+                # self.ui.status_lineEdit.setText("time elapsed: %s, time remaining: %s" % (total_time_str, elapsed_time_str))
+                self.ui.setWindowTitle("%s time elapsed: %s, time remaining: %s" % (self.name, total_time_str, elapsed_time_str))
+        else: 
+            for kk in ['exposure_time', 'int_time']:
+                if kk in list(self.spec.hw.settings.keys()):
+                    if self.settings['pixel_time'] != self.spec.hw.settings[kk]:
+                        self.settings.pixel_time.update_value(self.spec.hw.settings[kk])
+                        #self.ui.status_lineEdit.setText("estimated scan duration: %s" % seconds_to_time_string(self.settings['total_time']))
+    
+    
     def center_scan_on_pos(self):
         self.settings.h_center.update_value(new_val=self.stage.settings.x_position.val)
         self.settings.v_center.update_value(new_val=self.stage.settings.y_position.val)
@@ -101,8 +119,10 @@ class ASIHyperSpec2DScan(ASIStage2DScan):
         self.spec.interrupt()
     
     def update_display(self):
+        self.update_time()
         ASIStage2DScan.update_display(self)
         self.spec.update_display()
+        
     
     def update_LUT(self):
         ''' override this function to control display LUT scaling'''
@@ -126,25 +146,18 @@ class ASIHyperSpec3DScan(ASIStage3DScan):
         #Hardware                  
         self.stage = self.app.hardware['asi_stage']
         self.add_operation('center scan on position',self.center_scan_on_pos)
+        self.add_operation('center scan XY on position', self.center_xy_on_pos)
         self.add_operation('center view on scan', self.center_view_on_scan)
+        self.add_operation('set z0', self.set_z0)
         
         details_widget = QWidget()
         details = QVBoxLayout()
-        details.addWidget(self.app.settings.New_UI(include=['save_dir','sample']))
-        details.addWidget(self.settings.New_UI(include=['h_span','v_span','z_span']))
-        pushButtons_widget = QWidget()
-        pushButtons = QGridLayout()
-        ii = 1
-        ni = 3
-        for key in list(self.operations.keys()):
-            col = (ii - 1) % ni
-            row = math.ceil(ii / ni) - 1
-            op_pushButton = QPushButton(text=key)
-            op_pushButton.clicked.connect(self.operations[key])
-            pushButtons.addWidget(op_pushButton,row,col)
-            ii += 1
-        pushButtons_widget.setLayout(pushButtons)
-        details.addWidget(pushButtons_widget)
+        #details.addWidget(self.app.settings.New_UI(include=['save_dir','sample']))
+        details.addWidget(create_grid_layout_widget(self.app.settings,['save_dir', 'sample']))
+        scan_params_settings = ['h_span', 'pixel_time', 'v_span', 'frame_time', 'z_span', 'total_time']
+        details.addWidget(create_grid_layout_widget(self.settings, scan_params_settings))
+        
+        details.addWidget(create_operation_grid(self.operations, num_cols=4))
         details_widget.setLayout(details)
         self.set_details_widget(widget=details_widget)
         
@@ -160,13 +173,13 @@ class ASIHyperSpec3DScan(ASIStage3DScan):
         if self.settings['debug']: print("collect_pixel", pixel_num, k,j,i)
         self.spec.interrupt_measurement_called = self.interrupt_measurement_called
 
-        #self.start_nested_measure_and_wait(self.spec)
+        # self.start_nested_measure_and_wait(self.spec)
         self.spec.run()
         
         if pixel_num == 0:
             self.log.info("pixel 0: creating data arrays")
             spec_map_shape = self.scan_shape + self.spec.spectrum.shape
-              
+            self.time_array = np.zeros(self.scan_h_positions.shape, dtype=np.float)
             self.spec_map = np.zeros(spec_map_shape, dtype=np.float)
             if self.settings['save_h5']:
                 self.spec_map_h5 = self.h5_meas_group.create_dataset(
@@ -180,6 +193,7 @@ class ASIHyperSpec3DScan(ASIStage3DScan):
 
         # store in arrays
         spec = np.array(self.spec.spectrum)
+        self.time_array[pixel_num] = time.time()
         self.spec_map[k,j,i,:] = spec
         self.spec_map_h5[k,j,i,:] = spec
         self.display_image_map[k,j,i] = spec.sum()
@@ -187,6 +201,7 @@ class ASIHyperSpec3DScan(ASIStage3DScan):
     def post_scan_cleanup(self):
         self.settings.save_h5.change_readonly(False)
         self.stage.other_observer = False
+        del self.time_array
 
     def center_scan_on_pos(self):
         self.settings.h_center.update_value(new_val=self.stage.settings.x_position.val)
@@ -198,12 +213,42 @@ class ASIHyperSpec3DScan(ASIStage3DScan):
         del_h = self.h_span.val*delta
         del_v = self.v_span.val*delta
         self.img_plot.setRange(xRange=(self.h0.val-del_h, self.h1.val+del_h), yRange=(self.v0.val-del_v, self.v1.val+del_v))
-
+        
+    def set_z0(self):
+        span = self.settings['z_span']
+        pos = self.stage.settings['z_position']
+        self.settings.z0.update_value(pos)
+        self.settings.z1.update_value(pos+span)
+        
+    def center_xy_on_pos(self):
+        self.settings.h_center.update_value(new_val=self.stage.settings.x_position.val)
+        self.settings.v_center.update_value(new_val=self.stage.settings.y_position.val)
+    
+    def update_time(self):
+        if self.settings['running'] and hasattr(self, 'time_array'):
+            if self.time_array[0] != 0:
+                px_times = np.diff(self.time_array)
+                num_px = len(np.nonzero(px_times)[0])
+                avg_pixel_time = np.average(px_times[0:num_px-1])
+                self.settings.pixel_time.update_value(avg_pixel_time)
+                
+                total_time = np.sum(px_times[0:num_px-1])
+                total_time_str = seconds_to_time_string(total_time)
+                elapsed_time_str = seconds_to_time_string(self.settings['total_time'] - total_time)
+                self.ui.status_lineEdit.setText("time elapsed: %s, time remaining: %s" % (total_time_str, elapsed_time_str))
+        else: 
+            for kk in ['exposure_time', 'int_time']:
+                if kk in list(self.spec.hw.settings.keys()):
+                    if self.settings['pixel_time'] != self.spec.hw.settings[kk]:
+                        self.settings.pixel_time.update_value(self.spec.hw.settings[kk])
+                        self.ui.status_lineEdit.setText("estimated scan duration: %s" % seconds_to_time_string(self.settings['total_time']))
+    
     def interrupt(self):
-        ASIStage2DScan.interrupt(self)
+        ASIStage3DScan.interrupt(self)
         self.spec.interrupt()
     
     def update_display(self):
+        self.update_time()
         ASIStage3DScan.update_display(self)
         self.spec.update_display()
     
@@ -332,3 +377,39 @@ class AndorHyperSpecASIScan(ASIStage2DScan):
         
         
 
+def create_grid_layout_widget(lq_collection, lq_names, num_cols=2):
+    layout = QGridLayout()
+    ii = 1
+    ni = num_cols
+    for key in lq_names:
+        col = (ii - 1) % ni
+        row = math.ceil(ii / ni) - 1
+        layout.addWidget(QLabel(key),row,2*col)
+        layout.addWidget(lq_collection.get_lq(key).new_default_widget(),row,2*col+1)
+        ii += 1
+    widget = QWidget()
+    widget.setLayout(layout)
+    return widget
+
+def create_operation_grid(op_dict, num_cols=3):
+    widget = QWidget()
+    layout = QGridLayout()
+    ii = 1
+    ni = num_cols
+    for key in list(op_dict.keys()):
+        col = (ii - 1) % ni
+        row = math.ceil(ii / ni) - 1
+        pushButton = QPushButton(text=key)
+        pushButton.clicked.connect(op_dict[key])
+        layout.addWidget(pushButton,row,col)
+        ii += 1
+    widget.setLayout(layout)
+    return widget
+
+def seconds_to_time_string(val):
+    val = int(val)
+    mins = val / 60
+    sec = val % 60
+    hrs = mins / 60
+    mins = mins % 60
+    return "{:02d}:{:02d}:{:02d}" .format(int(hrs), int(mins), int(sec))

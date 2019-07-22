@@ -62,7 +62,8 @@ class ThorCamCaptureMeasure(Measurement):
         for lq_name, widget_name in cam_ui_connections:                          
             self.cam_hw.settings.get_lq(lq_name).connect_to_widget(getattr(self.ui, widget_name))
 
-        self.imview = pg.ImageView()
+        self.imview = pg.ImageView(view=pg.PlotItem())
+        
         def switch_camera_view():
             self.ui.plot_groupBox.layout().addWidget(self.imview)
             self.imview.showMaximized() 
@@ -111,9 +112,11 @@ class ThorCamCaptureMeasure(Measurement):
     
     def update_display(self):
         if hasattr(self, "img"):
-            self.imview.setImage(self.img, axes={'y':0, 'x':1, 'c':2}, autoRange=False, levels=(self.settings.img_min.value,self.settings.img_max.value))
+            #self.imview.setImage(self.img, axes={'y':0, 'x':1, 'c':2}, autoRange=False, levels=(self.settings.img_min.value,self.settings.img_max.value))
             #self.imview.setImage(self.img, axes={'y':0, 'x':1, 'c':2}, levels=(0.0, np.max([r.max(), g.max(), b.max()])))
-            #self.imview.setImage(self.img, axes={'y':0, 'x':1, 'c':2}, autoLevels=True)
+            saturation = self.img[:,:,:3].max() / 255.0
+            self.imview.view.setTitle('{:2.0f}% max saturation'.format(saturation*100.0))
+            self.imview.setImage(self.img[:,:,:], axes={'y':0, 'x':1, 'c':2}, autoLevels=True)
     
     def auto_white_balance(self):
         bgraimg = self.cam_hw.cam.acquire() # self.img is in BGRA order
@@ -157,7 +160,7 @@ class ThorCamCaptureMeasure(Measurement):
         if S['save_tif']:
             self.imview.export(fname + ".tif");
         if S['save_h5']:
-            with h5_io.h5_base_file(self.app,  fname = fname + ".h5") as H:
+            with h5_io.h5_base_file(app=self.app, measurement=self) as H:
                 M = h5_io.h5_create_measurement_group(measurement=self, h5group=H);
                 M.create_dataset('img', data=self.img, compression='gzip');
                 
