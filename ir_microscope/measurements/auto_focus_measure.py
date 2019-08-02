@@ -33,7 +33,7 @@ class AutoFocusMeasure(Measurement):
                          ]
         
         self.settings.New('optimization_quantity', dtype=str, choices=self.optimization_quantity_choices,
-                          initial='hydraharp_CountRate0')      
+                          initial=self.optimization_quantity_choices[0][1])      
                 
         lq_kwargs = {'spinbox_decimals':6, 'unit':'mm'}
         self.settings.New_Range('z', include_center_span=True, 
@@ -73,10 +73,20 @@ class AutoFocusMeasure(Measurement):
         self.plot = self.graph_layout.addPlot(title="Z auto-focus")
         self.plot_line = self.plot.plot()
         self.plot_line_fine = self.plot.plot(pen='r')
-        self.line_z_center_start = pg.InfiniteLine(angle=0, movable=False, pen='b')
-        self.line_z_center_coarse = pg.InfiniteLine(angle=0, movable=False)
-        self.line_z_center_fine = pg.InfiniteLine(angle=0, movable=False, pen='r')
-    
+        
+        # indicator lines
+        self.line_z_center_start = pg.InfiniteLine(angle=0, movable=False, pen='b', 
+                label='initial z_center: {value:0.6f}',  
+                labelOpts = {'color':'b', 'movable':True, 'position':0.15, 'fill':(200, 200, 200, 200)}
+        )
+        self.line_z_center_coarse = pg.InfiniteLine(angle=0, movable=False, pen=(200,200,200), 
+                label='coarse optimized: {value:0.6f}',                  
+                labelOpts = {'color':(200,200,200), 'movable':True, 'position':0.30, 'fill':(200, 200, 200, 60)}
+        )
+        self.line_z_center_fine = pg.InfiniteLine(angle=0, movable=False, pen='r', 
+                label='fine optimized: {value:0.6f}',                 
+                labelOpts = {'color':'r', 'movable':True, 'position':0.45, 'fill':(200, 200, 200, 80)}
+        )
         self.plot.addItem(self.line_z_center_start, ignoreBounds=True)
         self.plot.addItem(self.line_z_center_coarse, ignoreBounds=True)
         self.plot.addItem(self.line_z_center_fine, ignoreBounds=True)
@@ -151,12 +161,13 @@ class AutoFocusMeasure(Measurement):
                 self.z_center_fine = self.z_array_fine[np.argmax(self.quantity_records_fine)]
         
         if self.interrupt_measurement_called:
-            z_target_position.update_value(original_z)
+            self.z_target = original_z
         else:
-            z_target_position.update_value(self.z_center_fine + S['z_correction'])
+            self.z_target = self.z_center_fine + S['z_correction']
             self.z_optimal_history.append( [self.z_center_fine, int((time.time() - self.t0)), S['optimization_quantity']] ) 
             print('z_optimal, time (s), optimization_quantity')
             for x in self.z_optimal_history: print(*x)     
+        z_target_position.update_value(self.z_target)
 
 
     def update_display(self):
@@ -169,8 +180,9 @@ class AutoFocusMeasure(Measurement):
         S = self.settings
         self.line_z_center_start.setPos(S['z_center'])
         self.line_z_center_coarse.setPos(self.z_center_coarse)
-        self.line_z_center_fine.setPos(self.z_center_fine)       
-        
+        self.line_z_center_fine.setPos(self.z_center_fine)
+                   
         self.plot.setLabels(bottom=S['optimization_quantity'], left='z position')
         
-        
+        self.line_z_center_fine.setVisible(self.settings['use_fine_optimization'])
+        self.plot_line_fine.setVisible(self.settings['use_fine_optimization'])
