@@ -8,7 +8,6 @@ Base measurement for TRPL scan with
 see example of use bellow bellow
 
 @author: Edward Barnard, Benedikt Ursprung
-
 '''
 import numpy as np
 import time
@@ -185,6 +184,8 @@ class TRPL2DScanBase(BaseRaster2DSlowScan):
         self.display_image_map[k,j,i] = hist_data.sum() * 1.0/elapsed_time
 
         if pixel_num == 0:
+            self.display_image_map[:,:,:] = hist_data.sum() * 1.0/elapsed_time
+
             self.time_array = self.hw.time_array
             self.h5_meas_group['time_array'] = self.time_array[self.hist_slice[-1]]
             pos_x = self.time_array[self.hw.settings['HistogramBins']-1]*1e-12
@@ -265,8 +266,6 @@ class DummyStageBase2DScan(BaseRaster2DSlowScan):
         
     #def setup(self)
     #self.stage = self.hardware['dummy_stage']
-    
-    
 
         
 
