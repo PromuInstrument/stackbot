@@ -22,7 +22,6 @@ class IRMicroscopeApp(BaseMicroscopeApp):
     
     def setup(self):
         
-        self.add_quickbar(load_qt_ui_file(sibling_path(__file__, 'ir_quick_access.ui')))
         
         print("Adding Hardware Components")
         
@@ -176,6 +175,7 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(AutoFocusMeasure(self))
         
         ####### Quickbar connections #################################
+        self.add_quickbar(load_qt_ui_file(sibling_path(__file__, 'ir_quick_access.ui')))
         Q = self.quickbar
         
         
