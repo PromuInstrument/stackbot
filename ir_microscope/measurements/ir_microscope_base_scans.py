@@ -9,6 +9,7 @@ import time
 import datetime
 
 
+
 class IRMicroscopeBase2DScan(AttoCube2DSlowScan):
     
     name = 'ir_microscope_base_2D_scan'
@@ -20,12 +21,16 @@ class IRMicroscopeBase2DScan(AttoCube2DSlowScan):
         AttoCube2DSlowScan.setup(self,)
         self.save_power_map = self.settings.New('save_power_map', dtype=bool, initial=False)
         self.save_temperature_map = self.settings.New('save_temperature_map', dtype=bool, initial=False)
-        self.save_time_map = self.settings.New('save_time_map', dtype=bool, initial=True)
         self.use_power_feedback_control = self.settings.New("use_power_feedback_control", 
                                                             dtype=bool, initial=False)
         self.use_shutter = self.settings.New('use_shutter', dtype=bool, initial=False)
         self.shutter_open = self.app.lq_path('hardware/shutter/open')
         self.auto_focus_period = self.settings.New('auto_focus_period', int, initial=-1, unit='px')
+        
+    def setup_figure(self):
+        # Details widgets
+        details_layout = self.ui.details_groupBox.layout()
+        details_layout.addWidget(self.settings.New_UI(['auto_focus_period']))
         
         
     def pre_scan_setup(self):
@@ -42,11 +47,7 @@ class IRMicroscopeBase2DScan(AttoCube2DSlowScan):
                                                                   shape=self.scan_shape,
                                                                   dtype=float,
                                                                   compression ='gzip')
-        if self.save_time_map.val:           
-            self.time_map_h5 = self.h5_meas_group.create_dataset('time_map',
-                                                                  shape=self.scan_shape,
-                                                                  dtype=float,
-                                                                  compression ='gzip')
+
         if self.use_power_feedback_control.val:
             self.lpfc = self.app.measurements['laser_power_feedback_control']
             self.lpfc_activation_current_val = self.lpfc.settings.activation.val
@@ -57,23 +58,36 @@ class IRMicroscopeBase2DScan(AttoCube2DSlowScan):
         if self.use_shutter.val:   
             self.shutter_open.update_value(True)
             
-        self.auto_focus_measure = self.app.measurements['auto_focus']
+        if self.auto_focus_period.val > 0:
+            self.auto_focus_z_target_h5 = self.h5_meas_group.create_dataset('auto_focus_z_target',
+                                                                  shape=self.scan_shape,
+                                                                  dtype=float,
+                                                                  compression ='gzip')
+            
+            self.auto_focus_measure = self.app.measurements['auto_focus']
 
             
     def collect_pixel(self, pixel_num, k, j, i):
         S = self.settings
-        if S['auto_focus_period'] > 0 and pixel_num%S['auto_focus_period'] == 0:
-            h_ = self.stage.settings[S['h_axis'] + "_target_position"]
-            v_ = self.stage.settings[S['v_axis'] + "_target_position"]
-            self.move_position_slow(S['h_center'], S['v_center'], 0, 0)            
-            self.start_nested_measure_and_wait(self.auto_focus_measure)
-            self.move_position_slow(h_, v_, 0, 0)
+        if S['auto_focus_period'] > 0: 
+            if pixel_num%S['auto_focus_period'] == 0:
+                h_ = self.stage.settings[S['h_axis'] + "_target_position"]
+                v_ = self.stage.settings[S['v_axis'] + "_target_position"]
+                self.move_position_slow(S['h_center'], S['v_center'], 0, 0)            
+                success = self.start_nested_measure_and_wait(self.auto_focus_measure,
+                                nested_interrupt=False)
+                if not success:
+                    print("auto_focus failed, stopping scan")
+                    self.interrupt()
+                time.sleep(0.100)
+                self.move_position_slow(h_, v_, 0, 0)
+            
+            print(float(self.auto_focus_measure.z_target))
+            self.auto_focus_z_target_h5[k,j,i] = float(self.auto_focus_measure.z_target)
+            
         
-        t = time.time()-self.t0
-        if pixel_num == 1:
-            self.dt = t
         if pixel_num > 0:
-            sec_remaining = (self.Npixels-(pixel_num+1))*self.dt
+            sec_remaining = (self.Npixels-(pixel_num+1))*(time.time() - self.t0) / pixel_num
             print(self.name, "collecting pixel",
                   "({},{},{})".format(k,j,i),
                   "number:", pixel_num+1,"of",self.Npixels,
@@ -84,8 +98,6 @@ class IRMicroscopeBase2DScan(AttoCube2DSlowScan):
             self.power_meter_map_h5[k,j,i] = pow_reading
         if self.save_temperature_map.val:
             self.temperature_map_h5[k,j,i] = self.tc4.read_temp()
-        if self.save_time_map.val:           
-            self.time_map_h5[k,j,i] = t
             
         
         

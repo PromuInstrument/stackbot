@@ -1,10 +1,11 @@
-from ScopeFoundry.helper_funcs import sibling_path
-
-import time
-import pyqtgraph as pg
+#from ScopeFoundry.helper_funcs import sibling_path
+#import pyqtgraph as pg
+#import datetime
+#import time
 from ir_microscope.measurements.ir_microscope_base_scans import IRMicroscopeBase2DScan
 from ScopeFoundryHW.picoquant.trpl_2d_scan_base import TRPL2DScanBase 
-import datetime
+
+
 
 class TRPL2DScan(IRMicroscopeBase2DScan, TRPL2DScanBase):
     
@@ -20,6 +21,7 @@ class TRPL2DScan(IRMicroscopeBase2DScan, TRPL2DScanBase):
     
     def setup_figure(self):
         TRPL2DScanBase.setup_figure(self)
+        IRMicroscopeBase2DScan.setup_figure(self)
 
     def pre_scan_setup(self):
         IRMicroscopeBase2DScan.pre_scan_setup(self)
@@ -37,7 +39,10 @@ class TRPL2DScan(IRMicroscopeBase2DScan, TRPL2DScanBase):
         IRMicroscopeBase2DScan.update_display(self)
         TRPL2DScanBase.update_display(self)
 
+
+'''
 class TRPL2DScan_old(IRMicroscopeBase2DScan):
+    #works only with picoharp
     
     name = 'trpl_2d_scan'
     
@@ -231,6 +236,9 @@ class TRPL2DScan_old(IRMicroscopeBase2DScan):
         #kk, jj, ii = self.current_scan_index
         ph = self.ph_hw.picoharp
         self.lifetime_plotdata.setData(self.time_array,  1+ph.histogram_data)
+
+'''
+
 
 '''        
 class Picoharp_AttoCube_3DSlowScan(AttoCube3DStackSlowScan):
