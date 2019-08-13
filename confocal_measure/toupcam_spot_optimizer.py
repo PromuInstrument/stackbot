@@ -158,6 +158,9 @@ class ToupCamSpotOptimizer(ToupCamLiveMeasure):
                 d = mean - S['spot_px_y']
                 info_text += '<br> vertical beam offset {:0.1f}px'.format(d)
             self.linear_region_item.setRegion( (mean - 0.5*FWHM, mean + 0.5*FWHM) )
+            self.linear_region_item.getViewBox().setRange(xRange=(mean - 3*FWHM, mean + 3*FWHM))
+            self.linear_region_item.getViewBox().enableAutoRange(y=True)
+            
             S['inv_FWHM'] = 1/FWHM
 
         self.hist_plot.setTitle(info_text)      
