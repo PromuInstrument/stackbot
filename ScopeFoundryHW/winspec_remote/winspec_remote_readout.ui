@@ -28,27 +28,10 @@
       <string>WinSpec Remote Client Settings</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Acq Time</string>
-        </property>
-       </widget>
-      </item>
       <item row="2" column="2">
        <widget class="QPushButton" name="interrupt_pushButton">
         <property name="text">
          <string>Interrupt</string>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1" colspan="2">
-       <widget class="QDoubleSpinBox" name="acq_time_doubleSpinBox"/>
-      </item>
-      <item row="2" column="0" colspan="2">
-       <widget class="QPushButton" name="start_pushButton">
-        <property name="text">
-         <string>Start</string>
         </property>
        </widget>
       </item>
@@ -73,6 +56,26 @@
        <widget class="QCheckBox" name="continuous_checkBox">
         <property name="text">
          <string>Continuous</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Acq Time | # acummulations</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="QDoubleSpinBox" name="acq_time_doubleSpinBox"/>
+      </item>
+      <item row="0" column="2">
+       <widget class="QDoubleSpinBox" name="n_accumulations_doubleSpinBox"/>
+      </item>
+      <item row="2" column="1">
+       <widget class="QPushButton" name="start_pushButton">
+        <property name="text">
+         <string>Start</string>
         </property>
        </widget>
       </item>
