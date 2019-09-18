@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Form</class>
+ <widget class="QWidget" name="Form">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1577</width>
+    <height>988</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <widget class="QGroupBox" name="plot_groupBox">
+   <property name="geometry">
+    <rect>
+     <x>9</x>
+     <y>9</y>
+     <width>1251</width>
+     <height>971</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Image</string>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout_2"/>
+  </widget>
+  <widget class="QGroupBox" name="control_groupBox">
+   <property name="geometry">
+    <rect>
+     <x>1270</x>
+     <y>9</y>
+     <width>301</width>
+     <height>971</height>
+    </rect>
+   </property>
+   <property name="title">
+    <string>Camera Control</string>
+   </property>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>281</width>
+      <height>211</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Camera Connect</string>
+    </property>
+    <widget class="QPushButton" name="snap_pushButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>160</y>
+       <width>261</width>
+       <height>41</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Snap</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="cam_connect_checkBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>83</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>HW Connect</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="camera_index_label">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>48</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Camera #</string>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="cam_index_doubleSpinBox">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>20</y>
+       <width>53</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLabel" name="res_mode_label">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>20</y>
+       <width>79</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Resolution Mode</string>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="res_mode_doubleSpinBox">
+     <property name="geometry">
+      <rect>
+       <x>220</x>
+       <y>20</y>
+       <width>53</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="live_checkBox">
+     <property name="geometry">
+      <rect>
+       <x>130</x>
+       <y>80</y>
+       <width>42</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Live</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="camera_index_label_2">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>50</y>
+       <width>71</width>
+       <height>16</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Mag.</string>
+     </property>
+    </widget>
+    <widget class="QDoubleSpinBox" name="mag_doubleSpinBox">
+     <property name="geometry">
+      <rect>
+       <x>70</x>
+       <y>50</y>
+       <width>53</width>
+       <height>20</height>
+      </rect>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="group_color">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>560</y>
+      <width>281</width>
+      <height>201</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Color Adjustment</string>
+    </property>
+    <widget class="QGroupBox" name="contrast_group">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>261</width>
+       <height>55</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Contrast</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <widget class="QSlider" name="contrast_slider">
+        <property name="minimum">
+         <number>-100</number>
+        </property>
+        <property name="maximum">
+         <number>100</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="contrast_value"/>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QGroupBox" name="brightness_group">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>80</y>
+       <width>261</width>
+       <height>55</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Brightness</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_5">
+      <item>
+       <widget class="QSlider" name="brightness_slider">
+        <property name="minimum">
+         <number>-64</number>
+        </property>
+        <property name="maximum">
+         <number>64</number>
+        </property>
+        <property name="value">
+         <number>0</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="brightness_value"/>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QGroupBox" name="gamma_group">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>140</y>
+       <width>261</width>
+       <height>55</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Gamma</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_6">
+      <item>
+       <widget class="QSlider" name="gamma_slider">
+        <property name="minimum">
+         <number>20</number>
+        </property>
+        <property name="maximum">
+         <number>180</number>
+        </property>
+        <property name="value">
+         <number>100</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="gamma_value"/>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="group_white">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>390</y>
+      <width>281</width>
+      <height>161</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>White Balance</string>
+    </property>
+    <widget class="QGroupBox" name="tint_group">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>100</y>
+       <width>261</width>
+       <height>55</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Color Tint</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_3">
+      <item>
+       <widget class="QSlider" name="tint_slider">
+        <property name="minimum">
+         <number>500</number>
+        </property>
+        <property name="maximum">
+         <number>2500</number>
+        </property>
+        <property name="value">
+         <number>1000</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="tint_value"/>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QGroupBox" name="ctemp_group">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>40</y>
+       <width>261</width>
+       <height>55</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Color Temperature</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QSlider" name="ctemp_slider">
+        <property name="minimum">
+         <number>2000</number>
+        </property>
+        <property name="maximum">
+         <number>15000</number>
+        </property>
+        <property name="value">
+         <number>6500</number>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QDoubleSpinBox" name="ctemp_value"/>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="group_exposure">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>250</y>
+      <width>281</width>
+      <height>131</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Exposure Control</string>
+    </property>
+    <widget class="QGroupBox" name="exp_group">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>60</y>
+       <width>261</width>
+       <height>55</height>
+      </rect>
+     </property>
+     <property name="title">
+      <string>Exposure</string>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QDoubleSpinBox" name="exp_value">
+        <property name="maximum">
+         <double>5.000000000000000</double>
+        </property>
+        <property name="singleStep">
+         <double>0.010000000000000</double>
+        </property>
+        <property name="value">
+         <double>0.100000000000000</double>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+    <widget class="QCheckBox" name="auto_exp_checkBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>94</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Auto Exposure</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="auto_level_checkBox">
+     <property name="geometry">
+      <rect>
+       <x>160</x>
+       <y>30</y>
+       <width>110</width>
+       <height>17</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Auto Level display</string>
+     </property>
+    </widget>
+   </widget>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -16,13 +16,12 @@ class WinSpecRemoteReadoutMeasure(Measurement):
         self.settings.New('continuous', dtype=bool, initial=True, ro=False)
         self.settings.New('save_h5', dtype=bool, initial=True)
         self.settings.New('wl_calib', dtype=str, initial='winspec', choices=('pixels','raw_pixels','winspec', 'acton_spectrometer'))
+        self.settings.New('n_accumulations', dtype=int, initial=1)
 
-        
-        
     def pre_run(self):
         self.winspec_hc = self.app.hardware['winspec_remote_client']
         time.sleep(0.05)
-        self.winspec_hc.winspec_client
+        #self.winspec_hc.winspec_client
 
     def setup_figure(self):
 
@@ -68,7 +67,8 @@ class WinSpecRemoteReadoutMeasure(Measurement):
 
         self.ui.start_pushButton.clicked.connect(self.start)
         self.ui.interrupt_pushButton.clicked.connect(self.interrupt)
-        self.app.hardware['winspec_remote_client'].settings.acq_time.connect_bidir_to_widget(self.ui.acq_time_doubleSpinBox)
+        self.app.hardware['winspec_remote_client'].settings.acq_time.connect_to_widget(self.ui.acq_time_doubleSpinBox)
+        self.settings.n_accumulations.connect_to_widget(self.ui.n_accumulations_doubleSpinBox)
 
     def acquire_data(self, debug = False):
         "helper function - called multiple times i spectral maps"
@@ -122,36 +122,47 @@ class WinSpecRemoteReadoutMeasure(Measurement):
 #         time.sleep(0.2)
 #         
         
-        
+        S = self.settings
         while not self.interrupt_measurement_called:
             #print("test")
             try:
-                print("start acq")
-                hdr,data = self.acquire_data()
-                if hdr is None or data is None:
-                    raise IOError("Failed to acquire Data (probably interrupted)")
-                self.hdr = hdr
-                self.data = data
-                print("end acq")
-                wl_calib = self.settings['wl_calib']
-                px_index = np.arange(self.data.shape[-1])
-                if wl_calib=='winspec':
-                    self.wls = self.evaluate_wls_winspec(self.hdr)
-                elif wl_calib=='acton_spectrometer':
-                    hbin = self.hdr.bin_x
-                    px_index = np.arange(self.data.shape[-1])
-                    spec_hw = self.app.hardware['acton_spectrometer']
-                    self.wls = self.evaluate_wls_acton_spectrometer(self.hdr, px_index)
-                elif wl_calib=='pixels':
-                    binning = self.hdr.bin_x
-                    px_index = np.arange(self.data.shape[-1])
-                    self.wls = binned_px = binning*px_index + 0.5*(binning-1)
-                elif wl_calib=='raw_pixels':
-                    self.wls = px_index
-                else:
-                    self.wls = px_index
+                i_acc = 0
+                while not self.interrupt_measurement_called and i_acc < S['n_accumulations']:
+                    i_acc += 1
+                    self.set_progress(i_acc/S['n_accumulations']*100)
+                    print("start acq {}".format(i_acc))
+                    hdr,data = self.acquire_data()
+                    if hdr is None or data is None:
+                        raise IOError("Failed to acquire Data (probably interrupted)")
+                    self.hdr = hdr
+                    self.data = data
+                    
+                    if i_acc == 1:
+                        self.spec = np.average(self.data[0,:,:], axis=0)
                 
-                self.wls_mean = self.wls.mean()
+                        wl_calib = self.settings['wl_calib']
+                        self.pixels = px_index = np.arange(self.data.shape[-1])
+                        if wl_calib=='winspec':
+                            self.wls = self.evaluate_wls_winspec(self.hdr)
+                        elif wl_calib=='acton_spectrometer':
+                            hbin = self.hdr.bin_x
+                            spec_hw = self.app.hardware['acton_spectrometer']
+                            self.wls = self.evaluate_wls_acton_spectrometer(self.hdr, px_index)
+                        elif wl_calib=='pixels':
+                            binning = self.hdr.bin_x
+                            self.wls = binned_px = binning*px_index + 0.5*(binning-1)
+                        elif wl_calib=='raw_pixels':
+                            self.wls = px_index
+                        else:
+                            self.wls = px_index
+                        
+                        self.wls_mean = self.wls.mean()                        
+                        
+                    else:
+                        self.spec += np.average(self.data[0,:,:], axis=0)
+                    
+                    print("end acq {}".format(i_acc))
+
                     
                 if self.settings['save_h5']:
                     self.t0 = time.time()
@@ -161,15 +172,18 @@ class WinSpecRemoteReadoutMeasure(Measurement):
                 
                     #create h5 data arrays
                     H['wls'] = self.wls
-                    H['spectrum'] = self.data
+                    H['spectrum'] = self.spec
                 
                     self.h5_file.close()
             finally:
                 if not self.settings['continuous']:
                     break
         
+    def get_spectrum(self):
+        return self.spec
         
-        
+    def get_wavelengths(self):
+        return self.wls
             
     def update_display(self):
         
@@ -177,7 +191,7 @@ class WinSpecRemoteReadoutMeasure(Measurement):
             self.img_item.setImage(self.data[0], autoLevels=False)
             self.hist_lut.imageChanged(autoLevel=True, autoRange=True)
 
-        if not hasattr(self, 'data'):
+        if not hasattr(self, 'spec'):
             return
-        self.spec_plot_line.setData(self.wls, np.average(self.data[0,:,:], axis=0))
+        self.spec_plot_line.setData(self.wls, self.spec)
         self.infline.setValue([self.wls_mean,0])

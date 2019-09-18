@@ -4,11 +4,39 @@ Created on Sep 7, 2017
 @author: Benedikt Ursprung
 '''
 from ir_microscope.measurements.ir_microscope_base_scans import IRMicroscopeBase2DScan
+from confocal_measure.andor_hyperspec_scan import AndorHyperSpec2DScanBase
+
+class AndorHyperSpec2DScan(IRMicroscopeBase2DScan):
+    
+    name = "andor_hyperspec_scan"
+    
+    def setup(self):
+        IRMicroscopeBase2DScan.setup(self)
+    
+    def scan_specific_setup(self):
+        AndorHyperSpec2DScanBase.scan_specific_setup(self)
+        
+    def pre_scan_setup(self):
+        AndorHyperSpec2DScanBase.pre_scan_setup(self)
+        IRMicroscopeBase2DScan.pre_scan_setup(self)
+        
+    def post_scan_cleanup(self):
+        AndorHyperSpec2DScanBase.post_scan_cleanup(self)
+        IRMicroscopeBase2DScan.post_scan_cleanup(self)
+        
+    def collect_pixel(self, pixel_num, k, j, i):
+        IRMicroscopeBase2DScan.collect_pixel(self, pixel_num, k, j, i)
+        AndorHyperSpec2DScanBase.collect_pixel(self, pixel_num, k, j, i)
+
+    def update_display(self):
+        IRMicroscopeBase2DScan.update_display(self)
+        
+
+
 import numpy as np
 import time as time
-import datetime
-
-class Hyperspectral2DScan(IRMicroscopeBase2DScan):
+#Was used to with PI InGaAs / winspec readout
+class Hyperspectral2DScan_old_with_winspec(IRMicroscopeBase2DScan):
     
     name = 'hyperspectral_2d_scan'
     
@@ -60,14 +88,13 @@ class Hyperspectral2DScan(IRMicroscopeBase2DScan):
 
     def collect_pixel(self, pixel_num, k, j, i):
         self.ccd_measure.interrupt_measurement_called = self.interrupt_measurement_called
-        IRMicroscopeBase2DScan.collect_pixel(self, pixel_num, k, j, i)
-                
+        IRMicroscopeBase2DScan.collect_pixel(self, pixel_num, k, j, i)                
         #calculate time remaining, there is almost 0.72 second overhead per pixel.
         #sec_remaining = (self.Npixels-(pixel_num+1))*(self.app.hardware['winspec_remote_client'].settings['acq_time']+0.72)
         #print(self.name, "collecting pixel: (",k,j,i, ") number:", pixel_num+1,"of",self.Npixels,
         #      'estimated time remaining:',datetime.timedelta(seconds=sec_remaining) )
 
-        #aquire ccd data
+        #acquire ccd data
         counter=0 
         retry = True
         while(retry):

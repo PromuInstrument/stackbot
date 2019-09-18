@@ -39,13 +39,14 @@ class ToupCamCamera(object):
     _temptint_cb = None
     _save_path = None
 
-    def __init__(self, resolution=1, bits=32, cam_index=0):
+    def __init__(self, resolution=1, bits=32, cam_index=0, debug=False):
         if bits not in (32,):
             raise ValueError('Bits needs to by 8 or 32')
         # bits = 8
         self.resolution = resolution
         self.cam = self.get_camera(cam_index)
         self.bits = bits
+        self.debug = debug
 
     # icamera interface
     def save(self, p, extension='JPEG', *args, **kw):
@@ -212,10 +213,11 @@ class ToupCamCamera(object):
         expo_enabled = ctypes.c_bool()
         result = lib.Toupcam_get_AutoExpoEnable(self.cam, ctypes.byref(expo_enabled))
         if success(result):
+            if self.debug:print('ToupCamCamera.get_auto_exposure', result, expo_enabled.value)
             return expo_enabled.value
 
     def set_auto_exposure(self, expo_enabled):
-        lib.Toupcam_put_AutoExpoEnable(self.cam, expo_enabled)
+        lib.Toupcam_put_AutoExpoEnable(self.cam, ctypes.c_bool(expo_enabled) )
 
     def get_camera(self, cid=None, cam_index=None):
         if cam_index is not None:
@@ -264,18 +266,22 @@ class ToupCamCamera(object):
     def set_esize(self, nres):
         lib.Toupcam_put_eSize(self.cam, ctypes.c_ulong(nres))
         
-    def set_gain(self, gain):
-        lib.Toupcam_put_ExpoAGain(self.cam, gain)
-        
-    def get_gain(self):
-        res = ctypes.c_ushort()
-        if self._lib_func('get_ExpoAGain', ctypes.byref(res)):
-            return res.value
+    def set_exposure_gain(self, v):
+        '''must be in range of get range'''
+        if self.debug:print('ToupCamCamera.set_exposure_gain', v)
+        self._lib_func('put_ExpoAGain', ctypes.c_ushort(int(v)))
+
+    def get_exposure_gain(self):        
+        v = self._lib_get_func('ExpoAGain')
+        if self.debug:print('ToupCamCamera.get_exposure_gain',v)
+        return v
+
         
     def get_gain_range(self):
         min_gain = ctypes.c_ushort()
         max_gain = ctypes.c_ushort()
         def_gain = ctypes.c_ushort()
         if self._lib_func('get_ExpoAGain', ctypes.byref(min_gain), ctypes.byref(max_gain), ctypes.byref(def_gain)):
+            if self.debug:print('ToupCamCamera.get_gain_range', min_gain.value, max_gain.value, def_gain.value) #(min max value swap?)
             return min_gain.value, max_gain.value, def_gain.value
 # ============= EOF =============================================

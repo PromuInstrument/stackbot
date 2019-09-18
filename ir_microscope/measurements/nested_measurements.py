@@ -2,13 +2,12 @@
 Created on Aug 31, 2018
 
 @author: Benedikt Ursprung
+
+Just a bunch of small random measurements.
 '''
-
-
 import time
 from ScopeFoundry import Measurement
-from ScopeFoundryHW.picoharp import picoharp_hist_measure
-from ScopeFoundryHW.powerwheel_arduino import power_wheel_arduino_hw
+
 
 
 class NestedMeasurements(Measurement):
@@ -20,7 +19,30 @@ class NestedMeasurements(Measurement):
         print(self.name)
         
         #self.filter_sweep()
-        self.nested_trpl_scans()
+        #self.nested_trpl_scans()
+        self.timed_toupcam_series(dt=1 , rep=180)
+        
+        
+    def timed_toupcam_series(self, dt=1, rep=10):
+        measure = self.app.measurements['toupcam_spot_optimizer']
+        auto_focus = self.app.measurements['auto_focus']
+        MS = measure.settings
+                
+        MS['fit_gaus'] = False
+        MS['activation'] = False
+        
+        for i in range(rep):
+            self.set_progress((i+1.0)/rep *100.0)
+            if self.interrupt_measurement_called:
+                break
+            #measure.snap_h5()
+            print(self.name,  'acquired', i+1, 'of', rep, 'with', measure)
+            
+            self.start_nested_measure_and_wait(auto_focus)
+            
+            
+            #time.sleep(dt)
+        
         
     def nested_trpl_and_hyperspec(self):
         trpl_2d_scan_measure = self.app.measurements['trpl_2d_scan']

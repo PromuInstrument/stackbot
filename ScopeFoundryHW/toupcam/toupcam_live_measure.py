@@ -16,7 +16,7 @@ class ToupCamLiveMeasure(Measurement):
         
         self.ui = load_qt_ui_file(sibling_path(__file__,'toupcam_live_measure.ui'))
         self.graph_layout = pg.GraphicsLayoutWidget()
-        self.ui.plot_groupBox.layout().addWidget(self.graph_layout)
+        self.ui.main_horizontalLayout.addWidget(self.graph_layout)
 
         self.settings.activation.connect_to_widget(self.ui.live_checkBox)        
         self.settings.auto_level.connect_to_widget(self.ui.auto_level_checkBox)
@@ -27,13 +27,16 @@ class ToupCamLiveMeasure(Measurement):
         tcam.settings.res_mode.connect_to_widget(self.ui.res_mode_doubleSpinBox)
         tcam.settings.auto_exposure.connect_to_widget(self.ui.auto_exp_checkBox)
         tcam.settings.magnification.connect_to_widget(self.ui.mag_doubleSpinBox)
+        
         # connect to sliders 
+        tcam.settings.exposure.connect_to_widget(self.ui.exposure_horizontalSlider)
         tcam.settings.ctemp.connect_to_widget(self.ui.ctemp_slider)
         tcam.settings.tint.connect_to_widget(self.ui.tint_slider)
-        
-        tcam.settings.contrast.connect_to_widget(self.ui.contrast_slider)
-        tcam.settings.brightness.connect_to_widget(self.ui.brightness_slider)
-        tcam.settings.gamma.connect_to_widget(self.ui.gamma_slider)
+
+        tcam.settings.gain.connect_to_widget(self.ui.gain_horizontalSlider)        
+        tcam.settings.contrast.connect_to_widget(self.ui.contrast_horizontalSlider)
+        tcam.settings.brightness.connect_to_widget(self.ui.brightness_horizontalSlider)
+        tcam.settings.gamma.connect_to_widget(self.ui.gamma_horizontalSlider)
         
         #tcam.settings.ctemp.updated_value[int].connect(self.ui.ctemp_slider.setValue)
         #self.ui.ctemp_slider.sliderMoved[int].connect(tcam.settings.ctemp.update_value)
@@ -45,11 +48,19 @@ class ToupCamLiveMeasure(Measurement):
         tcam.settings.exposure.connect_to_widget(self.ui.exp_value)
         tcam.settings.ctemp.connect_to_widget(self.ui.ctemp_value)
         tcam.settings.tint.connect_to_widget(self.ui.tint_value)
-        
-        tcam.settings.contrast.connect_to_widget(self.ui.contrast_value)
-        tcam.settings.brightness.connect_to_widget(self.ui.brightness_value)
-        tcam.settings.gamma.connect_to_widget(self.ui.gamma_value)
 
+        tcam.settings.gain.connect_to_widget(self.ui.gain_doubleSpinBox)        
+        tcam.settings.contrast.connect_to_widget(self.ui.contrast_doubleSpinBox)
+        tcam.settings.brightness.connect_to_widget(self.ui.brightness_doubleSpinBox)
+        tcam.settings.gamma.connect_to_widget(self.ui.gamma_doubleSpinBox)
+
+        tcam.settings.calibration.connect_to_widget(self.ui.calibration_doubleSpinBox)
+
+        # pushButtons
+        self.ui.snap_pushButton.clicked.connect(self.snap_h5)        
+        self.ui.defaults_pushButton.clicked.connect(tcam.set_default_values)
+        
+        
         self.plot = self.graph_layout.addPlot()
         self.img_item = pg.ImageItem()
         self.plot.addItem(self.img_item)
@@ -64,8 +75,8 @@ class ToupCamLiveMeasure(Measurement):
         #self.roi_label.setFont(font)
         self.plot.addItem(self.roi_label)
         self.roi_label.setText(str(self.center_roi.size()[0]))
-        
-        self.ui.snap_pushButton.clicked.connect(self.snap_h5)
+
+
         ## to do add functionality that a double click on a position in the image moves the stage to the position.
     def run(self):
         
@@ -73,22 +84,20 @@ class ToupCamLiveMeasure(Measurement):
         tcam.settings['connected'] = True
         
         while not self.interrupt_measurement_called:
-            time.sleep(0.1)
+            self.im = self.get_rgb_image().swapaxes(0,1)
+            time.sleep(0.05)
             if tcam.settings['auto_exposure']:
                 tcam.settings.exposure.read_from_hardware()
+
         
     def update_display(self):
         tcam = self.app.hardware['toupcam']
-        self.im = self.get_rgb_image()
-        self.im = np.flip(self.im.swapaxes(0,1),0)
         self.img_item.setImage(self.im, autoLevels=self.settings['auto_level'])
         if not self.settings['auto_level']:
             self.img_item.setLevels((0, 255))
         
-        
         width  = tcam.settings['width_micron']
         height = tcam.settings['height_micron']
-        res_mode = tcam.settings['res_mode']
         x_center, y_center = tcam.settings['centerx_micron'], tcam.settings['centery_micron']
         
         x0 = -x_center
@@ -98,31 +107,29 @@ class ToupCamLiveMeasure(Measurement):
         self.img_item.setRect(self.img_rect)
         self.roi_label.setText('{:.2f} micron'.format(self.center_roi.size()[0]))
         
+        self.plot.addItem(self.roi_label)
+
     def get_rgb_image(self):
         cam = self.app.hardware['toupcam'].cam
-
         data = cam.get_image_data()
         raw = data.view(np.uint8).reshape(data.shape + (-1,))
         bgr = raw[..., :3]
         return bgr[..., ::-1]
-#        image = Image.fromarray(bgr, 'RGB')
-#        b, g, r = image.split()
-#        return Image.merge('RGB', (r, g, b))
 
 
     def snap_h5(self):
         
         #
         from ScopeFoundry import h5_io
-        self.app.hardware['asi_stage'].correct_backlash(0.02)
+        #self.app.hardware['asi_stage'].correct_backlash(0.02)
+
+
+        self.h5_file = h5_io.h5_base_file(app=self.app, measurement=self)
+        H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
+        im = self.get_rgb_image()
+        im = np.flip(im.swapaxes(0,1),0)
+        H['image'] = im
+        self.h5_file.close()
+        print('saved file successfully', im.sum())
         
-        try:
-            self.h5_file = h5_io.h5_base_file(app=self.app, measurement=self)
-            H = self.h5_meas_group  =  h5_io.h5_create_measurement_group(self, self.h5_file)
-            im = self.get_rgb_image()
-            im = np.flip(im.swapaxes(0,1),0)
-            H['image'] = im
-            self.update_display()
-        finally:
-            self.h5_file.close()
-            print('saved file successfully')
+        return im

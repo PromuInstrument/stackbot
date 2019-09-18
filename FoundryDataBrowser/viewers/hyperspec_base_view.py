@@ -1,275 +1,30 @@
-from __future__ import division, print_function, absolute_import
-from ScopeFoundry import BaseApp
-from ScopeFoundry.helper_funcs import load_qt_ui_file, sibling_path,\
-    load_qt_ui_from_pkg
+'''
+Created on Aug 7, 2019
+
+@author: lab
+'''
+
+from ScopeFoundry.data_browser import DataBrowserView
+from FoundryDataBrowser.viewers.plot_n_fit import PlotNFit
+from FoundryDataBrowser.viewers.scalebars import ConfocalScaleBar
 from ScopeFoundry.widgets import RegionSlicer
-from collections import OrderedDict
+from ScopeFoundry.helper_funcs import sibling_path
+from ScopeFoundry.logged_quantity import LQCollection
+
+from scipy.stats import spearmanr
+
 import os
+
+import time
+from datetime import datetime
+import h5py
+
+import numpy as np
+
 from qtpy import QtCore, QtWidgets, QtGui
 import pyqtgraph as pg
 import pyqtgraph.dockarea as dockarea
-import numpy as np
-from ScopeFoundry.logged_quantity import LQCollection
-from scipy.stats import spearmanr
-import argparse
-import time
-import h5py
-from datetime import datetime
-
-
-class DataBrowser(BaseApp):
-    
-    name = "DataBrowser"
-    
-    def __init__(self, argv):
-        BaseApp.__init__(self, argv)
-        self.setup()
-        parser = argparse.ArgumentParser()
-        for lq in self.settings.as_list():
-            parser.add_argument("--" + lq.name)
-        args = parser.parse_args()
-        for lq in self.settings.as_list():
-            if lq.name in args:
-                val = getattr(args,lq.name)
-                if val is not None:
-                    lq.update_value(val)
-        
-    
-    
-    def setup(self):
-
-        #self.ui = load_qt_ui_file(sibling_path(__file__, "data_browser.ui"))
-        self.ui = load_qt_ui_from_pkg('ScopeFoundry', 'data_browser.ui')
-        self.ui.show()
-        self.ui.raise_()
-        
-        self.views = OrderedDict()        
-        self.current_view = None        
-
-        self.settings.New('data_filename', dtype='file')
-        self.settings.New('browse_dir', dtype='file', is_dir=True, initial='/')
-        self.settings.New('file_filter', dtype=str, initial='*.*,')
-        
-        self.settings.data_filename.add_listener(self.on_change_data_filename)
-
-        self.settings.New('auto_select_view',dtype=bool, initial=True)
-
-        self.settings.New('view_name', dtype=str, initial='0', choices=('0',))
-        
-        
-        # UI Connections
-        self.settings.data_filename.connect_to_browse_widgets(self.ui.data_filename_lineEdit, 
-                                                              self.ui.data_filename_browse_pushButton)
-        self.settings.browse_dir.connect_to_browse_widgets(self.ui.browse_dir_lineEdit, 
-                                                              self.ui.browse_dir_browse_pushButton)
-        self.settings.view_name.connect_bidir_to_widget(self.ui.view_name_comboBox)
-        self.settings.file_filter.connect_bidir_to_widget(self.ui.file_filter_lineEdit)
-        
-        # file system tree
-        self.fs_model = QtWidgets.QFileSystemModel()
-        self.fs_model.setRootPath(QtCore.QDir.currentPath())
-        self.ui.treeView.setModel(self.fs_model)
-        self.ui.treeView.setIconSize(QtCore.QSize(16,16))
-        self.ui.treeView.setSortingEnabled(True)
-        #for i in (1,2,3):
-        #    self.ui.treeView.hideColumn(i)
-        #print("="*80, self.ui.treeView.selectionModel())
-        self.tree_selectionModel = self.ui.treeView.selectionModel()
-        self.tree_selectionModel.selectionChanged.connect(self.on_treeview_selection_change)
-
-
-        self.settings.browse_dir.add_listener(self.on_change_browse_dir)
-        self.settings['browse_dir'] = os.getcwd()
-
-        # set views
-        
-        self.load_view(FileInfoView(self))
-        self.load_view(NPZView(self))
-
-        self.settings.view_name.add_listener(self.on_change_view_name)
-        self.settings['view_name'] = "file_info"
-        
-        self.settings.file_filter.add_listener(self.on_change_file_filter)
-        
-        #self.console_widget.show()
-        self.ui.console_pushButton.clicked.connect(self.console_widget.show)
-        self.ui.log_pushButton.clicked.connect(self.logging_widget.show)
-        self.ui.show()
-        
-
-        
-    def load_view(self, new_view):
-        
-        #instantiate view
-        #new_view = ViewClass(self)
-        
-        self.log.debug('load_view called {}'.format(new_view))
-        # add to views dict
-        self.views[new_view.name] = new_view
-        
-        self.ui.dataview_groupBox.layout().addWidget(new_view.ui)
-        new_view.ui.hide()
-        
-        # update choices for view_name
-        self.settings.view_name.change_choice_list(list(self.views.keys()))
-        self.log.debug('load_view done {}'.format(new_view))
-        return new_view
-
-    def on_change_data_filename(self):
-        fname = self.settings.data_filename.val 
-        if not self.settings['auto_select_view']:
-            self.current_view.on_change_data_filename(fname)
-        else:
-            view_name = self.auto_select_view(fname)
-            if self.current_view is None or view_name != self.current_view.name:
-                # update view (automatically calls on_change_data_filename)
-                self.settings['view_name'] = view_name
-            else:
-                # force update
-                if  os.path.isfile(fname):
-                    self.current_view.on_change_data_filename(fname)
-
-    @QtCore.Slot()
-    def on_change_browse_dir(self):
-        self.log.debug("on_change_browse_dir")
-        self.ui.treeView.setRootIndex(self.fs_model.index(self.settings['browse_dir']))
-        self.fs_model.setRootPath(self.settings['browse_dir'])
-
-    
-    def on_change_file_filter(self):
-        self.log.debug("on_change_file_filter")
-        filter_str = self.settings['file_filter']
-        if filter_str == "":
-            filter_str = "*"
-            self.settings['file_filter'] = "*"
-        filter_str_list = [x.strip() for x in filter_str.split(',')]
-        self.log.debug(filter_str_list)
-        self.fs_model.setNameFilters(filter_str_list)
-                    
-    def on_change_view_name(self):
-        #print('on_change_view_name')
-        previous_view = self.current_view
-        
-        self.current_view = self.views[self.settings['view_name']]
-    
-        # hide current view 
-        # (handle the initial case where previous_view is None )
-        if previous_view:
-            previous_view.ui.hide() 
-        else:
-            self.ui.dataview_placeholder.hide()
-        
-        # show new view
-        self.current_view.ui.show()
-        
-        # set datafile for new (current) view
-        fname = self.settings['data_filename']
-        if  os.path.isfile(fname):
-            self.current_view.on_change_data_filename(self.settings['data_filename'])
-
-    def on_treeview_selection_change(self, sel, desel):
-        fname = self.fs_model.filePath(self.tree_selectionModel.currentIndex())
-        self.settings['data_filename'] = fname
-#        print( 'on_treeview_selection_change' , fname, sel, desel)
-
-    def auto_select_view(self, fname):
-        "return the name of the last supported view for the given fname"
-        for view_name, view in list(self.views.items())[::-1]:
-            if view.is_file_supported(fname):
-                return view_name
-        # return default file_info view if no others work
-        return 'file_info'
-        
-
-class DataBrowserView(QtCore.QObject):
-    """ Abstract class for DataBrowser Views"""
-    
-    def __init__(self, databrowser):
-        QtCore.QObject.__init__(self)
-        self.databrowser =  databrowser
-        self.settings = LQCollection()
-        self.setup()
-        
-    def setup(self):
-        pass
-        # create view with no data file
-
-    def on_change_data_filename(self, fname=None):
-        pass
-        # load data file
-        
-        # update display
-        
-    def is_file_supported(self, fname):
-        # returns whether view can handle file, should return False early to avoid
-        # too much computation when selecting a file
-        return False
-        
-class FileInfoView(DataBrowserView):
-    
-    name = 'file_info'
-    
-    def setup(self):
-        self.ui = QtWidgets.QTextEdit("file_info")
-        
-    def on_change_data_filename(self, fname=None):
-        if fname is None:
-            fname = self.databrowser.settings['data_filename']
-
-        _, ext = os.path.splitext(fname)
-        
-        if ext in ('.py', '.ini', '.txt'):
-            with open(fname, 'r') as f:
-                self.ui.setText(f.read())
-        else:
-            self.ui.setText(fname)
-        
-    def is_file_supported(self, fname):
-        return True
-
-
-class NPZView(DataBrowserView):
-    
-    name = 'npz_view'
-    
-    def setup(self):
-        
-        #self.ui = QtGui.QScrollArea()
-        #self.display_label = QtGui.QLabel("TestNPZView")
-        self.ui = self.display_textEdit = QtWidgets.QTextEdit()
-        
-        #self.ui.setLayout(QtGui.QVBoxLayout())
-        #self.ui.layout().addWidget(self.display_label)
-        #self.ui.setWidget(self.display_label)
-        
-    def on_change_data_filename(self, fname=None):
-        import numpy as np
-        
-        try:
-            self.dat = np.load(fname)
-            
-            self.display_txt = "File: {}\n".format(fname)
-            
-            sorted_keys = sorted(self.dat.keys())
-            
-            for key in sorted_keys:
-                val = self.dat[key]
-                if val.shape == ():
-                    self.display_txt += "    --> {}: {}\n".format(key, val)                    
-                else:
-                    self.display_txt += "    --D {}: Array of {} {}\n".format(key, val.dtype, val.shape)
-            
-            #self.display_label.setText(self.display_txt)
-            self.display_textEdit.setText(self.display_txt)
-        except Exception as err:
-            self.display_textEdit.setText("failed to load %s:\n%s" %(fname, err))
-            raise(err)
-        
-    def is_file_supported(self, fname):
-        return os.path.splitext(fname)[1] == ".npz"
-    
-    
-
+from lxml import includes
 
 class HyperSpectralBaseView(DataBrowserView):
     
@@ -286,36 +41,36 @@ class HyperSpectralBaseView(DataBrowserView):
         self.scalebar_type = None
 
 
-        # Will be filled derived maps and images
+        # Will be filled derived maps and x_arrays
         self.display_images = dict()
         self.spec_x_arrays = dict()   
 
+        
         ## Graphs and Interface 
+        self.line_colors = ['w', 'r', 'b', 'y', 'm', 'c', 'g']
+        self.plot_n_fit = PlotNFit(Ndata_lines=2, pens=['g']+self.line_colors)
+
+
+        # Docks
         self.ui = self.dockarea = dockarea.DockArea()
+        self.image_dock = self.dockarea.addDock(name='Image')
+        self.spec_dock = self.dockarea.addDock(self.plot_n_fit.graph_dock)
+        self.settings_dock = self.dockarea.addDock(name='settings', 
+                                                   position='left', relativeTo=self.image_dock)
+        self.export_dock = self.dockarea.addDock(name='export & adv. settings', 
+                                                 position='below', relativeTo=self.settings_dock)  
+        self.dockarea.addDock(self.plot_n_fit.settings_dock, 
+                              relativeTo=self.settings_dock, position='below')
+        self.corr_dock = self.dockarea.addDock(name='correlation', 
+                              position='right',  relativeTo = self.spec_dock)
+        
+        
+        # Image View
         self.imview = pg.ImageView()
         self.imview.getView().invertY(False) # lower left origin
-        self.image_dock = self.dockarea.addDock(name='Image', widget=self.imview)
-        self.graph_layout = pg.GraphicsLayoutWidget()
-        self.spec_dock = self.dockarea.addDock(name='Spec Plot', widget=self.graph_layout)
+        self.image_dock.addWidget(self.imview)
+        self.graph_layout = self.plot_n_fit.graph_layout
 
-        self.line_colors = ['w', 'r', 'g', 'b', 'y', 'm', 'c']
-        self.spec_plot = self.graph_layout.addPlot()
-        self.spec_plot.setLabel('left', 'Intensity', units='counts') 
-        self.rect_plotdata = self.spec_plot.plot(y=[0,2,1,3,2], pen=self.line_colors[0])
-        self.point_plotdata = self.spec_plot.plot(y=[0,2,1,3,2], pen=self.line_colors[1])
-        self.point_plotdata.setZValue(-1)
-
-        #correlation plot
-        self.corr_layout = pg.GraphicsLayoutWidget()
-        self.corr_plot = self.corr_layout.addPlot()
-        self.corr_plotdata = pg.ScatterPlotItem(x=[0,1,2,3,4], y=[0,2,1,3,2], size=17, 
-                                        pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255, 60))
-        self.corr_plot.addItem(self.corr_plotdata)        
-        self.corr_dock = self.dockarea.addDock(name='correlation', widget=self.corr_layout, 
-                              position='below',  relativeTo = self.spec_dock)
-        self.corr_plotdata.sigClicked.connect(self.corr_plot_clicked)
-        self.spec_dock.raiseDock()
-        
         # Rectangle ROI
         self.rect_roi = pg.RectROI([20, 20], [20, 20], pen=self.line_colors[0])
         self.rect_roi.addTranslateHandle((0.5,0.5))        
@@ -333,103 +88,80 @@ class HyperSpectralBaseView(DataBrowserView):
         self.circ_roi_plotline = pg.PlotCurveItem([0], pen=self.line_colors[1])
         self.imview.getView().addItem(self.circ_roi_plotline) 
         self.circ_roi.sigRegionChanged[object].connect(self.on_update_circ_roi)
-                
-        #font
-        font = QtGui.QFont("Times", 12)
-        font.setBold(True)
-            
+        
+        
+        # Spec plot
+        self.spec_plot = self.plot_n_fit.plot
+        self.spec_plot.setLabel('left', 'Intensity', units='counts') 
+        self.rect_plotdata = self.plot_n_fit.data_lines[0]
+        self.point_plotdata = self.plot_n_fit.data_lines[1]
+        self.point_plotdata.setZValue(-1)
+                   
+        
         #settings
+        S = self.settings
         self.default_display_image_choices = ['default', 'sum']
-        self.settings.New('display_image', str, choices = self.default_display_image_choices, initial = 'default')    
-        self.settings.display_image.add_listener(self.on_change_display_image)    
-        
+        S.New('display_image', str, choices = self.default_display_image_choices, initial = 'default')    
+        S.display_image.add_listener(self.on_change_display_image)    
+
         self.default_x_axis_choices = ['default', 'index']
-        self.x_axis = self.settings.New('x_axis', str, initial = 'default', choices = self.default_x_axis_choices)
-        self.x_axis.add_listener(self.on_change_x_axis)
+        self.x_axis = S.New('x_axis', str, initial = 'default', choices = self.default_x_axis_choices)
+        self.x_axis.add_listener(self.on_change_x_axis)      
 
-        self.norm_data = self.settings.New('norm_data', bool, initial = False)
-        self.norm_data.add_listener(self.update_display)
-
-        self.bg_subtract = self.settings.New('bg_subtract', str, initial='None', choices=('None', 'bg_slice', 'costum_const'))
-        self.norm_data.add_listener(self.update_display)
+        bg_subtract_choices = ('None', 'bg_slice', 'costum_const')
+        self.bg_subtract = S.New('bg_subtract', str, initial='None', 
+                                             choices=bg_subtract_choices)
         
-        self.bg_counts = self.settings.New('bg_value', initial=0, unit='cts/bin')
+        self.bg_counts = S.New('bg_value', initial=0, unit='cts/bin')
         self.bg_counts.add_listener(self.update_display)
         
-        self.settings.New('default_view_on_load', bool, initial=True)
-        
-        self.binning = self.settings.New('binning', int, initial = 1, vmin=1)
+        self.binning = S.New('binning', int, initial = 1, vmin=1)
         self.binning.add_listener(self.update_display)
 
-        self.spatial_binning = self.settings.New('spatial_binning', int, initial = 1, vmin=1)
+        
+        self.norm_data = S.New('norm_data', bool, initial = False)
+        self.norm_data.add_listener(self.update_display)
+        
+        S.New('default_view_on_load', bool, initial=True)
+
+        self.spatial_binning = S.New('spatial_binning', int, initial = 1, vmin=1)
         self.spatial_binning.add_listener(self.bin_spatially)
 
-        self.cor_X_data = self.settings.New('cor_X_data', str, choices = self.default_display_image_choices,
-                                            initial = 'default')
-        self.cor_Y_data = self.settings.New('cor_Y_data', str, choices = self.default_display_image_choices,
-                                            initial = 'sum')
-        self.cor_X_data.add_listener(self.on_change_corr_settings)
-        self.cor_Y_data.add_listener(self.on_change_corr_settings)
-
-
-        # data slicers
-        self.x_slicer = RegionSlicer(self.spec_plot, name='x_slice', 
-                                      brush = QtGui.QColor(0,255,0,70), 
-                                      ZValue=10, font=font, initial=[100,511])
-        self.bg_slicer = RegionSlicer(self.spec_plot, name='bg_slice', slicer_updated_func=self.update_display,
-                                      brush = QtGui.QColor(255,255,255,70), 
-                                      ZValue=11, font=font, initial=[0,80], label_line=0)
-        self.bg_slicer.activated.add_listener(lambda:self.bg_subtract.update_value('bg_slice') if self.bg_slicer.activated.val else None)        
-        
         self.show_lines = ['show_circ_line','show_rect_line']
         for x in self.show_lines:
-            lq = self.settings.New(x, bool, initial=True)
-            lq.add_listener(self.on_change_show_lines)        
-        
-        # peakutils
-        self.peakutils_settings = LQCollection()    
-        self.show_peak_line = self.peakutils_settings.New('show_peak_line', bool, initial=False)
-        self.show_peak_line.add_listener(self.update_display)
-        self.baseline_deg = self.peakutils_settings.New('baseline_deg', int, initial=0, vmin=-1, vmax=100)
-        self.baseline_deg.add_listener(self.update_display)
-        self.thres = self.peakutils_settings.New('thres', float, initial=0.5, vmin=0, vmax=1) 
-        self.thres.add_listener(self.update_display)
-        self.peakutils_settings.New('unique_solution', bool, initial=False)
-        self.peakutils_settings.New('min_dist', int, initial=-1)
-        self.peakutils_settings.New('gaus_fit_refinement', bool, initial=True)
-        self.peakutils_settings.New('ignore_phony_refinements', bool, initial=True)
-        self.base_plotdata = self.spec_plot.plot(y=[0,2,1,3,2], pen=self.line_colors[2])
-        self.peak_lines = []
+            lq = S.New(x, bool, initial=True)
+            lq.add_listener(self.on_change_show_lines)  
 
 
-        # Settings Docks
-        self.settings_dock = self.dockarea.addDock(name='settings', position='left', relativeTo=self.image_dock)
+        # Settings Widgets
         self.settings_widgets = [] # Hack part 1/2: allows to use settings.New_UI() and have settings defined in scan_specific_setup()
+
+        
+        font = QtGui.QFont("Times", 12)
+        font.setBold(True)
+        self.x_slicer = RegionSlicer(self.spec_plot, name='x_slice', 
+                                      #slicer_updated_func=self.update_display,
+                                      brush = QtGui.QColor(0,255,0,50), 
+                                      ZValue=10, font=font, initial=[100,511],
+                                      activated=True)
+        self.bg_slicer = RegionSlicer(self.spec_plot, name='bg_slice', 
+                                      #slicer_updated_func=self.update_display,
+                                      brush = QtGui.QColor(255,255,255,50), 
+                                      ZValue=11, font=font, initial=[0,80], label_line=0)
+        
+                
+        self.x_slicer.region_changed_signal.connect(self.update_display)
+        self.bg_slicer.region_changed_signal.connect(self.update_display)
+        
+        self.bg_slicer.activated.add_listener(lambda:self.bg_subtract.update_value('bg_slice') if self.bg_slicer.activated.val else None)        
         self.settings_widgets.append(self.x_slicer.New_UI())
-        self.settings_widgets.append(self.bg_slicer.New_UI())
-        self.scan_specific_setup()
-        self.generate_settings_ui() # Hack part 2/2: Need to generate settings after scan_specific_setup()
-            
-        self.peakutils_dock = self.dockarea.addDock(name='PeakUtils', position='below', relativeTo=self.settings_dock)
-        self.peakutils_dock.addWidget(self.peakutils_settings.New_UI())
-        self.settings_dock.raiseDock()
-             
-        self.settings_dock.setStretch(x=0,y=0)
-        self.peakutils_dock.setStretch(x=0,y=0)
-        self.image_dock.setStretch(x=100,y=1)
+        self.settings_widgets.append(self.bg_slicer.New_UI())      
 
-        #self.settings_dock.widgetArea.setStyleSheet('Dock > QWidget {border:0px; border-radius:0px}')
-        #self.peakutils_dock.widgetArea.setStyleSheet('Dock > QWidget {border:0px; border-radius:0px}')
-
-    
-    def generate_settings_ui(self):
-        self.settings_ui = self.settings.New_UI()
-        self.settings_dock.addWidget(self.settings_ui)        
-
-        #some more self.settings_widgets[]
-        #self.update_display_pushButton = QtWidgets.QPushButton(text = 'update display')
-        #self.settings_widgets.append(self.update_display_pushButton)
-        #self.update_display_pushButton.clicked.connect(self.update_display)  
+      
+        ## Setting widgets, (w/o logged quantities)
+        self.update_display_pushButton = QtWidgets.QPushButton(text = 'update display')
+        self.settings_widgets.append(self.update_display_pushButton)
+        self.update_display_pushButton.clicked.connect(self.update_display)  
 
         self.default_view_pushButton = QtWidgets.QPushButton(text = 'default img view')
         self.settings_widgets.append(self.default_view_pushButton)
@@ -442,20 +174,62 @@ class HyperSpectralBaseView(DataBrowserView):
         self.recalc_sum_pushButton = QtWidgets.QPushButton(text = 'recalc sum map')
         self.settings_widgets.append(self.recalc_sum_pushButton)
         self.recalc_sum_pushButton.clicked.connect(self.recalc_sum_map)
-        
-        self.recalc_peak_map_pushButton = QtWidgets.QPushButton(text = 'recalc PeakUtils map')
-        self.settings_widgets.append(self.recalc_peak_map_pushButton)
-        self.recalc_peak_map_pushButton.clicked.connect(self.recalc_peak_map)
 
-        self.save_state_pushButton = QtWidgets.QPushButton(text = 'save_state')
-        self.settings_widgets.append(self.save_state_pushButton)
-        self.save_state_pushButton.clicked.connect(self.save_state)
-
-        self.delete_current_display_image_pushButton = QtWidgets.QPushButton(text = 'remove image')
+        self.delete_current_display_image_pushButton = QtWidgets.QPushButton(text = 'delete image')
         self.settings_widgets.append(self.delete_current_display_image_pushButton)
         self.delete_current_display_image_pushButton.clicked.connect(self.delete_current_display_image)
+
+
+        #correlation plot
+        self.corr_layout = pg.GraphicsLayoutWidget()
+        self.corr_plot = self.corr_layout.addPlot()
+        self.corr_plotdata = pg.ScatterPlotItem(x=[0,1,2,3,4], y=[0,2,1,3,2], size=17, 
+                                        pen=pg.mkPen(None), brush=pg.mkBrush(255, 255, 255, 60))
+        self.corr_plot.addItem(self.corr_plotdata)        
+        self.corr_plotdata.sigClicked.connect(self.corr_plot_clicked)
+        self.corr_dock.addWidget(self.corr_layout)
+
+        self.corr_settings = CS = LQCollection()
+        self.cor_X_data = self.corr_settings.New('cor_X_data', str, choices = self.default_display_image_choices,
+                                            initial = 'default')
+        self.cor_Y_data = self.corr_settings.New('cor_Y_data', str, choices = self.default_display_image_choices,
+                                            initial = 'sum')
+        self.cor_X_data.add_listener(self.on_change_corr_settings)
+        self.cor_Y_data.add_listener(self.on_change_corr_settings)  
+        self.corr_ui = self.corr_settings.New_UI()      
+        self.corr_dock.addWidget(self.corr_ui)
         
-        # Place the self.settings_widgets[] on a grid
+        
+        # map exporter       
+        self.map_export_settings = MES = LQCollection()
+        MES.New('include_scale_bar', bool, initial = True)
+        MES.New('scale_bar_width', float, initial=1, spinbox_decimals = 3)
+        MES.New('scale_bar_text', str, ro=False)
+        map_export_ui = MES.New_UI()
+        self.export_dock.addWidget( map_export_ui )
+                
+        self.export_maps_as_jpegs_pushButton = QtWidgets.QPushButton('export maps as jpegs')
+        self.export_maps_as_jpegs_pushButton.clicked.connect(self.export_maps_as_jpegs)     
+        self.export_dock.addWidget( self.export_maps_as_jpegs_pushButton )   
+ 
+ 
+        self.save_state_pushButton = QtWidgets.QPushButton(text = 'save state')
+        self.export_dock.addWidget(self.save_state_pushButton)
+        self.save_state_pushButton.clicked.connect(self.save_state)              
+      
+                
+        # finalize settings widgets
+        self.scan_specific_setup() # there could more settings_widgets generated here (part 2/2)
+                
+                    
+        hide_settings = ['norm_data', 'show_circ_line','show_rect_line',
+                         'default_view_on_load', 'spatial_binning', 
+                          'x_axis']        
+        self.settings_ui = self.settings.New_UI(exclude=hide_settings)
+        self.settings_dock.addWidget(self.settings_ui)   
+        self.hidden_settings_ui =  self.settings.New_UI(include=hide_settings)
+        self.export_dock.addWidget(self.hidden_settings_ui)
+                     
         ui_widget =  QtWidgets.QWidget()
         gridLayout = QtWidgets.QGridLayout()
         gridLayout.setSpacing(0)
@@ -464,8 +238,34 @@ class HyperSpectralBaseView(DataBrowserView):
         for i,w in enumerate(self.settings_widgets):
             gridLayout.addWidget(w, int(i/2), i%2)
         self.settings_dock.addWidget(ui_widget)          
-        self.settings_dock.layout.setSpacing(0)                     
         
+                
+        self.plot_n_fit.add_button('fit_map', self.fit_map)
+
+        
+        self.settings_dock.raiseDock()
+
+        self.plot_n_fit.settings_dock.setStretch(1, 1)
+        self.export_dock.setStretch(1,1)
+        self.settings_dock.setStretch(1, 1)
+
+        for layout in [self.settings_ui.layout(), self.export_dock.layout, ]:
+            VSpacerItem = QtWidgets.QSpacerItem(0, 0,
+                                                QtWidgets.QSizePolicy.Minimum,
+                                                QtWidgets.QSizePolicy.Expanding)
+            layout.addItem(VSpacerItem)
+
+        
+    def fit_map(self):
+        x, hyperspec = self.get_xhyperspec_data(apply_use_x_slice=True)
+        keys,images = self.plot_n_fit.fit_hyperspec(x, hyperspec)
+        if len(keys) == 1:
+            self.add_display_image(keys[0], images)
+        else:
+            for key, image in zip(keys, images):
+                self.add_display_image(key, image)
+               
+                
     def add_spec_x_array(self, key, array):
         self.spec_x_arrays[key] = array
         self.settings.x_axis.add_choices(key, allow_duplicates=False)
@@ -479,6 +279,7 @@ class HyperSpectralBaseView(DataBrowserView):
         self.cor_X_data.update_value(self.cor_Y_data.val)
         self.cor_Y_data.update_value(key)
         self.on_change_corr_settings()
+        print('added', key, image.shape)
     
     def add_descriptor_suffixes(self, key):
         if self.x_slicer.activated.val:
@@ -487,7 +288,7 @@ class HyperSpectralBaseView(DataBrowserView):
             key += '_bg{}-{}'.format(self.bg_slicer.start.val, self.bg_slicer.stop.val)
         if self.settings['bg_subtract'] == 'costum_count':
             key += '_bg{1.2f}'.format(self.bg_counts.val)
-        return key        
+        return key
     
     def delete_current_display_image(self):
         key = self.settings.display_image.val
@@ -511,7 +312,7 @@ class HyperSpectralBaseView(DataBrowserView):
     
     def get_bg(self):
         bg_subtract_mode = self.bg_subtract.val
-        if bg_subtract_mode == 'bg_slice':
+        if bg_subtract_mode == 'bg_slice' and hasattr(self, 'bg_slicer'):
             if not self.bg_slicer.activated:
                 self.bg_slicer.activated.update_value(True)
             bg_slice = self.bg_slicer.slice
@@ -523,7 +324,7 @@ class HyperSpectralBaseView(DataBrowserView):
             self.bg_slicer.set_label('', title=bg_subtract_mode)
         else:
             bg = 0
-            self.bg_slicer.set_label('', title=bg_subtract_mode)
+            #self.bg_slicer.set_label('', title=bg_subtract_mode)
         return bg
         
     def get_xhyperspec_data(self, apply_use_x_slice=True):
@@ -560,12 +361,12 @@ class HyperSpectralBaseView(DataBrowserView):
         key = self.settings['display_image']
         if key in self.display_images:
             self.display_image = self.display_images[key]
-            self.update_display()
+            self.update_display_image()
         if self.display_image.shape == (1,1):
             self.databrowser.ui.statusbar.showMessage('Can not display single pixel image!')
                 
     def scan_specific_setup(self):
-        #override this!
+        #add settings and export_settings. Append widgets to self.settings_widgets and self.export_widgets
         pass
         
     def is_file_supported(self, fname):
@@ -584,6 +385,12 @@ class HyperSpectralBaseView(DataBrowserView):
             if self.settings['spatial_binning'] != 1:
                 self.hyperspec_data = bin_2D(self.hyperspec_data, self.settings['spatial_binning'])
                 self.display_image = bin_2D(self.display_image, self.settings['spatial_binning'])
+            print('on_change_data_filename', self.display_image.sum())
+        except Exception as err:
+            HyperSpectralBaseView.load_data(self, fname) # load default dummy data
+            self.databrowser.ui.statusbar.showMessage("failed to load {}: {}".format(fname, err))
+            raise(err)
+        finally:
             self.display_images['default'] = self.display_image
             self.display_images['sum'] = self.hyperspec_data.sum(axis=-1)         
             self.spec_x_arrays['default'] = self.spec_x_array
@@ -591,34 +398,62 @@ class HyperSpectralBaseView(DataBrowserView):
             self.databrowser.ui.statusbar.clearMessage()
             self.post_load()
             self.add_scalebar()
-        except Exception as err:
-            HyperSpectralBaseView.load_data(self, fname) # load default dummy data
-            self.databrowser.ui.statusbar.showMessage("failed to load {}: {}".format(fname, err))
-            raise(err)
-        finally:
             self.on_change_display_image()
             self.on_change_corr_settings()
             self.update_display()
         self.on_change_x_axis()
 
+
+        print('loaded new file')
         if self.settings['default_view_on_load']:
             self.default_image_view()   
             
     def add_scalebar(self):
         ''' not intended to use: Call set_scalebar_params() during load_data()'''
+        
         if hasattr(self, 'scalebar'):
             self.imview.getView().removeItem(self.scalebar)
             del self.scalebar
+                
+        num_px = self.display_image.shape[1] #horizontal dimension!
+
+        if self.scalebar_type == None: 
+            #matplotlib export
+            self.unit_per_px = 1
+            self.map_export_settings['scale_bar_width'] = int(num_px/4)
+            self.map_export_settings['scale_bar_text'] = '{} pixels'.format(int(num_px/4))          
+
+            
+        if self.scalebar_type != None: 
+            kwargs = self.scalebar_kwargs    
+            
+            span = self.scalebar_kwargs['span'] # this is in meter! convert to according to its magnitude
+            w_meter = span / 4
+            mag = int(np.log10(w_meter))
+            conv_fac, unit = {0: (1,'m'), 
+                        -1:(1e2,'cm'),-2:(1e3,'mm'), -3:(1e3,'mm'),
+                        -4:(1e6,'\u03bcm'),-5:(1e6,'\u03bcm'), -6:(1e6,'\u03bcm'), #\mu
+                        -7:(1e9,'nm'),-8:(1e9,'nm'), -9:(1e9,'nm'),
+                        -10:(1e10,'\u212b'),
+                        -11:(1e12,'pm'), -12:(1e12,'pm')}[mag]
+                                     
+            #matplotlib export           
+            self.unit_per_px = span * conv_fac / num_px
+            self.map_export_settings['scale_bar_width'] = int(w_meter * conv_fac)
+            self.map_export_settings['scale_bar_text'] = f'{int(w_meter * conv_fac)} {(unit)}'
+        
+            
         if self.scalebar_type == 'ConfocalScaleBar':
-            from viewers.scalebars import ConfocalScaleBar
-            num_px = self.display_image.shape[1] #horizontal dimension!
-            kwargs = self.scalebar_kwargs       
             self.scalebar = ConfocalScaleBar(num_px=num_px, 
                                 **kwargs)
             self.scalebar.setParentItem(self.imview.getView())
             self.scalebar.anchor((1, 1), (1, 1), offset=kwargs['offset'])
+
+
         elif self.scalebar_type == None:
             self.scalebar = None
+
+            
             
     def set_scalebar_params(self, h_span, units='m', scalebar_type='ConfocalScaleBar',
                            stroke_width=10, brush='w', pen='k', offset=(-20, -20)):
@@ -638,14 +473,21 @@ class HyperSpectralBaseView(DataBrowserView):
                       'nm':1e-9, 'pm':1e-12, 'fm':1e-15}[units] * h_span
         self.scalebar_kwargs = {'span':span_meter, 'brush':brush, 'pen':pen,
                                 'width':stroke_width, 'offset':offset}
+        
 
+
+    @QtCore.Slot()
     def update_display(self):
         # pyqtgraph axes are (x,y), but display_images are in (y,x) so we need to transpose        
         if self.display_image is not None:
-            self.imview.setImage(self.display_image.T)
+            self.update_display_image()
             self.on_change_rect_roi()
             self.on_update_circ_roi()
             
+    def update_display_image(self):
+        if self.display_image is not None:
+            self.imview.setImage(self.display_image.T)  
+                      
     def reset(self):
         '''
         resets the dictionaries
@@ -677,10 +519,17 @@ class HyperSpectralBaseView(DataBrowserView):
         # pyqtgraph axes are (x,y), but hyperspec is in (y,x,spec) hence axes=(1,0)      
         roi_slice, roi_tr = self.rect_roi.getArraySlice(self.hyperspec_data, self.imview.getImageItem(), axes=(1,0)) 
         self.rect_roi_slice = roi_slice
-        x,y = self.get_xy(roi_slice, apply_use_x_slice=False)
-        self.rect_plotdata.setData(x, y)
+        
+        x,y = self.get_xy(self.rect_roi_slice, apply_use_x_slice=False)  
+        self.plot_n_fit.update_data(x, y, 0, is_fit_data=False)
+
+        x_fit_data, y_fit_data = self.get_xy(self.rect_roi_slice, apply_use_x_slice=True)  
+        self.plot_n_fit.update_fit_data(x_fit_data, y_fit_data)
+        text = self.plot_n_fit.result_message
+        title = self.plot_n_fit.state_info + ' rect'
+        self.x_slicer.set_label(text, title, color = self.line_colors[0])
+
         self.on_change_corr_settings()
-        self.update_peaks(*self.get_xy(roi_slice, apply_use_x_slice=True), pen=self.line_colors[0])
 
         
     @QtCore.Slot(object)        
@@ -702,38 +551,18 @@ class HyperSpectralBaseView(DataBrowserView):
         
         self.circ_roi_ji = (j,i)    
         self.circ_roi_slice = np.s_[j:j+1,i:i+1]
-        x,y = self.get_xy(self.circ_roi_slice, apply_use_x_slice=False)  
-        self.point_plotdata.setData(x, y)
+        
+        x,y = self.get_xy(self.circ_roi_slice, apply_use_x_slice=False)
+        self.plot_n_fit.update_data(x, y, 1, is_fit_data=False)
+        
+        x_fit_data, y_fit_data = self.get_xy(self.circ_roi_slice, apply_use_x_slice=True)  
+        self.plot_n_fit.update_fit_data(x_fit_data, y_fit_data)
+        text = self.plot_n_fit.result_message
+        title = self.plot_n_fit.state_info + ' circ'
+        self.x_slicer.set_label(text, title, color = self.line_colors[1])
+        
         self.on_change_corr_settings()
-        self.update_peaks(*self.get_xy(self.circ_roi_slice, apply_use_x_slice=True), pen=self.line_colors[1])
-        
-        
-    def update_peaks(self, wls, spec, pen='g'):
-        self.base_plotdata.setVisible( self.peakutils_settings['show_peak_line'] )
-        
-        for l in self.peak_lines:
-            self.spec_plot.removeItem(l)
-            l.deleteLater()
-        self.peak_lines = []
-                    
-        if self.peakutils_settings['show_peak_line']:
-            PS = self.peakutils_settings
-            import peakutils
-            base = 1.0*peakutils.baseline(spec, PS['baseline_deg'])
-            self.base_plotdata.setData(wls, base)
-            self.base_plotdata.setPen(pen)
-            if PS['min_dist'] < 0: 
-                min_dist = int(len(wls)/2) 
-            else:
-                min_dist = PS['min_dist']
-            peaks_ = peaks(spec-base, wls, PS['thres'], PS['unique_solution'], min_dist, 
-                           PS['gaus_fit_refinement'], PS['ignore_phony_refinements'])
-            for p in np.atleast_1d(peaks_):
-                l = pg.InfiniteLine(pos=(p,0),
-                                    movable=False, angle=90, pen=pen, label='PeakUtils {value:0.2f}', 
-                         labelOpts={'color':pen, 'movable': True, 'fill': (200, 200, 200, 100)})
-                self.spec_plot.addItem(l)
-                self.peak_lines.append(l)
+
 
     def on_change_show_lines(self):
         self.point_plotdata.setVisible(self.settings['show_circ_line'])
@@ -755,26 +584,15 @@ class HyperSpectralBaseView(DataBrowserView):
         self.add_display_image('median_map', median_map)
         
     def recalc_sum_map(self):
-        x,hyperspec_data = self.get_xhyperspec_data(apply_use_x_slice=True)
+        _,hyperspec_data = self.get_xhyperspec_data(apply_use_x_slice=True)
         _sum = hyperspec_data.sum(-1)
         self.add_display_image('sum', _sum)
         
-    def recalc_peak_map(self):
-        x,hyperspec_data = self.get_xhyperspec_data(apply_use_x_slice=True)
-        PS = self.peakutils_settings
-        _map = peak_map(hyperspec_data, x, PS['thres'], int(len(x)/2), 
-                        PS['gaus_fit_refinement'], PS['ignore_phony_refinements'])
-        map_name = 'peak_map'
-        if  PS['gaus_fit_refinement']: 
-            map_name += '_refined'
-            if PS['ignore_phony_refinements']:
-                map_name += '_ignored'
-        self.add_display_image(map_name, _map)
           
     def on_change_corr_settings(self):
         try:
-            xname = self.settings['cor_X_data']
-            yname = self.settings['cor_Y_data']
+            xname = self.corr_settings['cor_X_data']
+            yname = self.corr_settings['cor_Y_data']
             X = self.display_images[xname]
             Y = self.display_images[yname]
 
@@ -804,7 +622,7 @@ class HyperSpectralBaseView(DataBrowserView):
             ##some more plot details 
             #self.corr_plot.getViewBox().setRange(xRange=(cor_x.min(), cor_x.max()),
             #                                     yRange=(cor_y.min(), cor_y.max()))
-            
+    
             self.corr_plot.autoRange()
             self.corr_plot.setLabels(**{'bottom':xname,'left':yname})
             sm = spearmanr(cor_x, cor_y)
@@ -813,6 +631,7 @@ class HyperSpectralBaseView(DataBrowserView):
             self.corr_plot.setTitle(text)
             
         except Exception as err:
+            print('Error in on_change_corr_settings: {}'.format(err))
             self.databrowser.ui.statusbar.showMessage('Error in on_change_corr_settings: {}'.format(err))
 
     def corr_plot_clicked(self, plotitem, points):
@@ -833,6 +652,30 @@ class HyperSpectralBaseView(DataBrowserView):
             self.settings.display_image.update_value( self.default_display_image_choices[0] )
         fname = self.databrowser.settings['data_filename']
         self.on_change_data_filename(fname)
+    
+    def export_maps_as_jpegs(self):
+        for name,image in self.display_images.items():
+            self.export_image_as_jpeg(name, image)   
+    
+    def export_image_as_jpeg(self, name, image, cmap='gist_heat'):
+        import matplotlib.pylab as plt
+        plt.figure(dpi=200)
+        plt.title(name)        
+        ax = plt.subplot(111)
+        Ny, Nx = image.shape
+        extent = [0, self.unit_per_px * Nx, 0, self.unit_per_px * Ny]   
+        plt.imshow(image, origin='lower', interpolation=None, cmap=cmap, 
+                   extent=extent,
+                   )
+        
+        ES = self.map_export_settings
+        if ES['include_scale_bar']:
+            add_scale_bar(ax, ES['scale_bar_width'], ES['scale_bar_text'])
+        cb = plt.colorbar()
+        plt.tight_layout()
+        fig_name =  self.fname.replace('.h5', '_{:0.0f}_{}.jpg'.format(time.time(), name)) 
+        plt.savefig(fig_name)
+        plt.close()
     
     def save_state(self):
         from ScopeFoundry import h5_io
@@ -856,8 +699,10 @@ class HyperSpectralBaseView(DataBrowserView):
             h5_io.h5_save_lqcoll_to_attrs(self.x_slicer.settings, h5_group_settings_group)            
             h5_group_settings_group = h5_file.create_group('bg_slicer_settings')
             h5_io.h5_save_lqcoll_to_attrs(self.bg_slicer.settings, h5_group_settings_group)
+            h5_group_settings_group = h5_file.create_group('export_settings')
+            h5_io.h5_save_lqcoll_to_attrs(self.export_settings, h5_group_settings_group)
             self.view_specific_save_state_func(h5_file)
-            h5_file.close()          
+            h5_file.close()
 
     def view_specific_save_state_func(self, h5_file):
         '''
@@ -907,7 +752,13 @@ class HyperSpectralBaseView(DataBrowserView):
             
             h5_file.close()
             print('loaded', state_files[fname_idx])
-        
+            
+            
+            
+            
+            
+            
+            
 def spectral_median(spec, wls, count_min=200):
     int_spec = np.cumsum(spec)
     total_sum = int_spec[-1]
@@ -918,8 +769,7 @@ def spectral_median(spec, wls, count_min=200):
         wl = 0
     return wl
 def spectral_median_map(hyperspectral_data, wls):
-    return np.apply_along_axis(spectral_median, -1, hyperspectral_data, wls=wls)
-
+    return np.apply_along_axis(spectral_median, -1, hyperspectral_data, wls=wls)  
 def norm(x):
     x_max = x.max()
     if x_max==0:
@@ -928,7 +778,8 @@ def norm(x):
         return x*1.0/x_max
 def norm_map(map_):
     return np.apply_along_axis(norm, -1, map_)
-
+    
+    
 def bin_y_average_x(x, y, binning = 2, axis = -1, datapoints_lost_warning = True):
     '''
     y can be a n-dim array with length on axis `axis` equal to len(x)
@@ -965,44 +816,70 @@ def bin_2D(arr,binning=2):
         print('cropped data:', (lost_lines_0,lost_lines_1), 'lines lost' )
     return arr
 
-def peaks(spec, wls, thres=0.5, unique_solution=True, 
-          min_dist=-1, refinement=True, ignore_phony_refinements=True):
-    import peakutils
-    indexes = peakutils.indexes(spec, thres, min_dist=min_dist)
-    if unique_solution:
-        #we only want the highest amplitude peak here!
-        indexes = [indexes[spec[indexes].argmax()]]
-        
-    if refinement:
-        peaks_x = peakutils.interpolate(wls, spec, ind=indexes)
-        if ignore_phony_refinements:
-            for i,p in enumerate(peaks_x):
-                if p < wls.min() or p > wls.max():
-                    print('peakutils.interpolate() yielded result outside wls range, returning unrefined result')
-                    peaks_x[i] = wls[indexes[i]]
+
+
+def add_scale_bar(ax, width=0.005, text=True, d=None, height=None, h_pos='left', v_pos='bottom',
+                  color='w', edgecolor='k', lw=1, set_ticks_off=True, origin_lower=True, fontsize=13):
+    from matplotlib.patches import Rectangle
+    import matplotlib.pylab as plt
+    imshow_ticks_off_kwargs = dict(axis='both', which='both', left=False, right=False, bottom=False, top=False,
+                         labelbottom=False, labeltop=False, labelleft=False, labelright=False)  
+    """
+        places a rectancle onto the axis *ax.
+        d is the distance from the edge to rectangle.
+    """
+    
+    x0, y0 = ax.get_xlim()[0], ax.get_ylim()[0]
+    x1, y1 = ax.get_xlim()[1], ax.get_ylim()[1]
+    
+    Dx = x1 - x0
+    if d == None:
+        d = Dx / 18.
+    if height == None:
+        height = d * 0.8
+    if width == None:
+        width = 5 * d
+
+    if h_pos == 'left':
+        X = x0 + d
     else:
-        peaks_x = wls[indexes]
+        X = x1 - d - width
 
-    if unique_solution:
-        return peaks_x[0]
+    
+    if origin_lower:
+        if v_pos == 'bottom':
+            Y = y0 + d
+        else:
+            Y = y1 - d - height
     else:
-        return peaks_x
-def peak_map(hyperspectral_data, wls, thres, min_dist, refinement, ignore_phony_refinements):
-    return np.apply_along_axis(peaks, -1, hyperspectral_data, 
-                               wls=wls, thres=thres, 
-                               unique_solution=True,
-                               min_dist=min_dist, refinement=refinement,
-                               ignore_phony_refinements=ignore_phony_refinements)
+        if v_pos == 'bottom':
+            Y = y0 - d - height
+        else:
+            Y = y1 + d
 
+    xy = (X, Y)
     
-
-
-
-if __name__ == '__main__':
-    import sys
+    p = Rectangle(xy, width, height, color=color, ls='solid', lw=lw, ec=edgecolor)
+    ax.add_patch(p)
     
-    app = DataBrowser(sys.argv)
-    app.load_view(HyperSpectralBaseView(app))
-
-    sys.exit(app.exec_())
     
+    if text:
+        if type(text) in [bool, None] or text == 'auto':
+            text = str(int(width*1000)) + ' \u03BCm'
+            print('caution: Assumes extent to be in mm, set text arg manually!')
+        if v_pos == 'bottom':
+            Y_text = Y+1.1*d
+            va = 'bottom'
+        else:
+            Y_text = Y-0.1*d
+            va = 'top'
+        txt = plt.text(X+0.5*width,Y_text,text,
+                 fontdict={'color':color, 'weight': 'heavy', 'size':fontsize,
+                           #'backgroundcolor':edgecolor, 
+                           'alpha':1, 'horizontalalignment':'center', 'verticalalignment':va}
+                )
+        import matplotlib.patheffects as PathEffects
+        txt.set_path_effects([PathEffects.withStroke(linewidth=lw, foreground=edgecolor)])    
+    
+    if set_ticks_off:
+        ax.tick_params(**imshow_ticks_off_kwargs)

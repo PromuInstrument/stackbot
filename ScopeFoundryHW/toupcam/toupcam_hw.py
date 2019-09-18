@@ -11,14 +11,15 @@ class ToupCamHW(HardwareComponent):
         S.New('height_pixel', dtype=int, initial= 1536) 
         S.New('centerx_pixel', initial= 1024) # this needs to be set in full resolution mode and is microscope specific
         S.New('centery_pixel', initial= 768)  # this needs to be set in full resolution mode and is microscope specific
-        S.New('magnification', dtype=int, initial=1, vmin=0, vmax=150)
+        S.New('magnification', dtype=int, initial=40, vmin=0, vmax=150)
         S.New('calibration', dtype=float, initial=((5.+0.21) /162.)*100.) #micron/pixel*magnification
         S.New('cam_index', dtype=int, initial=0)
-        S.New('res_mode', dtype=int, initial=1)
+        S.New('res_mode', dtype=int, initial=1) #number of pixels scales with 1/res_mode
         
-        S.New('auto_exposure', dtype=bool)
-        S.New('exposure', dtype=float, unit='s', initial=0.1, spinbox_decimals=3, vmin=0, vmax=5)
-        
+        S.New('auto_exposure', dtype=bool, initial=False)
+        S.New('exposure', dtype=float, unit='s', initial=0.1, spinbox_decimals=3, vmin=0.000244, vmax=2)
+        S.New('gain', dtype=int, initial=100, vmin=100, vmax=500, unit='%')
+              
         S.New('ctemp', dtype=int, initial=6500, vmin=2000, vmax=15000)
         S.New('tint', dtype=int, initial=1000, vmin=200, vmax=2500)
         
@@ -31,7 +32,7 @@ class ToupCamHW(HardwareComponent):
             calib_um_per_px = calib_um_per_px_mag/S['magnification']
         else:
             calib_um_per_px = 1
-        S.New('calib_um_per_px', dtype=float, initial=calib_um_per_px)
+        S.New('calib_um_per_px', dtype=float, initial=calib_um_per_px, ro=True, spinbox_decimals=3)
         
         S.New('centerx_micron', dtype=float,initial= 1024.)
         S.New('centery_micron', dtype=float,initial= 768.)
@@ -45,14 +46,14 @@ class ToupCamHW(HardwareComponent):
             print('Set magnification first, then connect...')
             raise ValueError
         
-        self.cam = ToupCamCamera(resolution=S['res_mode'], cam_index=S['cam_index'])
+        self.cam = ToupCamCamera(resolution=S['res_mode'], cam_index=S['cam_index'], debug=self.debug_mode.val)
         
         self.cam.open()
         
         #exposure
         S.auto_exposure.connect_to_hardware(
             read_func = self.cam.get_auto_exposure,
-            write_func = self.cam.set_auto_exposure
+            write_func = self.set_auto_exposure
             )
         S.auto_exposure.read_from_hardware()
         S.exposure.connect_to_hardware(
@@ -79,12 +80,18 @@ class ToupCamHW(HardwareComponent):
         S.brightness.connect_to_hardware(
             read_func = self.get_brightness,
             write_func = self.set_brightness
-            )
+        )
         S.gamma.connect_to_hardware(
             read_func = self.get_gamma,
             write_func = self.set_gamma
             )
+        S.gain.connect_to_hardware(
+            read_func = self.get_gain,
+            write_func = self.set_gain, 
+            )
         
+        #S.auto_exposure.hardware_set_func()
+
         # read and calibrate image size
         S['width_pixel'], S['height_pixel'] = self.get_size()
         calib_um_per_px_mag = S['calibration']*(S['res_mode']+1)
@@ -143,6 +150,22 @@ class ToupCamHW(HardwareComponent):
     def set_exposure_time(self, exp_time):
         self.cam.set_exposure_time( int(1e6*exp_time))
     def get_gain(self):
-        return self.cam.get_gain()
+        return self.cam.get_exposure_gain()
     def set_gain(self,gain):
-        return self.cam.set_gain(gain)
+        return self.cam.set_exposure_gain(gain)
+        
+    def set_auto_exposure(self, expo_enabled):
+        #FixMe: always goes to auto exposure mode when openning connection?
+        self.cam.set_auto_exposure(expo_enabled)
+    
+    def set_default_values(self):
+        S = self.settings      
+        S['tint'] = 1000
+        S['ctemp'] = 6500
+        S['contrast'] = 0
+        S['gamma'] = 100
+        S['brightness'] = 0
+        S['gain'] = 100
+        S['exposure'] = 0.096
+        S['auto_exposure'] = False
+        

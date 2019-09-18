@@ -2,13 +2,8 @@ from __future__ import division, print_function
 from ScopeFoundry import BaseMicroscopeApp
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
 import logging
-#from ScopeFoundryHW import attocube_ecc100
-from ir_microscope.measurements import apd_scan, hyperspectral_scan, trpl_scan, ir_microscope_base_scans
-
 import numpy as np
 from ScopeFoundry import LQRange
-from ScopeFoundry.scanning.base_raster_slow_scan import BaseRaster2DSlowScan
-import ir_microscope
 
 
 
@@ -27,7 +22,6 @@ class IRMicroscopeApp(BaseMicroscopeApp):
     
     def setup(self):
         
-        self.add_quickbar(load_qt_ui_file(sibling_path(__file__, 'ir_quick_access.ui')))
         
         print("Adding Hardware Components")
         
@@ -89,14 +83,13 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         self.add_measurement(AndorCCDReadoutMeasure)
         
         
-
-
+        from ScopeFoundryHW.toupcam.toupcam_hw import ToupCamHW
+        self.add_hardware(ToupCamHW(self))
         
         print("Adding Measurement Components")
 
         from ir_microscope.measurements.hyperspectral_scan import AndorHyperSpec2DScan
         self.add_measurement(AndorHyperSpec2DScan(self))
-
 
         #self.add_measurement(ph.PicoHarpChannelOptimizer(self))
         #self.add_measurement(ph.PicoHarpHistogramMeasure(self))
@@ -112,12 +105,13 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         #from ScopeFoundryHW.winspec_remote import WinSpecRemoteReadoutMeasure
         #self.add_measurement(WinSpecRemoteReadoutMeasure(self))
         
-        
         from confocal_measure.power_scan import PowerScanMeasure
         self.add_measurement(PowerScanMeasure(self, shutter_open_lq_path='hardware/shutter/open'))       
         
         from ScopeFoundryHW.thorlabs_powermeter import PowerMeterOptimizerMeasure
         self.add_measurement(PowerMeterOptimizerMeasure(self))    
+        
+
  
         from ScopeFoundryHW.attocube_ecc100.attocube_stage_control import AttoCubeStageControlMeasure
         self.add_measurement(AttoCubeStageControlMeasure(self))
@@ -129,6 +123,7 @@ class IRMicroscopeApp(BaseMicroscopeApp):
                    '',
                    ]
         self.add_measurement(PowermateMeasure(self, n_devs=3, dev_lq_choices=choices))
+        
         
         #from ScopeFoundryHW.attocube_ecc100.attocube_home_axis_measurement import AttoCubeHomeAxisMeasurement
         #self.add_measurement(AttoCubeHomeAxisMeasurement(self))
@@ -172,9 +167,15 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         
         #from ScopeFoundryHW.xbox_controller.xbox_controller_test_measure import 
         
+        from confocal_measure.toupcam_spot_optimizer import ToupCamSpotOptimizer
+        self.add_measurement(ToupCamSpotOptimizer(self))        
         
+        
+        from ir_microscope.measurements.auto_focus_measure import AutoFocusMeasure
+        self.add_measurement(AutoFocusMeasure(self))
         
         ####### Quickbar connections #################################
+        self.add_quickbar(load_qt_ui_file(sibling_path(__file__, 'ir_quick_access.ui')))
         Q = self.quickbar
         
         
@@ -379,7 +380,7 @@ class IRMicroscopeApp(BaseMicroscopeApp):
         self.coppy_current_position_to_2d_scan_center()
                 
         Q.copy_current_position_to_2d_scan_center_pushButton.clicked.connect(
-            lambda:self.coppy_current_position_to_2d_scan_center(decimal_places=3.0))
+            lambda:self.coppy_current_position_to_2d_scan_center(decimal_places=-1))
     
 
         ##########

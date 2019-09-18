@@ -6,13 +6,307 @@
    <rect>
     <x>0</x>
     <y>0</y>
+<<<<<<< HEAD
+    <width>888</width>
+    <height>988</height>
+=======
     <width>268</width>
     <height>694</height>
+>>>>>>> origin/master
    </rect>
   </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
+<<<<<<< HEAD
+  <layout class="QGridLayout" name="gridLayout" columnstretch="1,0" columnminimumwidth="0,0">
+   <item row="0" column="0">
+    <widget class="QGroupBox" name="plot_groupBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="title">
+      <string>Image</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2"/>
+    </widget>
+   </item>
+   <item row="0" column="1">
+    <widget class="QGroupBox" name="control_groupBox">
+     <property name="title">
+      <string>Camera Control</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_6">
+      <item row="0" column="0">
+       <widget class="QGroupBox" name="groupBox">
+        <property name="title">
+         <string>Camera Connect</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_3">
+         <item row="0" column="0">
+          <widget class="QLabel" name="camera_index_label">
+           <property name="text">
+            <string>Camera #</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QDoubleSpinBox" name="cam_index_doubleSpinBox"/>
+         </item>
+         <item row="0" column="2">
+          <widget class="QLabel" name="res_mode_label">
+           <property name="text">
+            <string>Resolution Mode</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="3">
+          <widget class="QDoubleSpinBox" name="res_mode_doubleSpinBox"/>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="camera_index_label_2">
+           <property name="text">
+            <string>Mag.</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="mag_doubleSpinBox"/>
+         </item>
+         <item row="2" column="0" colspan="2">
+          <widget class="QCheckBox" name="cam_connect_checkBox">
+           <property name="text">
+            <string>HW Connect</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="2">
+          <widget class="QCheckBox" name="live_checkBox">
+           <property name="text">
+            <string>Live</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0" colspan="4">
+          <widget class="QPushButton" name="snap_pushButton">
+           <property name="text">
+            <string>Snap</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QGroupBox" name="group_exposure">
+        <property name="title">
+         <string>Exposure Control</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_4">
+         <item row="0" column="0">
+          <widget class="QCheckBox" name="auto_exp_checkBox">
+           <property name="text">
+            <string>Auto Exposure</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QCheckBox" name="auto_level_checkBox">
+           <property name="text">
+            <string>Auto Level display</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <widget class="QGroupBox" name="exp_group">
+           <property name="title">
+            <string>Exposure</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QDoubleSpinBox" name="exp_value">
+              <property name="maximum">
+               <double>5.000000000000000</double>
+              </property>
+              <property name="singleStep">
+               <double>0.010000000000000</double>
+              </property>
+              <property name="value">
+               <double>0.100000000000000</double>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="2" column="0">
+       <widget class="QGroupBox" name="group_white">
+        <property name="title">
+         <string>White Balance</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_5">
+         <item row="0" column="0">
+          <widget class="QGroupBox" name="ctemp_group">
+           <property name="title">
+            <string>Color Temperature</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QSlider" name="ctemp_slider">
+              <property name="minimum">
+               <number>2000</number>
+              </property>
+              <property name="maximum">
+               <number>15000</number>
+              </property>
+              <property name="value">
+               <number>6500</number>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="ctemp_value"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QGroupBox" name="tint_group">
+           <property name="title">
+            <string>Color Tint</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QSlider" name="tint_slider">
+              <property name="minimum">
+               <number>500</number>
+              </property>
+              <property name="maximum">
+               <number>2500</number>
+              </property>
+              <property name="value">
+               <number>1000</number>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="tint_value"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QGroupBox" name="group_color">
+        <property name="title">
+         <string>Color Adjustment</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_2">
+         <item row="0" column="0">
+          <widget class="QGroupBox" name="contrast_group">
+           <property name="title">
+            <string>Contrast</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QSlider" name="contrast_slider">
+              <property name="minimum">
+               <number>-100</number>
+              </property>
+              <property name="maximum">
+               <number>100</number>
+              </property>
+              <property name="value">
+               <number>0</number>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="contrast_value"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QGroupBox" name="brightness_group">
+           <property name="title">
+            <string>Brightness</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QSlider" name="brightness_slider">
+              <property name="minimum">
+               <number>-64</number>
+              </property>
+              <property name="maximum">
+               <number>64</number>
+              </property>
+              <property name="value">
+               <number>0</number>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="brightness_value"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QGroupBox" name="gamma_group">
+           <property name="title">
+            <string>Gamma</string>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_6">
+            <item>
+             <widget class="QSlider" name="gamma_slider">
+              <property name="minimum">
+               <number>20</number>
+              </property>
+              <property name="maximum">
+               <number>180</number>
+              </property>
+              <property name="value">
+               <number>100</number>
+              </property>
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QDoubleSpinBox" name="gamma_value"/>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+=======
   <layout class="QHBoxLayout" name="main_horizontalLayout">
    <property name="leftMargin">
     <number>1</number>
@@ -393,6 +687,7 @@
      </layout>
     </widget>
    </item>
+>>>>>>> origin/master
   </layout>
  </widget>
  <resources/>
