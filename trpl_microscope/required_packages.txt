@@ -1,0 +1,5 @@
+pyqtgraph
+PyDAQmx
+pywinusb pip
+pyvisa pip
+pygame
