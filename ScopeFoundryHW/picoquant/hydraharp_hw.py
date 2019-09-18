@@ -23,7 +23,7 @@ class HydraHarpHW(HardwareComponent):
         # Acquisition Settings        
         S.New("StopOnOverflow", dtype=bool)
         S.New("StopCount", dtype=int, initial=4294967295, vmin=1, vmax=4294967295)
-        S.New("HistogramChannels", dtype=int, ro=False, vmin=0, vmax=2**16, initial=2**16, si=False)
+        S.New("HistogramBins", dtype=int, ro=False, vmin=0, vmax=2**16, initial=2**16, si=False)
 
         S.New("Tacq", dtype=float, unit="s", si=True, initial=1, vmin=1e-3, vmax=100*60*60)
         S.New("Binning", dtype=int, initial=2, choices=[(str(x), x) for x in range(0,8)])
@@ -47,8 +47,7 @@ class HydraHarpHW(HardwareComponent):
             S.New("CFDLevel{}".format(i), dtype=int, unit="mV", vmin=0, vmax=800, initial=100, si=False)
             S.New("CFDZeroCross{}".format(i), dtype=int,  unit="mV", vmin=0, vmax=20, initial=10, si=False)
             S.New("ChanOffset{}".format(i), dtype=int, unit='ps')
-            
-            S.New("CountRate{}".format(i), dtype=int, ro=True, vmin=0, vmax=100e6)
+            S.New("CountRate{}".format(i), dtype=int, ro=True, vmin=0, vmax=100e6, si=True, unit='Hz')
 
 
     def connect(self):
@@ -171,8 +170,19 @@ class HydraHarpHW(HardwareComponent):
     def stop_histogram(self):
         self.dev.StopMeas()
     
-    def read_histogram_data(self, channel='all', clear_after=False):
-        if channel == 'all':
+    def read_histogram_data(self, channel='enabled', clear_after=False):
+        '''
+        channel     'enabled': returns histograms of enabled channels.
+                    'all':     returns histograms of all channels.
+                    <int> i:   returns histogram of channel i.
+        '''
+        if channel == 'enabled':
+            hist_data = []
+            for i in range(self.n_channels):
+                if self.settings["ChanEnable{}".format(i)]:
+                    hist_data.append(self.dev.read_histogram_data(i, clear_after))
+            return np.array(hist_data)
+        elif channel == 'all':
             hist_data = []
             for i in range(self.n_channels):
                 hist_data.append(self.dev.read_histogram_data(i, clear_after))
@@ -183,15 +193,35 @@ class HydraHarpHW(HardwareComponent):
     def check_done_scanning(self):
         return self.dev.check_done_scanning()
     
-    def update_HistogramChannels(self):
-        '''sets HistogramChannels to minimum needed to cover the SyncPeriod'''
+    def update_HistogramBins(self):
+        '''sets HistogramBins to minimum needed to cover the SyncPeriod'''
         self.settings.Resolution.read_from_hardware()
         S = self.settings
-        sync_period = 1.0/10#S['SyncRate']
-        HistogramChannels = int( np.ceil( sync_period/S['Resolution']*1e12 ) )
-        if HistogramChannels > S.HistogramChannels.vmax:
+        sync_period = 1.0/S['SyncRate']
+        HistogramBins = int( np.ceil( sync_period/ (S['Resolution']*1e-12) ) )
+        if HistogramBins > S.HistogramBins.vmax:
             warnings.warn("Can not cover whole SyncPeriod with current Resolution: Increase Binning!", UserWarning)
         else:
-            S['HistogramChannels'] = HistogramChannels
-        return S['HistogramChannels']
+            S['HistogramBins'] = HistogramBins
+        return S['HistogramBins']
     
+    @property
+    def enabled_channels(self):
+        enabled_channels = 0
+        for i in range(self.n_channels):
+            if self.settings["ChanEnable{}".format(i)]:
+                enabled_channels += 1
+        return enabled_channels
+    
+    @property
+    def hist_shape(self):
+        return (self.enabled_channels, self.settings['HistogramBins'])
+    
+    @property
+    def hist_slice(self):
+        enabled_channels, HistogramBins = self.hist_shape
+        return np.s_[0:enabled_channels, 0:HistogramBins]
+        
+    @property
+    def sliced_time_array(self):
+        return self.time_array[:self.settings['HistogramBins']]

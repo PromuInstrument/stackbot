@@ -47,9 +47,17 @@ class DFMicroscopeApp(BaseMicroscopeApp):
 #         self.add_hardware(PololuMaestroServoHW(self, name='power_wheel'))
 
 
-        from ScopeFoundryHW.pololu_servo.multi_servo_hw import PololuMaestroHW
-        self.add_hardware(PololuMaestroHW(self, servo_names=[(1, "power_wheel"), 
-                                                             (2, "polarizer")]))
+        #from ScopeFoundryHW.pololu_servo.multi_servo_hw import PololuMaestroHW
+        #self.add_hardware(PololuMaestroHW(self, servo_names=[(1, "power_wheel"), 
+        #                                                     (2, "polarizer")]))
+
+        
+        from ScopeFoundryHW.pololu_servo.multi_servo_hw import PololuMaestroHW, PololuMaestroWheelServoHW
+        self.add_hardware(PololuMaestroHW(self, name='pololu_maestro'))
+        self.add_hardware(PololuMaestroWheelServoHW(self, name='power_wheel', channel=1))
+        self.add_hardware(PololuMaestroWheelServoHW(self, name='excitation_polarizer', channel=2))
+        #self.add_hardware(PololuMaestroShutterServoHW(self, name='shutter', channel=2))
+
 
         print("Adding Measurement Components")
         
@@ -68,7 +76,7 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         
         # combined measurements
         from confocal_measure.power_scan import PowerScanMeasure
-        self.add_measurement_component(PowerScanMeasure(self))
+        self.add_measurement_component(PowerScanMeasure(self, 'hardware/shutter_servo/shutter_open'))
         
 
         # Mapping measurements
@@ -108,21 +116,16 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         mcl.settings.y_target.connect_to_widget(Q.target_y_doubleSpinBox)
 
         #mcl.settings.move_speed.connect_to_widget(Q.nanodrive_move_slow_doubleSpinBox)        
-        
-        # Power Wheel
-#         pw = self.hardware['power_wheel']
-#         pw.settings.position.connect_to_widget(Q.powerwheel_encoder_pos_doubleSpinBox)
-#         pw.settings.jog_step.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
-#         Q.powerwheel_move_fwd_pushButton.clicked.connect(pw.jog_fwd)
-#         Q.powerwheel_move_bkwd_pushButton.clicked.connect(pw.jog_bkwd)
-        p = self.hardware['pololu_maestro']
-        p.settings.power_wheel_position.connect_to_widget(Q.powerwheel_encoder_pos_doubleSpinBox)
-        p.settings.power_wheel_jog_step.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
-        Q.powerwheel_move_fwd_pushButton.clicked.connect(lambda: p.jog_fwd('power_wheel'))
-        Q.powerwheel_move_bkwd_pushButton.clicked.connect(lambda: p.jog_bkwd('power_wheel'))
+
+        p = self.hardware['power_wheel']
+        p.settings.position.connect_to_widget(Q.powerwheel_encoder_pos_doubleSpinBox)
+        p.settings.jog_step.connect_to_widget(Q.powerwheel_move_steps_doubleSpinBox)
+        Q.powerwheel_move_fwd_pushButton.clicked.connect(p.jog_fwd)
+        Q.powerwheel_move_bkwd_pushButton.clicked.connect(p.jog_bkwd)
 
         #
-        p.settings.polarizer_position.connect_to_widget(Q.polarizer_pos_doubleSpinBox)
+        pol = self.hardware['excitation_polarizer']
+        pol.settings.position.connect_to_widget(Q.polarizer_pos_doubleSpinBox)
 
         #connect events
         apd = self.hardware['apd_counter']
@@ -148,6 +151,13 @@ class DFMicroscopeApp(BaseMicroscopeApp):
         
         shutter = self.hardware['shutter_servo']
         shutter.settings.shutter_open.connect_to_widget(Q.shutter_open_checkBox)
+        
+        
+        self.open_shutter_before_scan = self.settings.New('open_shutter_before_scan', initial = True, dtype=bool)
+        self.close_shutter_after_scan = self.settings.New('close_shutter_after_scan', initial = True, dtype=bool)
+            
+        self.open_shutter_before_scan.connect_to_widget(Q.open_shutter_on_run_checkBox)
+        self.close_shutter_after_scan.connect_to_widget(Q.close_shutter_after_scan_checkBox)
         
 
         

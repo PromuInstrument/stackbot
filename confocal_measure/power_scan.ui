@@ -18,121 +18,139 @@
     <item>
      <widget class="QGroupBox" name="control_groupBox">
       <property name="title">
-       <string>Power Scan Control</string>
+       <string/>
       </property>
-      <layout class="QGridLayout" name="gridLayout">
-       <item row="3" column="0">
-        <widget class="QCheckBox" name="updown_sweep_checkBox">
-         <property name="text">
-          <string>Up Down Sweep</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="0">
-        <widget class="QCheckBox" name="close_shutter_on_finish_checkBox">
-         <property name="text">
-          <string>close shutter on finish</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="1">
-        <widget class="QDoubleSpinBox" name="powerwheel_max_doubleSpinBox"/>
-       </item>
-       <item row="4" column="1">
-        <widget class="QLabel" name="label_2">
-         <property name="text">
-          <string>Power Wheel Max</string>
-         </property>
-        </widget>
-       </item>
-       <item row="2" column="1">
-        <widget class="QLabel" name="label_3">
-         <property name="text">
-          <string>Number of Datapoints</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QLabel" name="label">
-         <property name="text">
-          <string>Power Wheel Min</string>
-         </property>
-        </widget>
-       </item>
-       <item row="5" column="0">
-        <widget class="QDoubleSpinBox" name="powerwheel_min_doubleSpinBox"/>
-       </item>
-       <item row="0" column="0">
-        <widget class="QPushButton" name="start_pushButton">
-         <property name="text">
-          <string>Start</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="1">
-        <widget class="QPushButton" name="interrupt_pushButton">
-         <property name="text">
-          <string>Interrupt</string>
-         </property>
-        </widget>
-       </item>
-       <item row="3" column="1">
-        <widget class="QDoubleSpinBox" name="num_datapoints_doubleSpinBox"/>
-       </item>
-       <item row="0" column="2" rowspan="6">
-        <widget class="QGroupBox" name="collect_groupBox">
+      <property name="flat">
+       <bool>true</bool>
+      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QGroupBox" name="power_scan_GroupBox">
          <property name="title">
-          <string>Collect</string>
+          <string>Power Scan</string>
          </property>
-         <layout class="QGridLayout" name="gridLayout_2">
-          <item row="2" column="0">
-           <widget class="QCheckBox" name="collect_ascom_img_checkBox">
+         <layout class="QGridLayout" name="controls">
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_7">
             <property name="text">
-             <string>ASCOM Img</string>
+             <string>plot x</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QComboBox" name="x_axis_comboBox"/>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>aquisition mode:</string>
             </property>
            </widget>
           </item>
           <item row="0" column="0">
-           <widget class="QCheckBox" name="collect_apd_checkBox">
+           <widget class="QPushButton" name="start_pushButton">
             <property name="text">
-             <string>APD</string>
+             <string>Start</string>
             </property>
            </widget>
           </item>
           <item row="0" column="1">
-           <widget class="QCheckBox" name="collect_spectrum_checkBox">
+           <widget class="QPushButton" name="interrupt_pushButton">
             <property name="text">
-             <string>WinSpec</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="spectrum_int_time_doubleSpinBox"/>
-          </item>
-          <item row="1" column="0">
-           <widget class="QDoubleSpinBox" name="apd_int_time_doubleSpinBox"/>
-          </item>
-          <item row="3" column="0">
-           <widget class="QDoubleSpinBox" name="ascom_img_int_time_doubleSpinBox"/>
-          </item>
-          <item row="2" column="1">
-           <widget class="QCheckBox" name="collect_picoharp_checkBox">
-            <property name="text">
-             <string>PicoHarp</string>
+             <string>Interrupt</string>
             </property>
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QDoubleSpinBox" name="picoharp_int_time_doubleSpinBox"/>
+           <widget class="QComboBox" name="acq_mode_comboBox"/>
+          </item>
+          <item row="4" column="0" colspan="2">
+           <widget class="QLineEdit" name="manual_acq_times_lineEdit">
+            <property name="whatsThis">
+             <string>enter a list in the form of: pos0,Tacq0; pos1,Tacq1; pos2,Tacq2; ..</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="1" column="0">
-        <widget class="QCheckBox" name="open_shutter_on_start_checkBox">
-         <property name="text">
-          <string>open shutter on start</string>
+       <item>
+        <widget class="QGroupBox" name="range">
+         <property name="title">
+          <string>Power Wheel Range</string>
          </property>
+         <layout class="QFormLayout" name="formLayout_2">
+          <item row="2" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>min</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QDoubleSpinBox" name="power_wheel_min_doubleSpinBox"/>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>max</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QDoubleSpinBox" name="power_wheel_max_doubleSpinBox"/>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>num</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QDoubleSpinBox" name="power_wheel_num_doubleSpinBox"/>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>step</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1">
+           <widget class="QDoubleSpinBox" name="power_wheel_step_doubleSpinBox"/>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>sweep</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QComboBox" name="sweep_type_comboBox"/>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="collect_groupBox">
+         <property name="title">
+          <string>Collect (Installed Hardware | Acquisition Time)</string>
+         </property>
+         <layout class="QFormLayout" name="formLayout"/>
         </widget>
        </item>
       </layout>
