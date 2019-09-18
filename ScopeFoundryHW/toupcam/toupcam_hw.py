@@ -11,7 +11,7 @@ class ToupCamHW(HardwareComponent):
         S.New('height_pixel', dtype=int, initial= 1536) 
         S.New('centerx_pixel', initial= 1024) # this needs to be set in full resolution mode and is microscope specific
         S.New('centery_pixel', initial= 768)  # this needs to be set in full resolution mode and is microscope specific
-        S.New('magnification', dtype=int, initial=0, vmin=0, vmax=150)
+        S.New('magnification', dtype=int, initial=1, vmin=0, vmax=150)
         S.New('calibration', dtype=float, initial=((5.+0.21) /162.)*100.) #micron/pixel*magnification
         S.New('cam_index', dtype=int, initial=0)
         S.New('res_mode', dtype=int, initial=1)
