@@ -83,6 +83,7 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
 
         from ScopeFoundryHW.toupcam import ToupCamHW, ToupCamLiveMeasure
         self.add_hardware_component(ToupCamHW(self))
+        self.add_measurement(ToupCamLiveMeasure(self))
         
         from ScopeFoundryHW.powermate.powermate_hw import PowermateHW
         self.add_hardware(PowermateHW(self))
@@ -92,7 +93,6 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         self.add_hardware(ASIStageHW(self, name='fiber_stage'))
         self.add_measurement(ASIStageControlMeasure(self))
         self.add_measurement(ASIStageControlMeasure(self,name='Fiber_Stage_Control', hw_name='fiber_stage'))
-        
         
         from xbox_trpl_measure import XboxControllerTRPLMeasure
         from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
@@ -117,7 +117,6 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from ScopeFoundryHW.oceanoptics_spec.oo_spec_measure import  OOSpecLive
         self.add_measurement(OOSpecLive(self))
         
-        self.add_measurement(ToupCamLiveMeasure(self))
 
         powermate_lq_choices = [
                     'hardware/asi_stage/x_target',
@@ -165,6 +164,9 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         from confocal_measure.asi_hyperspec_scan import AndorHyperSpecASIScan
         hyperspec_asi = self.add_measurement(AndorHyperSpecASIScan(self))
         
+        from confocal_measure.tiled_large_area_map import TiledLargeAreaMapMeasure
+        self.add_measurement(TiledLargeAreaMapMeasure(self))
+        
         # connect mapping measurement settings        
         lq_names =  ['h0', 'h1', 'v0', 'v1',  'Nh', 'Nv']
         
@@ -173,6 +175,7 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
                 master_scan_lq =  apd_asi.settings.get_lq(lq_name)
                 scan.settings.get_lq(lq_name).connect_to_lq(master_scan_lq)         
                     
+
         
         ####### Quickbar connections #################################
         
@@ -275,6 +278,28 @@ class TRPLMicroscopeApp(BaseMicroscopeApp):
         ################# Shared Settings for Map Measurements ########################
         
         
+        ############
+        #Color scheme
+#         
+#         from qtpy.QtGui import QPalette, QColor
+#         from qtpy.QtCore import Qt
+# 
+#         # Now use a palette to switch to dark colors:
+#         palette = QPalette()
+#         palette.setColor(QPalette.Window, QColor(53, 53, 53))
+#         palette.setColor(QPalette.WindowText, Qt.white)
+#         palette.setColor(QPalette.Base, QColor(25, 25, 25))
+#         palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
+#         palette.setColor(QPalette.ToolTipBase, Qt.white)
+#         palette.setColor(QPalette.ToolTipText, Qt.white)
+#         palette.setColor(QPalette.Text, Qt.white)
+#         palette.setColor(QPalette.Button, QColor(53, 53, 53))
+#         palette.setColor(QPalette.ButtonText, Qt.white)
+#         palette.setColor(QPalette.BrightText, Qt.red)
+#         palette.setColor(QPalette.Link, QColor(42, 130, 218))
+#         palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
+#         palette.setColor(QPalette.HighlightedText, Qt.black)
+#         self.qtapp.setPalette(palette)
         
         
         ##########
