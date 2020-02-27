@@ -10,7 +10,7 @@ from qtpy import QtCore
 
 class PowermateHW(HardwareComponent):
     
-    name = "powermate_hw"
+    name = "powermate"
     
     # Signals emitted on powermate events
     button_pressed  = QtCore.Signal(int) # channel
@@ -20,11 +20,15 @@ class PowermateHW(HardwareComponent):
     moved_right = QtCore.Signal( (int, bool) ) # channel, button
     
     # Use for example
-    # self.app.hardware['powermate_hw'].moved.connect(callback_func)
+    # self.app.hardware['powermate'].moved.connect(callback_func)
     # where callback_func has (channel, direction, button) as arguments
         
     def data_handler(self, data, dev_num):
-        """emit signals on powermate events"""        
+        """emit signals on powermate events"""
+        
+        if self.settings['debug_mode']:
+            print("Powermate data_handler", data, dev_num)
+            
         button_down = bool(data[1])
         wheel = data[2]
         
@@ -47,13 +51,15 @@ class PowermateHW(HardwareComponent):
         # get device addresses        
         self.filter = hid.HidDeviceFilter(vendor_id=0x077D, product_id = 0x0410)
         self.device_addrs = []
-        for v in self.filter.get_devices_by_parent().items():
-            self.device_addrs.append(v[0])
+        for k, v in self.filter.get_devices_by_parent().items():
+            print("Powermate device:", v)
+            self.device_addrs.append(k)
         
         # create devices
         self.devices = []
         for addr in self.device_addrs:
             dev = self.filter.get_devices_by_parent()[addr][0]           
+            print("Powermate connect to device:", dev)
             self.devices.append(dev)
     
         self.open_all_devices()
@@ -64,11 +70,13 @@ class PowermateHW(HardwareComponent):
 
     def set_data_handlers(self):
         for ii,dev in enumerate(self.devices):
+            print("set data handlers", ii, dev)
             dev.set_raw_data_handler(lambda data, dev_num=ii:self.data_handler(data,dev_num))
-        self.settings['number_of_devices'] = ii
+        self.settings['number_of_devices'] = len(self.devices)
             
     def open_all_devices(self):
         for dev in self.devices:
+            print("openning", dev)
             dev.open()
             if not dev.is_opened:           
                 dev.open()

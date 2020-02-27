@@ -23,7 +23,7 @@ class PowermateMeasure(Measurement):
         Measurement.__init__(self, app, name=name)
 
     def setup(self):
-        self.powermate = self.app.hardware['powermate_hw']
+        self.powermate = self.app.hardware['powermate']
                 
         self.dt = 0.05
         

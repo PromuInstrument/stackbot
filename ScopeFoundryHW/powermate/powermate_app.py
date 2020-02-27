@@ -10,7 +10,7 @@ class PowermateApp(BaseMicroscopeApp):
     
     def setup(self):
 
-        from ScopeFoundryHW.powermate.powermate_dev import PowermateHW
+        from ScopeFoundryHW.powermate.powermate_hw import PowermateHW
         self.add_hardware(PowermateHW(self))
 
         from ScopeFoundryHW.powermate.powermate_measure import PowermateMeasure
@@ -21,6 +21,11 @@ class PowermateApp(BaseMicroscopeApp):
         
 if __name__ == '__main__':
     
+    import sys
+    import pywinusb.hid as hid
+
+    hid.core.show_hids()
+
     app = PowermateApp(sys.argv)
     
     sys.exit(app.exec_())
