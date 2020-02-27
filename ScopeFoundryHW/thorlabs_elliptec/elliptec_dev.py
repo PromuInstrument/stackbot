@@ -91,8 +91,8 @@ class ThorlabsElliptecDevice(object):
     def get_jog_step_size(self, addr=None):
         resp = self.ask('gj', addr)
         return int(resp[3:],16)
-    def get_job_step_size_mm(self, addr=None):
-        return self.get_job_step_size(addr) / self.hw_info['pulses_per_unit']
+    def get_jog_step_size_mm(self, addr=None):
+        return self.get_jog_step_size(addr) / self.hw_info['pulses_per_unit']
     
     def set_jog_step_size(self, step_size, addr=None):
         resp = self.ask('sj{:08X}'.format(step_size), addr)
@@ -141,6 +141,14 @@ class ThorlabsElliptecDevice(object):
         resp = self.ask("gs", addr)
         code = int(resp[3:5], 16)
         return code, ERROR_TABLE.get(code, 'Reserved')
+    
+    
+    def get_unit(self):
+        # TODO other device types
+        if self.hw_info['dev_type'] == 18:
+            return 'deg'
+        else:
+            return 'mm'
 
 ERROR_TABLE = {
     0: "no error",

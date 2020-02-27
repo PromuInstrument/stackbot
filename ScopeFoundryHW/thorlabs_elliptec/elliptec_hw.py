@@ -33,6 +33,8 @@ class ThorlabsElliptecSingleHW(HardwareComponent):
         self.dev = ThorlabsElliptecDevice(port=S['port'], addr=S['addr'], debug=S['debug_mode'])
         self.dev.get_information()
         
+        self.settings.position.change_unit(self.dev.get_unit())
+        
         self.settings.position.reread_from_hardware_after_write = True
         self.settings.position.connect_to_hardware(
             read_func= self.dev.get_position_mm,
