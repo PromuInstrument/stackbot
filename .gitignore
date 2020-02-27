@@ -59,3 +59,4 @@ thor_lsc_microscope/log/
 ScopeFoundry/tests/load_hw_ini_file_test/log
 ScopeFoundryHW/attocube_ecc100/log
 FoundryDataBrowser/FoundryDataBrowser.egg-info
+xfer_station/log/
