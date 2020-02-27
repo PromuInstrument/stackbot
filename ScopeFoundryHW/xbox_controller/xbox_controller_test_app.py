@@ -6,7 +6,7 @@ from ScopeFoundryHW.xbox_controller.xbox_controller_test_measure import XboxCont
 from ScopeFoundryHW.xbox_controller.xbox_controller_hw import XboxControllerHW
 import logging
 
-logging.basicConfig(level='DEBUG')
+#logging.basicConfig(level='DEBUG')
 
 class XboxApp(BaseMicroscopeApp):
 	"""

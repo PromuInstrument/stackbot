@@ -2,23 +2,24 @@
 from Ed Barnard and Lev Lozhkin"""
 from __future__ import absolute_import
 from ScopeFoundry.helper_funcs import sibling_path, load_qt_ui_file
-from pygame.constants import JOYAXISMOTION, JOYHATMOTION, JOYBUTTONDOWN, JOYBUTTONUP
-from ScopeFoundryHW.xbox_controller.xbox_controller_base_measure import XboxBaseMeasure
+from ScopeFoundry import Measurement
 
-class XboxControllerTestMeasure(XboxBaseMeasure):
+class XboxControllerTestMeasure(Measurement):
 
     name = 'xbox_controller_test_measure'
     
-    def setup(self):
-        XboxBaseMeasure.setup(self)
-        self.setup_ui()
+    def __init__(self, app, name=None, hw_name="xbox_controller"):
+        self.hw_name = hw_name
+        Measurement.__init__(self, app, name=name)
         
-    def setup_ui(self):
-        self.gui
+    def setup(self):
+        self.controller = self.app.hardware[self.hw_name]
+        
+    def setup_figure(self):
         
         self.ui_filename = sibling_path(__file__, "Controller.ui")
         self.ui = load_qt_ui_file(self.ui_filename)
-        self.ui.setWindowTitle(self.name)
+        #self.ui.setWindowTitle(self.name)
         
         # Buttons
         self.controller.A.connect_bidir_to_widget(self.ui.a_radio)

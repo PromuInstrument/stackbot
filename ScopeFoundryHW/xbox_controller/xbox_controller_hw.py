@@ -1,8 +1,13 @@
 """Xbox ScopeFoundry demonstration module written by Alan Buckley with suggestions for improvement 
-from Ed Barnard and Lev Lozhkin"""
+from Ed Barnard and Lev Lozhkin
+
+
+Updated by Edward Barnard 2019-09-25
+"""
 from __future__ import absolute_import
 from ScopeFoundry import HardwareComponent
 from ScopeFoundryHW.xbox_controller.xbox_controller_device import XboxControllerDevice
+import pygame
 
 
 class XboxControllerHW(HardwareComponent):
@@ -102,20 +107,88 @@ class XboxControllerHW(HardwareComponent):
         ## This logged quantity is meant to display the name of the connected controller.
         self.controller_name = self.settings.New(name="Controller_Name", initial="None",
                                     dtype=str, ro=True)
+        self.settings.New("joystick_id", dtype=int, initial=0)
         
     def connect(self):
         """Creates joystick object and connects to controller upon clicking "connect" in ScopeFoundry app."""
         # Reference to equipment level joystick object
-        self.xb_dev = XboxControllerDevice()
+        #self.xb_dev = XboxControllerDevice()
         #self.joystick = self.xb_interface.joystick
+        
+        
+        pygame.init()
+        pygame.joystick.init()
+        if pygame.joystick.get_init():
+            self.log.debug("Joystick module initialized!")
+            self.log.debug("%s joysticks detected." % pygame.joystick.get_count())
+
+        self.joystick = pygame.joystick.Joystick(self.settings['joystick_id'])
+        self.log.debug("Joystick instance created.")
+        
+
+        self.joystick.init()
+        if self.joystick.get_init():
+            print("Joystick initialized:", self.joystick.get_name())
+        self.num_buttons = self.joystick.get_numbuttons()
+        self.num_hats = self.joystick.get_numhats()
+        self.num_axes = self.joystick.get_numaxes()
+        
+        self.settings['Controller_Name'] = self.joystick.get_name()
+        
         
     def disconnect(self):
         """Disconnects and removes modules when no longer needed by the application."""
-        if hasattr(self, 'xb_dev'):
-            self.xb_dev.close()
-            # delete object
-            del self.xb_dev
+        
+        """Disconnects and removes modules upon closing.
+        Included in the list of modules to be removed are the 
+        :attr:`pygame.joystick` and 
+        :attr:`pygame.joystick.Joystick` modules."""
+        
+        if hasattr(self, "joystick"):
+            self.joystick.quit()
+            del self.joystick
+        pygame.joystick.quit()
+        #del pygame.joystick
+        pygame.quit()
         
     
+    def threaded_update(self): 
+        #event_list = pygame.event.get()
+        #for event in event_list:
+        
+        event = pygame.event.wait()
+        
+        if event.type == pygame.JOYAXISMOTION:
+            for i in range(self.num_axes):
+                self.settings['Axis_' + str(i)] = self.joystick.get_axis(i)
+
+        elif event.type == pygame.JOYHATMOTION:
+            for i in range(self.num_hats):
+                # Clear Directional Pad values
+                for k in set(self.direction_map.values()):
+                    self.settings[k] = False
+
+                # Check button status and record it
+                resp = self.joystick.get_hat(i)
+                try:
+                    self.settings[self.direction_map[resp]] = True
+                except KeyError:
+                    self.log.error("Unknown dpad hat: "+ repr(resp))
+
+        elif event.type in [pygame.JOYBUTTONDOWN, pygame.JOYBUTTONUP]:
+            button_state = (event.type == pygame.JOYBUTTONDOWN)
+
+            for i in range(self.num_buttons):
+                if self.joystick.get_button(i) == button_state:
+                    try:
+                        self.settings[self.button_map[i]] = button_state
+                    except KeyError:
+                        self.log.error("Unknown button: %i (target state: %s)" % (i,
+                            'down' if button_state else 'up'))
+
+        else:
+            self.log.debug("Unknown event type: {} {}".format(event, event.type))
+
+
 
         
