@@ -48,9 +48,9 @@ except Exception as err:
 
 #from matplotlib.figure import Figure
 
-from .logged_quantity import LoggedQuantity, LQCollection
+from ScopeFoundry.logged_quantity import LoggedQuantity, LQCollection
 
-from .helper_funcs import confirm_on_close, ignore_on_close, load_qt_ui_file, \
+from ScopeFoundry.helper_funcs import confirm_on_close, ignore_on_close, load_qt_ui_file, \
     OrderedAttrDict, sibling_path, get_logger_from_class, str2bool
 
 #from equipment.image_display import ImageDisplay

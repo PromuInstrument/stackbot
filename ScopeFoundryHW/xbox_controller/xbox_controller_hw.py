@@ -38,7 +38,11 @@ class XboxControllerHW(HardwareComponent):
         7: 'Start',
         8: 'LP',
         9: 'RP'}
-
+    
+    def __init__(self, app, debug=False, name=None):
+        self.xb_dev = XboxControllerDevice()
+        
+        HardwareComponent.__init__(self, app, debug=debug, name=name)
     def setup(self):
         """Create logged quantities for each HID object including all hats, 
         sticks and buttons specific to the Xbox controller."""

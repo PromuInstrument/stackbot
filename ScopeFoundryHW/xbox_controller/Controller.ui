@@ -64,6 +64,69 @@
       </layout>
      </widget>
     </item>
+    <item row="1" column="3" rowspan="2" colspan="4">
+       <widget class="QGroupBox" name="groupBox_3">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="title">
+         <string>Current Position</string>
+        </property>
+        <layout class="QGridLayout" name="gridLayout_10">
+	        <item row="0" column="0">
+	          <widget class="QLabel" name="label_20">
+	           <property name="text">
+	            <string>xy_jogstep</string>
+	           </property>
+	          </widget>
+	         </item>
+	       <item row="0" column="1">
+	       	<widget class="QDoubleSpinBox" name="xy_step_doubleSpinBox"/>
+	       </item>
+	       <item row="0" column="2">
+	          <widget class="QLabel" name="label_20">
+	           <property name="text">
+	            <string>z_jogstep</string>
+	           </property>
+	          </widget>
+	         </item>
+	       <item row="0" column="3">
+	       <widget class="QDoubleSpinBox" name="z_step_doubleSpinBox"/>
+	       </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_20">
+           <property name="text">
+            <string>X</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QDoubleSpinBox" name="x_pos_doubleSpinBox">
+           <property name="decimals">
+            <number>6</number>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="2">
+          <widget class="QLabel" name="label_18">
+           <property name="text">
+            <string>Y</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="3">
+          <widget class="QDoubleSpinBox" name="y_pos_doubleSpinBox">
+           <property name="decimals">
+            <number>6</number>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+      </item>
     <item row="3" column="2" rowspan="2">
      <widget class="QGroupBox" name="Right_stick">
       <property name="title">
